@@ -22,12 +22,20 @@ function migrate(sqlite: Database) {
   sqlite.run("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
   sqlite.run("CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, type TEXT NOT NULL, goal_id TEXT, payload TEXT NOT NULL DEFAULT '{}', timestamp TEXT NOT NULL)")
   sqlite.run("CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL)")
+  sqlite.run("CREATE TABLE IF NOT EXISTS problems (id TEXT PRIMARY KEY, title TEXT NOT NULL, priority TEXT NOT NULL DEFAULT 'warning', source TEXT, context TEXT, goal_id TEXT, state_id TEXT, status TEXT NOT NULL DEFAULT 'open', actions TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL, updated_at TEXT NOT NULL)")
+  sqlite.run("CREATE TABLE IF NOT EXISTS rules (id TEXT PRIMARY KEY, name TEXT NOT NULL, condition TEXT NOT NULL, action TEXT NOT NULL, enabled TEXT NOT NULL DEFAULT 'true', created_at TEXT NOT NULL)")
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_states_goal_id ON states(goal_id)")
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_artifacts_goal_id ON artifacts(goal_id)")
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_activities_goal_id ON activities(goal_id)")
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_events_goal_id ON events(goal_id)")
+  sqlite.run("CREATE INDEX IF NOT EXISTS idx_problems_status ON problems(status)")
+  sqlite.run("CREATE INDEX IF NOT EXISTS idx_problems_goal_id ON problems(goal_id)")
 
   // Migrations
   try { sqlite.run("ALTER TABLE agents ADD COLUMN enabled TEXT NOT NULL DEFAULT 'true'") } catch {}
   try { sqlite.run("ALTER TABLE goals ADD COLUMN project_id TEXT REFERENCES projects(id)") } catch {}
+  try { sqlite.run("CREATE TABLE IF NOT EXISTS problems (id TEXT PRIMARY KEY, title TEXT NOT NULL, priority TEXT NOT NULL DEFAULT 'warning', source TEXT, context TEXT, goal_id TEXT, state_id TEXT, status TEXT NOT NULL DEFAULT 'open', actions TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL, updated_at TEXT NOT NULL)") } catch {}
+  try { sqlite.run("CREATE TABLE IF NOT EXISTS rules (id TEXT PRIMARY KEY, name TEXT NOT NULL, condition TEXT NOT NULL, action TEXT NOT NULL, enabled TEXT NOT NULL DEFAULT 'true', created_at TEXT NOT NULL)") } catch {}
+  try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_problems_status ON problems(status)") } catch {}
+  try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_problems_goal_id ON problems(goal_id)") } catch {}
 }

@@ -83,3 +83,29 @@ export const organizations = sqliteTable("organizations", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
 })
+
+export const problems = sqliteTable("problems", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  priority: text("priority").notNull().default("warning"),
+  source: text("source"),
+  context: text("context"),
+  goalId: text("goal_id"),
+  stateId: text("state_id"),
+  status: text("status").notNull().default("open"),
+  actions: text("actions").notNull().default("[]"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (t) => [
+  index("idx_problems_status").on(t.status),
+  index("idx_problems_goal_id").on(t.goalId),
+])
+
+export const rules = sqliteTable("rules", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  condition: text("condition").notNull(),
+  action: text("action").notNull(),
+  enabled: text("enabled").notNull().default("true"),
+  createdAt: text("created_at").notNull(),
+})

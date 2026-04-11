@@ -1,11 +1,52 @@
 import { useState } from "react"
 import { ScrollArea } from "#/components/ui/scroll-area"
-import { Separator } from "#/components/ui/separator"
-import { Bot, PanelRightOpen, PanelRightClose, Brain } from "lucide-react"
+import { Bot, PanelRightOpen, PanelRightClose, Brain, ArrowRight, CheckCircle2, XCircle, Clock } from "lucide-react"
 import type { ActivityEntry } from "#/lib/types"
 
 interface ActivityPanelProps {
   activities: ActivityEntry[]
+}
+
+function AcpFlow({ activities }: { activities: ActivityEntry[] }) {
+  if (activities.length === 0) return null
+
+  return (
+    <div className="space-y-1 p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">ACP Flow</span>
+        <div className="flex-1 h-px bg-border/50" />
+      </div>
+      {activities.slice(0, 8).map((activity, idx) => {
+        const isSuccess = activity.detail?.includes("pass") || activity.detail?.includes("success") || activity.detail?.includes("created")
+        const isFailed = activity.detail?.includes("fail") || activity.detail?.includes("error") || activity.detail?.includes("rejected")
+        const ResultIcon = isSuccess ? CheckCircle2 : isFailed ? XCircle : Clock
+
+        return (
+          <div key={activity.id} className="flex items-start gap-2 py-1">
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-1">
+                <Bot className={cn("size-3", isSuccess ? "text-emerald-500" : isFailed ? "text-red-500" : "text-muted-foreground")} />
+                <ArrowRight className="size-2 text-muted-foreground/50" />
+                <ResultIcon className={cn("size-3", isSuccess ? "text-emerald-500" : isFailed ? "text-red-500" : "text-muted-foreground")} />
+              </div>
+              {idx < activities.length - 1 && (
+                <div className="mt-0.5 h-3 w-px bg-border/40" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[11px] font-medium text-foreground/80">{activity.agent}</span>
+              <span className="mx-1 text-[10px] text-muted-foreground/50">{"\u2192"}</span>
+              <span className="text-[11px] text-foreground/60">{activity.action}</span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function cn(...classes: (string | undefined | false)[]) {
+  return classes.filter(Boolean).join(" ")
 }
 
 export function ActivityPanel({ activities }: ActivityPanelProps) {
@@ -50,7 +91,11 @@ export function ActivityPanel({ activities }: ActivityPanelProps) {
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="space-y-0 p-3">
+        {/* ACP Flow */}
+        <AcpFlow activities={activities} />
+
+        {/* Detailed Timeline */}
+        <div className="border-t border-border/50 p-3 space-y-0">
           {activities.map((activity, idx) => (
             <div key={activity.id}>
               <div className="group flex gap-2.5 py-2">
@@ -91,9 +136,14 @@ export function ActivityPanel({ activities }: ActivityPanelProps) {
                   )}
                 </div>
               </div>
-              {idx < activities.length - 1 && <Separator className="!mt-0 opacity-0" />}
             </div>
           ))}
+          {activities.length === 0 && (
+            <div className="py-8 text-center">
+              <Bot className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground">No activity yet</p>
+            </div>
+          )}
         </div>
       </ScrollArea>
     </aside>

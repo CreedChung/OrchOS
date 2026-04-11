@@ -1,24 +1,25 @@
 import { useState, useMemo } from "react"
 import { cn } from "#/lib/utils"
 import { ScrollArea } from "#/components/ui/scroll-area"
-import { Separator } from "#/components/ui/separator"
 import {
+  Inbox,
   Target,
-  FolderGit2,
   Bot,
+  Shield,
   History,
-  ChevronRight,
   ChevronDown,
   Circle,
   Settings,
   Search,
   X,
   Plus,
-  Folder,
   Check,
   MoreHorizontal,
   Pencil,
   Trash2,
+  Flame,
+  AlertTriangle,
+  Info,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -27,7 +28,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "#/components/ui/dropdown-menu"
-import type { Goal, AgentProfile, Project, HistoryEntry, Organization } from "#/lib/types"
+import type { Goal, AgentProfile, Project, HistoryEntry, Organization, Problem, ProblemPriority, SidebarView } from "#/lib/types"
 
 interface SidebarProps {
   goals: Goal[]
@@ -35,8 +36,11 @@ interface SidebarProps {
   projects: Project[]
   history: HistoryEntry[]
   organizations: Organization[]
+  problems: Problem[]
   activeOrganizationId: string | null
+  activeView: SidebarView
   activeGoalId: string | null
+  onViewChange: (view: SidebarView) => void
   onGoalSelect: (id: string) => void
   onCreateGoal: () => void
   onOpenSettings: () => void
@@ -45,36 +49,6 @@ interface SidebarProps {
   onOrganizationDelete: (id: string) => void
   onGoalRename: (id: string, name: string) => void
   onGoalDelete: (id: string) => void
-}
-
-function SectionHeader({
-  icon: Icon,
-  title,
-  count,
-  expanded,
-  onToggle,
-}: {
-  icon: React.ElementType
-  title: string
-  count: number
-  expanded: boolean
-  onToggle: () => void
-}) {
-  return (
-    <button
-      onClick={onToggle}
-      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-    >
-      <Icon className="size-3.5" />
-      <span className="flex-1 text-left">{title}</span>
-      <span className="text-[10px] tabular-nums">{count}</span>
-      {expanded ? (
-        <ChevronDown className="size-3" />
-      ) : (
-        <ChevronRight className="size-3" />
-      )}
-    </button>
-  )
 }
 
 const agentStatusColor: Record<string, string> = {
@@ -95,14 +69,37 @@ const goalStatusColor: Record<Goal["status"], string> = {
   paused: "text-amber-500",
 }
 
+const priorityIcon: Record<ProblemPriority, React.ElementType> = {
+  critical: Flame,
+  warning: AlertTriangle,
+  info: Info,
+}
+
+const priorityColor: Record<ProblemPriority, string> = {
+  critical: "text-red-500",
+  warning: "text-amber-500",
+  info: "text-blue-500",
+}
+
+const navItems: { id: SidebarView; icon: React.ElementType; label: string }[] = [
+  { id: "inbox", icon: Inbox, label: "Inbox" },
+  { id: "goals", icon: Target, label: "Goals" },
+  { id: "agents", icon: Bot, label: "Agents" },
+  { id: "rules", icon: Shield, label: "Rules" },
+  { id: "history", icon: History, label: "History" },
+]
+
 export function Sidebar({
   goals,
   agents,
   projects,
   history,
   organizations,
+  problems,
   activeOrganizationId,
+  activeView,
   activeGoalId,
+  onViewChange,
   onGoalSelect,
   onCreateGoal,
   onOpenSettings,
@@ -112,11 +109,10 @@ export function Sidebar({
   onGoalRename,
   onGoalDelete,
 }: SidebarProps) {
-  const [goalsExpanded, setGoalsExpanded] = useState(true)
-  const [projectsExpanded, setProjectsExpanded] = useState(true)
-  const [agentsExpanded, setAgentsExpanded] = useState(true)
-  const [historyExpanded, setHistoryExpanded] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+
+  const openProblemCount = problems.filter((p) => p.status === "open").length
+  const criticalCount = problems.filter((p) => p.status === "open" && p.priority === "critical").length
 
   const filteredGoals = useMemo(
     () =>
@@ -134,29 +130,17 @@ export function Sidebar({
     [agents, searchQuery]
   )
 
-  const filteredProjects = useMemo(
+  const filteredProblems = useMemo(
     () =>
       searchQuery
-        ? projects.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-        : projects,
-    [projects, searchQuery]
-  )
-
-  const filteredHistory = useMemo(
-    () =>
-      searchQuery
-        ? history.filter((h) => {
-            const typeMatch = h.type.toLowerCase().includes(searchQuery.toLowerCase())
-            const detailStr = JSON.stringify(h.detail).toLowerCase()
-            const detailMatch = detailStr.includes(searchQuery.toLowerCase())
-            return typeMatch || detailMatch
-          })
-        : history,
-    [history, searchQuery]
+        ? problems.filter((p) => p.title.toLowerCase().includes(searchQuery.toLowerCase()) || (p.context || "").toLowerCase().includes(searchQuery.toLowerCase()))
+        : problems,
+    [problems, searchQuery]
   )
 
   return (
     <aside className="flex h-full w-60 flex-col border-r border-border bg-sidebar">
+      {/* Organization Selector */}
       <div className="flex h-11 items-center border-b border-border px-4">
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
@@ -218,6 +202,39 @@ export function Sidebar({
         )}
       </div>
 
+      {/* Navigation Items */}
+      <div className="border-b border-border p-2 space-y-0.5">
+        {navItems.map(({ id, icon: Icon, label }) => {
+          const isInbox = id === "inbox"
+          const isActive = activeView === id
+          return (
+            <button
+              key={id}
+              onClick={() => onViewChange(id)}
+              className={cn(
+                "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                isActive
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+              )}
+            >
+              <Icon className="size-4 shrink-0" />
+              <span className="flex-1 text-left">{label}</span>
+              {isInbox && openProblemCount > 0 && (
+                <span className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                  criticalCount > 0
+                    ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {openProblemCount}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
       {/* Search */}
       <div className="border-b border-border px-2 py-2">
         <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5">
@@ -238,27 +255,40 @@ export function Sidebar({
             </button>
           )}
         </div>
-        <button
-          onClick={onCreateGoal}
-          className="mt-2 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-        >
-          <Plus className="size-3.5 shrink-0 opacity-60" />
-          <span>New Goal</span>
-        </button>
       </div>
 
+      {/* Context Panel: Changes based on active view */}
       <ScrollArea className="flex-1">
-        <div className="space-y-1 p-2">
-          {/* Goals Section */}
-          <SectionHeader
-            icon={Target}
-            title="Goals"
-            count={filteredGoals.length}
-            expanded={goalsExpanded}
-            onToggle={() => setGoalsExpanded(!goalsExpanded)}
-          />
-          {goalsExpanded && (
-            <div className="ml-1 space-y-0.5">
+        <div className="p-2">
+          {activeView === "inbox" && (
+            <div className="space-y-0.5">
+              {filteredProblems.filter((p) => p.status === "open").map((problem) => {
+                const PriorityIcon = priorityIcon[problem.priority]
+                return (
+                  <button
+                    key={problem.id}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  >
+                    <PriorityIcon className={cn("size-3.5 shrink-0", priorityColor[problem.priority])} />
+                    <span className="flex-1 truncate">{problem.title}</span>
+                  </button>
+                )
+              })}
+              {filteredProblems.filter((p) => p.status === "open").length === 0 && (
+                <p className="px-2 py-1 text-xs text-muted-foreground">No open problems</p>
+              )}
+            </div>
+          )}
+
+          {activeView === "goals" && (
+            <div className="space-y-0.5">
+              <button
+                onClick={onCreateGoal}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground mb-1"
+              >
+                <Plus className="size-3.5 shrink-0 opacity-60" />
+                <span>New Goal</span>
+              </button>
               {filteredGoals.map((goal) => (
                 <div
                   key={goal.id}
@@ -312,45 +342,8 @@ export function Sidebar({
             </div>
           )}
 
-          <Separator className="my-1" />
-
-          {/* Projects Section */}
-          <SectionHeader
-            icon={FolderGit2}
-            title="Projects"
-            count={filteredProjects.length}
-            expanded={projectsExpanded}
-            onToggle={() => setProjectsExpanded(!projectsExpanded)}
-          />
-          {projectsExpanded && (
-            <div className="ml-1 space-y-0.5">
-              {filteredProjects.map((project) => (
-                <div
-                  key={project.id}
-                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70"
-                >
-                  <Folder className="size-3.5 shrink-0 opacity-60" />
-                  <span className="truncate">{project.name}</span>
-                </div>
-              ))}
-              {filteredProjects.length === 0 && (
-                <p className="px-2 py-1 text-xs text-muted-foreground">No projects</p>
-              )}
-            </div>
-          )}
-
-          <Separator className="my-1" />
-
-          {/* Agents Section */}
-          <SectionHeader
-            icon={Bot}
-            title="Agents"
-            count={filteredAgents.length}
-            expanded={agentsExpanded}
-            onToggle={() => setAgentsExpanded(!agentsExpanded)}
-          />
-          {agentsExpanded && (
-            <div className="ml-1 space-y-0.5">
+          {activeView === "agents" && (
+            <div className="space-y-0.5">
               {filteredAgents.map((agent) => (
                 <div
                   key={agent.id}
@@ -369,19 +362,17 @@ export function Sidebar({
             </div>
           )}
 
-          <Separator className="my-1" />
+          {activeView === "rules" && (
+            <div className="space-y-0.5">
+              <p className="px-2 py-1 text-xs text-muted-foreground">
+                Automation rules for handling problems
+              </p>
+            </div>
+          )}
 
-          {/* History Section */}
-          <SectionHeader
-            icon={History}
-            title="History"
-            count={filteredHistory.length}
-            expanded={historyExpanded}
-            onToggle={() => setHistoryExpanded(!historyExpanded)}
-          />
-          {historyExpanded && (
-            <div className="ml-1 space-y-0.5">
-              {filteredHistory.slice(0, 10).map((entry) => (
+          {activeView === "history" && (
+            <div className="space-y-0.5">
+              {history.slice(0, 20).map((entry) => (
                 <div
                   key={entry.id}
                   className="rounded-md px-2 py-1.5 text-xs text-sidebar-foreground/60"
@@ -390,7 +381,7 @@ export function Sidebar({
                   <span className="ml-1 truncate">{entry.timestamp.split("T")[1]?.slice(0, 5)}</span>
                 </div>
               ))}
-              {filteredHistory.length === 0 && (
+              {history.length === 0 && (
                 <p className="px-2 py-1 text-xs text-muted-foreground">No history</p>
               )}
             </div>

@@ -4,8 +4,10 @@ import { AgentService } from "../modules/agent/service"
 import { StateService } from "../modules/state/service"
 import { ActivityService } from "../modules/activity/service"
 import { OrganizationService } from "../modules/organization"
+import { ProblemService } from "../modules/problem/service"
+import { RuleService } from "../modules/rule/service"
 import { db } from "./index"
-import { goals, organizations } from "./schema"
+import { goals, organizations, problems, rules } from "./schema"
 import { sql } from "drizzle-orm"
 
 export function seedData() {
@@ -80,4 +82,65 @@ export function seedData() {
   StateService.createState(g3.id, "Deploy", "running")
   StateService.createState(g3.id, "Tests", "success")
   StateService.createArtifact(g3.id, ".github/workflows/ci.yml", "file", "success", "created")
+
+  // Seed problems (Inbox items)
+  const existingProblems = db.select({ count: sql<number>`count(*)` }).from(problems).get()
+  if (existingProblems?.count === 0) {
+    ProblemService.create({
+      title: "Tests failed",
+      priority: "critical",
+      source: "Tester",
+      context: "repo: auth-service | login.test.ts",
+      goalId: g1.id,
+      actions: ["Fix", "Ignore", "Assign"],
+    })
+    ProblemService.create({
+      title: "PR rejected",
+      priority: "warning",
+      source: "Reviewer",
+      context: "PR #23 | auth.ts",
+      goalId: g1.id,
+      actions: ["Apply fix", "Override"],
+    })
+    ProblemService.create({
+      title: "Lint error",
+      priority: "warning",
+      source: "Tester",
+      context: "repo: auth-service | auth.ts:42",
+      goalId: g1.id,
+      actions: ["Fix", "Ignore"],
+    })
+    ProblemService.create({
+      title: "Build success",
+      priority: "info",
+      source: "System",
+      context: "repo: auth-service",
+      goalId: g1.id,
+      actions: ["Archive"],
+    })
+    ProblemService.create({
+      title: "Deploy pipeline running",
+      priority: "info",
+      source: "System",
+      context: "repo: my-app | .github/workflows/ci.yml",
+      goalId: g3.id,
+      actions: ["Archive"],
+    })
+    ProblemService.create({
+      title: "Payment integration pending review",
+      priority: "warning",
+      source: "System",
+      context: "repo: OrchOS | payment.ts",
+      goalId: g2.id,
+      actions: ["Assign", "Ignore"],
+    })
+  }
+
+  // Seed rules
+  const existingRules = db.select({ count: sql<number>`count(*)` }).from(rules).get()
+  if (existingRules?.count === 0) {
+    RuleService.create({ name: "Auto-fix test failures", condition: "test_failed", action: "auto_fix" })
+    RuleService.create({ name: "Ignore lint warnings", condition: "lint_warning", action: "ignore" })
+    RuleService.create({ name: "Auto-assign reviews", condition: "review_rejected", action: "assign_reviewer" })
+  }
 }

@@ -12,6 +12,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 // Types aligned with server
 export type Status = "success" | "failed" | "error" | "pending" | "running" | "warning"
 export type Action = "write_code" | "run_tests" | "fix_bug" | "commit" | "review"
+export type ProblemPriority = "critical" | "warning" | "info"
+export type ProblemStatus = "open" | "fixed" | "ignored" | "assigned"
 
 export interface Goal {
   id: string
@@ -38,12 +40,6 @@ export interface HistoryEntry {
   goalId?: string
   detail: Record<string, unknown>
   timestamp: string
-}
-
-export interface Project {
-  id: string
-  name: string
-  path: string
 }
 
 export interface AgentProfile {
@@ -102,6 +98,29 @@ export interface Event {
 export interface Organization {
   id: string
   name: string
+}
+
+export interface Problem {
+  id: string
+  title: string
+  priority: ProblemPriority
+  source?: string
+  context?: string
+  goalId?: string
+  stateId?: string
+  status: ProblemStatus
+  actions: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Rule {
+  id: string
+  name: string
+  condition: string
+  action: string
+  enabled: boolean
+  createdAt: string
 }
 
 // API functions
@@ -169,4 +188,31 @@ export const api = {
     request<Organization>(`/api/organizations/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteOrganization: (id: string) =>
     request<{ success: boolean }>(`/api/organizations/${id}`, { method: "DELETE" }),
+
+  // Problems
+  listProblems: (filters?: { status?: ProblemStatus; priority?: ProblemPriority }) => {
+    const params = new URLSearchParams()
+    if (filters?.status) params.set("status", filters.status)
+    if (filters?.priority) params.set("priority", filters.priority)
+    const qs = params.toString()
+    return request<Problem[]>(`/api/problems${qs ? `?${qs}` : ""}`)
+  },
+  getProblemCounts: () => request<Record<ProblemStatus, number>>("/api/problems/counts"),
+  createProblem: (data: { title: string; priority?: ProblemPriority; source?: string; context?: string; goalId?: string; actions?: string[] }) =>
+    request<Problem>("/api/problems", { method: "POST", body: JSON.stringify(data) }),
+  updateProblem: (id: string, data: Partial<Pick<Problem, "title" | "priority" | "status" | "source" | "context">>) =>
+    request<Problem>(`/api/problems/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteProblem: (id: string) =>
+    request<{ success: boolean }>(`/api/problems/${id}`, { method: "DELETE" }),
+  bulkUpdateProblems: (ids: string[], status: ProblemStatus) =>
+    request<{ updated: number }>("/api/problems/bulk", { method: "POST", body: JSON.stringify({ ids, status }) }),
+
+  // Rules
+  listRules: () => request<Rule[]>("/api/rules"),
+  createRule: (data: { name: string; condition: string; action: string; enabled?: boolean }) =>
+    request<Rule>("/api/rules", { method: "POST", body: JSON.stringify(data) }),
+  updateRule: (id: string, data: Partial<Pick<Rule, "name" | "condition" | "action" | "enabled">>) =>
+    request<Rule>(`/api/rules/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteRule: (id: string) =>
+    request<{ success: boolean }>(`/api/rules/${id}`, { method: "DELETE" }),
 }

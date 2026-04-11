@@ -10,6 +10,8 @@ import { eventController } from "./modules/event"
 import { executionController, settingsController } from "./modules/execution"
 import { wsController } from "./modules/ws"
 import { organizationController } from "./modules/organization"
+import { problemController } from "./modules/problem"
+import { ruleController } from "./modules/rule"
 import { seedData } from "./db/seed"
 
 import "./db"
@@ -30,6 +32,8 @@ const app = new Elysia()
   .use(settingsController)
   .use(wsController)
   .use(organizationController)
+  .use(problemController)
+  .use(ruleController)
   .listen(5173)
 
 console.log(
