@@ -1,6 +1,8 @@
-import type { Event, EventType } from "./types"
-import { generateId, timestamp } from "./utils"
-import { getDb } from "./db"
+import type { Event, EventType } from "../../types"
+import { generateId, timestamp } from "../../utils"
+import { db } from "../../db"
+import { events } from "../../db/schema"
+import { eq, desc, sql } from "drizzle-orm"
 
 type EventHandler = (event: Event) => void
 
@@ -39,14 +41,14 @@ class EventBus {
       timestamp: timestamp(),
     }
 
-    // Persist to DB
-    const db = getDb()
-    db.run(
-      `INSERT INTO events (id, type, goal_id, payload, timestamp) VALUES (?, ?, ?, ?, ?)`,
-      [event.id, event.type, event.goalId || null, JSON.stringify(event.payload), event.timestamp]
-    )
+    db.insert(events).values({
+      id: event.id,
+      type: event.type,
+      goalId: event.goalId ?? null,
+      payload: JSON.stringify(event.payload),
+      timestamp: event.timestamp,
+    }).run()
 
-    // Notify handlers
     const typeHandlers = this.handlers.get(type) || []
     for (const h of typeHandlers) h(event)
     for (const h of this.allHandlers) h(event)
@@ -55,27 +57,23 @@ class EventBus {
   }
 
   getHistory(goalId?: string, limit: number = 50): Event[] {
-    const db = getDb()
-    let rows: any[]
+    let query = db.select().from(events).orderBy(desc(events.timestamp)).limit(limit).$dynamic()
 
     if (goalId) {
-      rows = db.query("SELECT * FROM events WHERE goal_id = ? ORDER BY timestamp DESC LIMIT ?").all(goalId, limit) as any[]
-    } else {
-      rows = db.query("SELECT * FROM events ORDER BY timestamp DESC LIMIT ?").all(limit) as any[]
+      query = query.where(eq(events.goalId, goalId))
     }
 
-    return rows.map((row) => ({
+    return query.all().map((row) => ({
       id: row.id,
       type: row.type as EventType,
-      goalId: row.goal_id || undefined,
+      goalId: row.goalId ?? undefined,
       payload: JSON.parse(row.payload),
       timestamp: row.timestamp,
     }))
   }
 
   clear(): void {
-    const db = getDb()
-    db.run("DELETE FROM events")
+    db.delete(events).run()
   }
 }
 
