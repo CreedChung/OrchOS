@@ -2,6 +2,8 @@ export type Status = "success" | "failed" | "error" | "pending" | "running" | "w
 
 export type Action = "write_code" | "run_tests" | "fix_bug" | "commit" | "review"
 
+export type EventType = "test_failed" | "review_rejected" | "build_success" | "state_changed" | "goal_created" | "goal_completed" | "agent_action"
+
 export interface Goal {
   id: string
   title: string
@@ -17,15 +19,6 @@ export interface Project {
   id: string
   name: string
   path: string
-  createdAt?: string
-}
-
-export interface HistoryEntry {
-  id: string
-  type: string
-  goalId?: string
-  detail: Record<string, unknown>
-  timestamp: string
 }
 
 export interface AgentProfile {
@@ -37,7 +30,7 @@ export interface AgentProfile {
   model: string
 }
 
-export interface StateItem {
+export interface StateEntry {
   id: string
   goalId: string
   label: string
@@ -66,8 +59,29 @@ export interface ActivityEntry {
   reasoning?: string
 }
 
+export interface Event {
+  id: string
+  type: EventType
+  goalId?: string
+  payload: Record<string, unknown>
+  timestamp: string
+}
+
 export interface ControlSettings {
   autoCommit: boolean
   autoFix: boolean
   modelStrategy: "local-first" | "cloud-first" | "adaptive"
+}
+
+export interface CreateGoalRequest {
+  title: string
+  description?: string
+  successCriteria: string[]
+  constraints?: string[]
+}
+
+export interface TriggerActionRequest {
+  action: Action
+  stateId?: string
+  agentId?: string
 }

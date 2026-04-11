@@ -13,15 +13,20 @@ import {
   Settings,
   Search,
   X,
+  Plus,
+  Folder,
 } from "lucide-react"
-import type { Goal, Project, AgentProfile } from "#/lib/types"
+import type { Goal, AgentProfile, Project, HistoryEntry } from "#/lib/types"
 
 interface SidebarProps {
   goals: Goal[]
-  projects: Project[]
   agents: AgentProfile[]
+  projects: Project[]
+  history: HistoryEntry[]
   activeGoalId: string | null
   onGoalSelect: (id: string) => void
+  onCreateGoal: () => void
+  onOpenSettings: () => void
 }
 
 function SectionHeader({
@@ -60,10 +65,32 @@ const agentStatusColor: Record<string, string> = {
   error: "text-red-500",
 }
 
-export function Sidebar({ goals, projects, agents, activeGoalId, onGoalSelect }: SidebarProps) {
+const goalStatusIcon: Record<Goal["status"], string> = {
+  active: "●",
+  completed: "✓",
+  paused: "⏸",
+}
+
+const goalStatusColor: Record<Goal["status"], string> = {
+  active: "text-emerald-500",
+  completed: "text-blue-500",
+  paused: "text-amber-500",
+}
+
+export function Sidebar({
+  goals,
+  agents,
+  projects,
+  history,
+  activeGoalId,
+  onGoalSelect,
+  onCreateGoal,
+  onOpenSettings,
+}: SidebarProps) {
   const [goalsExpanded, setGoalsExpanded] = useState(true)
   const [projectsExpanded, setProjectsExpanded] = useState(true)
   const [agentsExpanded, setAgentsExpanded] = useState(true)
+  const [historyExpanded, setHistoryExpanded] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
 
   const filteredGoals = useMemo(
@@ -74,14 +101,6 @@ export function Sidebar({ goals, projects, agents, activeGoalId, onGoalSelect }:
     [goals, searchQuery]
   )
 
-  const filteredProjects = useMemo(
-    () =>
-      searchQuery
-        ? projects.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-        : projects,
-    [projects, searchQuery]
-  )
-
   const filteredAgents = useMemo(
     () =>
       searchQuery
@@ -90,13 +109,34 @@ export function Sidebar({ goals, projects, agents, activeGoalId, onGoalSelect }:
     [agents, searchQuery]
   )
 
+  const filteredProjects = useMemo(
+    () =>
+      searchQuery
+        ? projects.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        : projects,
+    [projects, searchQuery]
+  )
+
+  const filteredHistory = useMemo(
+    () =>
+      searchQuery
+        ? history.filter((h) => {
+            const typeMatch = h.type.toLowerCase().includes(searchQuery.toLowerCase())
+            const detailStr = JSON.stringify(h.detail).toLowerCase()
+            const detailMatch = detailStr.includes(searchQuery.toLowerCase())
+            return typeMatch || detailMatch
+          })
+        : history,
+    [history, searchQuery]
+  )
+
   return (
     <aside className="flex h-full w-60 flex-col border-r border-border bg-sidebar">
       <div className="flex h-11 items-center gap-2 border-b border-border px-4">
         <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <Target className="size-3.5" />
         </div>
-        <span className="text-sm font-semibold text-sidebar-foreground">OrchOS</span>
+        <span className="text-sm font-semibold text-sidebar-foreground">Cortex</span>
       </div>
 
       {/* Search */}
@@ -144,7 +184,9 @@ export function Sidebar({ goals, projects, agents, activeGoalId, onGoalSelect }:
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                   )}
                 >
-                  <Target className="size-3.5 shrink-0 opacity-60" />
+                  <span className={cn("text-xs", goalStatusColor[goal.status])}>
+                    {goalStatusIcon[goal.status]}
+                  </span>
                   <span className="truncate">{goal.title}</span>
                 </button>
               ))}
@@ -167,16 +209,16 @@ export function Sidebar({ goals, projects, agents, activeGoalId, onGoalSelect }:
           {projectsExpanded && (
             <div className="ml-1 space-y-0.5">
               {filteredProjects.map((project) => (
-                <button
+                <div
                   key={project.id}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70"
                 >
-                  <FolderGit2 className="size-3.5 shrink-0 opacity-60" />
+                  <Folder className="size-3.5 shrink-0 opacity-60" />
                   <span className="truncate">{project.name}</span>
-                </button>
+                </div>
               ))}
-              {searchQuery && filteredProjects.length === 0 && (
-                <p className="px-2 py-1 text-xs text-muted-foreground">No matching projects</p>
+              {filteredProjects.length === 0 && (
+                <p className="px-2 py-1 text-xs text-muted-foreground">No projects</p>
               )}
             </div>
           )}
@@ -213,20 +255,46 @@ export function Sidebar({ goals, projects, agents, activeGoalId, onGoalSelect }:
 
           <Separator className="my-1" />
 
-          {/* History */}
+          {/* History Section */}
           <SectionHeader
             icon={History}
             title="History"
-            count={0}
-            expanded={false}
-            onToggle={() => {}}
+            count={filteredHistory.length}
+            expanded={historyExpanded}
+            onToggle={() => setHistoryExpanded(!historyExpanded)}
           />
+          {historyExpanded && (
+            <div className="ml-1 space-y-0.5">
+              {filteredHistory.slice(0, 10).map((entry) => (
+                <div
+                  key={entry.id}
+                  className="rounded-md px-2 py-1.5 text-xs text-sidebar-foreground/60"
+                >
+                  <span className="font-medium text-sidebar-foreground/70">{entry.type}</span>
+                  <span className="ml-1 truncate">{entry.timestamp.split("T")[1]?.slice(0, 5)}</span>
+                </div>
+              ))}
+              {filteredHistory.length === 0 && (
+                <p className="px-2 py-1 text-xs text-muted-foreground">No history</p>
+              )}
+            </div>
+          )}
         </div>
       </ScrollArea>
 
-      {/* Settings — pinned at bottom */}
+      {/* Bottom Actions */}
       <div className="border-t border-border p-2">
-        <button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground">
+        <button
+          onClick={onCreateGoal}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+        >
+          <Plus className="size-3.5 shrink-0 opacity-60" />
+          <span>New Goal</span>
+        </button>
+        <button
+          onClick={onOpenSettings}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+        >
           <Settings className="size-3.5 shrink-0 opacity-60" />
           <span>Settings</span>
         </button>

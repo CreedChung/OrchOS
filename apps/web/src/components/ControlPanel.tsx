@@ -1,0 +1,100 @@
+import { useState, useEffect } from "react"
+import { cn } from "#/lib/utils"
+import { ChevronDown, ChevronRight, Settings, ToggleLeft, ToggleRight } from "lucide-react"
+import type { ControlSettings } from "#/lib/types"
+import { api } from "#/lib/api"
+
+interface ControlPanelProps {
+  settings: ControlSettings | null
+  onSettingsChange: (settings: ControlSettings) => void
+}
+
+export function ControlPanel({ settings, onSettingsChange }: ControlPanelProps) {
+  const [expanded, setExpanded] = useState(false)
+
+  const handleToggle = async (key: keyof Pick<ControlSettings, "autoCommit" | "autoFix">) => {
+    if (!settings) return
+    const updated = await api.updateSettings({ [key]: !settings[key] })
+    onSettingsChange(updated)
+  }
+
+  const handleStrategyChange = async (strategy: ControlSettings["modelStrategy"]) => {
+    if (!settings) return
+    const updated = await api.updateSettings({ modelStrategy: strategy })
+    onSettingsChange(updated)
+  }
+
+  return (
+    <div className="border-t border-border">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center gap-2 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent/50"
+      >
+        <Settings className="size-3.5" />
+        <span className="flex-1 text-left">Control Panel</span>
+        {expanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+      </button>
+
+      {expanded && settings && (
+        <div className="space-y-3 border-t border-border px-6 py-4">
+          {/* Auto Commit */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-foreground">Auto Commit</span>
+            <button
+              onClick={() => handleToggle("autoCommit")}
+              className="flex items-center gap-1.5 text-sm"
+            >
+              {settings.autoCommit ? (
+                <ToggleRight className="size-5 text-emerald-500" />
+              ) : (
+                <ToggleLeft className="size-5 text-muted-foreground" />
+              )}
+              <span className={cn("text-xs", settings.autoCommit ? "text-emerald-600" : "text-muted-foreground")}>
+                {settings.autoCommit ? "ON" : "OFF"}
+              </span>
+            </button>
+          </div>
+
+          {/* Auto Fix */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-foreground">Auto Fix</span>
+            <button
+              onClick={() => handleToggle("autoFix")}
+              className="flex items-center gap-1.5 text-sm"
+            >
+              {settings.autoFix ? (
+                <ToggleRight className="size-5 text-emerald-500" />
+              ) : (
+                <ToggleLeft className="size-5 text-muted-foreground" />
+              )}
+              <span className={cn("text-xs", settings.autoFix ? "text-emerald-600" : "text-muted-foreground")}>
+                {settings.autoFix ? "ON" : "OFF"}
+              </span>
+            </button>
+          </div>
+
+          {/* Model Strategy */}
+          <div>
+            <span className="mb-2 block text-sm text-foreground">Model Strategy</span>
+            <div className="flex gap-1.5">
+              {(["local-first", "cloud-first", "adaptive"] as const).map((strategy) => (
+                <button
+                  key={strategy}
+                  onClick={() => handleStrategyChange(strategy)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                    settings.modelStrategy === strategy
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border text-foreground hover:bg-accent"
+                  )}
+                >
+                  {strategy.replace("-", " ")}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
