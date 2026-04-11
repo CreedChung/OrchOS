@@ -21,6 +21,7 @@ function migrate(sqlite: Database) {
   sqlite.run("CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, path TEXT NOT NULL, created_at TEXT NOT NULL)")
   sqlite.run("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
   sqlite.run("CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, type TEXT NOT NULL, goal_id TEXT, payload TEXT NOT NULL DEFAULT '{}', timestamp TEXT NOT NULL)")
+  sqlite.run("CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL)")
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_states_goal_id ON states(goal_id)")
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_artifacts_goal_id ON artifacts(goal_id)")
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_activities_goal_id ON activities(goal_id)")

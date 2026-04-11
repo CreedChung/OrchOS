@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:3001"
+const API_BASE = "http://localhost:5173"
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -97,6 +97,11 @@ export interface Event {
   timestamp: string
 }
 
+export interface Organization {
+  id: string
+  name: string
+}
+
 // API functions
 export const api = {
   // Goals
@@ -153,4 +158,7 @@ export const api = {
   // Events
   getEvents: (goalId?: string, limit?: number) =>
     request<Event[]>(`/api/events${goalId ? `?goalId=${goalId}` : ""}${limit ? `&limit=${limit}` : ""}`),
+
+  // Organizations
+  listOrganizations: () => request<Organization[]>("/api/organizations"),
 }

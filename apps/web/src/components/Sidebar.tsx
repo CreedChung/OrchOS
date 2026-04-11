@@ -15,18 +15,28 @@ import {
   X,
   Plus,
   Folder,
+  Check,
 } from "lucide-react"
-import type { Goal, AgentProfile, Project, HistoryEntry } from "#/lib/types"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "#/components/ui/dropdown-menu"
+import type { Goal, AgentProfile, Project, HistoryEntry, Organization } from "#/lib/types"
 
 interface SidebarProps {
   goals: Goal[]
   agents: AgentProfile[]
   projects: Project[]
   history: HistoryEntry[]
+  organizations: Organization[]
+  activeOrganizationId: string | null
   activeGoalId: string | null
   onGoalSelect: (id: string) => void
   onCreateGoal: () => void
   onOpenSettings: () => void
+  onOrganizationChange: (id: string) => void
 }
 
 function SectionHeader({
@@ -82,10 +92,13 @@ export function Sidebar({
   agents,
   projects,
   history,
+  organizations,
+  activeOrganizationId,
   activeGoalId,
   onGoalSelect,
   onCreateGoal,
   onOpenSettings,
+  onOrganizationChange,
 }: SidebarProps) {
   const [goalsExpanded, setGoalsExpanded] = useState(true)
   const [projectsExpanded, setProjectsExpanded] = useState(true)
@@ -132,11 +145,35 @@ export function Sidebar({
 
   return (
     <aside className="flex h-full w-60 flex-col border-r border-border bg-sidebar">
-      <div className="flex h-11 items-center gap-2 border-b border-border px-4">
-        <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <Target className="size-3.5" />
-        </div>
-        <span className="text-sm font-semibold text-sidebar-foreground">Cortex</span>
+      <div className="flex h-11 items-center border-b border-border px-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground">
+            <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Target className="size-3.5" />
+            </div>
+            <span className="truncate">
+              {organizations.find((o) => o.id === activeOrganizationId)?.name || "Select organization"}
+            </span>
+            <ChevronDown className="ml-auto size-3 shrink-0 opacity-50" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-48">
+            {organizations.length > 0 ? (
+              organizations.map((org) => (
+                <DropdownMenuItem
+                  key={org.id}
+                  onClick={() => onOrganizationChange(org.id)}
+                >
+                  <span className="flex-1">{org.name}</span>
+                  {org.id === activeOrganizationId && <Check className="size-4 text-primary" />}
+                </DropdownMenuItem>
+              ))
+            ) : (
+              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                No organizations found
+              </div>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Search */}

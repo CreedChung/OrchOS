@@ -2,19 +2,24 @@ import { useState, useCallback, useEffect } from "react"
 import { Sidebar } from "#/components/Sidebar"
 import { StateBoard } from "#/components/StateBoard"
 import { ActivityPanel } from "#/components/ActivityPanel"
-import { ControlPanel } from "#/components/ControlPanel"
+
 import { CreateGoalDialog } from "#/components/CreateGoalDialog"
 import { SettingsDialog } from "#/components/SettingsDialog"
 import { GoalActions } from "#/components/GoalActions"
+import { Target } from "lucide-react"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty"
+import { Button } from "#/components/ui/button"
 import { api } from "#/lib/api"
 import { useWebSocket } from "#/lib/hooks"
-import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, ControlSettings, Project, HistoryEntry, Status } from "#/lib/types"
+import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, ControlSettings, Project, HistoryEntry, Status, Organization } from "#/lib/types"
 
 export function Dashboard() {
   const [goals, setGoals] = useState<Goal[]>([])
   const [agents, setAgents] = useState<AgentProfile[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null)
   const [activeGoalId, setActiveGoalId] = useState<string | null>(null)
   const [states, setStates] = useState<StateItem[]>([])
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
@@ -29,18 +34,23 @@ export function Dashboard() {
   // Fetch all data
   const refreshAll = useCallback(async () => {
     try {
-      const [g, a, p, h, s] = await Promise.all([
+      const [g, a, p, h, s, orgs] = await Promise.all([
         api.listGoals(),
         api.listAgents(),
         api.listProjects(),
         api.getHistory(undefined, 50),
         api.getSettings(),
+        api.listOrganizations(),
       ])
       setGoals(g)
       setAgents(a)
       setProjects(p)
       setHistory(h)
       setSettings(s)
+      setOrganizations(orgs)
+      if (orgs.length > 0 && !activeOrganizationId) {
+        setActiveOrganizationId(orgs[0].id)
+      }
     } catch (err) {
       console.error("Failed to fetch data:", err)
     } finally {
@@ -183,10 +193,13 @@ export function Dashboard() {
           agents={agents}
           projects={projects}
           history={history}
+          organizations={organizations}
+          activeOrganizationId={activeOrganizationId}
           activeGoalId={activeGoalId}
           onGoalSelect={setActiveGoalId}
           onCreateGoal={() => setShowCreateDialog(true)}
           onOpenSettings={() => setShowSettingsDialog(true)}
+          onOrganizationChange={setActiveOrganizationId}
         />
         {activeGoal ? (
           <StateBoard
@@ -205,16 +218,21 @@ export function Dashboard() {
             }
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <p className="text-lg font-medium">No goal selected</p>
-              <p className="mt-1 text-sm">Select a goal from the sidebar or create a new one</p>
-            </div>
-          </div>
+          <Empty className="flex-1">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Target />
+              </EmptyMedia>
+              <EmptyTitle>No goal selected</EmptyTitle>
+              <EmptyDescription>Select a goal from the sidebar or create a new one to get started.</EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button onClick={() => setShowCreateDialog(true)}>Create Goal</Button>
+            </EmptyContent>
+          </Empty>
         )}
         <ActivityPanel activities={activities} />
       </div>
-      <ControlPanel settings={settings} onSettingsChange={setSettings} />
       <CreateGoalDialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}

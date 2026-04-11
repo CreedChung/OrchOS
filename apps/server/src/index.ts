@@ -9,6 +9,7 @@ import { activityController } from "./modules/activity"
 import { eventController } from "./modules/event"
 import { executionController, settingsController } from "./modules/execution"
 import { wsController } from "./modules/ws"
+import { organizationController } from "./modules/organization"
 import { seedData } from "./db/seed"
 
 import "./db"
@@ -28,7 +29,8 @@ const app = new Elysia()
   .use(executionController)
   .use(settingsController)
   .use(wsController)
-  .listen(3001)
+  .use(organizationController)
+  .listen(5173)
 
 console.log(
   `🦊 Elysia server running at ${app.server?.hostname}:${app.server?.port}`

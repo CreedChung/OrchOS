@@ -71,3 +71,8 @@ export interface ControlSettings {
   autoFix: boolean
   modelStrategy: "local-first" | "cloud-first" | "adaptive"
 }
+
+export interface Organization {
+  id: string
+  name: string
+}

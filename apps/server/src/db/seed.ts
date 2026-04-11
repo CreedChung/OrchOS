@@ -3,11 +3,20 @@ import { ProjectService } from "../modules/project/service"
 import { AgentService } from "../modules/agent/service"
 import { StateService } from "../modules/state/service"
 import { ActivityService } from "../modules/activity/service"
+import { OrganizationService } from "../modules/organization"
 import { db } from "./index"
-import { goals } from "./schema"
+import { goals, organizations } from "./schema"
 import { sql } from "drizzle-orm"
 
 export function seedData() {
+  // Seed organizations independently (may already exist)
+  const existingOrgs = db.select({ count: sql<number>`count(*)` }).from(organizations).get()
+  if (existingOrgs?.count === 0) {
+    OrganizationService.create("Acme Corp")
+    OrganizationService.create("Personal")
+    OrganizationService.create("Open Source")
+  }
+
   const existingGoals = db.select({ count: sql<number>`count(*)` }).from(goals).get()
   if (existingGoals?.count > 0) return
 

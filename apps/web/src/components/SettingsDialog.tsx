@@ -19,20 +19,36 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange }: Se
     setLocalSettings(settings)
   }, [settings])
 
+  // Use settings from props when localSettings is null
+  const currentSettings = localSettings ?? settings
+
   if (!open) return null
 
   const handleToggle = async (key: keyof Pick<ControlSettings, "autoCommit" | "autoFix">) => {
-    if (!localSettings) return
-    const updated = await api.updateSettings({ [key]: !localSettings[key] })
+    if (!currentSettings) return
+    const updated = await api.updateSettings({ [key]: !currentSettings[key] })
     setLocalSettings(updated)
     onSettingsChange(updated)
   }
 
   const handleStrategyChange = async (strategy: ControlSettings["modelStrategy"]) => {
-    if (!localSettings) return
+    if (!currentSettings) return
     const updated = await api.updateSettings({ modelStrategy: strategy })
     setLocalSettings(updated)
     onSettingsChange(updated)
+  }
+
+  // Show loading state if no settings available
+  if (!currentSettings) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl">
+          <div className="flex items-center justify-center py-8">
+            <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -48,7 +64,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange }: Se
           </button>
         </div>
 
-        {localSettings && (
+        {currentSettings && (
           <div className="space-y-5">
             {/* Auto Commit */}
             <div className="flex items-center justify-between">
@@ -60,13 +76,13 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange }: Se
                 onClick={() => handleToggle("autoCommit")}
                 className={cn(
                   "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                  localSettings.autoCommit ? "bg-emerald-500" : "bg-muted"
+                  currentSettings.autoCommit ? "bg-emerald-500" : "bg-muted"
                 )}
               >
                 <span
                   className={cn(
                     "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                    localSettings.autoCommit ? "translate-x-6" : "translate-x-1"
+                    currentSettings.autoCommit ? "translate-x-6" : "translate-x-1"
                   )}
                 />
               </button>
@@ -82,13 +98,13 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange }: Se
                 onClick={() => handleToggle("autoFix")}
                 className={cn(
                   "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                  localSettings.autoFix ? "bg-emerald-500" : "bg-muted"
+                  currentSettings.autoFix ? "bg-emerald-500" : "bg-muted"
                 )}
               >
                 <span
                   className={cn(
                     "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                    localSettings.autoFix ? "translate-x-6" : "translate-x-1"
+                    currentSettings.autoFix ? "translate-x-6" : "translate-x-1"
                   )}
                 />
               </button>
@@ -104,7 +120,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange }: Se
                     onClick={() => handleStrategyChange(strategy)}
                     className={cn(
                       "rounded-md px-3 py-2 text-xs font-medium transition-colors",
-                      localSettings.modelStrategy === strategy
+                      currentSettings.modelStrategy === strategy
                         ? "bg-primary text-primary-foreground"
                         : "border border-border text-foreground hover:bg-accent"
                     )}
@@ -123,7 +139,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange }: Se
             <div className="border-t border-border pt-4">
               <span className="mb-2 block text-sm font-medium text-foreground">System Info</span>
               <p className="text-xs text-muted-foreground">
-                Cortex v1.0 | Powered by Bun + Elysia + TanStack
+                OrchOS v1.0 | Powered by Bun + Elysia + React
               </p>
             </div>
           </div>

@@ -76,3 +76,8 @@ export const events = sqliteTable("events", {
 }, (t) => [
   index("idx_events_goal_id").on(t.goalId),
 ])
+
+export const organizations = sqliteTable("organizations", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+})
