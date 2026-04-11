@@ -5,8 +5,6 @@ import {
   Inbox,
   Target,
   Bot,
-  Shield,
-  History,
   ChevronDown,
   Circle,
   Settings,
@@ -28,20 +26,19 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "#/components/ui/dropdown-menu"
-import type { Goal, AgentProfile, Project, HistoryEntry, Organization, Problem, ProblemPriority, SidebarView } from "#/lib/types"
-
+import type { Goal, AgentProfile, Organization, Problem, ProblemPriority, SidebarView } from "#/lib/types"
 interface SidebarProps {
   goals: Goal[]
   agents: AgentProfile[]
-  projects: Project[]
-  history: HistoryEntry[]
   organizations: Organization[]
   problems: Problem[]
   activeOrganizationId: string | null
   activeView: SidebarView
   activeGoalId: string | null
+  activeAgentId: string | null
   onViewChange: (view: SidebarView) => void
   onGoalSelect: (id: string) => void
+  onAgentSelect: (id: string) => void
   onCreateGoal: () => void
   onOpenSettings: () => void
   onOrganizationChange: (id: string) => void
@@ -81,26 +78,27 @@ const priorityColor: Record<ProblemPriority, string> = {
   info: "text-blue-500",
 }
 
-const navItems: { id: SidebarView; icon: React.ElementType; label: string }[] = [
+const workspaceNav: { id: SidebarView; icon: React.ElementType; label: string }[] = [
   { id: "inbox", icon: Inbox, label: "Inbox" },
   { id: "goals", icon: Target, label: "Goals" },
+]
+
+const systemNav: { id: SidebarView; icon: React.ElementType; label: string }[] = [
   { id: "agents", icon: Bot, label: "Agents" },
-  { id: "rules", icon: Shield, label: "Rules" },
-  { id: "history", icon: History, label: "History" },
 ]
 
 export function Sidebar({
   goals,
   agents,
-  projects,
-  history,
   organizations,
   problems,
   activeOrganizationId,
   activeView,
   activeGoalId,
+  activeAgentId,
   onViewChange,
   onGoalSelect,
+  onAgentSelect,
   onCreateGoal,
   onOpenSettings,
   onOrganizationChange,
@@ -203,36 +201,60 @@ export function Sidebar({
       </div>
 
       {/* Navigation Items */}
-      <div className="border-b border-border p-2 space-y-0.5">
-        {navItems.map(({ id, icon: Icon, label }) => {
-          const isInbox = id === "inbox"
-          const isActive = activeView === id
-          return (
-            <button
-              key={id}
-              onClick={() => onViewChange(id)}
-              className={cn(
-                "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              )}
-            >
-              <Icon className="size-4 shrink-0" />
-              <span className="flex-1 text-left">{label}</span>
-              {isInbox && openProblemCount > 0 && (
-                <span className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-                  criticalCount > 0
-                    ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                    : "bg-muted text-muted-foreground"
-                )}>
-                  {openProblemCount}
-                </span>
-              )}
-            </button>
-          )
-        })}
+      <div className="border-b border-border p-2 space-y-3">
+        <div className="space-y-0.5">
+          <span className="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Workspace</span>
+          {workspaceNav.map(({ id, icon: Icon, label }) => {
+            const isInbox = id === "inbox"
+            const isActive = activeView === id
+            return (
+              <button
+                key={id}
+                onClick={() => onViewChange(id)}
+                className={cn(
+                  "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                )}
+              >
+                <Icon className="size-4 shrink-0" />
+                <span className="flex-1 text-left">{label}</span>
+                {isInbox && openProblemCount > 0 && (
+                  <span className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                    criticalCount > 0
+                      ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {openProblemCount}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+        <div className="space-y-0.5">
+          <span className="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">System</span>
+          {systemNav.map(({ id, icon: Icon, label }) => {
+            const isActive = activeView === id
+            return (
+              <button
+                key={id}
+                onClick={() => onViewChange(id)}
+                className={cn(
+                  "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                )}
+              >
+                <Icon className="size-4 shrink-0" />
+                <span className="flex-1 text-left">{label}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* Search */}
@@ -345,16 +367,22 @@ export function Sidebar({
           {activeView === "agents" && (
             <div className="space-y-0.5">
               {filteredAgents.map((agent) => (
-                <div
+                <button
                   key={agent.id}
-                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70"
+                  onClick={() => onAgentSelect(agent.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+                    activeAgentId === agent.id
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  )}
                 >
                   <Bot className="size-3.5 shrink-0 opacity-60" />
-                  <span className="flex-1 truncate">{agent.name}</span>
+                  <span className="flex-1 truncate text-left">{agent.name}</span>
                   <Circle
                     className={cn("size-2 fill-current", agentStatusColor[agent.status])}
                   />
-                </div>
+                </button>
               ))}
               {searchQuery && filteredAgents.length === 0 && (
                 <p className="px-2 py-1 text-xs text-muted-foreground">No matching agents</p>
@@ -362,30 +390,6 @@ export function Sidebar({
             </div>
           )}
 
-          {activeView === "rules" && (
-            <div className="space-y-0.5">
-              <p className="px-2 py-1 text-xs text-muted-foreground">
-                Automation rules for handling problems
-              </p>
-            </div>
-          )}
-
-          {activeView === "history" && (
-            <div className="space-y-0.5">
-              {history.slice(0, 20).map((entry) => (
-                <div
-                  key={entry.id}
-                  className="rounded-md px-2 py-1.5 text-xs text-sidebar-foreground/60"
-                >
-                  <span className="font-medium text-sidebar-foreground/70">{entry.type}</span>
-                  <span className="ml-1 truncate">{entry.timestamp.split("T")[1]?.slice(0, 5)}</span>
-                </div>
-              ))}
-              {history.length === 0 && (
-                <p className="px-2 py-1 text-xs text-muted-foreground">No history</p>
-              )}
-            </div>
-          )}
         </div>
       </ScrollArea>
 

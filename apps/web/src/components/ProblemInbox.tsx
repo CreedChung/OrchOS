@@ -14,6 +14,10 @@ import {
   UserPlus,
   Shield,
   MoreHorizontal,
+  Bot,
+  ChevronDown,
+  ChevronRight,
+  Brain,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -21,11 +25,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
-import type { Problem, ProblemPriority, ProblemStatus, Goal } from "#/lib/types"
+import type { Problem, ProblemPriority, ProblemStatus, Goal, ActivityEntry } from "#/lib/types"
 
 interface ProblemInboxProps {
   problems: Problem[]
   goals: Goal[]
+  activities: ActivityEntry[]
   onProblemAction: (problemId: string, action: string) => void
   onBulkAction: (ids: string[], status: ProblemStatus) => void
   onCreateRule: (problem: Problem) => void
@@ -68,10 +73,11 @@ const actionIconMap: Record<string, React.ElementType> = {
 
 type PriorityFilter = "all" | "critical" | "warning" | "info"
 
-export function ProblemInbox({ problems, goals, onProblemAction, onBulkAction, onCreateRule }: ProblemInboxProps) {
+export function ProblemInbox({ problems, goals, activities, onProblemAction, onBulkAction, onCreateRule }: ProblemInboxProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all")
   const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set())
 
   const openProblems = useMemo(() => {
     let filtered = problems.filter((p) => p.status === "open")
@@ -229,17 +235,16 @@ export function ProblemInbox({ problems, goals, onProblemAction, onBulkAction, o
             const goal = problem.goalId ? goals.find((g) => g.id === problem.goalId) : null
 
             return (
-              <div
-                key={problem.id}
-                className={cn(
-                  "group flex gap-3 px-4 py-3 transition-colors",
-                  config.bgClass,
-                  isFocused && "ring-1 ring-in-ring ring-primary/30",
-                  isSelected && "bg-accent/20",
-                  "hover:bg-accent/30"
-                )}
-                onClick={() => setFocusedIndex(idx)}
-              >
+              <div key={problem.id} className="transition-colors hover:bg-accent/30">
+                <div
+                  className={cn(
+                    "group flex gap-3 px-4 py-3",
+                    config.bgClass,
+                    isFocused && "ring-1 ring-in-ring ring-primary/30",
+                    isSelected && "bg-accent/20",
+                  )}
+                  onClick={() => setFocusedIndex(idx)}
+                >
                 {/* Checkbox */}
                 <button
                   onClick={(e) => {
@@ -309,6 +314,30 @@ export function ProblemInbox({ problems, goals, onProblemAction, onBulkAction, o
                         )
                       })}
 
+                      {/* View History */}
+                      {problem.goalId && activities.some((a) => a.goalId === problem.goalId) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setExpandedHistory((prev) => {
+                              const next = new Set(prev)
+                              if (next.has(problem.id)) next.delete(problem.id)
+                              else next.add(problem.id)
+                              return next
+                            })
+                          }}
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        >
+                          {expandedHistory.has(problem.id) ? (
+                            <ChevronDown className="size-3" />
+                          ) : (
+                            <ChevronRight className="size-3" />
+                          )}
+                          <Bot className="size-3" />
+                          View History
+                        </button>
+                      )}
+
                       {/* Create Rule from this problem */}
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger className="ml-1 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent hover:text-foreground">
@@ -329,6 +358,37 @@ export function ProblemInbox({ problems, goals, onProblemAction, onBulkAction, o
                 <div className="shrink-0 text-[10px] text-muted-foreground tabular-nums self-start mt-0.5">
                   {problem.createdAt.split("T")[1]?.slice(0, 5) || ""}
                 </div>
+              </div>
+
+              {/* Expanded History */}
+              {expandedHistory.has(problem.id) && problem.goalId && (
+                <div className="ml-9 mr-4 mb-2 rounded-md border border-border/50 bg-card/50 px-3 py-2 space-y-1.5">
+                  {activities
+                    .filter((a) => a.goalId === problem.goalId)
+                    .slice(0, 6)
+                    .map((activity) => {
+                      const isSuccess = activity.detail?.includes("pass") || activity.detail?.includes("success")
+                      const isFailed = activity.detail?.includes("fail") || activity.detail?.includes("error")
+                      return (
+                        <div key={activity.id} className="flex items-start gap-2">
+                          <Bot className={cn(
+                            "size-3 mt-0.5 shrink-0",
+                            isSuccess ? "text-emerald-500" : isFailed ? "text-red-500" : "text-muted-foreground"
+                          )} />
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[11px] font-medium text-foreground/80">{activity.agent}</span>
+                            <span className="mx-1 text-[10px] text-muted-foreground/50">→</span>
+                            <span className="text-[11px] text-foreground/60">{activity.action}</span>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">{activity.timestamp}</span>
+                        </div>
+                      )
+                    })}
+                  {activities.filter((a) => a.goalId === problem.goalId).length === 0 && (
+                    <p className="text-[11px] text-muted-foreground">No activity recorded</p>
+                  )}
+                </div>
+              )}
               </div>
             )
           })}

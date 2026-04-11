@@ -40,6 +40,7 @@ export interface AgentProfile {
   status: "idle" | "active" | "error"
   model: string
   enabled: boolean
+  rules?: AgentRule[]
 }
 
 export interface StateItem {
@@ -105,4 +106,11 @@ export interface Rule {
   createdAt: string
 }
 
-export type SidebarView = "inbox" | "goals" | "agents" | "rules" | "history"
+export type SidebarView = "inbox" | "goals" | "agents" | "agent-detail"
+
+export interface AgentRule {
+  id: string
+  when: string
+  action: string
+  enabled: boolean
+}

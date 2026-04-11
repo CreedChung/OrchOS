@@ -1,31 +1,215 @@
 import { useState, useCallback, useEffect } from "react"
+import { cn } from "#/lib/utils"
 import { Sidebar } from "#/components/Sidebar"
 import { ProblemInbox } from "#/components/ProblemInbox"
 import { StateBoard } from "#/components/StateBoard"
 import { ActivityPanel } from "#/components/ActivityPanel"
-import { RulesPanel } from "#/components/RulesPanel"
 import { CreateGoalDialog } from "#/components/CreateGoalDialog"
 import { CreateRuleDialog } from "#/components/CreateRuleDialog"
 import { SettingsDialog } from "#/components/SettingsDialog"
 import { GoalActions } from "#/components/GoalActions"
-import { Target } from "lucide-react"
+import { Target, Shield, ArrowRight, ToggleLeft, ToggleRight, X, Circle, Wrench } from "lucide-react"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty"
 import { Button } from "#/components/ui/button"
 import { api } from "#/lib/api"
 import { useWebSocket } from "#/lib/hooks"
-import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, ControlSettings, Project, HistoryEntry, Status, Organization, Problem, ProblemStatus, Rule, SidebarView } from "#/lib/types"
+import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, ControlSettings, Project, Organization, Problem, ProblemStatus, Rule, SidebarView } from "#/lib/types"
+
+const conditionLabels: Record<string, string> = {
+  test_failed: "Test failed",
+  lint_error: "Lint error",
+  lint_warning: "Lint warning",
+  review_rejected: "Review rejected",
+  build_failed: "Build failed",
+  build_success: "Build success",
+}
+
+const actionLabels: Record<string, string> = {
+  auto_fix: "Auto fix",
+  ignore: "Ignore",
+  assign_reviewer: "Assign reviewer",
+  archive: "Archive",
+  notify: "Notify",
+}
+
+function AgentDetailView({
+  agents,
+  activeAgentId,
+  rules,
+  onRuleToggle,
+  onRuleDelete,
+}: {
+  agents: AgentProfile[]
+  activeAgentId: string | null
+  rules: Rule[]
+  onRuleToggle: (id: string, enabled: boolean) => void
+  onRuleDelete: (id: string) => void
+}) {
+  const activeAgent = agents.find((a) => a.id === activeAgentId)
+
+  if (!activeAgent) {
+    return (
+      <div className="flex-1 overflow-y-auto p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">Agents</h2>
+        <div className="space-y-3">
+          {agents.map((agent) => (
+            <div key={agent.id} className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-4 py-3">
+              <div className="flex size-10 items-center justify-center rounded-md bg-primary/10 text-sm font-bold text-primary">
+                {agent.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">{agent.name}</span>
+                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {agent.model}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">{agent.role}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`size-2 rounded-full ${agent.status === "active" ? "bg-emerald-500" : agent.status === "error" ? "bg-red-500" : "bg-muted-foreground"}`} />
+                <span className="text-xs text-muted-foreground capitalize">{agent.status}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Agent detail with embedded rules
+  const agentRules = rules
+
+  return (
+    <main className="flex-1 overflow-y-auto">
+      <div className="mx-auto max-w-3xl p-6">
+        {/* Agent Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-4">
+            <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-lg font-bold text-primary">
+              {activeAgent.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-foreground">{activeAgent.name}</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {activeAgent.model}
+                </span>
+                <Circle
+                  className={cn(
+                    "size-2 fill-current",
+                    activeAgent.status === "active"
+                      ? "text-emerald-500"
+                      : activeAgent.status === "error"
+                        ? "text-red-500"
+                        : "text-muted-foreground"
+                  )}
+                />
+                <span className="text-xs text-muted-foreground capitalize">{activeAgent.status}</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">{activeAgent.role}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Capabilities */}
+        <section className="mb-6">
+          <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="size-1.5 rounded-full bg-primary" />
+            Capabilities
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            {activeAgent.capabilities.map((cap) => (
+              <span
+                key={cap}
+                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-accent/30 px-2.5 py-1 text-xs text-foreground"
+              >
+                <Wrench className="size-3 text-primary/60" />
+                {cap.replace(/_/g, " ")}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        {/* Rules — embedded in agent */}
+        <section>
+          <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="size-1.5 rounded-full bg-primary" />
+            Rules
+          </h2>
+          <div className="space-y-1.5">
+            {agentRules.map((rule) => (
+              <div
+                key={rule.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors",
+                  rule.enabled
+                    ? "border-border/50 bg-card"
+                    : "border-border/30 bg-muted/20 opacity-60"
+                )}
+              >
+                <Shield className={cn("size-4 shrink-0", rule.enabled ? "text-primary" : "text-muted-foreground")} />
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-foreground">{rule.name}</span>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">
+                      {conditionLabels[rule.condition] || rule.condition}
+                    </span>
+                    <ArrowRight className="size-2.5" />
+                    <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">
+                      {actionLabels[rule.action] || rule.action}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onRuleToggle(rule.id, !rule.enabled)}
+                  className="shrink-0 text-muted-foreground hover:text-foreground"
+                  title={rule.enabled ? "Disable rule" : "Enable rule"}
+                >
+                  {rule.enabled ? (
+                    <ToggleRight className="size-5 text-emerald-500" />
+                  ) : (
+                    <ToggleLeft className="size-5" />
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm("Delete this rule?")) onRuleDelete(rule.id)
+                  }}
+                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                  title="Delete rule"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ))}
+            {agentRules.length === 0 && (
+              <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
+                <Shield className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+                <p className="text-sm text-muted-foreground">No rules yet</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">
+                  Rules can be created from Inbox problems
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </main>
+  )
+}
 
 export function Dashboard() {
   const [goals, setGoals] = useState<Goal[]>([])
   const [agents, setAgents] = useState<AgentProfile[]>([])
   const [projects, setProjects] = useState<Project[]>([])
-  const [history, setHistory] = useState<HistoryEntry[]>([])
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [problems, setProblems] = useState<Problem[]>([])
   const [rules, setRules] = useState<Rule[]>([])
   const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<SidebarView>("inbox")
   const [activeGoalId, setActiveGoalId] = useState<string | null>(null)
+  const [activeAgentId, setActiveAgentId] = useState<string | null>(null)
   const [states, setStates] = useState<StateItem[]>([])
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
   const [activities, setActivities] = useState<ActivityEntry[]>([])
@@ -43,7 +227,6 @@ export function Dashboard() {
       api.listGoals(),
       api.listAgents(),
       api.listProjects(),
-      api.getHistory(undefined, 50),
       api.getSettings(),
       api.listOrganizations(),
       api.listProblems(),
@@ -52,16 +235,15 @@ export function Dashboard() {
     if (results[0].status === "fulfilled") setGoals(results[0].value)
     if (results[1].status === "fulfilled") setAgents(results[1].value)
     if (results[2].status === "fulfilled") setProjects(results[2].value)
-    if (results[3].status === "fulfilled") setHistory(results[3].value)
-    if (results[4].status === "fulfilled") setSettings(results[4].value)
-    if (results[5].status === "fulfilled") {
-      setOrganizations(results[5].value)
-      if (results[5].value.length > 0 && !activeOrganizationId) {
-        setActiveOrganizationId(results[5].value[0].id)
+    if (results[3].status === "fulfilled") setSettings(results[3].value)
+    if (results[4].status === "fulfilled") {
+      setOrganizations(results[4].value)
+      if (results[4].value.length > 0 && !activeOrganizationId) {
+        setActiveOrganizationId(results[4].value[0].id)
       }
     }
-    if (results[6].status === "fulfilled") setProblems(results[6].value)
-    if (results[7].status === "fulfilled") setRules(results[7].value)
+    if (results[5].status === "fulfilled") setProblems(results[5].value)
+    if (results[6].status === "fulfilled") setRules(results[6].value)
     for (const r of results) {
       if (r.status === "rejected") console.error("Failed to fetch data:", r.reason)
     }
@@ -192,15 +374,6 @@ export function Dashboard() {
     }
   }
 
-  const handleStateStatusChange = async (stateId: string, newStatus: Status) => {
-    try {
-      await api.updateState(stateId, newStatus)
-      refreshGoalData(activeGoalId)
-    } catch (err) {
-      console.error("Failed to update state:", err)
-    }
-  }
-
   const handleCreateGoal = async (data: { title: string; description?: string; successCriteria: string[]; constraints?: string[] }) => {
     try {
       const goal = await api.createGoal(data)
@@ -296,6 +469,7 @@ export function Dashboard() {
           <ProblemInbox
             problems={problems}
             goals={goals}
+            activities={activities}
             onProblemAction={handleProblemAction}
             onBulkAction={handleBulkAction}
             onCreateRule={handleCreateRuleFromProblem}
@@ -308,9 +482,15 @@ export function Dashboard() {
             goal={activeGoal}
             states={states}
             artifacts={artifacts}
+            activities={activities}
             projects={projects}
+            problems={{
+              critical: problems.filter((p) => p.status === "open" && p.priority === "critical" && p.goalId === activeGoalId).length,
+              warning: problems.filter((p) => p.status === "open" && p.priority === "warning" && p.goalId === activeGoalId).length,
+              info: problems.filter((p) => p.status === "open" && p.priority === "info" && p.goalId === activeGoalId).length,
+            }}
             onStateAction={handleStateAction}
-            onStateStatusChange={handleStateStatusChange}
+            onAutoModeToggle={activeGoal.status === "active" ? handlePauseGoal : handleResumeGoal}
             goalActions={
               <GoalActions
                 goal={activeGoal}
@@ -337,60 +517,24 @@ export function Dashboard() {
 
       case "agents":
         return (
-          <div className="flex-1 overflow-y-auto p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Agents</h2>
-            <div className="space-y-3">
-              {agents.map((agent) => (
-                <div key={agent.id} className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <div className="flex size-10 items-center justify-center rounded-md bg-primary/10 text-sm font-bold text-primary">
-                    {agent.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">{agent.name}</span>
-                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                        {agent.model}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{agent.role}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`size-2 rounded-full ${agent.status === "active" ? "bg-emerald-500" : agent.status === "error" ? "bg-red-500" : "bg-muted-foreground"}`} />
-                    <span className="text-xs text-muted-foreground capitalize">{agent.status}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-
-      case "rules":
-        return (
-          <RulesPanel
+          <AgentDetailView
+            agents={agents}
+            activeAgentId={activeAgentId}
             rules={rules}
-            onCreateRule={handleCreateRule}
-            onToggleRule={handleRuleToggle}
-            onDeleteRule={handleRuleDelete}
+            onRuleToggle={handleRuleToggle}
+            onRuleDelete={handleRuleDelete}
           />
         )
 
-      case "history":
+      case "agent-detail":
         return (
-          <div className="flex-1 overflow-y-auto p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">History</h2>
-            <div className="space-y-2">
-              {history.map((entry) => (
-                <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-4 py-2.5">
-                  <span className="text-xs font-semibold text-foreground/70">{entry.type}</span>
-                  <span className="text-xs text-muted-foreground">{JSON.stringify(entry.detail).slice(0, 80)}</span>
-                  <span className="ml-auto text-[10px] tabular-nums text-muted-foreground">{entry.timestamp}</span>
-                </div>
-              ))}
-              {history.length === 0 && (
-                <p className="text-sm text-muted-foreground">No history yet</p>
-              )}
-            </div>
-          </div>
+          <AgentDetailView
+            agents={agents}
+            activeAgentId={activeAgentId}
+            rules={rules}
+            onRuleToggle={handleRuleToggle}
+            onRuleDelete={handleRuleDelete}
+          />
         )
 
       default:
@@ -415,17 +559,20 @@ export function Dashboard() {
         <Sidebar
           goals={goals}
           agents={agents}
-          projects={projects}
-          history={history}
           organizations={organizations}
           problems={problems}
           activeOrganizationId={activeOrganizationId}
           activeView={activeView}
           activeGoalId={activeGoalId}
+          activeAgentId={activeAgentId}
           onViewChange={setActiveView}
           onGoalSelect={(id) => {
             setActiveGoalId(id)
             setActiveView("goals")
+          }}
+          onAgentSelect={(id) => {
+            setActiveAgentId(id)
+            setActiveView("agent-detail")
           }}
           onCreateGoal={() => setShowCreateDialog(true)}
           onOpenSettings={() => setShowSettingsDialog(true)}

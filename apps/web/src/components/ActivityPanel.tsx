@@ -78,7 +78,7 @@ export function ActivityPanel({ activities }: ActivityPanelProps) {
         <div className="flex items-center gap-2">
           <Bot className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Agent Activity
+            Timeline
           </span>
         </div>
         <button
