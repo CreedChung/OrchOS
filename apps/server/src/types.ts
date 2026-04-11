@@ -11,6 +11,7 @@ export interface Goal {
   successCriteria: string[]
   constraints: string[]
   status: "active" | "completed" | "paused"
+  projectId?: string
   createdAt: string
   updatedAt: string
 }
@@ -28,6 +29,7 @@ export interface AgentProfile {
   capabilities: Action[]
   status: "idle" | "active" | "error"
   model: string
+  enabled: boolean
 }
 
 export interface StateEntry {

@@ -19,6 +19,7 @@ export abstract class GoalService {
       successCriteria: JSON.stringify(req.successCriteria),
       constraints: JSON.stringify(req.constraints ?? []),
       status: "active",
+      projectId: req.projectId ?? null,
       createdAt: now,
       updatedAt: now,
     }).run()
@@ -48,6 +49,7 @@ export abstract class GoalService {
     if (patch.successCriteria !== undefined) updates.successCriteria = JSON.stringify(patch.successCriteria)
     if (patch.constraints !== undefined) updates.constraints = JSON.stringify(patch.constraints)
     if (patch.status !== undefined) updates.status = patch.status
+    if (patch.projectId !== undefined) updates.projectId = patch.projectId
 
     if (Object.keys(updates).length === 0) return goal
 
@@ -88,6 +90,7 @@ export abstract class GoalService {
       successCriteria: JSON.parse(row.successCriteria),
       constraints: JSON.parse(row.constraints),
       status: row.status as Goal["status"],
+      projectId: row.projectId ?? undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     }

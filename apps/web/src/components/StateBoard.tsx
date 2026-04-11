@@ -3,13 +3,14 @@ import { Badge } from "#/components/ui/badge"
 import { StateItem } from "#/components/StateItem"
 import { StateEditor } from "#/components/StateEditor"
 import { StatusIcon } from "#/components/StatusIcon"
-import type { Goal, StateItem as StateItemType, Artifact, Status } from "#/lib/types"
-import { FileCode2, GitPullRequest, TestTube2, ScrollText, Pencil } from "lucide-react"
+import type { Goal, StateItem as StateItemType, Artifact, Status, Project } from "#/lib/types"
+import { FileCode2, GitPullRequest, TestTube2, ScrollText, Pencil, FolderGit2 } from "lucide-react"
 
 interface StateBoardProps {
   goal: Goal
   states: StateItemType[]
   artifacts: Artifact[]
+  projects: Project[]
   onStateAction: (stateId: string, action: string) => void
   onStateStatusChange?: (stateId: string, newStatus: Status) => void
   goalActions?: React.ReactNode
@@ -37,7 +38,7 @@ const goalStatusVariant: Record<Goal["status"], "outline" | "default" | "seconda
   paused: "secondary",
 }
 
-export function StateBoard({ goal, states, artifacts, onStateAction, onStateStatusChange, goalActions }: StateBoardProps) {
+export function StateBoard({ goal, states, artifacts, projects, onStateAction, onStateStatusChange, goalActions }: StateBoardProps) {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-3xl p-6">
@@ -55,6 +56,20 @@ export function StateBoard({ goal, states, artifacts, onStateAction, onStateStat
           {goal.description && (
             <p className="mt-1 text-sm text-muted-foreground">{goal.description}</p>
           )}
+
+          {/* Project */}
+          {goal.projectId && (() => {
+            const project = projects.find((p) => p.id === goal.projectId)
+            if (!project) return null
+            return (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <FolderGit2 className="size-3" />
+                <span>{project.name}</span>
+                <span className="text-muted-foreground/50">·</span>
+                <span className="font-mono text-[10px]">{project.path}</span>
+              </div>
+            )
+          })()}
 
           {/* Success Criteria */}
           {goal.successCriteria.length > 0 && (

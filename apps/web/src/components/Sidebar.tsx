@@ -16,12 +16,16 @@ import {
   Plus,
   Folder,
   Check,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "#/components/ui/dropdown-menu"
 import type { Goal, AgentProfile, Project, HistoryEntry, Organization } from "#/lib/types"
 
@@ -37,6 +41,10 @@ interface SidebarProps {
   onCreateGoal: () => void
   onOpenSettings: () => void
   onOrganizationChange: (id: string) => void
+  onOrganizationRename: (id: string, name: string) => void
+  onOrganizationDelete: (id: string) => void
+  onGoalRename: (id: string, name: string) => void
+  onGoalDelete: (id: string) => void
 }
 
 function SectionHeader({
@@ -99,6 +107,10 @@ export function Sidebar({
   onCreateGoal,
   onOpenSettings,
   onOrganizationChange,
+  onOrganizationRename,
+  onOrganizationDelete,
+  onGoalRename,
+  onGoalDelete,
 }: SidebarProps) {
   const [goalsExpanded, setGoalsExpanded] = useState(true)
   const [projectsExpanded, setProjectsExpanded] = useState(true)
@@ -146,11 +158,11 @@ export function Sidebar({
   return (
     <aside className="flex h-full w-60 flex-col border-r border-border bg-sidebar">
       <div className="flex h-11 items-center border-b border-border px-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground">
-            <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Target className="size-3.5" />
-            </div>
+            </span>
             <span className="truncate">
               {organizations.find((o) => o.id === activeOrganizationId)?.name || "Select organization"}
             </span>
@@ -174,6 +186,36 @@ export function Sidebar({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+        {activeOrganizationId && (
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger className="ml-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+              <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-36">
+              <DropdownMenuItem
+                onClick={() => {
+                  const org = organizations.find((o) => o.id === activeOrganizationId)
+                  if (!org) return
+                  const newName = prompt("Rename organization", org.name)
+                  if (newName?.trim()) onOrganizationRename(org.id, newName.trim())
+                }}
+              >
+                <Pencil className="size-3.5" />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => {
+                  if (confirm("Delete this organization?")) onOrganizationDelete(activeOrganizationId)
+                }}
+              >
+                <Trash2 className="size-3.5" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Search */}
@@ -196,6 +238,13 @@ export function Sidebar({
             </button>
           )}
         </div>
+        <button
+          onClick={onCreateGoal}
+          className="mt-2 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+        >
+          <Plus className="size-3.5 shrink-0 opacity-60" />
+          <span>New Goal</span>
+        </button>
       </div>
 
       <ScrollArea className="flex-1">
@@ -211,21 +260,51 @@ export function Sidebar({
           {goalsExpanded && (
             <div className="ml-1 space-y-0.5">
               {filteredGoals.map((goal) => (
-                <button
+                <div
                   key={goal.id}
-                  onClick={() => onGoalSelect(goal.id)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                    "group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
                     activeGoalId === goal.id
                       ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                   )}
                 >
-                  <span className={cn("text-xs", goalStatusColor[goal.status])}>
-                    {goalStatusIcon[goal.status]}
-                  </span>
-                  <span className="truncate">{goal.title}</span>
-                </button>
+                  <button
+                    onClick={() => onGoalSelect(goal.id)}
+                    className="flex flex-1 items-center gap-2 min-w-0"
+                  >
+                    <span className={cn("text-xs shrink-0", goalStatusColor[goal.status])}>
+                      {goalStatusIcon[goal.status]}
+                    </span>
+                    <span className="truncate">{goal.title}</span>
+                  </button>
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent hover:text-foreground cursor-pointer">
+                      <MoreHorizontal className="size-3.5" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-36">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const newName = prompt("Rename goal", goal.title)
+                          if (newName?.trim()) onGoalRename(goal.id, newName.trim())
+                        }}
+                      >
+                        <Pencil className="size-3.5" />
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => {
+                          if (confirm("Delete this goal?")) onGoalDelete(goal.id)
+                        }}
+                      >
+                        <Trash2 className="size-3.5" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               ))}
               {searchQuery && filteredGoals.length === 0 && (
                 <p className="px-2 py-1 text-xs text-muted-foreground">No matching goals</p>
@@ -321,13 +400,6 @@ export function Sidebar({
 
       {/* Bottom Actions */}
       <div className="border-t border-border p-2">
-        <button
-          onClick={onCreateGoal}
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-        >
-          <Plus className="size-3.5 shrink-0 opacity-60" />
-          <span>New Goal</span>
-        </button>
         <button
           onClick={onOpenSettings}
           className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"

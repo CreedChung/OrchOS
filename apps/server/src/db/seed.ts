@@ -23,28 +23,31 @@ export function seedData() {
   const proj1 = ProjectService.create("OrchOS", "/Users/a1111/Project/OrchOS")
   const proj2 = ProjectService.create("my-app", "/Users/a1111/Projects/my-app")
 
-  AgentService.register({ name: "coder", role: "Code generation & editing", capabilities: ["write_code", "fix_bug"], status: "active", model: "local/coder" })
-  AgentService.register({ name: "tester", role: "Test execution & analysis", capabilities: ["run_tests"], status: "idle", model: "local/tester" })
-  AgentService.register({ name: "fixer", role: "Bug detection & repair", capabilities: ["fix_bug", "run_tests"], status: "idle", model: "local/fixer" })
-  AgentService.register({ name: "reviewer", role: "Code review & suggestions", capabilities: ["review"], status: "active", model: "cloud/reviewer" })
+  AgentService.register({ name: "Codex", role: "Code generation & editing", capabilities: ["write_code", "fix_bug"], status: "active", model: "local/codex", enabled: true })
+  AgentService.register({ name: "Claude", role: "Reasoning & analysis", capabilities: ["write_code", "fix_bug", "review"], status: "idle", model: "cloud/claude-sonnet-4", enabled: true })
+  AgentService.register({ name: "Tester", role: "Test execution & analysis", capabilities: ["run_tests"], status: "idle", model: "local/tester", enabled: true })
+  AgentService.register({ name: "Reviewer", role: "Code review & suggestions", capabilities: ["review"], status: "active", model: "cloud/reviewer", enabled: true })
 
   const g1 = GoalService.create({
     title: "Implement login system",
     description: "Full auth flow with session management",
     successCriteria: ["tests pass", "code reviewed", "no lint errors"],
     constraints: ["use typescript"],
+    projectId: proj1.id,
   })
 
   const g2 = GoalService.create({
     title: "Add payment integration",
     description: "Stripe checkout and webhook handling",
     successCriteria: ["payment flow works", "webhook verified"],
+    projectId: proj1.id,
   })
 
   const g3 = GoalService.create({
     title: "Setup CI/CD pipeline",
     description: "GitHub Actions with staging deploy",
     successCriteria: ["pipeline runs", "staging auto-deploys"],
+    projectId: proj2.id,
   })
 
   StateService.createState(g1.id, "Tests", "failed", ["Fix", "Ignore"])

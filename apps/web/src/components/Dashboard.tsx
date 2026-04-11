@@ -24,7 +24,7 @@ export function Dashboard() {
   const [states, setStates] = useState<StateItem[]>([])
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
   const [activities, setActivities] = useState<ActivityEntry[]>([])
-  const [settings, setSettings] = useState<ControlSettings | null>(null)
+  const [settings, setSettings] = useState<ControlSettings | null>({ autoCommit: false, autoFix: false, modelStrategy: "adaptive" })
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -33,29 +33,29 @@ export function Dashboard() {
 
   // Fetch all data
   const refreshAll = useCallback(async () => {
-    try {
-      const [g, a, p, h, s, orgs] = await Promise.all([
-        api.listGoals(),
-        api.listAgents(),
-        api.listProjects(),
-        api.getHistory(undefined, 50),
-        api.getSettings(),
-        api.listOrganizations(),
-      ])
-      setGoals(g)
-      setAgents(a)
-      setProjects(p)
-      setHistory(h)
-      setSettings(s)
-      setOrganizations(orgs)
-      if (orgs.length > 0 && !activeOrganizationId) {
-        setActiveOrganizationId(orgs[0].id)
+    const results = await Promise.allSettled([
+      api.listGoals(),
+      api.listAgents(),
+      api.listProjects(),
+      api.getHistory(undefined, 50),
+      api.getSettings(),
+      api.listOrganizations(),
+    ])
+    if (results[0].status === "fulfilled") setGoals(results[0].value)
+    if (results[1].status === "fulfilled") setAgents(results[1].value)
+    if (results[2].status === "fulfilled") setProjects(results[2].value)
+    if (results[3].status === "fulfilled") setHistory(results[3].value)
+    if (results[4].status === "fulfilled") setSettings(results[4].value)
+    if (results[5].status === "fulfilled") {
+      setOrganizations(results[5].value)
+      if (results[5].value.length > 0 && !activeOrganizationId) {
+        setActiveOrganizationId(results[5].value[0].id)
       }
-    } catch (err) {
-      console.error("Failed to fetch data:", err)
-    } finally {
-      setLoading(false)
     }
+    for (const r of results) {
+      if (r.status === "rejected") console.error("Failed to fetch data:", r.reason)
+    }
+    setLoading(false)
   }, [])
 
   const refreshGoalData = useCallback(async (goalId: string | null) => {
@@ -162,15 +162,62 @@ export function Dashboard() {
   }
 
   // Handle goal delete
-  const handleDeleteGoal = async () => {
-    if (!activeGoalId) return
+  const handleDeleteGoal = async (goalId?: string) => {
+    const id = goalId ?? activeGoalId
+    if (!id) return
     try {
-      await api.deleteGoal(activeGoalId)
-      const remaining = goals.filter((g) => g.id !== activeGoalId)
-      setActiveGoalId(remaining.length > 0 ? remaining[0].id : null)
+      await api.deleteGoal(id)
+      if (activeGoalId === id) {
+        const remaining = goals.filter((g) => g.id !== id)
+        setActiveGoalId(remaining.length > 0 ? remaining[0].id : null)
+      }
       await refreshAll()
     } catch (err) {
       console.error("Failed to delete goal:", err)
+    }
+  }
+
+  // Handle goal rename
+  const handleGoalRename = async (goalId: string, name: string) => {
+    try {
+      await api.updateGoal(goalId, { title: name })
+      await refreshAll()
+    } catch (err) {
+      console.error("Failed to rename goal:", err)
+    }
+  }
+
+  // Handle organization rename
+  const handleOrganizationRename = async (orgId: string, name: string) => {
+    try {
+      await api.updateOrganization(orgId, { name })
+      await refreshAll()
+    } catch (err) {
+      console.error("Failed to rename organization:", err)
+    }
+  }
+
+  // Handle organization delete
+  const handleOrganizationDelete = async (orgId: string) => {
+    try {
+      await api.deleteOrganization(orgId)
+      if (activeOrganizationId === orgId) {
+        const remaining = organizations.filter((o) => o.id !== orgId)
+        setActiveOrganizationId(remaining.length > 0 ? remaining[0].id : null)
+      }
+      await refreshAll()
+    } catch (err) {
+      console.error("Failed to delete organization:", err)
+    }
+  }
+
+  // Handle agent toggle
+  const handleAgentToggle = async (agentId: string, enabled: boolean) => {
+    try {
+      await api.updateAgent(agentId, { enabled })
+      await refreshAll()
+    } catch (err) {
+      console.error("Failed to toggle agent:", err)
     }
   }
 
@@ -200,12 +247,17 @@ export function Dashboard() {
           onCreateGoal={() => setShowCreateDialog(true)}
           onOpenSettings={() => setShowSettingsDialog(true)}
           onOrganizationChange={setActiveOrganizationId}
+          onOrganizationRename={handleOrganizationRename}
+          onOrganizationDelete={handleOrganizationDelete}
+          onGoalRename={handleGoalRename}
+          onGoalDelete={handleDeleteGoal}
         />
         {activeGoal ? (
           <StateBoard
             goal={activeGoal}
             states={states}
             artifacts={artifacts}
+            projects={projects}
             onStateAction={handleStateAction}
             onStateStatusChange={handleStateStatusChange}
             goalActions={
@@ -243,6 +295,8 @@ export function Dashboard() {
         onClose={() => setShowSettingsDialog(false)}
         settings={settings}
         onSettingsChange={setSettings}
+        agents={agents}
+        onAgentToggle={handleAgentToggle}
       />
     </div>
   )

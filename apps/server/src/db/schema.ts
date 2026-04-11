@@ -7,6 +7,7 @@ export const goals = sqliteTable("goals", {
   successCriteria: text("success_criteria").notNull().default("[]"),
   constraints: text("constraints").notNull().default("[]"),
   status: text("status").notNull().default("active"),
+  projectId: text("project_id").references(() => projects.id),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 })
@@ -53,6 +54,7 @@ export const agents = sqliteTable("agents", {
   capabilities: text("capabilities").notNull().default("[]"),
   status: text("status").notNull().default("idle"),
   model: text("model").notNull(),
+  enabled: text("enabled").notNull().default("true"),
 })
 
 export const projects = sqliteTable("projects", {

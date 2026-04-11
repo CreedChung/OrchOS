@@ -16,6 +16,7 @@ export abstract class AgentService {
       capabilities: JSON.stringify(agent.capabilities),
       status: agent.status,
       model: agent.model,
+      enabled: agent.enabled !== undefined ? String(agent.enabled) : "true",
     }).run()
 
     return { ...agent, id }
@@ -43,11 +44,17 @@ export abstract class AgentService {
     return AgentService.get(id)
   }
 
+  static updateEnabled(id: string, enabled: boolean): AgentProfile | undefined {
+    const result = db.update(agents).set({ enabled: String(enabled) }).where(eq(agents.id, id)).run()
+    if (result.changes === 0) return undefined
+    return AgentService.get(id)
+  }
+
   static selectAgent(action: Action, modelStrategy?: ControlSettings["modelStrategy"]): AgentProfile | undefined {
     const allAgents = AgentService.list()
 
     const candidates = allAgents.filter(
-      (a) => a.capabilities.includes(action) && a.status !== "error"
+      (a) => a.enabled && a.capabilities.includes(action) && a.status !== "error"
     )
 
     if (candidates.length === 0) return undefined
@@ -78,6 +85,7 @@ export abstract class AgentService {
       capabilities: JSON.parse(row.capabilities),
       status: row.status as AgentProfile["status"],
       model: row.model,
+      enabled: row.enabled === "true",
     }
   }
 }

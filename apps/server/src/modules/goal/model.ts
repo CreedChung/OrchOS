@@ -6,6 +6,7 @@ export const GoalModel = {
     description: t.Optional(t.String()),
     successCriteria: t.Array(t.String()),
     constraints: t.Optional(t.Array(t.String())),
+    projectId: t.Optional(t.String()),
   }),
   updateBody: t.Partial(
     t.Object({
@@ -14,6 +15,7 @@ export const GoalModel = {
       successCriteria: t.Array(t.String()),
       constraints: t.Array(t.String()),
       status: t.Union([t.Literal("active"), t.Literal("completed"), t.Literal("paused")]),
+      projectId: t.String(),
     })
   ),
   response: t.Object({
@@ -23,6 +25,7 @@ export const GoalModel = {
     successCriteria: t.Array(t.String()),
     constraints: t.Array(t.String()),
     status: t.Union([t.Literal("active"), t.Literal("completed"), t.Literal("paused")]),
+    projectId: t.Optional(t.String()),
     createdAt: t.String(),
     updatedAt: t.String(),
   }),

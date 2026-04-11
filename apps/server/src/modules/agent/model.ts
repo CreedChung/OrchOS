@@ -2,7 +2,8 @@ import { t, type UnwrapSchema } from "elysia"
 
 export const AgentModel = {
   updateBody: t.Object({
-    status: t.Union([t.Literal("idle"), t.Literal("active"), t.Literal("error")]),
+    status: t.Optional(t.Union([t.Literal("idle"), t.Literal("active"), t.Literal("error")])),
+    enabled: t.Optional(t.Boolean()),
   }),
   response: t.Object({
     id: t.String(),
@@ -11,6 +12,7 @@ export const AgentModel = {
     capabilities: t.Array(t.String()),
     status: t.Union([t.Literal("idle"), t.Literal("active"), t.Literal("error")]),
     model: t.String(),
+    enabled: t.Boolean(),
   }),
   errorNotFound: t.Object({ error: t.Literal("Agent not found") }),
 } as const

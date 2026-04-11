@@ -20,6 +20,7 @@ export interface Goal {
   successCriteria: string[]
   constraints: string[]
   status: "active" | "completed" | "paused"
+  projectId?: string
   createdAt: string
   updatedAt: string
 }
@@ -52,6 +53,7 @@ export interface AgentProfile {
   capabilities: Action[]
   status: "idle" | "active" | "error"
   model: string
+  enabled: boolean
 }
 
 export interface StateEntry {
@@ -107,7 +109,7 @@ export const api = {
   // Goals
   listGoals: () => request<Goal[]>("/api/goals"),
   getGoal: (id: string) => request<Goal>(`/api/goals/${id}`),
-  createGoal: (data: { title: string; description?: string; successCriteria: string[]; constraints?: string[] }) =>
+  createGoal: (data: { title: string; description?: string; successCriteria: string[]; constraints?: string[]; projectId?: string }) =>
     request<Goal>("/api/goals", { method: "POST", body: JSON.stringify(data) }),
   updateGoal: (id: string, data: Partial<Pick<Goal, "title" | "description" | "successCriteria" | "constraints" | "status">>) =>
     request<Goal>(`/api/goals/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
@@ -127,6 +129,8 @@ export const api = {
 
   // Agents
   listAgents: () => request<AgentProfile[]>("/api/agents"),
+  updateAgent: (id: string, data: { enabled?: boolean; status?: AgentProfile["status"] }) =>
+    request<AgentProfile>(`/api/agents/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   // Projects
   listProjects: () => request<Project[]>("/api/projects"),
@@ -161,4 +165,8 @@ export const api = {
 
   // Organizations
   listOrganizations: () => request<Organization[]>("/api/organizations"),
+  updateOrganization: (id: string, data: { name?: string }) =>
+    request<Organization>(`/api/organizations/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteOrganization: (id: string) =>
+    request<{ success: boolean }>(`/api/organizations/${id}`, { method: "DELETE" }),
 }
