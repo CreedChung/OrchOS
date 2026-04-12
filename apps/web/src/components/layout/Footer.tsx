@@ -1,3 +1,5 @@
+import { m } from "#/paraglide/messages";
+
 export default function Footer() {
   const year = new Date().getFullYear()
 
@@ -5,10 +7,10 @@ export default function Footer() {
     <footer className="mt-20 border-t border-border px-4 pb-14 pt-10 text-muted-foreground">
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 text-center sm:flex-row sm:text-left">
         <p className="m-0 text-sm">
-          &copy; {year} OrchOS. All rights reserved.
+          &copy; {year} {m.footer_rights()}
         </p>
         <p className="m-0 text-xs font-bold uppercase tracking-widest text-primary">
-          Built with OrchOS
+          {m.built_with_orchos()}
         </p>
       </div>
       <div className="mt-4 flex justify-center gap-4">
@@ -18,7 +20,7 @@ export default function Footer() {
           rel="noreferrer"
           className="rounded-xl p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
         >
-          <span className="sr-only">Follow OrchOS on GitHub</span>
+          <span className="sr-only">{m.follow_on_github()}</span>
           <svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32">
             <path
               fill="currentColor"

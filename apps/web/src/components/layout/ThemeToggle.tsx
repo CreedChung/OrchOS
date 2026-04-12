@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Moon, Sun, Monitor } from 'lucide-react'
+import { m } from "#/paraglide/messages"
 
 type ThemeMode = 'light' | 'dark' | 'auto'
 
-const themeOptions: { mode: ThemeMode; icon: typeof Sun; label: string }[] = [
-  { mode: 'light', icon: Sun, label: 'Light' },
-  { mode: 'dark', icon: Moon, label: 'Dark' },
-  { mode: 'auto', icon: Monitor, label: 'System' },
+const themeOptions: { mode: ThemeMode; icon: typeof Sun; labelKey: string }[] = [
+  { mode: 'light', icon: Sun, labelKey: 'theme_light' },
+  { mode: 'dark', icon: Moon, labelKey: 'theme_dark' },
+  { mode: 'auto', icon: Monitor, labelKey: 'theme_system' },
 ]
 
 function getInitialMode(): ThemeMode {
@@ -57,22 +58,25 @@ export default function ThemeToggle() {
 
   return (
     <div className="flex gap-0.5 rounded-lg bg-muted p-0.5">
-      {themeOptions.map(({ mode: optMode, icon: Icon, label }) => (
-        <button
-          key={optMode}
-          type="button"
-          onClick={() => setThemeMode(optMode)}
-          aria-label={`Switch to ${label} mode`}
-          title={`Switch to ${label} mode`}
-          className={`flex flex-1 items-center justify-center rounded-md py-1.5 transition-all ${
-            mode === optMode
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Icon className="size-4" />
-        </button>
-      ))}
+      {themeOptions.map(({ mode: optMode, icon: Icon, labelKey }) => {
+        const label = (m as Record<string, () => string>)[labelKey]()
+        return (
+          <button
+            key={optMode}
+            type="button"
+            onClick={() => setThemeMode(optMode)}
+            aria-label={m.theme_switch_mode({ label })}
+            title={m.theme_switch_mode({ label })}
+            className={`flex flex-1 items-center justify-center rounded-md py-1.5 transition-all ${
+              mode === optMode
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Icon className="size-4" />
+          </button>
+        )
+      })}
     </div>
   )
 }

@@ -218,7 +218,10 @@ export const executor = {
           if (agent.versionFlag) {
             const versionResult = await this.run(`${agent.command} ${agent.versionFlag}`)
             if (versionResult.success) {
-              detected.version = versionResult.output.trim().split("\n")[0].trim()
+              const versionOutput = versionResult.output.trim().split("\n")[0].trim()
+              // Extract version number only (e.g., "v2.1.86" from "Claude Code v2.1.86")
+              const versionMatch = versionOutput.match(/v?\d+(\.\d+)+/)
+              detected.version = versionMatch ? versionMatch[0] : versionOutput
             }
           }
         }

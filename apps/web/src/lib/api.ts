@@ -168,6 +168,32 @@ export interface Rule {
   createdAt: string
 }
 
+export interface McpServerProfile {
+  id: string
+  name: string
+  command: string
+  args: string[]
+  env: Record<string, string>
+  enabled: boolean
+  scope: "global" | "project"
+  projectId?: string
+  organizationId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SkillProfile {
+  id: string
+  name: string
+  description?: string
+  enabled: boolean
+  scope: "global" | "project"
+  projectId?: string
+  organizationId?: string
+  createdAt: string
+  updatedAt: string
+}
+
 // API functions
 export const api = {
   // Goals
@@ -277,4 +303,44 @@ export const api = {
     request<Command>(`/api/commands/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteCommand: (id: string) =>
     request<{ success: boolean }>(`/api/commands/${id}`, { method: "DELETE" }),
+
+  // MCP Servers
+  listMcpServers: (options?: { projectId?: string; organizationId?: string; scope?: "global" | "project" }) => {
+    const params = new URLSearchParams()
+    if (options?.projectId) params.set("projectId", options.projectId)
+    if (options?.organizationId) params.set("organizationId", options.organizationId)
+    if (options?.scope) params.set("scope", options.scope)
+    const qs = params.toString()
+    return request<McpServerProfile[]>(`/api/mcp-servers${qs ? `?${qs}` : ""}`)
+  },
+  listMcpServersGlobal: () => request<McpServerProfile[]>("/api/mcp-servers/global"),
+  listMcpServersByProject: (projectId: string) => request<McpServerProfile[]>(`/api/mcp-servers/project/${projectId}`),
+  getMcpServer: (id: string) => request<McpServerProfile>(`/api/mcp-servers/${id}`),
+  createMcpServer: (data: { name: string; command: string; args?: string[]; env?: Record<string, string>; scope?: "global" | "project"; projectId?: string; organizationId?: string }) =>
+    request<McpServerProfile>("/api/mcp-servers", { method: "POST", body: JSON.stringify(data) }),
+  updateMcpServer: (id: string, data: Partial<Pick<McpServerProfile, "name" | "command" | "args" | "env" | "enabled" | "scope">>) =>
+    request<McpServerProfile>(`/api/mcp-servers/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteMcpServer: (id: string) =>
+    request<{ success: boolean }>(`/api/mcp-servers/${id}`, { method: "DELETE" }),
+  toggleMcpServer: (id: string, enabled: boolean) =>
+    request<McpServerProfile>(`/api/mcp-servers/${id}/toggle`, { method: "POST", body: JSON.stringify({ enabled }) }),
+
+  // Skills
+  listSkills: (options?: { projectId?: string; organizationId?: string; scope?: "global" | "project" }) => {
+    const params = new URLSearchParams()
+    if (options?.projectId) params.set("projectId", options.projectId)
+    if (options?.organizationId) params.set("organizationId", options.organizationId)
+    if (options?.scope) params.set("scope", options.scope)
+    const qs = params.toString()
+    return request<SkillProfile[]>(`/api/skills${qs ? `?${qs}` : ""}`)
+  },
+  getSkill: (id: string) => request<SkillProfile>(`/api/skills/${id}`),
+  createSkill: (data: { name: string; description?: string; scope?: "global" | "project"; projectId?: string; organizationId?: string }) =>
+    request<SkillProfile>("/api/skills", { method: "POST", body: JSON.stringify(data) }),
+  updateSkill: (id: string, data: Partial<Pick<SkillProfile, "name" | "description" | "enabled" | "scope">>) =>
+    request<SkillProfile>(`/api/skills/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteSkill: (id: string) =>
+    request<{ success: boolean }>(`/api/skills/${id}`, { method: "DELETE" }),
+  toggleSkill: (id: string, enabled: boolean) =>
+    request<SkillProfile>(`/api/skills/${id}/toggle`, { method: "POST", body: JSON.stringify({ enabled }) }),
 }

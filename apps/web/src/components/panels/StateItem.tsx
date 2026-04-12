@@ -1,4 +1,5 @@
 import { cn } from "#/lib/utils"
+import { m } from "#/paraglide/messages"
 import type { Status } from "#/lib/types"
 
 interface StateItemProps {
@@ -8,13 +9,13 @@ interface StateItemProps {
   onAction?: (action: string) => void
 }
 
-const statusLabelMap: Record<Status, string> = {
-  success: "Success",
-  failed: "Failed",
-  error: "Error",
-  pending: "Pending",
-  running: "Running",
-  warning: "Warning",
+const statusLabelMap: Record<Status, () => string> = {
+  success: () => m.status_success(),
+  failed: () => m.status_failed(),
+  error: () => m.status_error(),
+  pending: () => m.status_pending(),
+  running: () => m.status_running(),
+  warning: () => m.status_warning(),
 }
 
 const statusPillClass: Record<Status, string> = {
@@ -37,7 +38,7 @@ export function StateItem({ label, status, actions, onAction }: StateItemProps) 
           statusPillClass[status]
         )}
       >
-        {statusLabelMap[status]}
+        {statusLabelMap[status]()}
       </span>
 
       {actions && actions.length > 0 && (

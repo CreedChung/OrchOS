@@ -1,5 +1,6 @@
-import { cn } from "#/lib/utils"
-import { ScrollArea } from "#/components/ui/scroll-area"
+import { useState } from "react";
+import { cn } from "#/lib/utils";
+import { ScrollArea } from "#/components/ui/scroll-area";
 import {
   InfoCard,
   InfoCardTitle,
@@ -8,8 +9,8 @@ import {
   InfoCardMedia,
   InfoCardFooter,
   InfoCardDismiss,
-} from "#/components/ui/info-card"
-import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
+} from "#/components/ui/info-card";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   InboxIcon,
   Target01Icon,
@@ -27,33 +28,40 @@ import {
   AiBrain01Icon,
   UserCircleIcon,
   Logout03Icon,
-} from "@hugeicons/core-free-icons"
+} from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "#/components/ui/dropdown-menu"
-import { m } from "#/paraglide/messages"
-import type { Organization, Problem, SidebarView } from "#/lib/types"
-import { isInboxItem } from "#/lib/types"
+} from "#/components/ui/dropdown-menu";
+import { RenameDialog } from "#/components/dialogs/RenameDialog";
+import { m } from "#/paraglide/messages";
+import type { Organization, Problem, SidebarView } from "#/lib/types";
+import { isInboxItem } from "#/lib/types";
 
 interface SidebarSection {
-  label: string
-  items: { id: SidebarView; icon: IconSvgElement; label: string; badge?: number; badgeCritical?: boolean }[]
+  label: string;
+  items: {
+    id: SidebarView;
+    icon: IconSvgElement;
+    label: string;
+    badge?: number;
+    badgeCritical?: boolean;
+  }[];
 }
 
 interface SidebarProps {
-  organizations: Organization[]
-  problems: Problem[]
-  activeOrganizationId: string | null
-  activeView: SidebarView
-  onViewChange: (view: SidebarView) => void
-  onOpenSettings: () => void
-  onOrganizationChange: (id: string) => void
-  onOrganizationRename: (id: string, name: string) => void
-  onOrganizationDelete: (id: string) => void
+  organizations: Organization[];
+  problems: Problem[];
+  activeOrganizationId: string | null;
+  activeView: SidebarView;
+  onViewChange: (view: SidebarView) => void;
+  onOpenSettings: () => void;
+  onOrganizationChange: (id: string) => void;
+  onOrganizationRename: (id: string, name: string) => void;
+  onOrganizationDelete: (id: string) => void;
 }
 
 export function Sidebar({
@@ -67,27 +75,32 @@ export function Sidebar({
   onOrganizationRename,
   onOrganizationDelete,
 }: SidebarProps) {
-
-  const openInboxCount = problems.filter((p) => p.status === "open" && isInboxItem(p)).length
-  const criticalCount = problems.filter((p) => p.status === "open" && isInboxItem(p) && p.priority === "critical").length
+  const [renameOpen, setRenameOpen] = useState(false);
+  const openInboxCount = problems.filter(
+    (p) => p.status === "open" && isInboxItem(p),
+  ).length;
+  const criticalCount = problems.filter(
+    (p) => p.status === "open" && isInboxItem(p) && p.priority === "critical",
+  ).length;
 
   const sections: SidebarSection[] = [
     {
       label: m.workspace(),
       items: [
-        { id: "inbox", icon: InboxIcon, label: m.inbox(), badge: openInboxCount, badgeCritical: criticalCount > 0 },
+        {
+          id: "inbox",
+          icon: InboxIcon,
+          label: m.inbox(),
+          badge: openInboxCount,
+          badgeCritical: criticalCount > 0,
+        },
         { id: "goals", icon: Target01Icon, label: m.goals() },
-      ],
-    },
-    {
-      label: m.agents(),
-      items: [
-        { id: "agents", icon: Robot02Icon, label: m.agents() },
       ],
     },
     {
       label: m.capabilities(),
       items: [
+        { id: "agents", icon: Robot02Icon, label: m.agents() },
         { id: "mcp-servers", icon: FolderGitIcon, label: m.mcp_servers() },
         { id: "skills", icon: Wrench01Icon, label: m.skills() },
       ],
@@ -104,7 +117,7 @@ export function Sidebar({
         { id: "observability", icon: AiBrain01Icon, label: m.observability() },
       ],
     },
-  ]
+  ];
 
   return (
     <aside className="flex h-full w-60 flex-col border-r border-border bg-sidebar">
@@ -116,9 +129,13 @@ export function Sidebar({
               <HugeiconsIcon icon={Target01Icon} className="size-3.5" />
             </span>
             <span className="truncate">
-              {organizations.find((o) => o.id === activeOrganizationId)?.name || m.select_organization()}
+              {organizations.find((o) => o.id === activeOrganizationId)?.name ||
+                m.select_organization()}
             </span>
-            <HugeiconsIcon icon={ChevronDown} className="ml-auto size-3 shrink-0 opacity-50" />
+            <HugeiconsIcon
+              icon={ChevronDown}
+              className="ml-auto size-3 shrink-0 opacity-50"
+            />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-48">
             {organizations.length > 0 ? (
@@ -128,7 +145,12 @@ export function Sidebar({
                   onClick={() => onOrganizationChange(org.id)}
                 >
                   <span className="flex-1">{org.name}</span>
-                  {org.id === activeOrganizationId && <HugeiconsIcon icon={Tick02Icon} className="size-4 text-primary" />}
+                  {org.id === activeOrganizationId && (
+                    <HugeiconsIcon
+                      icon={Tick02Icon}
+                      className="size-4 text-primary"
+                    />
+                  )}
                 </DropdownMenuItem>
               ))
             ) : (
@@ -145,12 +167,7 @@ export function Sidebar({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-36">
               <DropdownMenuItem
-                onClick={() => {
-                  const org = organizations.find((o) => o.id === activeOrganizationId)
-                  if (!org) return
-                  const newName = prompt(m.rename_organization(), org.name)
-                  if (newName?.trim()) onOrganizationRename(org.id, newName.trim())
-                }}
+                onClick={() => setRenameOpen(true)}
               >
                 <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
                 {m.rename()}
@@ -159,7 +176,8 @@ export function Sidebar({
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => {
-                  if (confirm(m.delete_organization())) onOrganizationDelete(activeOrganizationId)
+                  if (confirm(m.delete_organization()))
+                    onOrganizationDelete(activeOrganizationId);
                 }}
               >
                 <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
@@ -178,34 +196,38 @@ export function Sidebar({
               <span className="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {section.label}
               </span>
-              {section.items.map(({ id, icon: Icon, label, badge, badgeCritical }) => {
-                const isActive = activeView === id
-                return (
-                  <button
-                    key={id}
-                    onClick={() => onViewChange(id)}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    )}
-                  >
-                    <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
-                    <span className="flex-1 text-left">{label}</span>
-                    {badge != null && badge > 0 && (
-                      <span className={cn(
-                        "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-                        badgeCritical
-                          ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                          : "bg-muted text-muted-foreground"
-                      )}>
-                        {badge}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
+              {section.items.map(
+                ({ id, icon: Icon, label, badge, badgeCritical }) => {
+                  const isActive = activeView === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => onViewChange(id)}
+                      className={cn(
+                        "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                      )}
+                    >
+                      <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
+                      <span className="flex-1 text-left">{label}</span>
+                      {badge != null && badge > 0 && (
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                            badgeCritical
+                              ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          {badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                },
+              )}
             </div>
           ))}
         </div>
@@ -216,13 +238,14 @@ export function Sidebar({
         <InfoCard storageKey="sidebar-welcome" dismissType="forever">
           <InfoCardContent>
             <InfoCardTitle>{m.welcome_to_orchos()}</InfoCardTitle>
-            <InfoCardDescription>
-              {m.welcome_desc()}
-            </InfoCardDescription>
+            <InfoCardDescription>{m.welcome_desc()}</InfoCardDescription>
           </InfoCardContent>
           <InfoCardMedia
             media={[
-              { src: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&q=80", alt: "Infrastructure" },
+              {
+                src: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&q=80",
+                alt: "Infrastructure",
+              },
             ]}
             shrinkHeight={60}
             expandHeight={120}
@@ -241,16 +264,27 @@ export function Sidebar({
               <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
             </div>
             <span className="flex-1 truncate text-left">{m.user()}</span>
-            <HugeiconsIcon icon={ChevronUp} className="size-3 shrink-0 opacity-50" />
+            <HugeiconsIcon
+              icon={ChevronUp}
+              className="size-3 shrink-0 opacity-50"
+            />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" side="top" className="min-w-48 mb-1">
+          <DropdownMenuContent
+            align="start"
+            side="top"
+            className="min-w-48 mb-1"
+          >
             <div className="flex items-center gap-2.5 px-2 py-2">
               <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
                 U
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground truncate">{m.user()}</p>
-                <p className="text-xs text-muted-foreground truncate">user@orchos.dev</p>
+                <p className="text-sm font-medium text-foreground truncate">
+                  {m.user()}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  user@orchos.dev
+                </p>
               </div>
             </div>
             <DropdownMenuSeparator />
@@ -266,6 +300,18 @@ export function Sidebar({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <RenameDialog
+        open={renameOpen}
+        title={m.rename_organization()}
+        initialValue={organizations.find((o) => o.id === activeOrganizationId)?.name ?? ""}
+        placeholder={m.organization_name_placeholder()}
+        onClose={() => setRenameOpen(false)}
+        onSubmit={(name) => {
+          if (activeOrganizationId) onOrganizationRename(activeOrganizationId, name);
+          setRenameOpen(false);
+        }}
+      />
     </aside>
-  )
+  );
 }

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger } from "#
 import { useLocale } from "#/lib/useI18n"
 import { AVAILABLE_LOCALES } from "#/lib/i18n"
 import { m } from "#/paraglide/messages"
-import type { ControlSettings, AgentProfile, NotificationEvent } from "#/lib/types"
+import type { ControlSettings, NotificationEvent } from "#/lib/types"
 import { NOTIFICATION_EVENTS } from "#/lib/types"
 import { api, type DetectResponse } from "#/lib/api"
 
@@ -26,15 +26,13 @@ interface SettingsDialogProps {
   onClose: () => void
   settings: ControlSettings | null
   onSettingsChange: (settings: ControlSettings) => void
-  agents: AgentProfile[]
-  onAgentToggle: (id: string, enabled: boolean) => void
   onAgentsRefresh: () => void
 }
 
 function ModelBadge({ model }: { model: string }) {
   const isLocal = model.startsWith("local/")
   const isCloud = model.startsWith("cloud/")
-  const label = isLocal ? "Local" : isCloud ? "Cloud" : model
+  const label = isLocal ? m.model_local() : isCloud ? m.model_cloud() : model
   return (
     <span className={cn(
       "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
@@ -49,13 +47,13 @@ function ModelBadge({ model }: { model: string }) {
   )
 }
 
-export function SettingsDialog({ open, onClose, settings, onSettingsChange, agents, onAgentToggle, onAgentsRefresh }: SettingsDialogProps) {
+export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAgentsRefresh }: SettingsDialogProps) {
   const [localSettings, setLocalSettings] = useState<ControlSettings | null>(settings)
   const [activeTab, setActiveTab] = useState<SettingsTab>("general")
   const [detectResult, setDetectResult] = useState<DetectResponse | null>(null)
   const [detecting, setDetecting] = useState(false)
   const [registering, setRegistering] = useState<string | null>(null)
-  const { locale, setLocaleWithSync } = useLocale()
+  const { locale: currentLocale, setLocaleWithSync } = useLocale()
 
   useEffect(() => {
     setLocalSettings(settings)
@@ -119,7 +117,6 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
     try {
       await api.registerDetectedAgents({ agentIds: [agentId] })
       onAgentsRefresh()
-      // Re-detect to update status
       const result = await api.detectAgents()
       setDetectResult(result)
     } catch (err) {
@@ -142,8 +139,6 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
       setRegistering(null)
     }
   }, [onAgentsRefresh])
-
-  const registeredAgentNames = new Set(agents.map((a) => a.name))
 
   if (!open) return null
 
@@ -263,13 +258,11 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
                     <p className="text-xs text-muted-foreground">{m.language_desc()}</p>
                   </div>
                   <Select
-                    value={currentSettings.locale}
+                    value={currentLocale}
                     onValueChange={handleLocaleChange}
                   >
                     <SelectTrigger className="w-[160px]">
-                      <span className="flex-1 text-start truncate">
-                        {AVAILABLE_LOCALES.find((l) => l.value === currentSettings.locale)?.label ?? currentSettings.locale}
-                      </span>
+                      {AVAILABLE_LOCALES.find((l) => l.value === currentLocale)?.label || AVAILABLE_LOCALES[0].label}
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -375,10 +368,10 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
                 </p>
                 <div className="space-y-2">
                   {[
-                    { name: "GitHub", description: "Pull requests, issues, and code reviews", connected: true },
-                    { name: "Slack", description: "Notifications and mentions", connected: false },
-                    { name: "Linear", description: "Issue tracking and project management", connected: false },
-                    { name: "Sentry", description: "Error monitoring and alerts", connected: false },
+                    { name: m.integration_github(), description: m.integration_github_desc(), connected: true },
+                    { name: m.integration_slack(), description: m.integration_slack_desc(), connected: false },
+                    { name: m.integration_linear(), description: m.integration_linear_desc(), connected: false },
+                    { name: m.integration_sentry(), description: m.integration_sentry_desc(), connected: false },
                   ].map((integration) => (
                     <div
                       key={integration.name}
@@ -423,9 +416,9 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
                         {registering === "__all__" ? (
                           <span className="flex items-center gap-1">
                             <span className="size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                            Registering...
+                            {m.registering()}
                           </span>
-                        ) : "Register All"}
+                        ) : m.register_all()}
                       </button>
                     )}
                     <button
@@ -436,12 +429,12 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
                       {detecting ? (
                         <span className="flex items-center gap-1">
                           <span className="size-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                          Scanning...
+                          {m.scanning()}
                         </span>
                       ) : (
                         <span className="flex items-center gap-1">
                           <HugeiconsIcon icon={Search01Icon} className="size-3" />
-                          Detect
+                          {m.detect_btn()}
                         </span>
                       )}
                     </button>
@@ -453,51 +446,42 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                       <span className="size-1.5 rounded-full bg-emerald-500" />
-                      Available ({detectResult.available.length})
+                      {m.available()} ({detectResult.available.length})
                     </div>
-                    {detectResult.available.map((agent) => {
-                      const isRegistered = registeredAgentNames.has(agent.name)
-                      return (
-                        <div
-                          key={agent.id}
-                          className="flex items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-2.5"
-                        >
-                          <div className="flex size-8 items-center justify-center rounded-md bg-emerald-500/10 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                            {agent.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-foreground">{agent.name}</span>
-                              <ModelBadge model={agent.model} />
-                              {agent.version && (
-                                <span className="text-[10px] text-muted-foreground">v{agent.version}</span>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground">{agent.role}</p>
-                          </div>
-                          {isRegistered ? (
-                            <span className="rounded-md px-2.5 py-1 text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                              Registered
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleRegisterAgent(agent.id)}
-                              disabled={registering === agent.id}
-                              className="rounded-md px-2.5 py-1 text-xs font-medium border border-border bg-card text-foreground hover:bg-accent disabled:opacity-50 transition-colors"
-                            >
-                              {registering === agent.id ? (
-                                <span className="size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                              ) : (
-                                <span className="flex items-center gap-1">
-                                  <HugeiconsIcon icon={AddCircleHalfDotIcon} className="size-3" />
-                                  Register
-                                </span>
-                              )}
-                            </button>
-                          )}
+                    {detectResult.available.map((agent) => (
+                      <div
+                        key={agent.id}
+                        className="flex items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-2.5"
+                      >
+                        <div className="flex size-8 items-center justify-center rounded-md bg-emerald-500/10 text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                          {agent.name.charAt(0).toUpperCase()}
                         </div>
-                      )
-                    })}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-foreground">{agent.name}</span>
+                            <ModelBadge model={agent.model} />
+                            {agent.version && (
+                              <span className="text-[10px] text-muted-foreground">v{agent.version}</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{agent.role}</p>
+                        </div>
+                        <button
+                          onClick={() => handleRegisterAgent(agent.id)}
+                          disabled={registering === agent.id}
+                          className="rounded-md px-2.5 py-1 text-xs font-medium border border-border bg-card text-foreground hover:bg-accent disabled:opacity-50 transition-colors"
+                        >
+                          {registering === agent.id ? (
+                            <span className="size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <HugeiconsIcon icon={AddCircleHalfDotIcon} className="size-3" />
+                              {m.register()}
+                            </span>
+                          )}
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -506,7 +490,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span className="size-1.5 rounded-full bg-muted-foreground" />
-                      Not Found ({detectResult.unavailable.length})
+                      {m.not_found()} ({detectResult.unavailable.length})
                     </div>
                     {detectResult.unavailable.map((agent) => (
                       <div
@@ -524,7 +508,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
                           <p className="text-xs text-muted-foreground">{agent.role}</p>
                         </div>
                         <span className="rounded-md px-2.5 py-1 text-[10px] font-medium bg-muted text-muted-foreground">
-                          Not installed
+                          {m.not_installed()}
                         </span>
                       </div>
                     ))}
@@ -539,64 +523,6 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
                     <p className="text-xs text-muted-foreground/60 mt-1">
                       {m.detect_runtimes_hint_desc()}
                     </p>
-                  </div>
-                )}
-
-                {/* Registered agents */}
-                {agents.length > 0 && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
-                      <HugeiconsIcon icon={Robot02Icon} className="size-3" />
-                      {m.registered_runtimes()} ({agents.length})
-                    </div>
-                    {agents.map((agent) => (
-                      <div
-                        key={agent.id}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg border px-4 py-2.5 transition-colors",
-                          agent.enabled ? "border-border bg-card" : "border-border/50 bg-muted/30 opacity-60"
-                        )}
-                      >
-                        <div className={cn(
-                          "flex size-8 items-center justify-center rounded-md text-sm font-bold",
-                          agent.enabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                        )}>
-                          {agent.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground">{agent.name}</span>
-                            <ModelBadge model={agent.model} />
-                            {agent.cliCommand && (
-                              <span className="text-[10px] text-muted-foreground font-mono">{agent.cliCommand}</span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">{agent.role}</p>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className={cn(
-                            "size-1.5 rounded-full",
-                            agent.status === "active" ? "bg-emerald-500" :
-                            agent.status === "error" ? "bg-red-500" : "bg-muted-foreground"
-                          )} />
-                          <span className="text-[10px] text-muted-foreground capitalize w-10">{agent.status}</span>
-                        </div>
-                        <button
-                          onClick={() => onAgentToggle(agent.id, !agent.enabled)}
-                          className={cn(
-                            "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
-                            agent.enabled ? "bg-emerald-500" : "bg-muted"
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
-                              agent.enabled ? "translate-x-5" : "translate-x-0.5"
-                            )}
-                          />
-                        </button>
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>

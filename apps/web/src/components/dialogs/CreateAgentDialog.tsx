@@ -1,18 +1,18 @@
 import { useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Cancel01Icon } from "@hugeicons/core-free-icons"
+import { Cancel01Icon, CloudIcon, Server } from "@hugeicons/core-free-icons"
 import { cn } from "#/lib/utils"
 import { m } from "#/paraglide/messages"
 import type { AgentProfile } from "#/lib/types"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger } from "#/components/ui/select"
 
 const CAPABILITY_OPTIONS = [
-  { value: "write_code", label: "Write Code" },
-  { value: "fix_bug", label: "Fix Bug" },
-  { value: "run_tests", label: "Run Tests" },
-  { value: "commit", label: "Commit" },
-  { value: "review", label: "Review" },
-]
+  { value: "write_code", labelKey: "cap_write_code" },
+  { value: "fix_bug", labelKey: "cap_fix_bug" },
+  { value: "run_tests", labelKey: "cap_run_tests" },
+  { value: "commit", labelKey: "cap_commit" },
+  { value: "review", labelKey: "cap_review" },
+] as const
 
 interface CreateAgentDialogProps {
   open: boolean
@@ -116,17 +116,39 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
             {runtimes.length > 0 ? (
               <Select value={runtimeId ?? ""} onValueChange={handleRuntimeChange}>
                 <SelectTrigger>
-                  <span className="flex-1 text-start truncate">
-                    {selectedRuntime ? selectedRuntime.name : m.agent_runtime_placeholder()}
+                  <span className="flex items-center gap-1.5 flex-1 text-start truncate">
+                    {selectedRuntime ? (
+                      <>
+                        {selectedRuntime.model.startsWith("local/") ? (
+                          <HugeiconsIcon icon={Server} className="size-3.5 text-blue-500 dark:text-blue-400" />
+                        ) : selectedRuntime.model.startsWith("cloud/") ? (
+                          <HugeiconsIcon icon={CloudIcon} className="size-3.5 text-violet-500 dark:text-violet-400" />
+                        ) : null}
+                        <span>{selectedRuntime.name}</span>
+                      </>
+                    ) : m.agent_runtime_placeholder()}
                   </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {runtimes.map((rt) => (
-                      <SelectItem key={rt.id} value={rt.id}>
-                        {rt.name} — {rt.model}
-                      </SelectItem>
-                    ))}
+                    {runtimes.map((rt) => {
+                      const isLocal = rt.model.startsWith("local/")
+                      const isCloud = rt.model.startsWith("cloud/")
+                      const modelLabel = rt.model.includes("/") ? rt.model.split("/").slice(1).join("/") : rt.model
+                      return (
+                        <SelectItem key={rt.id} value={rt.id}>
+                          <span className="flex items-center gap-2">
+                            {isLocal ? (
+                              <HugeiconsIcon icon={Server} className="size-3.5 text-blue-500 dark:text-blue-400" />
+                            ) : isCloud ? (
+                              <HugeiconsIcon icon={CloudIcon} className="size-3.5 text-violet-500 dark:text-violet-400" />
+                            ) : null}
+                            <span>{rt.name}</span>
+                          </span>
+                          <span className="ms-auto text-muted-foreground text-xs">{modelLabel}</span>
+                        </SelectItem>
+                      )
+                    })}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -156,7 +178,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
                       : "border-border bg-muted/30 text-muted-foreground hover:bg-accent"
                   )}
                 >
-                  {cap.label}
+                  {(m as Record<string, () => string>)[cap.labelKey]()}
                 </button>
               ))}
             </div>

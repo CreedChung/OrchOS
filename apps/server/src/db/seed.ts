@@ -7,8 +7,9 @@ import { OrganizationService } from "../modules/organization"
 import { ProblemService } from "../modules/problem/service"
 import { RuleService } from "../modules/rule/service"
 import { CommandService } from "../modules/command/service"
+import { SkillService } from "../modules/skill/service"
 import { db } from "./index"
-import { goals, organizations, problems, rules } from "./schema"
+import { goals, organizations, problems, rules, skills } from "./schema"
 import { sql } from "drizzle-orm"
 
 export function seedData() {
@@ -155,5 +156,17 @@ export function seedData() {
     RuleService.create({ name: "Auto-fix test failures", condition: "test_failed", action: "auto_fix" })
     RuleService.create({ name: "Ignore lint warnings", condition: "lint_warning", action: "ignore" })
     RuleService.create({ name: "Auto-assign reviews", condition: "review_rejected", action: "assign_reviewer" })
+  }
+
+  // Seed skills
+  const existingSkills = db.select({ count: sql<number>`count(*)` }).from(skills).get()
+  if (existingSkills?.count === 0) {
+    SkillService.create({ name: "Code Review", description: "Automated code review with suggestions for quality, security, and best practices", scope: "global" })
+    SkillService.create({ name: "Test Generation", description: "Generate unit and integration tests for your codebase", scope: "global" })
+    SkillService.create({ name: "Bug Fix", description: "Automatically diagnose and fix bugs in your code", scope: "global" })
+    SkillService.create({ name: "Documentation", description: "Generate and update documentation for APIs, modules, and components", scope: "global" })
+    SkillService.create({ name: "Refactoring", description: "Suggest and apply code refactoring for improved maintainability", scope: "global" })
+    SkillService.create({ name: "Security Audit", description: "Scan code for security vulnerabilities and apply fixes", scope: "global", enabled: false })
+    SkillService.create({ name: "Performance Analysis", description: "Analyze and optimize code performance bottlenecks", scope: "project", projectId: proj1.id })
   }
 }

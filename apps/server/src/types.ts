@@ -93,6 +93,32 @@ export interface ControlSettings {
   modelStrategy: "local-first" | "cloud-first" | "adaptive"
 }
 
+export interface McpServerProfile {
+  id: string
+  name: string
+  command: string
+  args: string[]
+  env: Record<string, string>
+  enabled: boolean
+  scope: "global" | "project"
+  projectId?: string
+  organizationId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SkillProfile {
+  id: string
+  name: string
+  description?: string
+  enabled: boolean
+  scope: "global" | "project"
+  projectId?: string
+  organizationId?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface CreateGoalRequest {
   title: string
   description?: string

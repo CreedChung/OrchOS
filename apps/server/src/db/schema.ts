@@ -127,3 +127,35 @@ export const rules = sqliteTable("rules", {
   enabled: text("enabled").notNull().default("true"),
   createdAt: text("created_at").notNull(),
 })
+
+export const mcpServers = sqliteTable("mcp_servers", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  command: text("command").notNull(),
+  args: text("args").notNull().default("[]"),
+  env: text("env").notNull().default("{}"),
+  enabled: text("enabled").notNull().default("true"),
+  scope: text("scope").notNull().default("global"), // "global" | "project"
+  projectId: text("project_id").references(() => projects.id),
+  organizationId: text("organization_id").references(() => organizations.id),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (t) => [
+  index("idx_mcp_servers_project_id").on(t.projectId),
+  index("idx_mcp_servers_organization_id").on(t.organizationId),
+])
+
+export const skills = sqliteTable("skills", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  enabled: text("enabled").notNull().default("true"),
+  scope: text("scope").notNull().default("global"), // "global" | "project"
+  projectId: text("project_id").references(() => projects.id),
+  organizationId: text("organization_id").references(() => organizations.id),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (t) => [
+  index("idx_skills_project_id").on(t.projectId),
+  index("idx_skills_organization_id").on(t.organizationId),
+])

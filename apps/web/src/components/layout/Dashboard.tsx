@@ -11,6 +11,8 @@ import { SettingsDialog } from "#/components/dialogs/SettingsDialog"
 import { CreateAgentDialog } from "#/components/dialogs/CreateAgentDialog"
 import { GoalActions } from "#/components/panels/GoalActions"
 import { Toolbar } from "#/components/layout/Toolbar"
+import { McpServersView } from "#/components/panels/McpServersView"
+import { SkillsView } from "#/components/panels/SkillsView"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Target01Icon, Shield01Icon, ArrowRight01Icon, ToggleLeft, ToggleRight, Cancel01Icon, Circle, Wrench01Icon, SentIcon, Add01Icon } from "@hugeicons/core-free-icons"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty"
@@ -132,7 +134,7 @@ function AgentDetailView({
         <section className="mb-6">
           <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <div className="size-1.5 rounded-full bg-primary" />
-            Capabilities
+            {m.capabilities()}
           </h2>
           <div className="flex flex-wrap gap-1.5">
             {activeAgent.capabilities.map((cap) => (
@@ -150,7 +152,7 @@ function AgentDetailView({
         <section>
           <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <div className="size-1.5 rounded-full bg-primary" />
-            Rules
+            {m.automation_rules()}
           </h2>
           <div className="space-y-1.5">
             {agentRules.map((rule) => (
@@ -179,7 +181,7 @@ function AgentDetailView({
                 <button
                   onClick={() => onRuleToggle(rule.id, !rule.enabled)}
                   className="shrink-0 text-muted-foreground hover:text-foreground"
-                  title={rule.enabled ? "Disable rule" : "Enable rule"}
+                  title={rule.enabled ? m.disable_rule() : m.enable_rule()}
                 >
                   {rule.enabled ? (
                     <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
@@ -189,10 +191,10 @@ function AgentDetailView({
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm("Delete this rule?")) onRuleDelete(rule.id)
+                    if (confirm(m.delete_rule_confirm())) onRuleDelete(rule.id)
                   }}
                   className="shrink-0 text-muted-foreground hover:text-destructive"
-                  title="Delete rule"
+                  title={m.delete()}
                 >
                   <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
                 </button>
@@ -201,9 +203,9 @@ function AgentDetailView({
             {agentRules.length === 0 && (
               <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
                 <HugeiconsIcon icon={Shield01Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
-                <p className="text-sm text-muted-foreground">No rules yet</p>
+                <p className="text-sm text-muted-foreground">{m.no_rules_yet()}</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">
-                  Rules can be created from Inbox problems
+                  {m.create_rules_desc()}
                 </p>
               </div>
             )}
@@ -222,6 +224,8 @@ export function Dashboard() {
   const [problems, setProblems] = useState<Problem[]>([])
   const [rules, setRules] = useState<Rule[]>([])
   const [commands, setCommands] = useState<Command[]>([])
+  const [mcpServers, setMcpServers] = useState<import("#/lib/api").McpServerProfile[]>([])
+  const [skills, setSkills] = useState<import("#/lib/api").SkillProfile[]>([])
   const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<SidebarView>("inbox")
   const [activeGoalId, setActiveGoalId] = useState<string | null>(null)
@@ -279,6 +283,8 @@ export function Dashboard() {
       api.listProblems(),
       api.listRules(),
       api.listCommands(),
+      api.listMcpServers(),
+      api.listSkills(),
     ])
     if (results[0].status === "fulfilled") setGoals(results[0].value)
     if (results[1].status === "fulfilled") setAgents(results[1].value)
@@ -293,6 +299,8 @@ export function Dashboard() {
     if (results[5].status === "fulfilled") setProblems(results[5].value)
     if (results[6].status === "fulfilled") setRules(results[6].value)
     if (results[7].status === "fulfilled") setCommands(results[7].value)
+    if (results[8].status === "fulfilled") setMcpServers(results[8].value)
+    if (results[9].status === "fulfilled") setSkills(results[9].value)
     for (const r of results) {
       if (r.status === "rejected") console.error("Failed to fetch data:", r.reason)
     }
@@ -570,15 +578,6 @@ export function Dashboard() {
     }
   }
 
-  const handleAgentToggle = async (agentId: string, enabled: boolean) => {
-    try {
-      await api.updateAgent(agentId, { enabled })
-      await refreshAll()
-    } catch (err) {
-      console.error("Failed to toggle agent:", err)
-    }
-  }
-
   const handleCreateAgent = async (data: { name: string; role: string; capabilities: string[]; model: string; cliCommand?: string; runtimeId?: string }) => {
     try {
       await api.createAgent(data)
@@ -677,7 +676,11 @@ export function Dashboard() {
         )
 
       case "mcp-servers":
+        return <McpServersView servers={mcpServers} onRefresh={refreshAll} />
+
       case "skills":
+        return <SkillsView skills={skills} onRefresh={refreshAll} />
+
       case "environments":
       case "observability":
       case "settings": {
@@ -700,11 +703,10 @@ export function Dashboard() {
   )
 
   const placeholderViews: Partial<Record<SidebarView, { title: string; description: string }>> = {
-    "mcp-servers": { title: m.mcp_servers(), description: "Manage your Model Context Protocol server connections." },
-    "skills": { title: m.skills(), description: "Configure agent skills and capabilities." },
-    "environments": { title: m.environments(), description: "Configure deployment and runtime environments." },
-    "observability": { title: m.observability(), description: "Monitor system health, logs, and metrics." },
-    "settings": { title: m.settings(), description: "Application settings and preferences." },
+    "mcp-servers": { title: m.mcp_servers(), description: m.mcp_servers_desc() },
+    "environments": { title: m.environments(), description: m.environments_desc() },
+    "observability": { title: m.observability(), description: m.observability_desc() },
+    "settings": { title: m.settings(), description: m.settings_desc() },
   }
 
   return (
@@ -780,8 +782,6 @@ export function Dashboard() {
         onClose={() => setShowSettingsDialog(false)}
         settings={settings}
         onSettingsChange={setSettings}
-        agents={agents}
-        onAgentToggle={handleAgentToggle}
         onAgentsRefresh={refreshAll}
       />
       <CreateAgentDialog

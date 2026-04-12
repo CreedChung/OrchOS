@@ -1,0 +1,238 @@
+import { useState, useEffect } from "react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Wrench01Icon, Add01Icon, Delete02Icon, ToggleLeft, ToggleRight } from "@hugeicons/core-free-icons"
+import { Button } from "#/components/ui/button"
+import { api, type SkillProfile } from "#/lib/api"
+import { cn } from "#/lib/utils"
+import { m } from "#/paraglide/messages"
+
+interface SkillsViewProps {
+  skills: SkillProfile[]
+  onRefresh: () => void
+}
+
+export function SkillsView({ skills: initialSkills, onRefresh }: SkillsViewProps) {
+  const [skills, setSkills] = useState<SkillProfile[]>(initialSkills)
+  const [showForm, setShowForm] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    scope: "global" as "global" | "project",
+  })
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setSkills(initialSkills)
+  }, [initialSkills])
+
+  const handleCreate = async () => {
+    if (!formData.name) return
+    setLoading(true)
+    try {
+      await api.createSkill({
+        name: formData.name,
+        description: formData.description || undefined,
+        scope: formData.scope,
+      })
+      setFormData({ name: "", description: "", scope: "global" })
+      setShowForm(false)
+      onRefresh()
+    } catch (err) {
+      console.error("Failed to create skill:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleToggle = async (id: string, enabled: boolean) => {
+    try {
+      await api.toggleSkill(id, !enabled)
+      onRefresh()
+    } catch (err) {
+      console.error("Failed to toggle skill:", err)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm(m.delete_skill_confirm())) return
+    try {
+      await api.deleteSkill(id)
+      onRefresh()
+    } catch (err) {
+      console.error("Failed to delete skill:", err)
+    }
+  }
+
+  const globalSkills = skills.filter((s) => s.scope === "global")
+  const projectSkills = skills.filter((s) => s.scope === "project")
+
+  return (
+    <div className="flex-1 overflow-y-auto p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">{m.skills()}</h2>
+        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+          <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
+          {m.add()}
+        </Button>
+      </div>
+
+      {showForm && (
+        <div className="mb-6 rounded-lg border border-border bg-card p-4">
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-muted-foreground">{m.skill_name()}</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder={m.skill_name_placeholder()}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">{m.skill_description()}</label>
+              <input
+                type="text"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder={m.skill_description_placeholder()}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">{m.scope()}</label>
+              <select
+                value={formData.scope}
+                onChange={(e) => setFormData({ ...formData, scope: e.target.value as "global" | "project" })}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              >
+                <option value="global">{m.global()}</option>
+                <option value="project">{m.project()}</option>
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleCreate} disabled={loading || !formData.name}>
+                {loading ? m.creating() : m.create()}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>
+                {m.cancel()}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Skills */}
+      <div className="mb-6">
+        <h3 className="mb-3 text-sm font-medium text-foreground">
+          {m.global()} ({globalSkills.length})
+        </h3>
+        <div className="space-y-2">
+          {globalSkills.map((skill) => (
+            <div
+              key={skill.id}
+              className={cn(
+                "flex items-center gap-3 rounded-lg border border-border/50 px-4 py-3",
+                !skill.enabled && "opacity-60"
+              )}
+            >
+              <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
+                <HugeiconsIcon icon={Wrench01Icon} className="size-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">{skill.name}</span>
+                </div>
+                {skill.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-1">{skill.description}</p>
+                )}
+              </div>
+              <button
+                onClick={() => handleToggle(skill.id, skill.enabled)}
+                className="text-muted-foreground hover:text-foreground"
+                title={skill.enabled ? m.disable() : m.enable()}
+              >
+                {skill.enabled ? (
+                  <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
+                ) : (
+                  <HugeiconsIcon icon={ToggleLeft} className="size-5" />
+                )}
+              </button>
+              <button
+                onClick={() => handleDelete(skill.id)}
+                className="text-muted-foreground hover:text-destructive"
+                title={m.delete()}
+              >
+                <HugeiconsIcon icon={Delete02Icon} className="size-4" />
+              </button>
+            </div>
+          ))}
+          {globalSkills.length === 0 && (
+            <p className="text-sm text-muted-foreground">{m.no_global_skills()}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Project Skills */}
+      <div>
+        <h3 className="mb-3 text-sm font-medium text-foreground">
+          {m.project()} ({projectSkills.length})
+        </h3>
+        <div className="space-y-2">
+          {projectSkills.map((skill) => (
+            <div
+              key={skill.id}
+              className={cn(
+                "flex items-center gap-3 rounded-lg border border-border/50 px-4 py-3",
+                !skill.enabled && "opacity-60"
+              )}
+            >
+              <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
+                <HugeiconsIcon icon={Wrench01Icon} className="size-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">{skill.name}</span>
+                </div>
+                {skill.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-1">{skill.description}</p>
+                )}
+              </div>
+              <button
+                onClick={() => handleToggle(skill.id, skill.enabled)}
+                className="text-muted-foreground hover:text-foreground"
+                title={skill.enabled ? m.disable() : m.enable()}
+              >
+                {skill.enabled ? (
+                  <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
+                ) : (
+                  <HugeiconsIcon icon={ToggleLeft} className="size-5" />
+                )}
+              </button>
+              <button
+                onClick={() => handleDelete(skill.id)}
+                className="text-muted-foreground hover:text-destructive"
+                title={m.delete()}
+              >
+                <HugeiconsIcon icon={Delete02Icon} className="size-4" />
+              </button>
+            </div>
+          ))}
+          {projectSkills.length === 0 && (
+            <p className="text-sm text-muted-foreground">{m.no_project_skills()}</p>
+          )}
+        </div>
+      </div>
+
+      {skills.length === 0 && !showForm && (
+        <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
+          <HugeiconsIcon icon={Wrench01Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+          <p className="text-sm text-muted-foreground">{m.no_skills()}</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">
+            {m.no_skills_desc()}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
