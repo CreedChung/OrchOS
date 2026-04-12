@@ -106,8 +106,8 @@ function generateTimeSeriesData(range: TimeRange) {
       label: range === "24h"
         ? new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
         : new Date(t).toLocaleDateString([], { month: "short", day: "numeric" }),
-      operations: Math.floor(20 + Math.random() * 80),
-      successes: Math.floor(15 + Math.random() * 70),
+      operations: 0,
+      successes: 0,
     }
   })
 }
@@ -123,8 +123,8 @@ function generateGoalData(range: TimeRange) {
       label: range === "24h"
         ? new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
         : new Date(t).toLocaleDateString([], { month: "short", day: "numeric" }),
-      completed: Math.floor(Math.random() * 8),
-      active: Math.floor(1 + Math.random() * 10),
+      completed: 0,
+      active: 0,
     }
   })
 }
@@ -146,13 +146,13 @@ export function ObservabilityView({ agents, goals, problems }: ObservabilityView
   const goalData = useMemo(() => generateGoalData(timeRange), [timeRange])
 
   const agentStatusData = useMemo(() => [
-    { name: "Active", value: activeAgents || 1, fill: AGENT_STATUS_COLORS[0] },
-    { name: "Idle", value: idleAgents || 1, fill: AGENT_STATUS_COLORS[1] },
-    { name: "Error", value: errorAgents || 0, fill: AGENT_STATUS_COLORS[2] },
+    { name: "Active", value: activeAgents, fill: AGENT_STATUS_COLORS[0] },
+    { name: "Idle", value: idleAgents, fill: AGENT_STATUS_COLORS[1] },
+    { name: "Error", value: errorAgents, fill: AGENT_STATUS_COLORS[2] },
   ], [activeAgents, idleAgents, errorAgents])
 
   const operationsData = useMemo(() => {
-    const totalOps = goals.length * 5 + Math.floor(Math.random() * 20)
+    const totalOps = goals.length * 5
     const successOps = Math.floor(totalOps * 0.78)
     const failOps = Math.floor(totalOps * 0.07)
     const pendingOps = totalOps - successOps - failOps
@@ -204,13 +204,13 @@ export function ObservabilityView({ agents, goals, problems }: ObservabilityView
           <MetricCard
             icon={Alert01Icon}
             label={m.obs_error_rate()}
-            value={errorRate}
-            trend={errorRate === "0%" ? "flat" : "down"}
+            value={activeGoals > 0 || completedGoals > 0 ? errorRate : "—"}
+            trend={errorRate === "0%" ? "flat" : errorRate !== "0%" && problems.length > 0 ? "down" : "flat"}
           />
           <MetricCard
             icon={Clock01Icon}
             label={m.obs_avg_response()}
-            value="1.2s"
+            value={activeGoals > 0 || completedGoals > 0 ? "1.2s" : "—"}
             trend="down"
           />
         </div>

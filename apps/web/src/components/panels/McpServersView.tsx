@@ -3,6 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { FolderGitIcon, Add01Icon, Delete02Icon, ToggleLeft, ToggleRight } from "@hugeicons/core-free-icons"
 import { Button } from "#/components/ui/button"
 import { ConfirmDialog } from "#/components/ui/confirm-dialog"
+import { CreateMcpServerDialog } from "#/components/dialogs/CreateMcpServerDialog"
 import { api, type McpServerProfile } from "#/lib/api"
 import { m } from "#/paraglide/messages"
 
@@ -14,40 +15,18 @@ interface McpServersViewProps {
 
 export function McpServersView({ servers: initialServers, onRefresh, scopeFilter = "all" }: McpServersViewProps) {
   const [servers, setServers] = useState<McpServerProfile[]>(initialServers)
-  const [showForm, setShowForm] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [serverToDelete, setServerToDelete] = useState<string | null>(null)
-  const [formData, setFormData] = useState({
-    name: "",
-    command: "",
-    args: "",
-    scope: "global" as "global" | "project",
-  })
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     setServers(initialServers)
   }, [initialServers])
 
-  const handleCreate = async () => {
-    if (!formData.name || !formData.command) return
-    setLoading(true)
-    try {
-      const args = formData.args ? formData.args.split(" ").filter(Boolean) : []
-      await api.createMcpServer({
-        name: formData.name,
-        command: formData.command,
-        args,
-        scope: formData.scope,
-      })
-      setFormData({ name: "", command: "", args: "", scope: "global" })
-      setShowForm(false)
-      onRefresh()
-    } catch (err) {
-      console.error("Failed to create MCP server:", err)
-    } finally {
-      setLoading(false)
-    }
+  const handleCreated = async () => {
+    setLoading(false)
+    onRefresh()
   }
 
   const handleToggle = async (id: string, enabled: boolean) => {
@@ -82,67 +61,11 @@ export function McpServersView({ servers: initialServers, onRefresh, scopeFilter
     <div className="flex-1 overflow-y-auto p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">{m.mcp_servers()}</h2>
-        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
           <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
           {m.add()}
         </Button>
       </div>
-
-      {showForm && (
-        <div className="mb-6 rounded-lg border border-border bg-card p-4">
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs text-muted-foreground">{m.field_name()}</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder={m.mcp_name_placeholder()}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">{m.command()}</label>
-              <input
-                type="text"
-                value={formData.command}
-                onChange={(e) => setFormData({ ...formData, command: e.target.value })}
-                placeholder={m.mcp_command_placeholder()}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">{m.mcp_args_label()}</label>
-              <input
-                type="text"
-                value={formData.args}
-                onChange={(e) => setFormData({ ...formData, args: e.target.value })}
-                placeholder={m.mcp_args_placeholder()}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">{m.scope()}</label>
-              <select
-                value={formData.scope}
-                onChange={(e) => setFormData({ ...formData, scope: e.target.value as "global" | "project" })}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              >
-                <option value="global">{m.scope_global()}</option>
-                <option value="project">{m.scope_project()}</option>
-              </select>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleCreate} disabled={loading}>
-                {loading ? m.creating() : m.create()}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>
-                {m.cancel()}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="space-y-2">
         {filteredServers.map((server) => (
@@ -205,6 +128,8 @@ export function McpServersView({ servers: initialServers, onRefresh, scopeFilter
         confirmLabel={m.delete()}
         variant="destructive"
       />
+
+      <CreateMcpServerDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
     </div>
   )
 }

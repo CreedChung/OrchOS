@@ -237,6 +237,11 @@ function RuntimesTab({ agents, onRefresh }: { agents: AgentProfile[]; onRefresh:
     }
   }, [])
 
+  // Auto-detect on mount
+  useEffect(() => {
+    handleDetect()
+  }, [handleDetect])
+
   const handleRegister = async (agentId: string) => {
     setRegistering(agentId)
     try {
