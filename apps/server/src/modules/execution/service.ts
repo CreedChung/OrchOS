@@ -125,8 +125,56 @@ export class ExecutionService {
       }
 
       case "write_code": {
-        const artifact = StateService.createArtifact(goalId, `module_${generateId("f")}.ts`, "file", "warning", "pending implementation")
-        result = { success: true, message: "Code file created (stub)", detail: `Created ${artifact.name}`, reasoning: "Goal requires new code" }
+        const goal = GoalService.get(goalId)
+        const agent = agentId ? AgentService.get(agentId) : undefined
+        const prompt = `Implement the following goal: ${goal?.title}${goal?.description ? `\nDescription: ${goal.description}` : ""}${goal?.successCriteria?.length ? `\nSuccess criteria: ${goal.successCriteria.join(", ")}` : ""}`
+
+        let codeGenerated = false
+        let output = ""
+        let fileName = ""
+
+        if (agent?.cliCommand) {
+          const invokeResult = await executor.run(
+            `${agent.cliCommand} -p '${prompt.replace(/'/g, "'\\''")}' 2>&1`,
+            { cwd: projectPath, timeout: 120000 }
+          )
+          output = invokeResult.output.trim()
+          codeGenerated = invokeResult.success
+
+          if (codeGenerated) {
+            const diffResult = await executor.git("diff --name-only", projectPath)
+            if (diffResult.success && diffResult.output.trim()) {
+              const changedFiles = diffResult.output.trim().split("\n")
+              fileName = changedFiles[0]
+            }
+          }
+        } else {
+          const buildResult = await executor.runBuild(projectPath)
+          if (buildResult.success) {
+            codeGenerated = true
+            output = buildResult.output.trim().slice(0, 2000)
+          } else {
+            output = buildResult.error || buildResult.output.trim().slice(0, 2000)
+          }
+        }
+
+        if (stateId) StateService.updateState(stateId, codeGenerated ? "success" : "failed")
+
+        const artifactName = fileName || `module_${generateId("f")}.ts`
+        StateService.createArtifact(
+          goalId,
+          artifactName,
+          "file",
+          codeGenerated ? "success" : "failed",
+          output.slice(0, 500)
+        )
+
+        result = {
+          success: codeGenerated,
+          message: codeGenerated ? "Code generated" : "Code generation failed",
+          detail: codeGenerated ? `Generated ${artifactName}` : output.slice(0, 500),
+          reasoning: codeGenerated ? "Agent produced code changes" : "Agent did not produce valid output",
+        }
         break
       }
 

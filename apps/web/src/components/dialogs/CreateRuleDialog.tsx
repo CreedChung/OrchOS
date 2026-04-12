@@ -2,6 +2,7 @@ import { useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, ArrowRight01Icon, Shield01Icon } from "@hugeicons/core-free-icons"
 import { m } from "#/paraglide/messages"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
 import type { Problem } from "#/lib/types"
 
 interface CreateRuleDialogProps {
@@ -115,25 +116,31 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
               {m.rule_logic()}
             </label>
             <div className="flex items-center gap-2">
-              <select
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-                className="flex-1 rounded-md border border-border bg-background px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                {Object.entries(conditionLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
+              <Select value={condition} onValueChange={setCondition}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {Object.entries(conditionLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
               <HugeiconsIcon icon={ArrowRight01Icon} className="size-4 text-muted-foreground shrink-0" />
-              <select
-                value={action}
-                onChange={(e) => setAction(e.target.value)}
-                className="flex-1 rounded-md border border-border bg-background px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                {Object.entries(actionLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
+              <Select value={action} onValueChange={setAction}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {Object.entries(actionLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

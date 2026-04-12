@@ -92,3 +92,15 @@ export const mcpController = new Elysia({ prefix: "/api/mcp-servers" })
       404: t.Object({ error: t.String() }),
     },
   })
+  .get("/:id/status", ({ params: { id } }) => {
+    const server = McpServerService.get(id)
+    if (!server) throw status(404, "MCP server not found")
+    return { id, running: McpServerService.isProcessRunning(id), enabled: server.enabled }
+  }, {
+    params: t.Object({ id: t.String() }),
+    response: t.Object({
+      id: t.String(),
+      running: t.Boolean(),
+      enabled: t.Boolean(),
+    }),
+  })

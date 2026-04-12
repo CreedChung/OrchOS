@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { m } from "#/paraglide/messages"
 import { Button } from "#/components/ui/button"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
 import { api } from "#/lib/api"
 
 interface CreateMcpServerDialogProps {
@@ -83,14 +84,20 @@ export function CreateMcpServerDialog({ open, onClose, onCreated }: CreateMcpSer
           </div>
           <div>
             <label className="text-xs text-muted-foreground">{m.scope()}</label>
-            <select
+            <Select
               value={formData.scope}
-              onChange={(e) => setFormData({ ...formData, scope: e.target.value as "global" | "project" })}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              onValueChange={(v) => setFormData({ ...formData, scope: v as "global" | "project" })}
             >
-              <option value="global">{m.scope_global()}</option>
-              <option value="project">{m.scope_project()}</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="global">{m.scope_global()}</SelectItem>
+                  <SelectItem value="project">{m.scope_project()}</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button size="sm" variant="outline" onClick={onClose}>

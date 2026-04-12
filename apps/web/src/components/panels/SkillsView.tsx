@@ -16,37 +16,18 @@ interface SkillsViewProps {
 
 export function SkillsView({ skills: initialSkills, onRefresh, scopeFilter = "all" }: SkillsViewProps) {
   const [skills, setSkills] = useState<SkillProfile[]>(initialSkills)
-  const [showForm, setShowForm] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null)
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    scope: "global" as "global" | "project",
-  })
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     setSkills(initialSkills)
   }, [initialSkills])
 
-  const handleCreate = async () => {
-    if (!formData.name) return
-    setLoading(true)
-    try {
-      await api.createSkill({
-        name: formData.name,
-        description: formData.description || undefined,
-        scope: formData.scope,
-      })
-      setFormData({ name: "", description: "", scope: "global" })
-      setShowForm(false)
-      onRefresh()
-    } catch (err) {
-      console.error("Failed to create skill:", err)
-    } finally {
-      setLoading(false)
-    }
+  const handleCreated = async () => {
+    setLoading(false)
+    onRefresh()
   }
 
   const handleToggle = async (id: string, enabled: boolean) => {
@@ -81,57 +62,11 @@ export function SkillsView({ skills: initialSkills, onRefresh, scopeFilter = "al
     <div className="flex-1 overflow-y-auto p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">{m.skills()}</h2>
-        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
           <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
           {m.add()}
         </Button>
       </div>
-
-      {showForm && (
-        <div className="mb-6 rounded-lg border border-border bg-card p-4">
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs text-muted-foreground">{m.skill_name()}</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder={m.skill_name_placeholder()}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">{m.skill_description()}</label>
-              <input
-                type="text"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder={m.skill_description_placeholder()}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">{m.scope()}</label>
-              <select
-                value={formData.scope}
-                onChange={(e) => setFormData({ ...formData, scope: e.target.value as "global" | "project" })}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              >
-                <option value="global">{m.global()}</option>
-                <option value="project">{m.project()}</option>
-              </select>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleCreate} disabled={loading || !formData.name}>
-                {loading ? m.creating() : m.create()}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>
-                {m.cancel()}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="space-y-2">
         {filteredSkills.map((skill) => (
@@ -178,7 +113,7 @@ export function SkillsView({ skills: initialSkills, onRefresh, scopeFilter = "al
         )}
       </div>
 
-      {skills.length === 0 && !showForm && (
+      {skills.length === 0 && (
         <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
           <HugeiconsIcon icon={Wrench01Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
           <p className="text-sm text-muted-foreground">{m.no_skills()}</p>
@@ -197,6 +132,8 @@ export function SkillsView({ skills: initialSkills, onRefresh, scopeFilter = "al
         confirmLabel={m.delete()}
         variant="destructive"
       />
+
+      <CreateSkillDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
     </div>
   )
 }

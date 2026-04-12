@@ -3,6 +3,7 @@ import { cn } from "#/lib/utils"
 import { m } from "#/paraglide/messages"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Edit02Icon, Tick02Icon, Cancel01Icon } from "@hugeicons/core-free-icons"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
 import type { Status, StateItem } from "#/lib/types"
 
 interface StateEditorProps {
@@ -48,17 +49,20 @@ export function StateEditor({ state, onStatusChange }: StateEditorProps) {
     return (
       <div className="flex items-center gap-2 rounded-lg border border-primary/50 bg-card px-3 py-2">
         <span className="min-w-[90px] text-sm font-medium text-foreground">{state.label}</span>
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value as Status)}
-          className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          {statusOptions.map((status) => (
-            <option key={status} value={status}>
-              {statusLabelMap[status]()}
-            </option>
-          ))}
-        </select>
+        <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as Status)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {statusOptions.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {statusLabelMap[status]()}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
         <button
           onClick={handleSave}
           className="rounded p-1 text-emerald-500 hover:bg-emerald-500/10"

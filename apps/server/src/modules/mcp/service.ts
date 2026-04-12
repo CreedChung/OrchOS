@@ -3,8 +3,11 @@ import { mcpServers } from "../../db/schema"
 import { eq, and, isNull, or } from "drizzle-orm"
 import { generateId } from "../../utils"
 import type { McpServerProfile } from "../../types"
+import { spawn, type Subprocess } from "bun"
 
 export type { McpServerProfile }
+
+const activeProcesses = new Map<string, Subprocess>()
 
 export abstract class McpServerService {
   static mapRow(row: any): McpServerProfile {
@@ -49,7 +52,7 @@ export abstract class McpServerService {
       updatedAt: now,
     }).run()
 
-    return {
+    const profile = {
       id,
       name: data.name,
       command: data.command,
@@ -62,6 +65,10 @@ export abstract class McpServerService {
       createdAt: now,
       updatedAt: now,
     }
+
+    McpServerService.startProcess(profile)
+
+    return profile
   }
 
   static get(id: string): McpServerProfile | undefined {
@@ -131,15 +138,30 @@ export abstract class McpServerService {
     const result = db.update(mcpServers).set(updates).where(eq(mcpServers.id, id)).run()
     if (result.changes === 0) return undefined
 
-    return McpServerService.get(id)
+    const updated = McpServerService.get(id)!
+
+    if (data.command !== undefined || data.args !== undefined || data.env !== undefined) {
+      McpServerService.stopProcess(id)
+      if (updated.enabled) McpServerService.startProcess(updated)
+    } else if (data.enabled === true) {
+      McpServerService.startProcess(updated)
+    } else if (data.enabled === false) {
+      McpServerService.stopProcess(id)
+    }
+
+    return updated
   }
 
   static delete(id: string): boolean {
+    McpServerService.stopProcess(id)
     const result = db.delete(mcpServers).where(eq(mcpServers.id, id)).run()
     return result.changes > 0
   }
 
   static toggleEnabled(id: string, enabled: boolean): McpServerProfile | undefined {
+    const existing = McpServerService.get(id)
+    if (!existing) return undefined
+
     const result = db
       .update(mcpServers)
       .set({ enabled: String(enabled), updatedAt: new Date().toISOString() })
@@ -147,6 +169,52 @@ export abstract class McpServerService {
       .run()
 
     if (result.changes === 0) return undefined
+
+    if (enabled) {
+      const profile = McpServerService.get(id)!
+      McpServerService.startProcess(profile)
+    } else {
+      McpServerService.stopProcess(id)
+    }
+
     return McpServerService.get(id)
+  }
+
+  static isProcessRunning(id: string): boolean {
+    const proc = activeProcesses.get(id)
+    if (!proc) return false
+    try {
+      return proc.pid !== undefined
+    } catch {
+      return false
+    }
+  }
+
+  private static startProcess(profile: McpServerProfile): void {
+    if (activeProcesses.has(profile.id)) return
+
+    try {
+      const cmdArgs = [profile.command, ...profile.args]
+      const proc = spawn({
+        cmd: cmdArgs,
+        env: { ...process.env, ...profile.env },
+        stdout: "pipe",
+        stderr: "pipe",
+      })
+      activeProcesses.set(profile.id, proc)
+    } catch {
+      // Process failed to start, but we still mark it enabled in DB
+    }
+  }
+
+  private static stopProcess(id: string): void {
+    const proc = activeProcesses.get(id)
+    if (!proc) return
+    try {
+      proc.kill()
+    } catch {
+      // Process may have already exited
+    }
+    activeProcesses.delete(id)
   }
 }

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { cn } from "#/lib/utils"
 import { ScrollArea } from "#/components/ui/scroll-area"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
 import { ConfirmDialog } from "#/components/ui/confirm-dialog"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Shield01Icon, Add01Icon, Delete02Icon, ToggleLeft, ToggleRight, Cancel01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
@@ -96,25 +97,31 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
           />
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{m.when()}</span>
-            <select
-              value={condition}
-              onChange={(e) => setCondition(e.target.value)}
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {Object.entries(conditionLabels).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+            <Select value={condition} onValueChange={setCondition}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {Object.entries(conditionLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
             <HugeiconsIcon icon={ArrowRight01Icon} className="size-3 text-muted-foreground" />
-            <select
-              value={action}
-              onChange={(e) => setAction(e.target.value)}
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {Object.entries(actionLabels).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+            <Select value={action} onValueChange={setAction}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {Object.entries(actionLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
           <button
             onClick={handleCreate}

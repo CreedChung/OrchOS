@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
-import { Cancel01Icon, Settings02Icon, SlidersHorizontalIcon, Robot02Icon, InformationCircleIcon, LinkCircleIcon, NotificationIcon, Search01Icon, CloudIcon, Server, AddCircleHalfDotIcon } from "@hugeicons/core-free-icons"
+import { Cancel01Icon, Settings02Icon, SlidersHorizontalIcon, Robot02Icon, InformationCircleIcon, LinkCircleIcon, NotificationIcon, Search01Icon, CloudIcon, Server, AddCircleHalfDotIcon, GitBranchIcon, BubbleChatIcon, FolderOpenIcon, AlertIcon } from "@hugeicons/core-free-icons"
 import { cn } from "#/lib/utils"
 import ThemeToggle from "#/components/layout/ThemeToggle"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
@@ -12,6 +12,27 @@ import { NOTIFICATION_EVENTS } from "#/lib/types"
 import { api, type DetectResponse, type AgentProfile } from "#/lib/api"
 
 type SettingsTab = "general" | "notifications" | "integrations" | "runtimes" | "about"
+
+type IntegrationCategory = "code" | "comm" | "project" | "monitor"
+
+const integrationCategoryDefs: { id: IntegrationCategory; icon: IconSvgElement; labelKey: () => string }[] = [
+  { id: "code", icon: GitBranchIcon, labelKey: m.integration_cat_code },
+  { id: "comm", icon: BubbleChatIcon, labelKey: m.integration_cat_comm },
+  { id: "project", icon: FolderOpenIcon, labelKey: m.integration_cat_project },
+  { id: "monitor", icon: AlertIcon, labelKey: m.integration_cat_monitor },
+]
+
+const integrationItems: { category: IntegrationCategory; nameKey: () => string; descKey: () => string; connected?: boolean }[] = [
+  { category: "code", nameKey: m.integration_github, descKey: m.integration_github_desc, connected: true },
+  { category: "code", nameKey: m.integration_gitlab, descKey: m.integration_gitlab_desc },
+  { category: "comm", nameKey: m.integration_slack, descKey: m.integration_slack_desc },
+  { category: "comm", nameKey: m.integration_discord, descKey: m.integration_discord_desc },
+  { category: "project", nameKey: m.integration_linear, descKey: m.integration_linear_desc },
+  { category: "project", nameKey: m.integration_jira, descKey: m.integration_jira_desc },
+  { category: "project", nameKey: m.integration_notion, descKey: m.integration_notion_desc },
+  { category: "monitor", nameKey: m.integration_sentry, descKey: m.integration_sentry_desc },
+  { category: "monitor", nameKey: m.integration_pagerduty, descKey: m.integration_pagerduty_desc },
+]
 
 const tabDefs: { id: SettingsTab; icon: IconSvgElement; labelKey: () => string }[] = [
   { id: "general", icon: SlidersHorizontalIcon, labelKey: m.general },
@@ -31,8 +52,8 @@ interface SettingsDialogProps {
 }
 
 function ModelBadge({ model }: { model: string }) {
-  const isLocal = model.startsWith("local/")
   const isCloud = model.startsWith("cloud/")
+  const isLocal = model.startsWith("local/") || (!model.startsWith("cloud/") && !model.startsWith("http"))
   const label = isLocal ? m.model_local() : isCloud ? m.model_cloud() : model
   return (
     <span className={cn(
@@ -51,6 +72,7 @@ function ModelBadge({ model }: { model: string }) {
 export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAgentsRefresh, registeredAgents }: SettingsDialogProps) {
   const [localSettings, setLocalSettings] = useState<ControlSettings | null>(settings)
   const [activeTab, setActiveTab] = useState<SettingsTab>("general")
+  const [activeIntegrationCat, setActiveIntegrationCat] = useState<IntegrationCategory>("code")
   const [detectResult, setDetectResult] = useState<DetectResponse | null>(null)
   const [detecting, setDetecting] = useState(false)
   const [registering, setRegistering] = useState<string | null>(null)
@@ -401,23 +423,42 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
                 <p className="text-xs text-muted-foreground">
                   {m.connect_services_desc()}
                 </p>
+                {/* Category tabs */}
+                <div className="flex gap-1 rounded-lg border border-border/50 bg-muted/30 p-1">
+                  {integrationCategoryDefs.map((cat) => {
+                    const Icon = cat.icon
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setActiveIntegrationCat(cat.id)}
+                        className={cn(
+                          "flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                          activeIntegrationCat === cat.id
+                            ? "bg-accent text-accent-foreground shadow-sm"
+                            : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                        )}
+                      >
+                        <HugeiconsIcon icon={Icon} className="size-3.5" />
+                        {cat.labelKey()}
+                      </button>
+                    )
+                  })}
+                </div>
+                {/* Filtered integration list */}
                 <div className="space-y-2">
-                  {[
-                    { name: m.integration_github(), description: m.integration_github_desc(), connected: true },
-                    { name: m.integration_slack(), description: m.integration_slack_desc(), connected: false },
-                    { name: m.integration_linear(), description: m.integration_linear_desc(), connected: false },
-                    { name: m.integration_sentry(), description: m.integration_sentry_desc(), connected: false },
-                  ].map((integration) => (
+                  {integrationItems
+                    .filter((item) => item.category === activeIntegrationCat)
+                    .map((integration) => (
                     <div
-                      key={integration.name}
+                      key={integration.nameKey()}
                       className="flex items-center gap-3 rounded-lg border border-border/50 px-4 py-3"
                     >
                       <div className="flex size-8 items-center justify-center rounded-md bg-muted text-sm font-bold text-muted-foreground">
-                        {integration.name.charAt(0)}
+                        {integration.nameKey().charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="text-sm font-medium text-foreground">{integration.name}</span>
-                        <p className="text-xs text-muted-foreground">{integration.description}</p>
+                        <span className="text-sm font-medium text-foreground">{integration.nameKey()}</span>
+                        <p className="text-xs text-muted-foreground">{integration.descKey()}</p>
                       </div>
                       <button
                         className={cn(

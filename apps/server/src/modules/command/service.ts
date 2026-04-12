@@ -3,6 +3,10 @@ import { commands } from "../../db/schema"
 import { eq, desc } from "drizzle-orm"
 import { generateId, timestamp } from "../../utils"
 import { eventBus } from "../event/event-bus"
+import { GoalService } from "../goal/service"
+import { AgentService } from "../agent/service"
+import { StateService } from "../state/service"
+import { ActivityService } from "../activity/service"
 import type { Command, CommandStatus } from "../../types"
 
 export abstract class CommandService {
@@ -22,7 +26,38 @@ export abstract class CommandService {
 
     const command = CommandService.get(id)!
     eventBus.emit("command_sent", { commandId: id, instruction: data.instruction }, undefined)
+
+    CommandService.dispatch(command)
+
     return command
+  }
+
+  private static dispatch(command: Command): void {
+    CommandService.update(command.id, { status: "executing" })
+
+    const resolvedAgentNames = command.agentNames.length > 0
+      ? command.agentNames
+      : AgentService.list().filter(a => a.enabled && a.status !== "error").map(a => a.name)
+
+    const projectId = command.projectIds.length > 0 ? command.projectIds[0] : undefined
+
+    const goal = GoalService.create({
+      title: command.instruction,
+      description: `Created from command: ${command.instruction}`,
+      successCriteria: ["Code implements the instruction", "Tests pass", "Build succeeds"],
+      constraints: ["Follow existing code conventions"],
+      projectId,
+      commandId: command.id,
+      watchers: resolvedAgentNames,
+    })
+
+    CommandService.update(command.id, { goalId: goal.id })
+
+    for (const agentName of resolvedAgentNames) {
+      ActivityService.add(goal.id, agentName, "command_dispatched", command.instruction)
+    }
+
+    eventBus.emit("goal_created", { goalId: goal.id, commandId: command.id }, goal.id)
   }
 
   static get(id: string): Command | undefined {

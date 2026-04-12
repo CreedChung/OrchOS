@@ -14,6 +14,14 @@ const CAPABILITY_OPTIONS = [
   { value: "review", labelKey: "cap_review" },
 ] as const
 
+const CAPABILITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  write_code: { bg: "bg-blue-500/10", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/30" },
+  fix_bug: { bg: "bg-red-500/10", text: "text-red-600 dark:text-red-400", border: "border-red-500/30" },
+  run_tests: { bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/30" },
+  commit: { bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/30" },
+  review: { bg: "bg-violet-500/10", text: "text-violet-600 dark:text-violet-400", border: "border-violet-500/30" },
+}
+
 interface CreateAgentDialogProps {
   open: boolean
   onClose: () => void
@@ -166,21 +174,25 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
               {m.agent_capabilities()}
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {CAPABILITY_OPTIONS.map((cap) => (
-                <button
-                  key={cap.value}
-                  type="button"
-                  onClick={() => toggleCapability(cap.value)}
-                  className={cn(
-                    "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                    selectedCapabilities.includes(cap.value)
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-muted/30 text-muted-foreground hover:bg-accent"
-                  )}
-                >
-                  {(m as Record<string, () => string>)[cap.labelKey]()}
-                </button>
-              ))}
+              {CAPABILITY_OPTIONS.map((cap) => {
+                const colors = CAPABILITY_COLORS[cap.value]
+                const isSelected = selectedCapabilities.includes(cap.value)
+                return (
+                  <button
+                    key={cap.value}
+                    type="button"
+                    onClick={() => toggleCapability(cap.value)}
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                      isSelected
+                        ? `${colors.bg} ${colors.text} ${colors.border}`
+                        : "border-border bg-muted/30 text-muted-foreground hover:bg-accent"
+                    )}
+                  >
+                    {(m as Record<string, () => string>)[cap.labelKey]()}
+                  </button>
+                )
+              })}
             </div>
           </div>
 

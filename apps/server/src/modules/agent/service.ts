@@ -149,6 +149,11 @@ export abstract class AgentService {
   }
 
   static async getCurrentModel(agentId: string) {
-    return executor.getAgentCurrentModel(agentId)
+    const result = await executor.getAgentCurrentModel(agentId)
+    const agent = AgentService.list().find(a => a.runtimeId === agentId || a.id === agentId)
+    if (agent && result.model && result.source === "cli") {
+      db.update(agents).set({ currentModel: result.model }).where(eq(agents.id, agent.id)).run()
+    }
+    return result
   }
 }
