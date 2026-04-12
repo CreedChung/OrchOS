@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { cn } from "#/lib/utils"
-import { ChevronDown, ChevronRight, Settings, ToggleLeft, ToggleRight } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ChevronDown, ChevronRight, Settings02Icon, ToggleLeft, ToggleRight } from "@hugeicons/core-free-icons"
 import type { ControlSettings } from "#/lib/types"
 import { api } from "#/lib/api"
 
@@ -30,9 +31,9 @@ export function ControlPanel({ settings, onSettingsChange }: ControlPanelProps) 
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center gap-2 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent/50"
       >
-        <Settings className="size-3.5" />
+        <HugeiconsIcon icon={Settings02Icon} className="size-3.5" />
         <span className="flex-1 text-left">Control Panel</span>
-        {expanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+        {expanded ? <HugeiconsIcon icon={ChevronDown} className="size-3" /> : <HugeiconsIcon icon={ChevronRight} className="size-3" />}
       </button>
 
       {expanded && settings && (
@@ -45,9 +46,9 @@ export function ControlPanel({ settings, onSettingsChange }: ControlPanelProps) 
               className="flex items-center gap-1.5 text-sm"
             >
               {settings.autoCommit ? (
-                <ToggleRight className="size-5 text-emerald-500" />
+                <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
               ) : (
-                <ToggleLeft className="size-5 text-muted-foreground" />
+                <HugeiconsIcon icon={ToggleLeft} className="size-5 text-muted-foreground" />
               )}
               <span className={cn("text-xs", settings.autoCommit ? "text-emerald-600" : "text-muted-foreground")}>
                 {settings.autoCommit ? "ON" : "OFF"}
@@ -63,9 +64,9 @@ export function ControlPanel({ settings, onSettingsChange }: ControlPanelProps) 
               className="flex items-center gap-1.5 text-sm"
             >
               {settings.autoFix ? (
-                <ToggleRight className="size-5 text-emerald-500" />
+                <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
               ) : (
-                <ToggleLeft className="size-5 text-muted-foreground" />
+                <HugeiconsIcon icon={ToggleLeft} className="size-5 text-muted-foreground" />
               )}
               <span className={cn("text-xs", settings.autoFix ? "text-emerald-600" : "text-muted-foreground")}>
                 {settings.autoFix ? "ON" : "OFF"}

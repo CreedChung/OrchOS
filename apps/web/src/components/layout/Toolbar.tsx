@@ -1,6 +1,6 @@
-import { cn } from "#/lib/utils"
 import { Button } from "#/components/ui/button"
-import { Search, X, Send, Plus, PanelRightOpen, PanelRightClose } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Search01Icon, Cancel01Icon, SentIcon, Add01Icon, PanelRight, PanelLeft } from "@hugeicons/core-free-icons"
 import type { SidebarView } from "#/lib/types"
 
 interface ToolbarProps {
@@ -21,7 +21,7 @@ export function Toolbar({ activeView, onNewCommand, onCreateGoal, searchQuery, o
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
       {/* Search */}
       <div className="flex flex-1 items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 max-w-xs">
-        <Search className="size-3.5 shrink-0 text-muted-foreground" />
+        <HugeiconsIcon icon={Search01Icon} className="size-3.5 shrink-0 text-muted-foreground" />
         <input
           type="text"
           value={searchQuery}
@@ -34,7 +34,7 @@ export function Toolbar({ activeView, onNewCommand, onCreateGoal, searchQuery, o
             onClick={() => onSearchChange("")}
             className="shrink-0 text-muted-foreground hover:text-foreground"
           >
-            <X className="size-3" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
           </button>
         )}
       </div>
@@ -46,13 +46,13 @@ export function Toolbar({ activeView, onNewCommand, onCreateGoal, searchQuery, o
         <div className="flex items-center gap-1.5">
           {showNewGoal && (
             <Button variant="outline" size="xs" onClick={onCreateGoal}>
-              <Plus className="size-3.5" />
+              <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
               New Goal
             </Button>
           )}
           {showNewCommand && (
             <Button size="xs" onClick={onNewCommand}>
-              <Send className="size-3.5" />
+              <HugeiconsIcon icon={SentIcon} className="size-3.5" />
               Command
             </Button>
           )}
@@ -67,9 +67,9 @@ export function Toolbar({ activeView, onNewCommand, onCreateGoal, searchQuery, o
         title={activityPanelOpen ? "Close activity panel" : "Open activity panel"}
       >
         {activityPanelOpen ? (
-          <PanelRightClose className="size-4" />
+          <HugeiconsIcon icon={PanelLeft} className="size-4" />
         ) : (
-          <PanelRightOpen className="size-4" />
+          <HugeiconsIcon icon={PanelRight} className="size-4" />
         )}
       </Button>
     </div>

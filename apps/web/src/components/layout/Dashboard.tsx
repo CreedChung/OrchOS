@@ -1,16 +1,17 @@
 import { useState, useCallback, useEffect } from "react"
 import { cn } from "#/lib/utils"
-import { Sidebar } from "#/components/Sidebar"
-import { ProblemInbox } from "#/components/ProblemInbox"
-import { StateBoard } from "#/components/StateBoard"
-import { ActivityPanel } from "#/components/ActivityPanel"
-import { CommandBar } from "#/components/CommandBar"
-import { CreateGoalDialog } from "#/components/CreateGoalDialog"
-import { CreateRuleDialog } from "#/components/CreateRuleDialog"
-import { SettingsDialog } from "#/components/SettingsDialog"
-import { GoalActions } from "#/components/GoalActions"
-import { Toolbar } from "#/components/Toolbar"
-import { Target, Shield, ArrowRight, ToggleLeft, ToggleRight, X, Circle, Wrench, Send } from "lucide-react"
+import { Sidebar } from "#/components/layout/Sidebar"
+import { ProblemInbox } from "#/components/panels/ProblemInbox"
+import { StateBoard } from "#/components/panels/StateBoard"
+import { ActivityPanel } from "#/components/panels/ActivityPanel"
+import { CommandBar } from "#/components/panels/CommandBar"
+import { CreateGoalDialog } from "#/components/dialogs/CreateGoalDialog"
+import { CreateRuleDialog } from "#/components/dialogs/CreateRuleDialog"
+import { SettingsDialog } from "#/components/dialogs/SettingsDialog"
+import { GoalActions } from "#/components/panels/GoalActions"
+import { Toolbar } from "#/components/layout/Toolbar"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Target01Icon, Shield01Icon, ArrowRight01Icon, ToggleLeft, ToggleRight, Cancel01Icon, Circle, Wrench01Icon, SentIcon } from "@hugeicons/core-free-icons"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty"
 import { Button } from "#/components/ui/button"
 import { api } from "#/lib/api"
@@ -95,7 +96,8 @@ function AgentDetailView({
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                   {activeAgent.model}
                 </span>
-                <Circle
+                <HugeiconsIcon
+                  icon={Circle}
                   className={cn(
                     "size-2 fill-current",
                     activeAgent.status === "active"
@@ -123,7 +125,7 @@ function AgentDetailView({
                 key={cap}
                 className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-accent/30 px-2.5 py-1 text-xs text-foreground"
               >
-                <Wrench className="size-3 text-primary/60" />
+                <HugeiconsIcon icon={Wrench01Icon} className="size-3 text-primary/60" />
                 {cap.replace(/_/g, " ")}
               </span>
             ))}
@@ -146,14 +148,14 @@ function AgentDetailView({
                     : "border-border/30 bg-muted/20 opacity-60"
                 )}
               >
-                <Shield className={cn("size-4 shrink-0", rule.enabled ? "text-primary" : "text-muted-foreground")} />
+                <HugeiconsIcon icon={Shield01Icon} className={cn("size-4 shrink-0", rule.enabled ? "text-primary" : "text-muted-foreground")} />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-foreground">{rule.name}</span>
                   <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                     <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">
                       {conditionLabels[rule.condition] || rule.condition}
                     </span>
-                    <ArrowRight className="size-2.5" />
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="size-2.5" />
                     <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">
                       {actionLabels[rule.action] || rule.action}
                     </span>
@@ -165,9 +167,9 @@ function AgentDetailView({
                   title={rule.enabled ? "Disable rule" : "Enable rule"}
                 >
                   {rule.enabled ? (
-                    <ToggleRight className="size-5 text-emerald-500" />
+                    <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
                   ) : (
-                    <ToggleLeft className="size-5" />
+                    <HugeiconsIcon icon={ToggleLeft} className="size-5" />
                   )}
                 </button>
                 <button
@@ -177,13 +179,13 @@ function AgentDetailView({
                   className="shrink-0 text-muted-foreground hover:text-destructive"
                   title="Delete rule"
                 >
-                  <X className="size-3.5" />
+                  <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
                 </button>
               </div>
             ))}
             {agentRules.length === 0 && (
               <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
-                <Shield className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+                <HugeiconsIcon icon={Shield01Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
                 <p className="text-sm text-muted-foreground">No rules yet</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">
                   Rules can be created from Inbox problems
@@ -548,7 +550,7 @@ export function Dashboard() {
           <Empty className="flex-1">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Target />
+                <HugeiconsIcon icon={Target01Icon} />
               </EmptyMedia>
               <EmptyTitle>No goal selected</EmptyTitle>
               <EmptyDescription>Select a goal from the sidebar or send a command to get started.</EmptyDescription>
@@ -556,7 +558,7 @@ export function Dashboard() {
             <EmptyContent>
               <div className="flex gap-2">
                 <Button onClick={() => setShowCommandBar(true)}>
-                  <Send className="size-3.5 mr-1.5" />
+                  <HugeiconsIcon icon={SentIcon} className="size-3.5 mr-1.5" />
                   Send Command
                 </Button>
                 <Button variant="outline" onClick={() => setShowCreateDialog(true)}>

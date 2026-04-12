@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { cn } from "#/lib/utils"
-import { Send, Bot, FolderGit2, X, ChevronDown } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { SentIcon, Robot02Icon, FolderGitIcon, Cancel01Icon } from "@hugeicons/core-free-icons"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,14 +58,14 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-border">
           <div className="flex items-center gap-2">
-            <Send className="size-4 text-primary" />
+            <HugeiconsIcon icon={SentIcon} className="size-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">New Command</h2>
           </div>
           <button
             onClick={onClose}
             className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <X className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </button>
         </div>
 
@@ -104,7 +105,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
                         : "border-border/50 bg-card text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                     )}
                   >
-                    <Bot className="size-3" />
+                    <HugeiconsIcon icon={Robot02Icon} className="size-3" />
                     {agent.name}
                     {agent.status === "active" && (
                       <span className="size-1.5 rounded-full bg-emerald-500" />
@@ -138,7 +139,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
                         : "border-border/50 bg-card text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                     )}
                   >
-                    <FolderGit2 className="size-3" />
+                    <HugeiconsIcon icon={FolderGitIcon} className="size-3" />
                     {project.name}
                   </button>
                 )
@@ -172,7 +173,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 )}
               >
-                <Send className="size-3.5" />
+                <HugeiconsIcon icon={SentIcon} className="size-3.5" />
                 Send
               </button>
             </div>

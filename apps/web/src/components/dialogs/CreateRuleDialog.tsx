@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { X, ArrowRight, Shield } from "lucide-react"
-import { cn } from "#/lib/utils"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Cancel01Icon, ArrowRight01Icon, Shield01Icon } from "@hugeicons/core-free-icons"
 import type { Problem } from "#/lib/types"
 
 interface CreateRuleDialogProps {
@@ -72,14 +72,14 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="size-4 text-primary" />
+            <HugeiconsIcon icon={Shield01Icon} className="size-4 text-primary" />
             <h2 className="text-lg font-semibold text-foreground">Create Rule</h2>
           </div>
           <button
             onClick={onClose}
             className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <X className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </button>
         </div>
 
@@ -123,7 +123,7 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-              <ArrowRight className="size-4 text-muted-foreground shrink-0" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="size-4 text-muted-foreground shrink-0" />
               <select
                 value={action}
                 onChange={(e) => setAction(e.target.value)}

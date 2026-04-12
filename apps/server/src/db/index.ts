@@ -45,4 +45,6 @@ function migrate(sqlite: Database) {
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_problems_goal_id ON problems(goal_id)") } catch {}
   try { sqlite.run("CREATE TABLE IF NOT EXISTS commands (id TEXT PRIMARY KEY, instruction TEXT NOT NULL, agent_names TEXT NOT NULL DEFAULT '[]', project_ids TEXT NOT NULL DEFAULT '[]', goal_id TEXT REFERENCES goals(id), status TEXT NOT NULL DEFAULT 'sent', created_at TEXT NOT NULL)") } catch {}
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_commands_goal_id ON commands(goal_id)") } catch {}
+  try { sqlite.run("ALTER TABLE agents ADD COLUMN cli_command TEXT") } catch {}
+  try { sqlite.run("ALTER TABLE agents ADD COLUMN current_model TEXT") } catch {}
 }

@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { cn } from "#/lib/utils"
 import { ScrollArea } from "#/components/ui/scroll-area"
-import { Shield, Plus, Trash2, ToggleLeft, ToggleRight, X, ArrowRight } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Shield01Icon, Add01Icon, Delete02Icon, ToggleLeft, ToggleRight, Cancel01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import type { Rule, Problem } from "#/lib/types"
 
 interface RulesPanelProps {
@@ -47,7 +48,7 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
     <div className="flex flex-1 flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
-          <Shield className="size-4 text-muted-foreground" />
+          <HugeiconsIcon icon={Shield01Icon} className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold text-foreground">Automation Rules</h2>
           <span className="text-xs text-muted-foreground">({rules.filter((r) => r.enabled).length} active)</span>
         </div>
@@ -55,7 +56,7 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
           onClick={() => setShowCreate(!showCreate)}
           className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          <Plus className="size-3" />
+          <HugeiconsIcon icon={Add01Icon} className="size-3" />
           New Rule
         </button>
       </div>
@@ -66,7 +67,7 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-foreground">Create Rule</span>
             <button onClick={() => setShowCreate(false)} className="text-muted-foreground hover:text-foreground">
-              <X className="size-3.5" />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
             </button>
           </div>
           <input
@@ -88,7 +89,7 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
                 <option key={value} value={value}>{label}</option>
               ))}
             </select>
-            <ArrowRight className="size-3 text-muted-foreground" />
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-3 text-muted-foreground" />
             <select
               value={action}
               onChange={(e) => setAction(e.target.value)}
@@ -125,14 +126,14 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
                 rule.enabled ? "bg-card" : "bg-muted/30 opacity-60"
               )}
             >
-              <Shield className={cn("size-4 shrink-0", rule.enabled ? "text-primary" : "text-muted-foreground")} />
+              <HugeiconsIcon icon={Shield01Icon} className={cn("size-4 shrink-0", rule.enabled ? "text-primary" : "text-muted-foreground")} />
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-medium text-foreground">{rule.name}</span>
                 <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">
                     {conditionLabels[rule.condition] || rule.condition}
                   </span>
-                  <ArrowRight className="size-2.5" />
+                  <HugeiconsIcon icon={ArrowRight01Icon} className="size-2.5" />
                   <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">
                     {actionLabels[rule.action] || rule.action}
                   </span>
@@ -144,9 +145,9 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
                 title={rule.enabled ? "Disable rule" : "Enable rule"}
               >
                 {rule.enabled ? (
-                  <ToggleRight className="size-5 text-emerald-500" />
+                  <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
                 ) : (
-                  <ToggleLeft className="size-5" />
+                  <HugeiconsIcon icon={ToggleLeft} className="size-5" />
                 )}
               </button>
               <button
@@ -156,13 +157,13 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
                 className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
                 title="Delete rule"
               >
-                <Trash2 className="size-3.5" />
+                <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
               </button>
             </div>
           ))}
           {rules.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Shield className="size-8 text-muted-foreground/30 mb-2" />
+              <HugeiconsIcon icon={Shield01Icon} className="size-8 text-muted-foreground/30 mb-2" />
               <p className="text-sm text-muted-foreground">No rules yet</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
                 Create rules to auto-handle problems

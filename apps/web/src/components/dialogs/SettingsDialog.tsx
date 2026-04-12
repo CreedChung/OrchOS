@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react"
-import { X, Settings2, Bot, Info } from "lucide-react"
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
+import { Cancel01Icon, Settings02Icon, Robot02Icon, InformationCircleIcon } from "@hugeicons/core-free-icons"
 import { cn } from "#/lib/utils"
-import ThemeToggle from "#/components/ThemeToggle"
+import ThemeToggle from "#/components/layout/ThemeToggle"
 import type { ControlSettings, AgentProfile } from "#/lib/types"
 import { api } from "#/lib/api"
 
 type SettingsTab = "general" | "agents" | "about"
 
-const tabs: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
-  { id: "general", label: "General", icon: Settings2 },
-  { id: "agents", label: "Agents", icon: Bot },
-  { id: "about", label: "About", icon: Info },
+const tabs: { id: SettingsTab; label: string; icon: IconSvgElement }[] = [
+  { id: "general", label: "General", icon: Settings02Icon },
+  { id: "agents", label: "Agents", icon: Robot02Icon },
+  { id: "about", label: "About", icon: InformationCircleIcon },
 ]
 
 interface SettingsDialogProps {
@@ -59,7 +60,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
         {/* Left: Tabs */}
         <div className="flex w-48 shrink-0 flex-col border-r border-border bg-muted/30">
           <div className="flex h-12 items-center px-4">
-            <Settings2 className="mr-2 size-4 text-muted-foreground" />
+            <HugeiconsIcon icon={Settings02Icon} className="mr-2 size-4 text-muted-foreground" />
             <span className="text-sm font-semibold text-foreground">Settings</span>
           </div>
           <nav className="flex-1 space-y-0.5 px-2 py-1">
@@ -76,7 +77,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
                       : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                   )}
                 >
-                  <Icon className="size-4" />
+                  <HugeiconsIcon icon={Icon} className="size-4" />
                   {tab.label}
                 </button>
               )
@@ -98,7 +99,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
               onClick={onClose}
               className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
-              <X className="size-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
             </button>
           </div>
 
@@ -203,7 +204,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, agen
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Settings2 className="size-5" />
+                    <HugeiconsIcon icon={Settings02Icon} className="size-5" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">OrchOS</p>

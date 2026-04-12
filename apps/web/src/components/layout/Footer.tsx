@@ -2,19 +2,21 @@ export default function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="mt-20 border-t border-[var(--line)] px-4 pb-14 pt-10 text-[var(--sea-ink-soft)]">
-      <div className="page-wrap flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+    <footer className="mt-20 border-t border-border px-4 pb-14 pt-10 text-muted-foreground">
+      <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 text-center sm:flex-row sm:text-left">
         <p className="m-0 text-sm">
           &copy; {year} OrchOS. All rights reserved.
         </p>
-        <p className="island-kicker m-0">Built with OrchOS</p>
+        <p className="m-0 text-xs font-bold uppercase tracking-widest text-primary">
+          Built with OrchOS
+        </p>
       </div>
       <div className="mt-4 flex justify-center gap-4">
         <a
           href="https://github.com/orchos"
           target="_blank"
           rel="noreferrer"
-          className="rounded-xl p-2 text-[var(--sea-ink-soft)] transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
+          className="rounded-xl p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
         >
           <span className="sr-only">Follow OrchOS on GitHub</span>
           <svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32">

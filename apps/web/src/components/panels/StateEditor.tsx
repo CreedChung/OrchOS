@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { cn } from "#/lib/utils"
-import { Edit2, Check, X } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Edit02Icon, Tick02Icon, Cancel01Icon } from "@hugeicons/core-free-icons"
 import type { Status, StateItem } from "#/lib/types"
 
 interface StateEditorProps {
@@ -62,14 +63,14 @@ export function StateEditor({ state, onStatusChange }: StateEditorProps) {
           className="rounded p-1 text-emerald-500 hover:bg-emerald-500/10"
           title="Save"
         >
-          <Check className="size-3.5" />
+          <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
         </button>
         <button
           onClick={handleCancel}
           className="rounded p-1 text-red-500 hover:bg-red-500/10"
           title="Cancel"
         >
-          <X className="size-3.5" />
+          <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
         </button>
       </div>
     )
@@ -94,7 +95,7 @@ export function StateEditor({ state, onStatusChange }: StateEditorProps) {
           className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           title="Edit status"
         >
-          <Edit2 className="size-3.5" />
+          <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
         </button>
       </div>
     </div>

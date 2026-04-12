@@ -44,6 +44,8 @@ export interface AgentProfile {
   status: "idle" | "active" | "error"
   model: string
   enabled: boolean
+  cliCommand?: string
+  currentModel?: string
 }
 
 export interface StateEntry {

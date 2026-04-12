@@ -1,6 +1,7 @@
 import { ScrollArea } from "#/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
-import { Bot, Brain, ArrowRight, CheckCircle2, XCircle, Clock, FileDiff, MessageSquare, Workflow } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Robot02Icon, AiBrain01Icon, ArrowRight01Icon, CheckmarkCircleIcon, CancelCircleIcon, Clock01Icon, FileCodeIcon, Message01Icon, Workflow } from "@hugeicons/core-free-icons"
 import { cn } from "#/lib/utils"
 import type { ActivityEntry } from "#/lib/types"
 
@@ -22,15 +23,15 @@ function AcpFlow({ activities }: { activities: ActivityEntry[] }) {
       {activities.slice(0, 8).map((activity, idx) => {
         const isSuccess = activity.detail?.includes("pass") || activity.detail?.includes("success") || activity.detail?.includes("created")
         const isFailed = activity.detail?.includes("fail") || activity.detail?.includes("error") || activity.detail?.includes("rejected")
-        const ResultIcon = isSuccess ? CheckCircle2 : isFailed ? XCircle : Clock
+        const ResultIcon = isSuccess ? CheckmarkCircleIcon : isFailed ? CancelCircleIcon : Clock01Icon
 
         return (
           <div key={activity.id} className="flex items-start gap-2 py-1">
             <div className="flex flex-col items-center">
               <div className="flex items-center gap-1">
-                <Bot className={cn("size-3", isSuccess ? "text-emerald-500" : isFailed ? "text-red-500" : "text-muted-foreground")} />
-                <ArrowRight className="size-2 text-muted-foreground/50" />
-                <ResultIcon className={cn("size-3", isSuccess ? "text-emerald-500" : isFailed ? "text-red-500" : "text-muted-foreground")} />
+                <HugeiconsIcon icon={Robot02Icon} className={cn("size-3", isSuccess ? "text-emerald-500" : isFailed ? "text-red-500" : "text-muted-foreground")} />
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-2 text-muted-foreground/50" />
+                <HugeiconsIcon icon={ResultIcon} className={cn("size-3", isSuccess ? "text-emerald-500" : isFailed ? "text-red-500" : "text-muted-foreground")} />
               </div>
               {idx < activities.length - 1 && (
                 <div className="mt-0.5 h-3 w-px bg-border/40" />
@@ -52,7 +53,7 @@ function MessagesView({ activities }: { activities: ActivityEntry[] }) {
   if (activities.length === 0) {
     return (
       <div className="py-8 text-center">
-        <MessageSquare className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+        <HugeiconsIcon icon={Message01Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
         <p className="text-xs text-muted-foreground">No messages yet</p>
       </div>
     )
@@ -64,7 +65,7 @@ function MessagesView({ activities }: { activities: ActivityEntry[] }) {
         <div key={activity.id} className="group flex gap-2.5 py-2">
           <div className="flex flex-col items-center">
             <div className="flex size-6 items-center justify-center rounded-full bg-primary/10">
-              <Bot className="size-3 text-primary/70" />
+              <HugeiconsIcon icon={Robot02Icon} className="size-3 text-primary/70" />
             </div>
           </div>
           <div className="flex-1 space-y-1">
@@ -79,7 +80,7 @@ function MessagesView({ activities }: { activities: ActivityEntry[] }) {
             {activity.reasoning && (
               <div className="mt-1.5 rounded-md border border-border/50 bg-accent/30 px-2.5 py-1.5">
                 <div className="mb-1 flex items-center gap-1">
-                  <Brain className="size-3 text-primary/70" />
+                  <HugeiconsIcon icon={AiBrain01Icon} className="size-3 text-primary/70" />
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">Reasoning</span>
                 </div>
                 <p className="text-[11px] leading-relaxed text-muted-foreground">{activity.reasoning}</p>
@@ -98,7 +99,7 @@ function DiffView({ activities }: { activities: ActivityEntry[] }) {
   if (activitiesWithDiff.length === 0) {
     return (
       <div className="py-8 text-center">
-        <FileDiff className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+        <HugeiconsIcon icon={FileCodeIcon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
         <p className="text-xs text-muted-foreground">No diffs yet</p>
         <p className="text-[10px] text-muted-foreground/60 mt-1">Diffs appear when agents modify code</p>
       </div>
@@ -110,7 +111,7 @@ function DiffView({ activities }: { activities: ActivityEntry[] }) {
       {activitiesWithDiff.map((activity) => (
         <div key={activity.id} className="rounded-md border border-border/50 overflow-hidden">
           <div className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 border-b border-border/50">
-            <Bot className="size-3 text-primary/70" />
+            <HugeiconsIcon icon={Robot02Icon} className="size-3 text-primary/70" />
             <span className="text-[11px] font-medium text-foreground/80">{activity.agent}</span>
             <span className="text-[10px] text-muted-foreground">{activity.action}</span>
             <span className="ml-auto text-[10px] tabular-nums text-muted-foreground">{activity.timestamp}</span>
@@ -134,7 +135,7 @@ export function ActivityPanel({ activities, collapsed, onToggle }: ActivityPanel
       {/* Header */}
       <div className="flex h-11 items-center border-b border-border px-3">
         <div className="flex items-center gap-2">
-          <Bot className="size-3.5 text-muted-foreground" />
+          <HugeiconsIcon icon={Robot02Icon} className="size-3.5 text-muted-foreground" />
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Activity
           </span>
@@ -144,17 +145,17 @@ export function ActivityPanel({ activities, collapsed, onToggle }: ActivityPanel
       {/* Tab bar */}
       <Tabs defaultValue="flow" className="flex flex-1 flex-col">
         <div className="flex items-center px-3 py-2">
-          <TabsList className="w-full">
+          <TabsList>
             <TabsTrigger value="flow">
-              <Workflow className="size-3" />
+              <HugeiconsIcon icon={Workflow} className="size-3" />
               Flow
             </TabsTrigger>
             <TabsTrigger value="messages">
-              <MessageSquare className="size-3" />
+              <HugeiconsIcon icon={Message01Icon} className="size-3" />
               Messages
             </TabsTrigger>
             <TabsTrigger value="diff">
-              <FileDiff className="size-3" />
+              <HugeiconsIcon icon={FileCodeIcon} className="size-3" />
               Diff
             </TabsTrigger>
           </TabsList>
@@ -190,7 +191,7 @@ export function ActivityPanel({ activities, collapsed, onToggle }: ActivityPanel
               ))}
               {activities.length === 0 && (
                 <div className="py-8 text-center">
-                  <Bot className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+                  <HugeiconsIcon icon={Robot02Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
                   <p className="text-xs text-muted-foreground">No activity yet</p>
                 </div>
               )}

@@ -1,24 +1,25 @@
 import { cn } from "#/lib/utils"
 import { Badge } from "#/components/ui/badge"
-import { StatusIcon } from "#/components/StatusIcon"
+import { StatusIcon } from "#/components/panels/StatusIcon"
 import type { Goal, StateItem as StateItemType, Artifact, ActivityEntry, Status, Project, Command } from "#/lib/types"
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import {
-  FileCode2,
-  GitPullRequest,
-  TestTube2,
-  ScrollText,
-  Pencil,
-  FolderGit2,
-  Bot,
-  Flame,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Zap,
-  Send,
-  Eye,
-} from "lucide-react"
+  FileCodeIcon,
+  GitPullRequestIcon,
+  TestTube01Icon,
+  DocumentCodeIcon,
+  Edit02Icon,
+  FolderGitIcon,
+  Robot02Icon,
+  Fire02Icon,
+  Alert01Icon,
+  CheckmarkCircleIcon,
+  CancelCircleIcon,
+  Clock01Icon,
+  ZapIcon,
+  SentIcon,
+  EyeIcon,
+} from "@hugeicons/core-free-icons"
 
 interface StateBoardProps {
   goal: Goal
@@ -33,11 +34,11 @@ interface StateBoardProps {
   onAutoModeToggle?: () => void
 }
 
-const artifactIconMap: Record<Artifact["type"], React.ElementType> = {
-  file: FileCode2,
-  pr: GitPullRequest,
-  test: TestTube2,
-  log: ScrollText,
+const artifactIconMap: Record<Artifact["type"], IconSvgElement> = {
+  file: FileCodeIcon,
+  pr: GitPullRequestIcon,
+  test: TestTube01Icon,
+  log: DocumentCodeIcon,
 }
 
 const artifactStatusClass: Record<Status, string> = {
@@ -55,13 +56,13 @@ const goalStatusVariant: Record<Goal["status"], "outline" | "default" | "seconda
   paused: "secondary",
 }
 
-const stateStatusIcon: Record<Status, React.ElementType> = {
-  success: CheckCircle2,
-  failed: XCircle,
-  error: XCircle,
-  pending: Clock,
-  running: Zap,
-  warning: AlertTriangle,
+const stateStatusIcon: Record<Status, IconSvgElement> = {
+  success: CheckmarkCircleIcon,
+  failed: CancelCircleIcon,
+  error: CancelCircleIcon,
+  pending: Clock01Icon,
+  running: ZapIcon,
+  warning: Alert01Icon,
 }
 
 const stateStatusColor: Record<Status, string> = {
@@ -116,7 +117,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
           {command && (
             <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
               <div className="flex items-center gap-2 mb-1">
-                <Send className={cn("size-3.5", commandStatusColor[command.status] || "text-muted-foreground")} />
+                <HugeiconsIcon icon={SentIcon} className={cn("size-3.5", commandStatusColor[command.status] || "text-muted-foreground")} />
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Command</span>
                 <Badge variant="outline" className="text-[9px] uppercase tracking-wider px-1.5 py-0">
                   {command.status}
@@ -125,7 +126,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
               <p className="text-sm text-foreground/90">{command.instruction}</p>
               {command.agentNames.length > 0 && (
                 <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                  <Bot className="size-3 text-muted-foreground" />
+                  <HugeiconsIcon icon={Robot02Icon} className="size-3 text-muted-foreground" />
                   {command.agentNames.map((name) => (
                     <span key={name} className="inline-flex items-center rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-foreground/70">
                       {name}
@@ -142,7 +143,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
             if (!project) return null
             return (
               <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <FolderGit2 className="size-3" />
+                <HugeiconsIcon icon={FolderGitIcon} className="size-3" />
                 <span>{project.name}</span>
                 <span className="text-muted-foreground/50">·</span>
                 <span className="font-mono text-[10px]">{project.path}</span>
@@ -153,7 +154,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
           {/* Watchers */}
           {goal.watchers.length > 0 && (
             <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Eye className="size-3" />
+              <HugeiconsIcon icon={EyeIcon} className="size-3" />
               {goal.watchers.map((w) => (
                 <span key={w} className="inline-flex items-center rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-foreground/70">
                   {w}
@@ -240,7 +241,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
               problems.critical > 0 ? "border-red-500/20 bg-red-500/5" : "border-border/50 bg-card"
             )}>
               <div className="flex items-center gap-2">
-                <Flame className={cn("size-4", problems.critical > 0 ? "text-red-500" : "text-muted-foreground/30")} />
+                <HugeiconsIcon icon={Fire02Icon} className={cn("size-4", problems.critical > 0 ? "text-red-500" : "text-muted-foreground/30")} />
                 <span className="text-2xl font-bold tabular-nums text-foreground">{problems.critical}</span>
               </div>
               <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Critical</span>
@@ -250,7 +251,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
               problems.warning > 0 ? "border-amber-500/20 bg-amber-500/5" : "border-border/50 bg-card"
             )}>
               <div className="flex items-center gap-2">
-                <AlertTriangle className={cn("size-4", problems.warning > 0 ? "text-amber-500" : "text-muted-foreground/30")} />
+                <HugeiconsIcon icon={Alert01Icon} className={cn("size-4", problems.warning > 0 ? "text-amber-500" : "text-muted-foreground/30")} />
                 <span className="text-2xl font-bold tabular-nums text-foreground">{problems.warning}</span>
               </div>
               <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Warning</span>
@@ -261,9 +262,9 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
             )}>
               <div className="flex items-center gap-2">
                 {failedStates.length === 0 && successStates.length > 0 ? (
-                  <CheckCircle2 className="size-4 text-emerald-500" />
+                  <HugeiconsIcon icon={CheckmarkCircleIcon} className="size-4 text-emerald-500" />
                 ) : (
-                  <AlertTriangle className="size-4 text-muted-foreground/30" />
+                  <HugeiconsIcon icon={Alert01Icon} className="size-4 text-muted-foreground/30" />
                 )}
                 <span className="text-2xl font-bold tabular-nums text-foreground">
                   {states.length > 0 ? `${successStates.length}/${states.length}` : "—"}
@@ -294,7 +295,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <StatusIcon className={cn("size-4 shrink-0", stateStatusColor[state.status])} />
+                    <HugeiconsIcon icon={StatusIcon} className={cn("size-4 shrink-0", stateStatusColor[state.status])} />
                     <span className="text-sm font-medium text-foreground">{state.label}</span>
                     <span className={cn(
                       "ml-auto text-xs font-semibold uppercase tracking-wider",
@@ -345,7 +346,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
                     key={artifact.id}
                     className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-4 py-2.5 transition-colors hover:bg-accent/50"
                   >
-                    <Icon className="size-4 shrink-0 text-muted-foreground" />
+                    <HugeiconsIcon icon={Icon} className="size-4 shrink-0 text-muted-foreground" />
                     <span className="min-w-0 text-sm font-medium text-foreground">
                       {artifact.name}
                     </span>
@@ -358,7 +359,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
                         )}
                       >
                         {artifact.detail === "modified" && (
-                          <Pencil className="mr-0.5 inline size-3" />
+                          <HugeiconsIcon icon={Edit02Icon} className="mr-0.5 inline size-3" />
                         )}
                         {artifact.detail}
                       </span>
@@ -389,7 +390,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
                         "flex size-5 items-center justify-center rounded-full",
                         isSuccess ? "bg-emerald-500/10" : isFailed ? "bg-red-500/10" : "bg-muted"
                       )}>
-                        <Bot className={cn(
+                        <HugeiconsIcon icon={Robot02Icon} className={cn(
                           "size-3",
                           isSuccess ? "text-emerald-500" : isFailed ? "text-red-500" : "text-muted-foreground"
                         )} />

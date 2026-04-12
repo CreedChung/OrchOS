@@ -2,23 +2,23 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import { cn } from "#/lib/utils"
 import { ScrollArea } from "#/components/ui/scroll-area"
 import { Badge } from "#/components/ui/badge"
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import {
-  Flame,
-  AlertTriangle,
-  Info,
-  CheckSquare,
-  Square,
-  Archive,
-  Wrench,
-  EyeOff,
-  UserPlus,
-  Shield,
+  Fire02Icon,
+  Alert01Icon,
+  InformationCircleIcon,
+  CheckmarkBadge01Icon,
+  Square01Icon,
+  Archive01Icon,
+  Wrench01Icon,
+  ViewOffIcon,
+  UserAdd01Icon,
+  Shield01Icon,
   MoreHorizontal,
-  Bot,
+  Robot02Icon,
   ChevronDown,
   ChevronRight,
-  Brain,
-} from "lucide-react"
+} from "@hugeicons/core-free-icons"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,23 +36,23 @@ interface ProblemInboxProps {
   onCreateRule: (problem: Problem) => void
 }
 
-const priorityConfig: Record<ProblemPriority, { icon: React.ElementType; label: string; colorClass: string; bgClass: string; borderClass: string }> = {
+const priorityConfig: Record<ProblemPriority, { icon: IconSvgElement; label: string; colorClass: string; bgClass: string; borderClass: string }> = {
   critical: {
-    icon: Flame,
+    icon: Fire02Icon,
     label: "Critical",
     colorClass: "text-red-600 dark:text-red-400",
     bgClass: "bg-red-500/5",
     borderClass: "border-red-500/20",
   },
   warning: {
-    icon: AlertTriangle,
+    icon: Alert01Icon,
     label: "Warning",
     colorClass: "text-amber-600 dark:text-amber-400",
     bgClass: "bg-amber-500/5",
     borderClass: "border-amber-500/20",
   },
   info: {
-    icon: Info,
+    icon: InformationCircleIcon,
     label: "Info",
     colorClass: "text-blue-600 dark:text-blue-400",
     bgClass: "bg-blue-500/5",
@@ -60,15 +60,15 @@ const priorityConfig: Record<ProblemPriority, { icon: React.ElementType; label: 
   },
 }
 
-const actionIconMap: Record<string, React.ElementType> = {
-  Fix: Wrench,
-  Ignore: EyeOff,
-  Assign: UserPlus,
-  Archive: Archive,
-  "Apply fix": Wrench,
-  Override: Shield,
-  Dismiss: EyeOff,
-  "Apply suggestion": Wrench,
+const actionIconMap: Record<string, IconSvgElement> = {
+  Fix: Wrench01Icon,
+  Ignore: ViewOffIcon,
+  Assign: UserAdd01Icon,
+  Archive: Archive01Icon,
+  "Apply fix": Wrench01Icon,
+  Override: Shield01Icon,
+  Dismiss: ViewOffIcon,
+  "Apply suggestion": Wrench01Icon,
 }
 
 type PriorityFilter = "all" | "critical" | "warning" | "info"
@@ -162,7 +162,7 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                 )}
               >
-                {config && <config.icon className="size-3" />}
+                {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
                 <span className="capitalize">{filter}</span>
                 <span className="tabular-nums text-[10px] opacity-60">{counts[filter]}</span>
               </button>
@@ -189,14 +189,14 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
             onClick={() => onBulkAction(Array.from(selectedIds), "fixed")}
             className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 transition-colors hover:bg-emerald-500/20"
           >
-            <Wrench className="size-3" />
+            <HugeiconsIcon icon={Wrench01Icon} className="size-3" />
             Auto fix
           </button>
           <button
             onClick={() => onBulkAction(Array.from(selectedIds), "ignored")}
             className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
           >
-            <EyeOff className="size-3" />
+            <HugeiconsIcon icon={ViewOffIcon} className="size-3" />
             Ignore all
           </button>
           <button
@@ -213,9 +213,9 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
         <div className="flex items-center gap-2 border-b border-border/50 px-4 py-1.5">
           <button onClick={toggleSelectAll} className="text-muted-foreground hover:text-foreground">
             {selectedIds.size === openProblems.length ? (
-              <CheckSquare className="size-3.5" />
+              <HugeiconsIcon icon={CheckmarkBadge01Icon} className="size-3.5" />
             ) : (
-              <Square className="size-3.5" />
+              <HugeiconsIcon icon={Square01Icon} className="size-3.5" />
             )}
           </button>
           <span className="text-xs text-muted-foreground">
@@ -254,14 +254,14 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                   className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
                 >
                   {isSelected ? (
-                    <CheckSquare className="size-4 text-primary" />
+                    <HugeiconsIcon icon={CheckmarkBadge01Icon} className="size-4 text-primary" />
                   ) : (
-                    <Square className="size-4" />
+                    <HugeiconsIcon icon={Square01Icon} className="size-4" />
                   )}
                 </button>
 
                 {/* Priority Icon */}
-                <PriorityIcon className={cn("mt-0.5 size-4 shrink-0", config.colorClass)} />
+                <HugeiconsIcon icon={PriorityIcon} className={cn("mt-0.5 size-4 shrink-0", config.colorClass)} />
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
@@ -298,7 +298,7 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                   {problem.actions && problem.actions.length > 0 && (
                     <div className="mt-2 flex items-center gap-1.5">
                       {problem.actions.map((action) => {
-                        const ActionIcon = actionIconMap[action] || Wrench
+                        const ActionIcon = actionIconMap[action] || Wrench01Icon
                         return (
                           <button
                             key={action}
@@ -308,7 +308,7 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                             }}
                             className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                           >
-                            <ActionIcon className="size-3" />
+                            <HugeiconsIcon icon={ActionIcon} className="size-3" />
                             {action}
                           </button>
                         )
@@ -329,11 +329,11 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                           className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                         >
                           {expandedHistory.has(problem.id) ? (
-                            <ChevronDown className="size-3" />
+                            <HugeiconsIcon icon={ChevronDown} className="size-3" />
                           ) : (
-                            <ChevronRight className="size-3" />
+                            <HugeiconsIcon icon={ChevronRight} className="size-3" />
                           )}
-                          <Bot className="size-3" />
+                          <HugeiconsIcon icon={Robot02Icon} className="size-3" />
                           View History
                         </button>
                       )}
@@ -341,11 +341,11 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                       {/* Create Rule from this problem */}
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger className="ml-1 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent hover:text-foreground">
-                          <MoreHorizontal className="size-3.5" />
+                          <HugeiconsIcon icon={MoreHorizontal} className="size-3.5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-40">
                           <DropdownMenuItem onClick={() => onCreateRule(problem)}>
-                            <Shield className="size-3.5" />
+                            <HugeiconsIcon icon={Shield01Icon} className="size-3.5" />
                             Create rule from this
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -371,7 +371,7 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                       const isFailed = activity.detail?.includes("fail") || activity.detail?.includes("error")
                       return (
                         <div key={activity.id} className="flex items-start gap-2">
-                          <Bot className={cn(
+                          <HugeiconsIcon icon={Robot02Icon} className={cn(
                             "size-3 mt-0.5 shrink-0",
                             isSuccess ? "text-emerald-500" : isFailed ? "text-red-500" : "text-muted-foreground"
                           )} />
@@ -396,7 +396,7 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
           {openProblems.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="size-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-3">
-                <CheckSquare className="size-5 text-emerald-500" />
+                <HugeiconsIcon icon={CheckmarkBadge01Icon} className="size-5 text-emerald-500" />
               </div>
               <p className="text-sm font-medium text-foreground">All clear</p>
               <p className="text-xs text-muted-foreground mt-1">No open problems to handle</p>

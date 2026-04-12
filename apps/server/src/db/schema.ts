@@ -70,6 +70,8 @@ export const agents = sqliteTable("agents", {
   status: text("status").notNull().default("idle"),
   model: text("model").notNull(),
   enabled: text("enabled").notNull().default("true"),
+  cliCommand: text("cli_command"),
+  currentModel: text("current_model"),
 })
 
 export const projects = sqliteTable("projects", {

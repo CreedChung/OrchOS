@@ -1,21 +1,22 @@
 import { useMemo } from "react"
 import { cn } from "#/lib/utils"
 import { ScrollArea } from "#/components/ui/scroll-area"
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import {
-  Inbox,
-  Target,
-  Bot,
+  InboxIcon,
+  Target01Icon,
+  Robot02Icon,
   ChevronDown,
   Circle,
-  Settings,
-  Check,
+  Settings02Icon,
+  Tick02Icon,
   MoreHorizontal,
-  Pencil,
-  Trash2,
-  Flame,
-  AlertTriangle,
-  Info,
-} from "lucide-react"
+  Edit02Icon,
+  Delete02Icon,
+  Fire02Icon,
+  Alert01Icon,
+  InformationCircleIcon,
+} from "@hugeicons/core-free-icons"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,10 +64,10 @@ const goalStatusColor: Record<Goal["status"], string> = {
   paused: "text-amber-500",
 }
 
-const priorityIcon: Record<ProblemPriority, React.ElementType> = {
-  critical: Flame,
-  warning: AlertTriangle,
-  info: Info,
+const priorityIcon: Record<ProblemPriority, IconSvgElement> = {
+  critical: Fire02Icon,
+  warning: Alert01Icon,
+  info: InformationCircleIcon,
 }
 
 const priorityColor: Record<ProblemPriority, string> = {
@@ -75,13 +76,13 @@ const priorityColor: Record<ProblemPriority, string> = {
   info: "text-blue-500",
 }
 
-const workspaceNav: { id: SidebarView; icon: React.ElementType; label: string }[] = [
-  { id: "inbox", icon: Inbox, label: "Inbox" },
-  { id: "goals", icon: Target, label: "Goals" },
+const workspaceNav: { id: SidebarView; icon: IconSvgElement; label: string }[] = [
+  { id: "inbox", icon: InboxIcon, label: "Inbox" },
+  { id: "goals", icon: Target01Icon, label: "Goals" },
 ]
 
-const systemNav: { id: SidebarView; icon: React.ElementType; label: string }[] = [
-  { id: "agents", icon: Bot, label: "Agents" },
+const systemNav: { id: SidebarView; icon: IconSvgElement; label: string }[] = [
+  { id: "agents", icon: Robot02Icon, label: "Agents" },
 ]
 
 export function Sidebar({
@@ -139,12 +140,12 @@ export function Sidebar({
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
             <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Target className="size-3.5" />
+              <HugeiconsIcon icon={Target01Icon} className="size-3.5" />
             </span>
             <span className="truncate">
               {organizations.find((o) => o.id === activeOrganizationId)?.name || "Select organization"}
             </span>
-            <ChevronDown className="ml-auto size-3 shrink-0 opacity-50" />
+            <HugeiconsIcon icon={ChevronDown} className="ml-auto size-3 shrink-0 opacity-50" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-48">
             {organizations.length > 0 ? (
@@ -154,7 +155,7 @@ export function Sidebar({
                   onClick={() => onOrganizationChange(org.id)}
                 >
                   <span className="flex-1">{org.name}</span>
-                  {org.id === activeOrganizationId && <Check className="size-4 text-primary" />}
+                  {org.id === activeOrganizationId && <HugeiconsIcon icon={Tick02Icon} className="size-4 text-primary" />}
                 </DropdownMenuItem>
               ))
             ) : (
@@ -167,7 +168,7 @@ export function Sidebar({
         {activeOrganizationId && (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger className="ml-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
-              <MoreHorizontal className="size-4" />
+              <HugeiconsIcon icon={MoreHorizontal} className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-36">
               <DropdownMenuItem
@@ -178,7 +179,7 @@ export function Sidebar({
                   if (newName?.trim()) onOrganizationRename(org.id, newName.trim())
                 }}
               >
-                <Pencil className="size-3.5" />
+                <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
                 Rename
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -188,7 +189,7 @@ export function Sidebar({
                   if (confirm("Delete this organization?")) onOrganizationDelete(activeOrganizationId)
                 }}
               >
-                <Trash2 className="size-3.5" />
+                <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -214,7 +215,7 @@ export function Sidebar({
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 )}
               >
-                <Icon className="size-4 shrink-0" />
+                <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
                 <span className="flex-1 text-left">{label}</span>
                 {isInbox && openProblemCount > 0 && (
                   <span className={cn(
@@ -245,7 +246,7 @@ export function Sidebar({
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 )}
               >
-                <Icon className="size-4 shrink-0" />
+                <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
                 <span className="flex-1 text-left">{label}</span>
               </button>
             )
@@ -265,7 +266,7 @@ export function Sidebar({
                     key={problem.id}
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                   >
-                    <PriorityIcon className={cn("size-3.5 shrink-0", priorityColor[problem.priority])} />
+                    <HugeiconsIcon icon={PriorityIcon} className={cn("size-3.5 shrink-0", priorityColor[problem.priority])} />
                     <span className="flex-1 truncate">{problem.title}</span>
                   </button>
                 )
@@ -299,7 +300,7 @@ export function Sidebar({
                   </button>
                   <DropdownMenu modal={false}>
                     <DropdownMenuTrigger className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent hover:text-foreground cursor-pointer">
-                      <MoreHorizontal className="size-3.5" />
+                      <HugeiconsIcon icon={MoreHorizontal} className="size-3.5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-36">
                       <DropdownMenuItem
@@ -308,7 +309,7 @@ export function Sidebar({
                           if (newName?.trim()) onGoalRename(goal.id, newName.trim())
                         }}
                       >
-                        <Pencil className="size-3.5" />
+                        <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
                         Rename
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -318,7 +319,7 @@ export function Sidebar({
                           if (confirm("Delete this goal?")) onGoalDelete(goal.id)
                         }}
                       >
-                        <Trash2 className="size-3.5" />
+                        <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -344,11 +345,9 @@ export function Sidebar({
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                   )}
                 >
-                  <Bot className="size-3.5 shrink-0 opacity-60" />
+                  <HugeiconsIcon icon={Robot02Icon} className="size-3.5 shrink-0 opacity-60" />
                   <span className="flex-1 truncate text-left">{agent.name}</span>
-                  <Circle
-                    className={cn("size-2 fill-current", agentStatusColor[agent.status])}
-                  />
+                  <HugeiconsIcon icon={Circle} className={cn("size-2 fill-current", agentStatusColor[agent.status])} />
                 </button>
               ))}
               {searchQuery && filteredAgents.length === 0 && (
@@ -366,7 +365,7 @@ export function Sidebar({
           onClick={onOpenSettings}
           className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
         >
-          <Settings className="size-3.5 shrink-0 opacity-60" />
+          <HugeiconsIcon icon={Settings02Icon} className="size-3.5 shrink-0 opacity-60" />
           <span>Settings</span>
         </button>
       </div>

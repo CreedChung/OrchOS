@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { cn } from "#/lib/utils"
-import { Play, Pause, Trash2, MoreVertical, CheckCircle, AlertCircle, Clock } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Play, Pause, Delete02Icon, MoreVertical, CheckmarkCircleIcon } from "@hugeicons/core-free-icons"
 import type { Goal } from "#/lib/types"
 
 interface GoalActionsProps {
@@ -13,7 +14,7 @@ interface GoalActionsProps {
 const statusConfig = {
   active: { icon: Play, color: "text-emerald-500", bg: "bg-emerald-500/10", label: "Active" },
   paused: { icon: Pause, color: "text-amber-500", bg: "bg-amber-500/10", label: "Paused" },
-  completed: { icon: CheckCircle, color: "text-blue-500", bg: "bg-blue-500/10", label: "Completed" },
+  completed: { icon: CheckmarkCircleIcon, color: "text-blue-500", bg: "bg-blue-500/10", label: "Completed" },
 }
 
 export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsProps) {
@@ -31,7 +32,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
             config.color
           )}
         >
-          <StatusIcon className="size-3" />
+          <HugeiconsIcon icon={StatusIcon} className="size-3" />
           {config.label}
         </span>
 
@@ -41,7 +42,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
             className="rounded-md border border-border bg-background p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             title="Pause goal"
           >
-            <Pause className="size-3.5" />
+            <HugeiconsIcon icon={Pause} className="size-3.5" />
           </button>
         )}
 
@@ -51,7 +52,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
             className="rounded-md border border-border bg-background p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             title="Resume goal"
           >
-            <Play className="size-3.5" />
+            <HugeiconsIcon icon={Play} className="size-3.5" />
           </button>
         )}
 
@@ -60,7 +61,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
             onClick={() => setShowMenu(!showMenu)}
             className="rounded-md border border-border bg-background p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <MoreVertical className="size-3.5" />
+            <HugeiconsIcon icon={MoreVertical} className="size-3.5" />
           </button>
         )}
       </div>
@@ -77,7 +78,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
                 }}
                 className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-accent"
               >
-                <Pause className="size-3.5" />
+                <HugeiconsIcon icon={Pause} className="size-3.5" />
                 Pause
               </button>
             )}
@@ -89,7 +90,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
                 }}
                 className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-accent"
               >
-                <Play className="size-3.5" />
+                <HugeiconsIcon icon={Play} className="size-3.5" />
                 Resume
               </button>
             )}
@@ -102,7 +103,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
               }}
               className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-red-500 hover:bg-destructive/10"
             >
-              <Trash2 className="size-3.5" />
+              <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
               Delete
             </button>
           </div>

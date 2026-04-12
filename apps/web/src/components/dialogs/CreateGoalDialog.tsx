@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { X, Plus, Trash2 } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Cancel01Icon, Add01Icon, Delete02Icon } from "@hugeicons/core-free-icons"
 import { cn } from "#/lib/utils"
 
 interface CreateGoalDialogProps {
@@ -41,7 +42,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
             onClick={onClose}
             className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <X className="size-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
           </button>
         </div>
 
@@ -100,7 +101,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
                       onClick={() => setCriteria(criteria.filter((_, j) => j !== i))}
                       className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     >
-                      <Trash2 className="size-3.5" />
+                      <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                     </button>
                   )}
                 </div>
@@ -110,7 +111,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
                 onClick={() => setCriteria([...criteria, ""])}
                 className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-accent"
               >
-                <Plus className="size-3" /> Add criterion
+                <HugeiconsIcon icon={Add01Icon} className="size-3" /> Add criterion
               </button>
             </div>
           </div>
@@ -139,7 +140,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
                     onClick={() => setConstraints(constraints.filter((_, j) => j !== i))}
                     className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                   </button>
                 </div>
               ))}
@@ -148,7 +149,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
                 onClick={() => setConstraints([...constraints, ""])}
                 className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-accent"
               >
-                <Plus className="size-3" /> Add constraint
+                <HugeiconsIcon icon={Add01Icon} className="size-3" /> Add constraint
               </button>
             </div>
           </div>

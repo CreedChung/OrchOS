@@ -10,8 +10,8 @@
     "cssVariables": true,
     "prefix": ""
   },
-  "iconLibrary": "lucide",
-  "rtl": false,
+  "iconLibrary": "hugeicons",
+  "rtl": true,
   "aliases": {
     "components": "#/components",
     "utils": "#/lib/utils",
