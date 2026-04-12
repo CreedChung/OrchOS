@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { cn } from "#/lib/utils"
+import { m } from "#/paraglide/messages"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Play, Pause, Delete02Icon, MoreVertical, CheckmarkCircleIcon } from "@hugeicons/core-free-icons"
 import type { Goal } from "#/lib/types"
@@ -12,9 +13,9 @@ interface GoalActionsProps {
 }
 
 const statusConfig = {
-  active: { icon: Play, color: "text-emerald-500", bg: "bg-emerald-500/10", label: "Active" },
-  paused: { icon: Pause, color: "text-amber-500", bg: "bg-amber-500/10", label: "Paused" },
-  completed: { icon: CheckmarkCircleIcon, color: "text-blue-500", bg: "bg-blue-500/10", label: "Completed" },
+  active: { icon: Play, color: "text-emerald-500", bg: "bg-emerald-500/10", label: () => m.goal_active() },
+  paused: { icon: Pause, color: "text-amber-500", bg: "bg-amber-500/10", label: () => m.goal_paused() },
+  completed: { icon: CheckmarkCircleIcon, color: "text-blue-500", bg: "bg-blue-500/10", label: () => m.goal_completed() },
 }
 
 export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsProps) {
@@ -33,14 +34,14 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
           )}
         >
           <HugeiconsIcon icon={StatusIcon} className="size-3" />
-          {config.label}
+          {config.label()}
         </span>
 
         {goal.status === "active" && (
           <button
             onClick={onPause}
             className="rounded-md border border-border bg-background p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            title="Pause goal"
+            title={m.pause_goal()}
           >
             <HugeiconsIcon icon={Pause} className="size-3.5" />
           </button>
@@ -50,7 +51,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
           <button
             onClick={onResume}
             className="rounded-md border border-border bg-background p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            title="Resume goal"
+            title={m.resume_goal()}
           >
             <HugeiconsIcon icon={Play} className="size-3.5" />
           </button>
@@ -79,7 +80,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
                 className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-accent"
               >
                 <HugeiconsIcon icon={Pause} className="size-3.5" />
-                Pause
+                {m.pause()}
               </button>
             )}
             {goal.status === "paused" && (
@@ -91,12 +92,12 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
                 className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-accent"
               >
                 <HugeiconsIcon icon={Play} className="size-3.5" />
-                Resume
+                {m.resume()}
               </button>
             )}
             <button
               onClick={() => {
-                if (confirm("Are you sure you want to delete this goal?")) {
+                if (confirm(m.delete_goal_confirm())) {
                   onDelete()
                 }
                 setShowMenu(false)
@@ -104,7 +105,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
               className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-red-500 hover:bg-destructive/10"
             >
               <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-              Delete
+              {m.delete()}
             </button>
           </div>
         </>

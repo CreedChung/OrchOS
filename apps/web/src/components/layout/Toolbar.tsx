@@ -98,7 +98,7 @@ export function Toolbar({
                 )}
               >
                 {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
-                <span className="capitalize">{filter}</span>
+                <span className="capitalize">{filter === "all" ? m.all() : config?.label || filter}</span>
                 <span className="tabular-nums text-[10px] opacity-60">{goalCounts[filter]}</span>
               </button>
             )

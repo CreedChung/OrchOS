@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { cn } from "#/lib/utils"
+import { m } from "#/paraglide/messages"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Edit02Icon, Tick02Icon, Cancel01Icon } from "@hugeicons/core-free-icons"
 import type { Status, StateItem } from "#/lib/types"
@@ -11,13 +12,13 @@ interface StateEditorProps {
 
 const statusOptions: Status[] = ["pending", "running", "success", "failed", "error", "warning"]
 
-const statusLabelMap: Record<Status, string> = {
-  success: "Success",
-  failed: "Failed",
-  error: "Error",
-  pending: "Pending",
-  running: "Running",
-  warning: "Warning",
+const statusLabelMap: Record<Status, () => string> = {
+  success: () => m.status_success(),
+  failed: () => m.status_failed(),
+  error: () => m.status_error(),
+  pending: () => m.status_pending(),
+  running: () => m.status_running(),
+  warning: () => m.status_warning(),
 }
 
 const statusPillClass: Record<Status, string> = {
@@ -54,21 +55,21 @@ export function StateEditor({ state, onStatusChange }: StateEditorProps) {
         >
           {statusOptions.map((status) => (
             <option key={status} value={status}>
-              {statusLabelMap[status]}
+              {statusLabelMap[status]()}
             </option>
           ))}
         </select>
         <button
           onClick={handleSave}
           className="rounded p-1 text-emerald-500 hover:bg-emerald-500/10"
-          title="Save"
+          title={m.save()}
         >
           <HugeiconsIcon icon={Tick02Icon} className="size-3.5" />
         </button>
         <button
           onClick={handleCancel}
           className="rounded p-1 text-red-500 hover:bg-red-500/10"
-          title="Cancel"
+          title={m.cancel()}
         >
           <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
         </button>
@@ -86,14 +87,14 @@ export function StateEditor({ state, onStatusChange }: StateEditorProps) {
           statusPillClass[state.status]
         )}
       >
-        {statusLabelMap[state.status]}
+        {statusLabelMap[state.status]()}
       </span>
 
       <div className="ml-auto flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
         <button
           onClick={() => setEditing(true)}
           className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          title="Edit status"
+          title={m.edit_status()}
         >
           <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
         </button>
