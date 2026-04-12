@@ -25,7 +25,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
+import { m } from "#/paraglide/messages"
 import type { Problem, ProblemPriority, ProblemStatus, Goal, ActivityEntry } from "#/lib/types"
+
+type PriorityFilter = "all" | "critical" | "warning" | "info"
 
 interface ProblemInboxProps {
   problems: Problem[]
@@ -34,26 +37,27 @@ interface ProblemInboxProps {
   onProblemAction: (problemId: string, action: string) => void
   onBulkAction: (ids: string[], status: ProblemStatus) => void
   onCreateRule: (problem: Problem) => void
+  priorityFilter: PriorityFilter
 }
 
 const priorityConfig: Record<ProblemPriority, { icon: IconSvgElement; label: string; colorClass: string; bgClass: string; borderClass: string }> = {
   critical: {
     icon: Fire02Icon,
-    label: "Critical",
+    label: m.critical(),
     colorClass: "text-red-600 dark:text-red-400",
     bgClass: "bg-red-500/5",
     borderClass: "border-red-500/20",
   },
   warning: {
     icon: Alert01Icon,
-    label: "Warning",
+    label: m.warning(),
     colorClass: "text-amber-600 dark:text-amber-400",
     bgClass: "bg-amber-500/5",
     borderClass: "border-amber-500/20",
   },
   info: {
     icon: InformationCircleIcon,
-    label: "Info",
+    label: m.info(),
     colorClass: "text-blue-600 dark:text-blue-400",
     bgClass: "bg-blue-500/5",
     borderClass: "border-blue-500/10",
@@ -71,11 +75,8 @@ const actionIconMap: Record<string, IconSvgElement> = {
   "Apply suggestion": Wrench01Icon,
 }
 
-type PriorityFilter = "all" | "critical" | "warning" | "info"
-
-export function ProblemInbox({ problems, goals, activities, onProblemAction, onBulkAction, onCreateRule }: ProblemInboxProps) {
+export function ProblemInbox({ problems, goals, activities, onProblemAction, onBulkAction, onCreateRule, priorityFilter }: ProblemInboxProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all")
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set())
 
@@ -86,13 +87,6 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
     }
     return filtered
   }, [problems, priorityFilter])
-
-  const counts = useMemo(() => ({
-    all: problems.filter((p) => p.status === "open").length,
-    critical: problems.filter((p) => p.status === "open" && p.priority === "critical").length,
-    warning: problems.filter((p) => p.status === "open" && p.priority === "warning").length,
-    info: problems.filter((p) => p.status === "open" && p.priority === "info").length,
-  }), [problems])
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -146,64 +140,31 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
 
   return (
     <main className="flex flex-1 flex-col overflow-hidden">
-      {/* Toolbar */}
-      <div className="flex items-center gap-3 border-b border-border px-4 py-2">
-        <div className="flex items-center gap-1.5">
-          {(["all", "critical", "warning", "info"] as PriorityFilter[]).map((filter) => {
-            const config = filter === "all" ? null : priorityConfig[filter]
-            return (
-              <button
-                key={filter}
-                onClick={() => setPriorityFilter(filter)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                  priorityFilter === filter
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                )}
-              >
-                {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
-                <span className="capitalize">{filter}</span>
-                <span className="tabular-nums text-[10px] opacity-60">{counts[filter]}</span>
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="ml-auto flex items-center gap-2 text-[10px] text-muted-foreground">
-          <kbd className="rounded border border-border px-1 py-0.5 font-mono">j/k</kbd> navigate
-          <kbd className="rounded border border-border px-1 py-0.5 font-mono">x</kbd> select
-          <kbd className="rounded border border-border px-1 py-0.5 font-mono">f</kbd> fix
-          <kbd className="rounded border border-border px-1 py-0.5 font-mono">i</kbd> ignore
-          <kbd className="rounded border border-border px-1 py-0.5 font-mono">a</kbd> assign
-        </div>
-      </div>
-
       {/* Batch Action Bar */}
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 border-b border-border bg-accent/30 px-4 py-2">
           <span className="text-xs font-medium text-foreground">
-            {selectedIds.size} selected
+            {selectedIds.size} {m.selected()}
           </span>
           <button
             onClick={() => onBulkAction(Array.from(selectedIds), "fixed")}
             className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 transition-colors hover:bg-emerald-500/20"
           >
             <HugeiconsIcon icon={Wrench01Icon} className="size-3" />
-            Auto fix
+            {m.auto_fix_action()}
           </button>
           <button
             onClick={() => onBulkAction(Array.from(selectedIds), "ignored")}
             className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
           >
             <HugeiconsIcon icon={ViewOffIcon} className="size-3" />
-            Ignore all
+            {m.ignore_all()}
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
             className="ml-auto text-xs text-muted-foreground hover:text-foreground"
           >
-            Clear selection
+            {m.clear_selection()}
           </button>
         </div>
       )}
@@ -334,7 +295,7 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                             <HugeiconsIcon icon={ChevronRight} className="size-3" />
                           )}
                           <HugeiconsIcon icon={Robot02Icon} className="size-3" />
-                          View History
+                          {m.view_history()}
                         </button>
                       )}
 
@@ -346,7 +307,7 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                         <DropdownMenuContent align="end" className="min-w-40">
                           <DropdownMenuItem onClick={() => onCreateRule(problem)}>
                             <HugeiconsIcon icon={Shield01Icon} className="size-3.5" />
-                            Create rule from this
+                            {m.create_rule_from_this()}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -385,7 +346,7 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                       )
                     })}
                   {activities.filter((a) => a.goalId === problem.goalId).length === 0 && (
-                    <p className="text-[11px] text-muted-foreground">No activity recorded</p>
+                    <p className="text-[11px] text-muted-foreground">{m.no_activity_recorded()}</p>
                   )}
                 </div>
               )}
@@ -398,8 +359,8 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
               <div className="size-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-3">
                 <HugeiconsIcon icon={CheckmarkBadge01Icon} className="size-5 text-emerald-500" />
               </div>
-              <p className="text-sm font-medium text-foreground">All clear</p>
-              <p className="text-xs text-muted-foreground mt-1">No open problems to handle</p>
+              <p className="text-sm font-medium text-foreground">{m.all_clear()}</p>
+              <p className="text-xs text-muted-foreground mt-1">{m.no_open_problems()}</p>
             </div>
           )}
         </div>

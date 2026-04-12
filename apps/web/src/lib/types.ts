@@ -6,6 +6,19 @@ export type ProblemPriority = "critical" | "warning" | "info"
 export type ProblemStatus = "open" | "fixed" | "ignored" | "assigned"
 export type CommandStatus = "sent" | "executing" | "completed" | "failed"
 
+export type InboxSource = "github_pr" | "github_issue" | "mention" | "agent_request"
+export type SystemProblemSource = "test_failed" | "build_error" | "lint_error" | "lint_warning" | "review_rejected"
+
+export const INBOX_SOURCES: InboxSource[] = ["github_pr", "github_issue", "mention", "agent_request"]
+export const SYSTEM_SOURCES: SystemProblemSource[] = ["test_failed", "build_error", "lint_error", "lint_warning", "review_rejected"]
+
+export const inboxSourceLabels: Record<InboxSource, string> = {
+  github_pr: "Pull Request",
+  github_issue: "Issue",
+  mention: "Mention",
+  agent_request: "Agent Request",
+}
+
 export interface Command {
   id: string
   instruction: string
@@ -86,10 +99,29 @@ export interface ActivityEntry {
   diff?: string
 }
 
+export type NotificationEvent = "goal_completed" | "goal_failed" | "agent_action" | "inbox_item" | "build_failed" | "review_rejected" | "mention"
+
+export const NOTIFICATION_EVENTS: { id: NotificationEvent; label: string }[] = [
+  { id: "goal_completed", label: "Goal Completed" },
+  { id: "goal_failed", label: "Goal Failed" },
+  { id: "agent_action", label: "Agent Action" },
+  { id: "inbox_item", label: "Inbox Item" },
+  { id: "build_failed", label: "Build Failed" },
+  { id: "review_rejected", label: "Review Rejected" },
+  { id: "mention", label: "Mention" },
+]
+
 export interface ControlSettings {
   autoCommit: boolean
   autoFix: boolean
   modelStrategy: "local-first" | "cloud-first" | "adaptive"
+  locale: string
+  timezone: string
+  notifications: {
+    system: boolean
+    sound: boolean
+    eventSounds: Partial<Record<NotificationEvent, boolean>>
+  }
 }
 
 export interface Organization {
@@ -107,8 +139,17 @@ export interface Problem {
   stateId?: string
   status: ProblemStatus
   actions: string[]
+  suggestedGoal?: string
   createdAt: string
   updatedAt: string
+}
+
+export function isInboxItem(problem: Problem): problem is Problem & { source: InboxSource } {
+  return INBOX_SOURCES.includes(problem.source as InboxSource)
+}
+
+export function isSystemProblem(problem: Problem): problem is Problem & { source: SystemProblemSource } {
+  return SYSTEM_SOURCES.includes(problem.source as SystemProblemSource)
 }
 
 export interface Rule {
@@ -120,7 +161,7 @@ export interface Rule {
   createdAt: string
 }
 
-export type SidebarView = "inbox" | "goals" | "agents" | "agent-detail" | "command"
+export type SidebarView = "inbox" | "goals" | "agents" | "agent-detail" | "command" | "mcp-servers" | "skills" | "commands" | "environments" | "observability" | "settings"
 
 export interface AgentRule {
   id: string

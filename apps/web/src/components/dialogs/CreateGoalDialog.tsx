@@ -2,6 +2,7 @@ import { useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, Add01Icon, Delete02Icon } from "@hugeicons/core-free-icons"
 import { cn } from "#/lib/utils"
+import { m } from "#/paraglide/messages"
 
 interface CreateGoalDialogProps {
   open: boolean
@@ -37,7 +38,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-2xl">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Create New Goal</h2>
+          <h2 className="text-lg font-semibold text-foreground">{m.create_new_goal()}</h2>
           <button
             onClick={onClose}
             className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -50,13 +51,13 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
           {/* Title */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Goal Title *
+              {m.goal_title()}
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Implement login system"
+              placeholder={m.goal_title_placeholder()}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               autoFocus
             />
@@ -65,12 +66,12 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
           {/* Description */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Description
+              {m.description()}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What should this goal accomplish?"
+              placeholder={m.description_placeholder()}
               rows={2}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
@@ -79,7 +80,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
           {/* Success Criteria */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Success Criteria *
+              {m.success_criteria()}
             </label>
             <div className="space-y-2">
               {criteria.map((c, i) => (
@@ -92,7 +93,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
                       next[i] = e.target.value
                       setCriteria(next)
                     }}
-                    placeholder="e.g. tests pass"
+                    placeholder={m.criteria_placeholder()}
                     className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                   {criteria.length > 1 && (
@@ -111,7 +112,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
                 onClick={() => setCriteria([...criteria, ""])}
                 className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-accent"
               >
-                <HugeiconsIcon icon={Add01Icon} className="size-3" /> Add criterion
+                <HugeiconsIcon icon={Add01Icon} className="size-3" /> {m.add_criterion()}
               </button>
             </div>
           </div>
@@ -119,7 +120,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
           {/* Constraints */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Constraints
+              {m.constraints()}
             </label>
             <div className="space-y-2">
               {constraints.map((c, i) => (
@@ -132,7 +133,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
                       next[i] = e.target.value
                       setConstraints(next)
                     }}
-                    placeholder="e.g. use typescript"
+                    placeholder={m.constraints_placeholder()}
                     className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                   <button
@@ -149,7 +150,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
                 onClick={() => setConstraints([...constraints, ""])}
                 className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-accent"
               >
-                <HugeiconsIcon icon={Add01Icon} className="size-3" /> Add constraint
+                <HugeiconsIcon icon={Add01Icon} className="size-3" /> {m.add_constraint()}
               </button>
             </div>
           </div>
@@ -161,7 +162,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
               onClick={onClose}
               className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
             >
-              Cancel
+              {m.cancel()}
             </button>
             <button
               type="submit"
@@ -173,7 +174,7 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
                   : "bg-muted text-muted-foreground cursor-not-allowed"
               )}
             >
-              Create Goal
+              {m.create_goal()}
             </button>
           </div>
         </form>

@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useMemo } from "react"
 import { cn } from "#/lib/utils"
 import { Sidebar } from "#/components/layout/Sidebar"
-import { ProblemInbox } from "#/components/panels/ProblemInbox"
+import { Inbox } from "#/components/panels/Inbox"
 import { StateBoard } from "#/components/panels/StateBoard"
 import { ActivityPanel } from "#/components/panels/ActivityPanel"
 import { CommandBar } from "#/components/panels/CommandBar"
@@ -16,23 +16,29 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Button } from "#/components/ui/button"
 import { api } from "#/lib/api"
 import { useWebSocket } from "#/lib/hooks"
-import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, ControlSettings, Project, Organization, Problem, ProblemStatus, Rule, SidebarView, Command } from "#/lib/types"
+import { I18nProvider } from "#/lib/useI18n"
+import { m } from "#/paraglide/messages"
+import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, ControlSettings, Project, Organization, Problem, ProblemStatus, Rule, SidebarView, Command, InboxSource } from "#/lib/types"
+import { isInboxItem, isSystemProblem } from "#/lib/types"
+
+type SourceFilter = "all" | InboxSource
+type GoalStatusFilter = "all" | "active" | "completed" | "paused"
 
 const conditionLabels: Record<string, string> = {
-  test_failed: "Test failed",
-  lint_error: "Lint error",
-  lint_warning: "Lint warning",
-  review_rejected: "Review rejected",
-  build_failed: "Build failed",
-  build_success: "Build success",
+  test_failed: m.test_failed(),
+  lint_error: m.lint_error(),
+  lint_warning: m.lint_warning(),
+  review_rejected: m.review_rejected(),
+  build_failed: m.build_failed(),
+  build_success: m.build_success(),
 }
 
 const actionLabels: Record<string, string> = {
-  auto_fix: "Auto fix",
-  ignore: "Ignore",
-  assign_reviewer: "Assign reviewer",
-  archive: "Archive",
-  notify: "Notify",
+  auto_fix: m.auto_fix_rule(),
+  ignore: m.ignore_rule(),
+  assign_reviewer: m.assign_reviewer(),
+  archive: m.archive(),
+  notify: m.notify(),
 }
 
 function AgentDetailView({
@@ -214,7 +220,7 @@ export function Dashboard() {
   const [states, setStates] = useState<StateItem[]>([])
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
   const [activities, setActivities] = useState<ActivityEntry[]>([])
-  const [settings, setSettings] = useState<ControlSettings | null>({ autoCommit: false, autoFix: false, modelStrategy: "adaptive" })
+  const [settings, setSettings] = useState<ControlSettings | null>({ autoCommit: false, autoFix: false, modelStrategy: "adaptive", locale: "en", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", notifications: { system: true, sound: true, eventSounds: {} } })
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showCommandBar, setShowCommandBar] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
@@ -222,10 +228,36 @@ export function Dashboard() {
   const [ruleFromProblem, setRuleFromProblem] = useState<Problem | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [activityPanelOpen, setActivityPanelOpen] = useState(false)
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all")
+  const [goalStatusFilter, setGoalStatusFilter] = useState<GoalStatusFilter>("all")
   const [loading, setLoading] = useState(true)
 
   const activeGoal = goals.find((g) => g.id === activeGoalId) ?? null
   const activeCommand = activeGoal?.commandId ? commands.find((c) => c.id === activeGoal.commandId) : undefined
+
+  const inboxCounts = useMemo(() => {
+    const inboxItems = problems.filter((p) => p.status === "open" && isInboxItem(p))
+    return {
+      all: inboxItems.length,
+      github_pr: inboxItems.filter((p) => p.source === "github_pr").length,
+      github_issue: inboxItems.filter((p) => p.source === "github_issue").length,
+      mention: inboxItems.filter((p) => p.source === "mention").length,
+      agent_request: inboxItems.filter((p) => p.source === "agent_request").length,
+    }
+  }, [problems])
+
+  const systemProblemCounts = useMemo(() => ({
+    critical: problems.filter((p) => p.status === "open" && p.priority === "critical" && isSystemProblem(p)).length,
+    warning: problems.filter((p) => p.status === "open" && p.priority === "warning" && isSystemProblem(p)).length,
+    info: problems.filter((p) => p.status === "open" && p.priority === "info" && isSystemProblem(p)).length,
+  }), [problems])
+
+  const goalCounts = useMemo(() => ({
+    all: goals.length,
+    active: goals.filter((g) => g.status === "active").length,
+    completed: goals.filter((g) => g.status === "completed").length,
+    paused: goals.filter((g) => g.status === "paused").length,
+  }), [goals])
 
   const refreshAll = useCallback(async () => {
     const results = await Promise.allSettled([
@@ -327,6 +359,37 @@ export function Dashboard() {
       } catch (err) {
         console.error("Problem action failed:", err)
       }
+    }
+  }
+
+  // Convert inbox item to goal
+  const handleConvertToGoal = async (problemId: string, suggestedGoal?: string) => {
+    const problem = problems.find((p) => p.id === problemId)
+    if (!problem) return
+
+    try {
+      const goalTitle = suggestedGoal || problem.title
+      const goal = await api.createGoal({
+        title: goalTitle,
+        description: `Converted from inbox: ${problem.source} — ${problem.title}${problem.context ? `\n\n${problem.context}` : ""}`,
+        successCriteria: ["completed"],
+        watchers: problem.source === "agent_request" ? [problem.context || ""] : [],
+      })
+      await api.updateProblem(problemId, { status: "assigned" })
+      await refreshAll()
+      setActiveGoalId(goal.id)
+      setActiveView("goals")
+    } catch (err) {
+      console.error("Convert to goal failed:", err)
+    }
+  }
+
+  const handleDismiss = async (problemId: string) => {
+    try {
+      await api.updateProblem(problemId, { status: "ignored" })
+      await refreshAll()
+    } catch (err) {
+      console.error("Dismiss failed:", err)
     }
   }
 
@@ -511,13 +574,11 @@ export function Dashboard() {
     switch (activeView) {
       case "inbox":
         return (
-          <ProblemInbox
+          <Inbox
             problems={problems}
-            goals={goals}
-            activities={activities}
-            onProblemAction={handleProblemAction}
-            onBulkAction={handleBulkAction}
-            onCreateRule={handleCreateRuleFromProblem}
+            onConvertToGoal={handleConvertToGoal}
+            onDismiss={handleDismiss}
+            sourceFilter={sourceFilter}
           />
         )
 
@@ -531,11 +592,13 @@ export function Dashboard() {
             projects={projects}
             command={activeCommand}
             problems={{
-              critical: problems.filter((p) => p.status === "open" && p.priority === "critical" && p.goalId === activeGoalId).length,
-              warning: problems.filter((p) => p.status === "open" && p.priority === "warning" && p.goalId === activeGoalId).length,
-              info: problems.filter((p) => p.status === "open" && p.priority === "info" && p.goalId === activeGoalId).length,
+              critical: problems.filter((p) => p.status === "open" && p.priority === "critical" && isSystemProblem(p) && p.goalId === activeGoalId).length,
+              warning: problems.filter((p) => p.status === "open" && p.priority === "warning" && isSystemProblem(p) && p.goalId === activeGoalId).length,
+              info: problems.filter((p) => p.status === "open" && p.priority === "info" && isSystemProblem(p) && p.goalId === activeGoalId).length,
             }}
+            systemProblems={problems.filter((p) => p.status === "open" && isSystemProblem(p) && p.goalId === activeGoalId)}
             onStateAction={handleStateAction}
+            onProblemAction={handleProblemAction}
             onAutoModeToggle={activeGoal.status === "active" ? handlePauseGoal : handleResumeGoal}
             goalActions={
               <GoalActions
@@ -552,17 +615,17 @@ export function Dashboard() {
               <EmptyMedia variant="icon">
                 <HugeiconsIcon icon={Target01Icon} />
               </EmptyMedia>
-              <EmptyTitle>No goal selected</EmptyTitle>
-              <EmptyDescription>Select a goal from the sidebar or send a command to get started.</EmptyDescription>
+              <EmptyTitle>{m.no_goal_selected()}</EmptyTitle>
+              <EmptyDescription>{m.no_goal_selected_desc()}</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <div className="flex gap-2">
                 <Button onClick={() => setShowCommandBar(true)}>
                   <HugeiconsIcon icon={SentIcon} className="size-3.5 mr-1.5" />
-                  Send Command
+                  {m.send_command()}
                 </Button>
                 <Button variant="outline" onClick={() => setShowCreateDialog(true)}>
-                  Create Goal
+                  {m.create_goal_btn()}
                 </Button>
               </div>
             </EmptyContent>
@@ -591,9 +654,35 @@ export function Dashboard() {
           />
         )
 
+      case "mcp-servers":
+      case "skills":
+      case "environments":
+      case "observability":
+      case "settings": {
+        const placeholder = placeholderViews[activeView]
+        return placeholder ? renderPlaceholderContent(placeholder.title, placeholder.description) : null
+      }
+
       default:
         return null
     }
+  }
+
+  const renderPlaceholderContent = (title: string, description: string) => (
+    <div className="flex flex-1 items-center justify-center">
+      <div className="text-center">
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      </div>
+    </div>
+  )
+
+  const placeholderViews: Partial<Record<SidebarView, { title: string; description: string }>> = {
+    "mcp-servers": { title: m.mcp_servers(), description: "Manage your Model Context Protocol server connections." },
+    "skills": { title: m.skills(), description: "Configure agent skills and capabilities." },
+    "environments": { title: m.environments(), description: "Configure deployment and runtime environments." },
+    "observability": { title: m.observability(), description: "Monitor system health, logs, and metrics." },
+    "settings": { title: m.settings(), description: "Application settings and preferences." },
   }
 
   if (loading) {
@@ -601,40 +690,26 @@ export function Dashboard() {
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex items-center gap-3 text-muted-foreground">
           <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-sm">Loading...</span>
+          <span className="text-sm">{m.loading()}</span>
         </div>
       </div>
     )
   }
 
   return (
+    <I18nProvider settings={settings} onSettingsChange={setSettings}>
     <div className="flex h-screen flex-col overflow-hidden bg-background">
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
-          goals={goals}
-          agents={agents}
           organizations={organizations}
           problems={problems}
           activeOrganizationId={activeOrganizationId}
           activeView={activeView}
-          activeGoalId={activeGoalId}
-          activeAgentId={activeAgentId}
-          searchQuery={searchQuery}
           onViewChange={setActiveView}
-          onGoalSelect={(id) => {
-            setActiveGoalId(id)
-            setActiveView("goals")
-          }}
-          onAgentSelect={(id) => {
-            setActiveAgentId(id)
-            setActiveView("agent-detail")
-          }}
-          onOpenSettings={() => setShowSettingsDialog(true)}
+          onOpenSettings={() => { setActiveView("settings"); setShowSettingsDialog(true) }}
           onOrganizationChange={setActiveOrganizationId}
           onOrganizationRename={handleOrganizationRename}
           onOrganizationDelete={handleOrganizationDelete}
-          onGoalRename={handleGoalRename}
-          onGoalDelete={handleDeleteGoal}
         />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Toolbar
@@ -645,6 +720,12 @@ export function Dashboard() {
             onSearchChange={setSearchQuery}
             activityPanelOpen={activityPanelOpen}
             onToggleActivityPanel={() => setActivityPanelOpen((v) => !v)}
+            sourceFilter={sourceFilter}
+            onSourceFilterChange={setSourceFilter}
+            inboxCounts={inboxCounts}
+            goalStatusFilter={goalStatusFilter}
+            onGoalStatusFilterChange={setGoalStatusFilter}
+            goalCounts={goalCounts}
           />
           {renderMainContent()}
         </div>
@@ -684,5 +765,6 @@ export function Dashboard() {
         onAgentToggle={handleAgentToggle}
       />
     </div>
+    </I18nProvider>
   )
 }

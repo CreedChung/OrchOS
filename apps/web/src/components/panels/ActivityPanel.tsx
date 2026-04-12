@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Robot02Icon, AiBrain01Icon, ArrowRight01Icon, CheckmarkCircleIcon, CancelCircleIcon, Clock01Icon, FileCodeIcon, Message01Icon, Workflow } from "@hugeicons/core-free-icons"
 import { cn } from "#/lib/utils"
+import { m } from "#/paraglide/messages"
 import type { ActivityEntry } from "#/lib/types"
 
 interface ActivityPanelProps {
@@ -17,7 +18,7 @@ function AcpFlow({ activities }: { activities: ActivityEntry[] }) {
   return (
     <div className="space-y-1 p-3">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">ACP Flow</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">{m.acp_flow()}</span>
         <div className="flex-1 h-px bg-border/50" />
       </div>
       {activities.slice(0, 8).map((activity, idx) => {
@@ -54,7 +55,7 @@ function MessagesView({ activities }: { activities: ActivityEntry[] }) {
     return (
       <div className="py-8 text-center">
         <HugeiconsIcon icon={Message01Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
-        <p className="text-xs text-muted-foreground">No messages yet</p>
+        <p className="text-xs text-muted-foreground">{m.no_messages_yet()}</p>
       </div>
     )
   }
@@ -81,7 +82,7 @@ function MessagesView({ activities }: { activities: ActivityEntry[] }) {
               <div className="mt-1.5 rounded-md border border-border/50 bg-accent/30 px-2.5 py-1.5">
                 <div className="mb-1 flex items-center gap-1">
                   <HugeiconsIcon icon={AiBrain01Icon} className="size-3 text-primary/70" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">Reasoning</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">{m.reasoning()}</span>
                 </div>
                 <p className="text-[11px] leading-relaxed text-muted-foreground">{activity.reasoning}</p>
               </div>
@@ -100,8 +101,8 @@ function DiffView({ activities }: { activities: ActivityEntry[] }) {
     return (
       <div className="py-8 text-center">
         <HugeiconsIcon icon={FileCodeIcon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
-        <p className="text-xs text-muted-foreground">No diffs yet</p>
-        <p className="text-[10px] text-muted-foreground/60 mt-1">Diffs appear when agents modify code</p>
+        <p className="text-xs text-muted-foreground">{m.no_diffs_yet()}</p>
+        <p className="text-[10px] text-muted-foreground/60 mt-1">{m.diffs_appear_when()}</p>
       </div>
     )
   }
@@ -133,35 +134,27 @@ export function ActivityPanel({ activities, collapsed, onToggle }: ActivityPanel
   return (
     <aside className="flex h-full w-72 flex-col border-l border-border bg-sidebar">
       {/* Header */}
-      <div className="flex h-11 items-center border-b border-border px-3">
-        <div className="flex items-center gap-2">
-          <HugeiconsIcon icon={Robot02Icon} className="size-3.5 text-muted-foreground" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Activity
-          </span>
-        </div>
-      </div>
-
-      {/* Tab bar */}
-      <Tabs defaultValue="flow" className="flex flex-1 flex-col">
-        <div className="flex items-center px-3 py-2">
+      <div className="flex h-11 items-center justify-center border-b border-border px-3">
+        <Tabs defaultValue="flow">
           <TabsList>
             <TabsTrigger value="flow">
               <HugeiconsIcon icon={Workflow} className="size-3" />
-              Flow
+              {m.flow()}
             </TabsTrigger>
             <TabsTrigger value="messages">
               <HugeiconsIcon icon={Message01Icon} className="size-3" />
-              Messages
+              {m.messages()}
             </TabsTrigger>
             <TabsTrigger value="diff">
               <HugeiconsIcon icon={FileCodeIcon} className="size-3" />
-              Diff
+              {m.diff()}
             </TabsTrigger>
           </TabsList>
-        </div>
+        </Tabs>
+      </div>
 
-        {/* Content */}
+      {/* Content */}
+      <Tabs defaultValue="flow" className="flex flex-1 flex-col">
         <TabsContent value="flow" className="flex-1 overflow-hidden m-0">
           <ScrollArea className="h-full">
             <AcpFlow activities={activities} />
@@ -192,7 +185,7 @@ export function ActivityPanel({ activities, collapsed, onToggle }: ActivityPanel
               {activities.length === 0 && (
                 <div className="py-8 text-center">
                   <HugeiconsIcon icon={Robot02Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
-                  <p className="text-xs text-muted-foreground">No activity yet</p>
+                  <p className="text-xs text-muted-foreground">{m.no_activity_yet()}</p>
                 </div>
               )}
             </div>

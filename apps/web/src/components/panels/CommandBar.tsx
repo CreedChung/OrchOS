@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu"
+import { m } from "#/paraglide/messages"
 import type { AgentProfile, Project } from "#/lib/types"
 
 interface CommandBarProps {
@@ -59,7 +60,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
         <div className="flex items-center justify-between px-5 py-3 border-b border-border">
           <div className="flex items-center gap-2">
             <HugeiconsIcon icon={SentIcon} className="size-4 text-primary" />
-            <h2 className="text-sm font-semibold text-foreground">New Command</h2>
+            <h2 className="text-sm font-semibold text-foreground">{m.new_command()}</h2>
           </div>
           <button
             onClick={onClose}
@@ -73,12 +74,12 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
           {/* Instruction Input */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Command
+              {m.command_label()}
             </label>
             <textarea
               value={instruction}
               onChange={(e) => setInstruction(e.target.value)}
-              placeholder='e.g. "Implement login functionality, with tests passing"'
+              placeholder={m.command_placeholder()}
               rows={3}
               className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               autoFocus
@@ -88,7 +89,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
           {/* Agent Selection */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Agents
+              {m.agents_label()}
             </label>
             <div className="flex flex-wrap gap-1.5">
               {enabledAgents.map((agent) => {
@@ -114,7 +115,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
                 )
               })}
               {enabledAgents.length === 0 && (
-                <span className="text-xs text-muted-foreground">No agents available</span>
+                <span className="text-xs text-muted-foreground">{m.no_agents_available()}</span>
               )}
             </div>
           </div>
@@ -122,7 +123,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
           {/* Project / Context Selection */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Context
+              {m.context()}
             </label>
             <div className="flex flex-wrap gap-1.5">
               {projects.map((project) => {
@@ -145,7 +146,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
                 )
               })}
               {projects.length === 0 && (
-                <span className="text-xs text-muted-foreground">No projects configured</span>
+                <span className="text-xs text-muted-foreground">{m.no_projects_configured()}</span>
               )}
             </div>
           </div>
@@ -153,7 +154,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
           {/* Actions */}
           <div className="flex items-center justify-between pt-2">
             <span className="text-[10px] text-muted-foreground">
-              Command → Goal + initial Actions
+              {m.command_to_goal()}
             </span>
             <div className="flex gap-2">
               <button
@@ -161,7 +162,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
                 onClick={onClose}
                 className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
               >
-                Cancel
+                {m.cancel()}
               </button>
               <button
                 type="submit"
@@ -174,7 +175,7 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
                 )}
               >
                 <HugeiconsIcon icon={SentIcon} className="size-3.5" />
-                Send
+                {m.send()}
               </button>
             </div>
           </div>

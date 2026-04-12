@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, ArrowRight01Icon, Shield01Icon } from "@hugeicons/core-free-icons"
+import { m } from "#/paraglide/messages"
 import type { Problem } from "#/lib/types"
 
 interface CreateRuleDialogProps {
@@ -11,20 +12,20 @@ interface CreateRuleDialogProps {
 }
 
 const conditionLabels: Record<string, string> = {
-  test_failed: "Test failed",
-  lint_error: "Lint error",
-  lint_warning: "Lint warning",
-  review_rejected: "Review rejected",
-  build_failed: "Build failed",
-  build_success: "Build success",
+  test_failed: m.test_failed(),
+  lint_error: m.lint_error(),
+  lint_warning: m.lint_warning(),
+  review_rejected: m.review_rejected(),
+  build_failed: m.build_failed(),
+  build_success: m.build_success(),
 }
 
 const actionLabels: Record<string, string> = {
-  auto_fix: "Auto fix",
-  ignore: "Ignore",
-  assign_reviewer: "Assign reviewer",
-  archive: "Archive",
-  notify: "Notify",
+  auto_fix: m.auto_fix_rule(),
+  ignore: m.ignore_rule(),
+  assign_reviewer: m.assign_reviewer(),
+  archive: m.archive(),
+  notify: m.notify(),
 }
 
 function inferCondition(problem: Problem): string {
@@ -73,7 +74,7 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <HugeiconsIcon icon={Shield01Icon} className="size-4 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">Create Rule</h2>
+            <h2 className="text-lg font-semibold text-foreground">{m.create_rule()}</h2>
           </div>
           <button
             onClick={onClose}
@@ -85,7 +86,7 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
 
         {/* Source problem info */}
         <div className="mb-4 rounded-md border border-border/50 bg-accent/20 px-3 py-2">
-          <p className="text-xs text-muted-foreground">From problem:</p>
+          <p className="text-xs text-muted-foreground">{m.from_problem()}</p>
           <p className="text-sm font-medium text-foreground">{problem.title}</p>
           {problem.context && (
             <p className="text-xs text-muted-foreground mt-0.5">{problem.context}</p>
@@ -96,7 +97,7 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
           {/* Rule Name */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Rule Name
+              {m.rule_name()}
             </label>
             <input
               type="text"
@@ -111,7 +112,7 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
           {/* Condition -> Action */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              Rule Logic
+              {m.rule_logic()}
             </label>
             <div className="flex items-center gap-2">
               <select
@@ -143,13 +144,13 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
               onClick={onClose}
               className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
             >
-              Cancel
+              {m.cancel()}
             </button>
             <button
               type="submit"
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              Create Rule
+              {m.create_rule()}
             </button>
           </div>
         </form>

@@ -1,7 +1,25 @@
+import { cn } from "#/lib/utils"
 import { Button } from "#/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Search01Icon, Cancel01Icon, SentIcon, Add01Icon, PanelRight, PanelLeft } from "@hugeicons/core-free-icons"
-import type { SidebarView } from "#/lib/types"
+import { Search01Icon, Cancel01Icon, SentIcon, Add01Icon, PanelRight, PanelLeft, GitPullRequestIcon, SquareIcon, InformationCircleIcon, Robot02Icon, Clock01Icon, CheckmarkCircleIcon, CancelCircleIcon } from "@hugeicons/core-free-icons"
+import { m } from "#/paraglide/messages"
+import type { SidebarView, InboxSource } from "#/lib/types"
+
+type SourceFilter = "all" | InboxSource
+type GoalStatusFilter = "all" | "active" | "completed" | "paused"
+
+const sourceFilterConfig: Record<InboxSource, { icon: typeof GitPullRequestIcon; label: string }> = {
+  github_pr: { icon: GitPullRequestIcon, label: m.prs() },
+  github_issue: { icon: SquareIcon, label: m.issues() },
+  mention: { icon: InformationCircleIcon, label: m.mentions() },
+  agent_request: { icon: Robot02Icon, label: m.agents() },
+}
+
+const goalStatusFilterConfig: Record<Exclude<GoalStatusFilter, "all">, { icon: typeof Clock01Icon; label: string }> = {
+  active: { icon: Clock01Icon, label: m.active() },
+  completed: { icon: CheckmarkCircleIcon, label: m.completed() },
+  paused: { icon: CancelCircleIcon, label: m.paused() },
+}
 
 interface ToolbarProps {
   activeView: SidebarView
@@ -11,35 +29,104 @@ interface ToolbarProps {
   onSearchChange: (query: string) => void
   activityPanelOpen: boolean
   onToggleActivityPanel: () => void
+  sourceFilter: SourceFilter
+  onSourceFilterChange: (filter: SourceFilter) => void
+  inboxCounts: { all: number; github_pr: number; github_issue: number; mention: number; agent_request: number }
+  goalStatusFilter: GoalStatusFilter
+  onGoalStatusFilterChange: (filter: GoalStatusFilter) => void
+  goalCounts: { all: number; active: number; completed: number; paused: number }
 }
 
-export function Toolbar({ activeView, onNewCommand, onCreateGoal, searchQuery, onSearchChange, activityPanelOpen, onToggleActivityPanel }: ToolbarProps) {
-  const showNewGoal = activeView === "goals" || activeView === "inbox"
+export function Toolbar({
+  activeView,
+  onNewCommand,
+  onCreateGoal,
+  searchQuery,
+  onSearchChange,
+  activityPanelOpen,
+  onToggleActivityPanel,
+  sourceFilter,
+  onSourceFilterChange,
+  inboxCounts,
+  goalStatusFilter,
+  onGoalStatusFilterChange,
+  goalCounts,
+}: ToolbarProps) {
+  const showNewGoal = activeView === "goals"
   const showNewCommand = activeView === "goals" || activeView === "inbox"
 
   return (
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
-      {/* Search */}
-      <div className="flex flex-1 items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 max-w-xs">
-        <HugeiconsIcon icon={Search01Icon} className="size-3.5 shrink-0 text-muted-foreground" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search..."
-          className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => onSearchChange("")}
-            className="shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
-          </button>
-        )}
-      </div>
+      {/* Inbox: source-based filter tabs */}
+      {activeView === "inbox" && (
+        <div className="flex items-center gap-1.5">
+          {(["all", "github_pr", "github_issue", "mention", "agent_request"] as SourceFilter[]).map((filter) => {
+            const config = filter === "all" ? null : sourceFilterConfig[filter]
+            return (
+              <button
+                key={filter}
+                onClick={() => onSourceFilterChange(filter)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                  sourceFilter === filter
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                )}
+              >
+                {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
+                <span className="capitalize">{filter === "all" ? m.all() : config?.label || filter}</span>
+                <span className="tabular-nums text-[10px] opacity-60">{inboxCounts[filter as keyof typeof inboxCounts]}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
 
-      <div className="flex-1" />
+      {activeView === "goals" && (
+        <div className="flex items-center gap-1.5">
+          {(["all", "active", "completed", "paused"] as GoalStatusFilter[]).map((filter) => {
+            const config = filter === "all" ? null : goalStatusFilterConfig[filter]
+            return (
+              <button
+                key={filter}
+                onClick={() => onGoalStatusFilterChange(filter)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                  goalStatusFilter === filter
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                )}
+              >
+                {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
+                <span className="capitalize">{filter}</span>
+                <span className="tabular-nums text-[10px] opacity-60">{goalCounts[filter]}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Centered Search */}
+      <div className="flex flex-1 items-center justify-center">
+        <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 w-full max-w-xs">
+          <HugeiconsIcon icon={Search01Icon} className="size-3.5 shrink-0 text-muted-foreground" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder={m.search()}
+            className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => onSearchChange("")}
+              className="shrink-0 text-muted-foreground hover:text-foreground"
+            >
+              <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Actions — shown based on active view */}
       {(showNewGoal || showNewCommand) && (
@@ -47,13 +134,13 @@ export function Toolbar({ activeView, onNewCommand, onCreateGoal, searchQuery, o
           {showNewGoal && (
             <Button variant="outline" size="xs" onClick={onCreateGoal}>
               <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-              New Goal
+              {m.new_goal()}
             </Button>
           )}
           {showNewCommand && (
             <Button size="xs" onClick={onNewCommand}>
               <HugeiconsIcon icon={SentIcon} className="size-3.5" />
-              Command
+              {m.command()}
             </Button>
           )}
         </div>
@@ -64,7 +151,7 @@ export function Toolbar({ activeView, onNewCommand, onCreateGoal, searchQuery, o
         variant="outline"
         size="icon-sm"
         onClick={onToggleActivityPanel}
-        title={activityPanelOpen ? "Close activity panel" : "Open activity panel"}
+        title={activityPanelOpen ? m.close_activity_panel() : m.open_activity_panel()}
       >
         {activityPanelOpen ? (
           <HugeiconsIcon icon={PanelLeft} className="size-4" />

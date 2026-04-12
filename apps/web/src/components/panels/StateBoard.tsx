@@ -1,7 +1,8 @@
 import { cn } from "#/lib/utils"
 import { Badge } from "#/components/ui/badge"
 import { StatusIcon } from "#/components/panels/StatusIcon"
-import type { Goal, StateItem as StateItemType, Artifact, ActivityEntry, Status, Project, Command } from "#/lib/types"
+import { m } from "#/paraglide/messages"
+import type { Goal, StateItem as StateItemType, Artifact, ActivityEntry, Status, Project, Command, Problem } from "#/lib/types"
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import {
   FileCodeIcon,
@@ -29,7 +30,9 @@ interface StateBoardProps {
   projects: Project[]
   command?: Command
   problems: { critical: number; warning: number; info: number }
+  systemProblems?: Problem[]
   onStateAction: (stateId: string, action: string) => void
+  onProblemAction?: (problemId: string, action: string) => void
   goalActions?: React.ReactNode
   onAutoModeToggle?: () => void
 }
@@ -90,7 +93,7 @@ const commandStatusColor: Record<string, string> = {
   failed: "text-red-500",
 }
 
-export function StateBoard({ goal, states, artifacts, activities, projects, command, problems, onStateAction, goalActions, onAutoModeToggle }: StateBoardProps) {
+export function StateBoard({ goal, states, artifacts, activities, projects, command, problems, systemProblems, onStateAction, onProblemAction, goalActions, onAutoModeToggle }: StateBoardProps) {
   const isAutoMode = goal.status === "active"
   const failedStates = states.filter((s) => s.status === "failed" || s.status === "error")
   const successStates = states.filter((s) => s.status === "success")
@@ -102,7 +105,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
         <div className="mb-6">
           <div className="mb-2 flex items-center gap-2 flex-wrap">
             <Badge variant={goalStatusVariant[goal.status]} className="text-[10px] uppercase tracking-wider">
-              Goal
+              {m.goal()}
             </Badge>
             {goalActions}
           </div>
@@ -211,20 +214,20 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
           </button>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">Auto Mode</span>
+              <span className="text-sm font-medium text-foreground">{m.auto_mode()}</span>
               <span className={cn(
                 "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
                 isAutoMode
                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                   : "bg-muted text-muted-foreground"
               )}>
-                {isAutoMode ? "ON" : "OFF"}
+                {isAutoMode ? m.on() : m.off()}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
               {isAutoMode
-                ? "System will auto-fix problems as they arise"
-                : "Manual mode — you approve each action"}
+                ? m.auto_mode_on_desc()
+                : m.auto_mode_off_desc()}
             </p>
           </div>
         </div>
@@ -233,7 +236,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
         <section className="mb-6">
           <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <div className="size-1.5 rounded-full bg-primary" />
-            System Health
+            {m.system_health()}
           </h2>
           <div className="grid grid-cols-3 gap-3">
             <div className={cn(
@@ -244,7 +247,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
                 <HugeiconsIcon icon={Fire02Icon} className={cn("size-4", problems.critical > 0 ? "text-red-500" : "text-muted-foreground/30")} />
                 <span className="text-2xl font-bold tabular-nums text-foreground">{problems.critical}</span>
               </div>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Critical</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{m.critical()}</span>
             </div>
             <div className={cn(
               "rounded-lg border p-3",
@@ -254,7 +257,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
                 <HugeiconsIcon icon={Alert01Icon} className={cn("size-4", problems.warning > 0 ? "text-amber-500" : "text-muted-foreground/30")} />
                 <span className="text-2xl font-bold tabular-nums text-foreground">{problems.warning}</span>
               </div>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Warning</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{m.warning()}</span>
             </div>
             <div className={cn(
               "rounded-lg border p-3",
@@ -270,7 +273,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
                   {states.length > 0 ? `${successStates.length}/${states.length}` : "—"}
                 </span>
               </div>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">States OK</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{m.states_ok()}</span>
             </div>
           </div>
         </section>
@@ -279,7 +282,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
         <section className="mb-8">
           <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <div className="size-1.5 rounded-full bg-primary" />
-            System State
+            {m.system_state()}
           </h2>
           <div className="space-y-2">
             {states.map((state) => {
@@ -324,19 +327,74 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
             })}
             {states.length === 0 && (
               <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
-                <p className="text-sm text-muted-foreground">No states yet</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">States will appear as the system runs</p>
+                <p className="text-sm text-muted-foreground">{m.no_states_yet()}</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">{m.states_will_appear()}</p>
               </div>
             )}
           </div>
         </section>
+
+        {/* System Problems — internal issues like test_failed, build_error */}
+        {systemProblems && systemProblems.length > 0 && (
+          <section className="mb-8">
+            <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="size-1.5 rounded-full bg-red-500" />
+              {m.system_problems()}
+            </h2>
+            <div className="space-y-2">
+              {systemProblems.filter((p) => p.status === "open").map((problem) => (
+                <div
+                  key={problem.id}
+                  className={cn(
+                    "rounded-lg border p-3 transition-colors",
+                    problem.priority === "critical"
+                      ? "bg-red-500/5 border-red-500/20"
+                      : problem.priority === "warning"
+                        ? "bg-amber-500/5 border-amber-500/20"
+                        : "bg-blue-500/5 border-blue-500/10"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <HugeiconsIcon
+                      icon={problem.priority === "critical" ? Fire02Icon : Alert01Icon}
+                      className={cn(
+                        "size-4 shrink-0",
+                        problem.priority === "critical" ? "text-red-500" : problem.priority === "warning" ? "text-amber-500" : "text-blue-500"
+                      )}
+                    />
+                    <span className="text-sm font-medium text-foreground">{problem.title}</span>
+                    <span className="ml-auto text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {problem.source?.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                  {problem.context && (
+                    <p className="mt-1 ml-7 text-xs text-muted-foreground">{problem.context}</p>
+                  )}
+                  {problem.actions && problem.actions.length > 0 && onProblemAction && (
+                    <div className="mt-2 ml-7 flex items-center gap-1.5">
+                      {problem.actions.map((action) => (
+                        <button
+                          key={action}
+                          onClick={() => onProblemAction(problem.id, action)}
+                          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                        >
+                          {action}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Artifacts Section */}
         {artifacts.length > 0 && (
           <section className="mb-8">
             <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <div className="size-1.5 rounded-full bg-primary" />
-              Artifacts
+              {m.artifacts()}
             </h2>
             <div className="space-y-1">
               {artifacts.map((artifact) => {
@@ -376,7 +434,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
           <section>
             <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <div className="size-1.5 rounded-full bg-primary" />
-              Activity
+              {m.activity()}
             </h2>
             <div className="space-y-0">
               {activities.slice(0, 5).map((activity, idx) => {
