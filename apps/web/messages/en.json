@@ -325,5 +325,17 @@
   "idle_status": "Idle",
   "disabled_agents": "Disabled",
   "no_agent_selected": "No agent selected",
-  "no_agent_selected_desc": "Select an agent from the list to view details."
+  "no_agent_selected_desc": "Select an agent from the list to view details.",
+  "no_inbox_selected": "No item selected",
+  "no_inbox_selected_desc": "Select an item from the list to view details.",
+  "landing_subtitle": "AI Agent Orchestration System",
+  "landing_description": "Coordinate multiple AI agents to accomplish complex goals. Built with Bun, Elysia, and React.",
+  "open_dashboard": "Open Dashboard",
+  "learn_more": "Learn More",
+  "feature_agents_title": "Multi-Agent Coordination",
+  "feature_agents_desc": "Register and manage AI agents with different capabilities. Assign tasks, monitor status, and orchestrate collaboration.",
+  "feature_goals_title": "Goal-Driven Workflows",
+  "feature_goals_desc": "Define goals with success criteria and constraints. Track progress through states, artifacts, and activity feeds.",
+  "feature_automation_title": "Smart Automation Rules",
+  "feature_automation_desc": "Create rules to automatically handle recurring problems. From auto-fixing test failures to assigning reviewers."
 }

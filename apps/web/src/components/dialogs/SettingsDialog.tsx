@@ -9,7 +9,7 @@ import { AVAILABLE_LOCALES } from "#/lib/i18n"
 import { m } from "#/paraglide/messages"
 import type { ControlSettings, NotificationEvent } from "#/lib/types"
 import { NOTIFICATION_EVENTS } from "#/lib/types"
-import { api, type DetectResponse } from "#/lib/api"
+import { api, type DetectResponse, type AgentProfile } from "#/lib/api"
 
 type SettingsTab = "general" | "notifications" | "integrations" | "runtimes" | "about"
 
@@ -27,6 +27,7 @@ interface SettingsDialogProps {
   settings: ControlSettings | null
   onSettingsChange: (settings: ControlSettings) => void
   onAgentsRefresh: () => void
+  registeredAgents: AgentProfile[]
 }
 
 function ModelBadge({ model }: { model: string }) {
@@ -47,7 +48,7 @@ function ModelBadge({ model }: { model: string }) {
   )
 }
 
-export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAgentsRefresh }: SettingsDialogProps) {
+export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAgentsRefresh, registeredAgents }: SettingsDialogProps) {
   const [localSettings, setLocalSettings] = useState<ControlSettings | null>(settings)
   const [activeTab, setActiveTab] = useState<SettingsTab>("general")
   const [detectResult, setDetectResult] = useState<DetectResponse | null>(null)
@@ -59,13 +60,6 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
   useEffect(() => {
     setLocalSettings(settings)
   }, [settings])
-
-  // Auto-detect runtimes when dialog opens and runtimes tab is active
-  useEffect(() => {
-    if (open && activeTab === "runtimes" && !detectResult && !detecting) {
-      handleDetect()
-    }
-  }, [open, activeTab])
 
   const currentSettings = localSettings ?? settings
 
@@ -119,6 +113,13 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
       setDetecting(false)
     }
   }, [])
+
+  // Auto-detect runtimes whenever the runtimes tab is activated
+  useEffect(() => {
+    if (open && activeTab === "runtimes" && !detecting) {
+      handleDetect()
+    }
+  }, [open, activeTab, handleDetect])
 
   const handleRegisterAgent = useCallback(async (agentId: string) => {
     setRegistering(agentId)
@@ -494,40 +495,61 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
                       <span className="size-1.5 rounded-full bg-emerald-500" />
                       {m.available()} ({detectResult.available.length})
                     </div>
-                    {detectResult.available.map((agent) => (
-                      <div
-                        key={agent.id}
-                        className="flex items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-2.5"
-                      >
-                        <div className="flex size-8 items-center justify-center rounded-md bg-emerald-500/10 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                          {agent.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground">{agent.name}</span>
-                            <ModelBadge model={agent.model} />
-                            {agent.version && (
-                              <span className="text-[10px] text-muted-foreground">v{agent.version}</span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">{agent.role}</p>
-                        </div>
-                        <button
-                          onClick={() => handleRegisterAgent(agent.id)}
-                          disabled={registering === agent.id}
-                          className="rounded-md px-2.5 py-1 text-xs font-medium border border-border bg-card text-foreground hover:bg-accent disabled:opacity-50 transition-colors"
-                        >
-                          {registering === agent.id ? (
-                            <span className="size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <HugeiconsIcon icon={AddCircleHalfDotIcon} className="size-3" />
-                              {m.register()}
-                            </span>
+                    {detectResult.available.map((agent) => {
+                      const isRegistered = registeredAgents.some(
+                        (r) => r.name === agent.name || r.runtimeId === agent.id
+                      )
+                      return (
+                        <div
+                          key={agent.id}
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg border px-4 py-2.5",
+                            isRegistered
+                              ? "border-border/50 bg-muted/30"
+                              : "border-emerald-500/20 bg-emerald-500/5"
                           )}
-                        </button>
-                      </div>
-                    ))}
+                        >
+                          <div className={cn(
+                            "flex size-8 items-center justify-center rounded-md text-sm font-bold",
+                            isRegistered
+                              ? "bg-muted text-muted-foreground"
+                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          )}>
+                            {agent.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-foreground">{agent.name}</span>
+                              <ModelBadge model={agent.model} />
+                              {agent.version && (
+                                <span className="text-[10px] text-muted-foreground">v{agent.version}</span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{agent.role}</p>
+                          </div>
+                          {isRegistered ? (
+                            <span className="rounded-md px-2.5 py-1 text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                              {m.connected()}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleRegisterAgent(agent.id)}
+                              disabled={registering === agent.id}
+                              className="rounded-md px-2.5 py-1 text-xs font-medium border border-border bg-card text-foreground hover:bg-accent disabled:opacity-50 transition-colors"
+                            >
+                              {registering === agent.id ? (
+                                <span className="size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                              ) : (
+                                <span className="flex items-center gap-1">
+                                  <HugeiconsIcon icon={AddCircleHalfDotIcon} className="size-3" />
+                                  {m.register()}
+                                </span>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
 

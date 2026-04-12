@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from "react"
 import { cn } from "#/lib/utils"
 import { Sidebar } from "#/components/layout/Sidebar"
-import { Inbox } from "#/components/panels/Inbox"
+import { InboxList } from "#/components/panels/InboxList"
+import { InboxDetail, InboxNoSelection } from "#/components/panels/InboxDetail"
 import { StateBoard } from "#/components/panels/StateBoard"
 import { ActivityPanel } from "#/components/panels/ActivityPanel"
 import { CommandBar } from "#/components/panels/CommandBar"
@@ -13,7 +14,7 @@ import { ObservabilityView } from "#/components/panels/ObservabilityView"
 import { GoalActions } from "#/components/panels/GoalActions"
 import { GoalList } from "#/components/panels/GoalList"
 import { AgentList } from "#/components/panels/AgentList"
-import { Toolbar } from "#/components/layout/Toolbar"
+import { Toolbar, type AgentModelFilter } from "#/components/layout/Toolbar"
 import { McpServersView } from "#/components/panels/McpServersView"
 import { SkillsView } from "#/components/panels/SkillsView"
 import { EnvironmentsView } from "#/components/panels/EnvironmentsView"
@@ -202,6 +203,7 @@ export function Dashboard() {
     activeView, setActiveView,
     activeGoalId, setActiveGoalId,
     activeAgentId, setActiveAgentId,
+    activeInboxId, setActiveInboxId,
     activeOrganizationId, setActiveOrganizationId,
     sourceFilter, setSourceFilter,
     goalStatusFilter, setGoalStatusFilter,
@@ -233,6 +235,7 @@ export function Dashboard() {
   const [showCreateAgentDialog, setShowCreateAgentDialog] = useState(false)
   const [ruleFromProblem, setRuleFromProblem] = useState<Problem | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [agentModelFilter, setAgentModelFilter] = useState<AgentModelFilter>("all")
   const [loading, setLoading] = useState(true)
 
   const activeGoal = goals.find((g) => g.id === activeGoalId) ?? null
@@ -270,6 +273,12 @@ export function Dashboard() {
       project: items.filter((s: { scope: string }) => s.scope === "project").length,
     }
   }, [activeView, mcpServers, skills])
+
+  const agentModelCounts = useMemo(() => ({
+    all: agents.length,
+    local: agents.filter((a) => a.model.startsWith("local/")).length,
+    cloud: agents.filter((a) => !a.model.startsWith("local/")).length,
+  }), [agents])
 
   const refreshAll = useCallback(async () => {
     const results = await Promise.allSettled([
@@ -590,15 +599,30 @@ export function Dashboard() {
   // Render main content based on active view
   const renderMainContent = () => {
     switch (activeView) {
-      case "inbox":
+      case "inbox": {
+        const activeInboxItem = problems.find((p) => p.id === activeInboxId && p.status === "open" && isInboxItem(p))
         return (
-          <Inbox
-            problems={problems}
-            onConvertToGoal={handleConvertToGoal}
-            onDismiss={handleDismiss}
-            sourceFilter={sourceFilter}
-          />
+          <div className="flex flex-1 overflow-hidden">
+            <InboxList
+              problems={problems}
+              activeInboxId={activeInboxId}
+              sourceFilter={sourceFilter}
+              onSelectItem={setActiveInboxId}
+            />
+            <div className="flex-1 overflow-hidden">
+              {activeInboxItem ? (
+                <InboxDetail
+                  item={activeInboxItem}
+                  onConvertToGoal={handleConvertToGoal}
+                  onDismiss={handleDismiss}
+                />
+              ) : (
+                <InboxNoSelection />
+              )}
+            </div>
+          </div>
         )
+      }
 
       case "goals":
         return (
@@ -767,6 +791,9 @@ export function Dashboard() {
             scopeFilter={scopeFilter}
             onScopeFilterChange={setScopeFilter}
             scopeCounts={scopeCounts}
+            agentModelFilter={agentModelFilter}
+            onAgentModelFilterChange={setAgentModelFilter}
+            agentModelCounts={agentModelCounts}
           />
           {renderMainContent()}
         </div>
@@ -804,6 +831,7 @@ export function Dashboard() {
         settings={settings}
         onSettingsChange={setSettings}
         onAgentsRefresh={refreshAll}
+        registeredAgents={agents}
       />
       <CreateAgentDialog
         open={showCreateAgentDialog}

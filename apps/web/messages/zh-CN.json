@@ -325,5 +325,17 @@
   "idle_status": "空闲",
   "disabled_agents": "已禁用",
   "no_agent_selected": "未选择代理",
-  "no_agent_selected_desc": "从列表中选择一个代理以查看详情。"
+  "no_agent_selected_desc": "从列表中选择一个代理以查看详情。",
+  "no_inbox_selected": "未选择项目",
+  "no_inbox_selected_desc": "从列表中选择一个项目以查看详情。",
+  "landing_subtitle": "AI 代理编排系统",
+  "landing_description": "协调多个 AI 代理完成复杂目标。基于 Bun、Elysia 和 React 构建。",
+  "open_dashboard": "打开控制台",
+  "learn_more": "了解更多",
+  "feature_agents_title": "多代理协作",
+  "feature_agents_desc": "注册和管理具有不同能力的 AI 代理。分配任务、监控状态并编排协作流程。",
+  "feature_goals_title": "目标驱动工作流",
+  "feature_goals_desc": "定义包含成功标准和约束条件的目标。通过状态、产物和活动动态跟踪进度。",
+  "feature_automation_title": "智能自动化规则",
+  "feature_automation_desc": "创建规则以自动处理重复出现的问题，从自动修复测试失败到自动分配审查者。"
 }

@@ -325,5 +325,17 @@
   "idle_status": "閒置",
   "disabled_agents": "已停用",
   "no_agent_selected": "未選擇代理",
-  "no_agent_selected_desc": "從列表中選擇一個代理以查看詳情。"
+  "no_agent_selected_desc": "從列表中選擇一個代理以查看詳情。",
+  "no_inbox_selected": "未選擇項目",
+  "no_inbox_selected_desc": "從列表中選擇一個項目以查看詳情。",
+  "landing_subtitle": "AI 代理編排系統",
+  "landing_description": "協調多個 AI 代理完成複雜目標。基於 Bun、Elysia 和 React 構建。",
+  "open_dashboard": "打開控制台",
+  "learn_more": "瞭解更多",
+  "feature_agents_title": "多代理協作",
+  "feature_agents_desc": "註冊和管理具有不同能力的 AI 代理。分配任務、監控狀態並編排協作流程。",
+  "feature_goals_title": "目標驅動工作流",
+  "feature_goals_desc": "定義包含成功標準和約束條件的目標。通過狀態、產物和活動動態跟蹤進度。",
+  "feature_automation_title": "智慧自動化規則",
+  "feature_automation_desc": "建立規則以自動處理重複出現的問題，從自動修復測試失敗到自動分配審查者。"
 }

@@ -1,13 +1,14 @@
 import { cn } from "#/lib/utils"
 import { Button } from "#/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Search01Icon, Cancel01Icon, PanelRight, PanelLeft, GitPullRequestIcon, SquareIcon, InformationCircleIcon, Robot02Icon, Clock01Icon, CheckmarkCircleIcon, CancelCircleIcon, Globe02Icon, Folder01Icon } from "@hugeicons/core-free-icons"
+import { Search01Icon, Cancel01Icon, PanelRight, PanelLeft, GitPullRequestIcon, SquareIcon, InformationCircleIcon, Robot02Icon, Clock01Icon, CheckmarkCircleIcon, CancelCircleIcon, Globe02Icon, Folder01Icon, CodeIcon, CloudIcon } from "@hugeicons/core-free-icons"
 import { m } from "#/paraglide/messages"
 import type { SidebarView, InboxSource } from "#/lib/types"
 
 type SourceFilter = "all" | InboxSource
 type GoalStatusFilter = "all" | "active" | "completed" | "paused"
 export type ScopeFilter = "all" | "global" | "project"
+export type AgentModelFilter = "all" | "local" | "cloud"
 
 const scopeFilterConfig: Record<Exclude<ScopeFilter, "all">, { icon: typeof Globe02Icon; label: string }> = {
   global: { icon: Globe02Icon, label: m.global() },
@@ -27,6 +28,11 @@ const goalStatusFilterConfig: Record<Exclude<GoalStatusFilter, "all">, { icon: t
   paused: { icon: CancelCircleIcon, label: m.paused() },
 }
 
+const agentModelFilterConfig: Record<Exclude<AgentModelFilter, "all">, { icon: typeof CodeIcon; label: string }> = {
+  local: { icon: CodeIcon, label: m.model_local() },
+  cloud: { icon: CloudIcon, label: m.model_cloud() },
+}
+
 interface ToolbarProps {
   activeView: SidebarView
   searchQuery: string
@@ -39,6 +45,9 @@ interface ToolbarProps {
   goalStatusFilter: GoalStatusFilter
   onGoalStatusFilterChange: (filter: GoalStatusFilter) => void
   goalCounts: { all: number; active: number; completed: number; paused: number }
+  agentModelFilter: AgentModelFilter
+  onAgentModelFilterChange: (filter: AgentModelFilter) => void
+  agentModelCounts: { all: number; local: number; cloud: number }
   scopeFilter: ScopeFilter
   onScopeFilterChange: (filter: ScopeFilter) => void
   scopeCounts: { all: number; global: number; project: number }
@@ -56,6 +65,9 @@ export function Toolbar({
   goalStatusFilter,
   onGoalStatusFilterChange,
   goalCounts,
+  agentModelFilter,
+  onAgentModelFilterChange,
+  agentModelCounts,
   scopeFilter,
   onScopeFilterChange,
   scopeCounts,
@@ -113,6 +125,31 @@ export function Toolbar({
         </div>
       )}
 
+      {/* Agents: model-based filter tabs */}
+      {(activeView === "agents" || activeView === "agent-detail") && (
+        <div className="flex items-center gap-1.5">
+          {(["all", "local", "cloud"] as AgentModelFilter[]).map((filter) => {
+            const config = filter === "all" ? null : agentModelFilterConfig[filter]
+            return (
+              <button
+                key={filter}
+                onClick={() => onAgentModelFilterChange(filter)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                  agentModelFilter === filter
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                )}
+              >
+                {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
+                <span>{filter === "all" ? m.all() : config?.label || filter}</span>
+                <span className="tabular-nums text-[10px] opacity-60">{agentModelCounts[filter]}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* MCP Servers / Skills: scope-based filter tabs */}
       {(activeView === "mcp-servers" || activeView === "skills") && (
         <div className="flex items-center gap-1.5">
@@ -138,8 +175,11 @@ export function Toolbar({
         </div>
       )}
 
-      {/* Centered Search */}
-      <div className="flex flex-1 items-center justify-center">
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Right side: Search + Activity panel toggle */}
+      <div className="flex items-center gap-2">
         <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 w-full max-w-xs">
           <HugeiconsIcon icon={Search01Icon} className="size-3.5 shrink-0 text-muted-foreground" />
           <input
@@ -158,23 +198,20 @@ export function Toolbar({
             </button>
           )}
         </div>
+
+        <Button
+          variant="outline"
+          size="icon-sm"
+          onClick={onToggleActivityPanel}
+          title={activityPanelOpen ? m.close_activity_panel() : m.open_activity_panel()}
+        >
+          {activityPanelOpen ? (
+            <HugeiconsIcon icon={PanelLeft} className="size-4" />
+          ) : (
+            <HugeiconsIcon icon={PanelRight} className="size-4" />
+          )}
+        </Button>
       </div>
-
-
-
-      {/* Activity panel toggle */}
-      <Button
-        variant="outline"
-        size="icon-sm"
-        onClick={onToggleActivityPanel}
-        title={activityPanelOpen ? m.close_activity_panel() : m.open_activity_panel()}
-      >
-        {activityPanelOpen ? (
-          <HugeiconsIcon icon={PanelLeft} className="size-4" />
-        ) : (
-          <HugeiconsIcon icon={PanelRight} className="size-4" />
-        )}
-      </Button>
     </div>
   )
 }

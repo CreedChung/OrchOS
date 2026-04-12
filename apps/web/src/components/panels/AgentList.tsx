@@ -50,7 +50,6 @@ export function AgentList({
       {/* List */}
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-0.5">
-          {/* Enabled agents */}
           {enabledAgents.length > 0 && (
             <>
               {enabledAgents.map((agent) => (
@@ -64,7 +63,6 @@ export function AgentList({
             </>
           )}
 
-          {/* Disabled agents */}
           {disabledAgents.length > 0 && (
             <>
               <div className="flex items-center gap-2 px-2 py-1.5">
@@ -83,7 +81,6 @@ export function AgentList({
             </>
           )}
 
-          {/* Empty state */}
           {agents.length === 0 && (
             <div className="py-8 text-center">
               <HugeiconsIcon icon={Robot02Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />

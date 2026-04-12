@@ -1,159 +1,198 @@
-# Turborepo starter
+# OrchOS
 
-This Turborepo starter is maintained by the Turborepo core team.
+**AI Agent Orchestration System** — Coordinate multiple AI agents to accomplish complex development goals.
 
-## Using this example
+OrchOS provides a dashboard where you can define goals, assign agents, track progress through a state machine (tests → build → lint → review → deploy), and manage problems that arise during execution.
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
+## Features
+
+- **Goal Management** — Create goals with success criteria and track them through a multi-stage state machine
+- **Agent Management** — Register local or cloud-based AI agents, auto-detect installed CLIs, and assign agents to goals
+- **Problem Inbox** — Collect issues from GitHub PRs, test failures, lint errors, and convert them to goals
+- **Automation Rules** — Define conditions and actions to auto-fix, ignore, or assign reviewers
+- **MCP Server Management** — Manage Model Context Protocol server profiles with global or project scoping
+- **Skills** — Define reusable capabilities like Code Review, Test Generation, Security Audit
+- **Natural Language Commands** — Submit instructions like "Implement login system" and let agents execute
+- **Real-time Observability** — Activity feed, event tracking, and metrics via WebSocket
+- **Multi-Organization** — Switch between organizations with scoped settings, MCP servers, and skills
+- **i18n** — English, Simplified Chinese, Traditional Chinese (powered by Paraglide JS)
+- **Dark/Light Theme** — Auto-detect or manually toggle, persisted across sessions
+
+---
+
+## Architecture
+
+```
+OrchOS/
+├── apps/
+│   ├── web/          # React frontend (Vite + TanStack Router)
+│   └── server/       # Elysia backend (Bun runtime) — "Cortex"
+├── packages/
+│   ├── ui/           # Shared React component stubs
+│   ├── eslint-config/
+│   └── typescript-config/
 ```
 
-## What's inside?
+### Tech Stack
 
-This Turborepo includes the following packages/apps:
+| Layer       | Technology                                    |
+| ----------- | --------------------------------------------- |
+| Frontend    | React 19, Vite, TanStack Router               |
+| Styling     | Tailwind CSS v4, shadcn/ui, Motion            |
+| State       | Zustand (persisted to localStorage)           |
+| i18n        | Paraglide JS (compile-time)                   |
+| Charts      | Recharts                                      |
+| Backend     | Elysia on Bun, Drizzle ORM, SQLite (WAL mode) |
+| Real-time   | WebSocket event broadcasting                  |
+| Monorepo    | Turborepo, Bun workspaces                     |
 
-### Apps and Packages
+---
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## Getting Started
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### Prerequisites
 
-### Utilities
+- [Bun](https://bun.sh/) >= 1.3
+- Node.js >= 18
 
-This Turborepo has some additional tools already setup for you:
+### Install & Run
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+```bash
+# Install dependencies
+bun install
+
+# Start both frontend and backend
+bun run dev
+```
+
+| App      | URL                    | Description               |
+| -------- | ---------------------- | ------------------------- |
+| Frontend | http://localhost:3000  | React dashboard           |
+| Backend  | http://localhost:5173  | API server + WebSocket    |
+
+### Run Individually
+
+```bash
+# Backend only
+bun --filter=server dev
+
+# Frontend only
+bun --filter=web dev
+```
 
 ### Build
 
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+bun run build
 ```
 
-Without global `turbo`, use your package manager:
+---
 
-```sh
-cd my-turborepo
-npx turbo build
-bun dlx turbo build
-bun exec turbo build
+## Available Scripts
+
+| Command             | Description                    |
+| ------------------- | ------------------------------ |
+| `bun run dev`       | Start all apps in dev mode     |
+| `bun run build`     | Build all apps for production  |
+| `bun run lint`      | Lint all packages              |
+| `bun run check-types` | Type check all packages      |
+| `bun run format`    | Format code with Prettier      |
+
+You can also target specific apps with filters:
+
+```bash
+bun --filter=web dev
+bun --filter=server dev
+bun --filter=web build
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## API Endpoints
 
-```sh
-turbo build --filter=docs
+### Agents
+
+| Method | Path                        | Description               |
+| ------ | --------------------------- | ------------------------- |
+| GET    | `/api/agents`               | List all agents           |
+| POST   | `/api/agents`               | Create an agent           |
+| GET    | `/api/agents/detect`        | Auto-detect installed CLIs|
+| POST   | `/api/agents/detect/register`| Register detected agents  |
+| PATCH  | `/api/agents/:id`           | Update agent status       |
+| GET    | `/api/agents/:id/health`    | Agent health check        |
+
+### Goals
+
+| Method | Path                        | Description               |
+| ------ | --------------------------- | ------------------------- |
+| GET    | `/api/goals`                | List all goals            |
+| POST   | `/api/goals`                | Create a goal             |
+| GET    | `/api/goals/:id`            | Get goal details          |
+| PATCH  | `/api/goals/:id`            | Update a goal             |
+| DELETE | `/api/goals/:id`            | Delete a goal             |
+| GET    | `/api/goals/:id/states`     | Get goal states           |
+| GET    | `/api/goals/:id/artifacts`  | Get goal artifacts        |
+| GET    | `/api/goals/:id/activities` | Get goal activity log     |
+| POST   | `/api/goals/:id/actions`    | Trigger state action      |
+| POST   | `/api/goals/:id/loop`       | Run goal execution loop   |
+
+### More
+
+- **Projects** — `GET/POST/PATCH/DELETE /api/projects`
+- **Problems** — `GET/POST/PATCH/DELETE /api/problems` (with bulk update)
+- **Rules** — `GET/POST/PATCH/DELETE /api/rules`
+- **Commands** — `GET/POST/PATCH/DELETE /api/commands`
+- **MCP Servers** — `GET/POST/PATCH/DELETE /api/mcp-servers`
+- **Skills** — `GET/POST/PATCH/DELETE /api/skills`
+- **Settings** — `GET/PATCH /api/settings`
+- **Events** — `GET /api/events`, `GET /api/activities`
+- **WebSocket** — `WS /ws` for real-time events
+
+---
+
+## Database
+
+The backend uses **SQLite** with Drizzle ORM. The database file (`cortex.db`) is stored in `apps/server/` and uses WAL mode for concurrent reads/writes.
+
+Tables: `commands`, `goals`, `states`, `artifacts`, `activities`, `agents`, `projects`, `settings`, `events`, `organizations`, `problems`, `rules`, `mcp_servers`, `skills`
+
+### Migrations
+
+```bash
+cd apps/server
+bun --filter=server drizzle-kit generate
+bun --filter=server drizzle-kit migrate
 ```
 
-Without global `turbo`:
+---
 
-```sh
-npx turbo build --filter=docs
-bun exec turbo build --filter=docs
-bun exec turbo build --filter=docs
+## Keyboard Shortcuts
+
+| Shortcut         | Action            |
+| ---------------- | ----------------- |
+| `Cmd+K` / `Ctrl+K` | Open command bar |
+
+---
+
+## Project Structure (Frontend)
+
+```
+apps/web/src/
+├── components/       # UI components, dialogs, layout, pages
+├── lib/              # Utilities, API client, store, i18n, hooks
+├── routes/           # TanStack Router file-based routes
+├── paraglide/        # Generated i18n messages
+└── styles.css        # Tailwind CSS entry
 ```
 
-### Develop
+---
 
-To develop all apps and packages, run the following command:
+## Learn More
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-bun exec turbo dev
-bun exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-bun exec turbo dev --filter=web
-bun exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-bun exec turbo login
-bun exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-bun exec turbo link
-bun exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- [Turborepo](https://turborepo.dev/docs) — Monorepo task orchestration
+- [TanStack Router](https://tanstack.com/router) — File-based routing for React
+- [Elysia](https://elysiajs.com/) — Ergonomic web framework for Bun
+- [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) — Compile-time i18n
+- [Drizzle ORM](https://orm.drizzle.team/) — TypeScript ORM with SQLite

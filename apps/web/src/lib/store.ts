@@ -12,6 +12,7 @@ interface UIState {
   activeView: SidebarView
   activeGoalId: string | null
   activeAgentId: string | null
+  activeInboxId: string | null
   activeOrganizationId: string | null
 
   // Filters
@@ -33,6 +34,7 @@ interface UIActions {
   setActiveView: (view: SidebarView) => void
   setActiveGoalId: (id: string | null) => void
   setActiveAgentId: (id: string | null) => void
+  setActiveInboxId: (id: string | null) => void
   setActiveOrganizationId: (id: string | null) => void
   setSourceFilter: (filter: SourceFilter) => void
   setGoalStatusFilter: (filter: GoalStatusFilter) => void
@@ -59,6 +61,7 @@ export const useUIStore = create<UIState & UIActions>()(
       activeView: "inbox" as SidebarView,
       activeGoalId: null,
       activeAgentId: null,
+      activeInboxId: null,
       activeOrganizationId: null,
 
       // Filters
@@ -78,6 +81,7 @@ export const useUIStore = create<UIState & UIActions>()(
       setActiveView: (view) => set({ activeView: view }),
       setActiveGoalId: (id) => set({ activeGoalId: id }),
       setActiveAgentId: (id) => set({ activeAgentId: id }),
+      setActiveInboxId: (id) => set({ activeInboxId: id }),
       setActiveOrganizationId: (id) => set({ activeOrganizationId: id }),
       setSourceFilter: (filter) => set({ sourceFilter: filter }),
       setGoalStatusFilter: (filter) => set({ goalStatusFilter: filter }),

@@ -43,6 +43,13 @@ export default function Header() {
             Home
           </Link>
           <Link
+            to="/dashboard"
+            className="text-muted-foreground transition hover:text-foreground"
+            activeProps={{ className: 'text-foreground' }}
+          >
+            Dashboard
+          </Link>
+          <Link
             to="/about"
             className="text-muted-foreground transition hover:text-foreground"
             activeProps={{ className: 'text-foreground' }}

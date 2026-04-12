@@ -93,7 +93,9 @@ function TabsContent({
       data-slot="tabs-content"
       className={cn("flex-1 text-sm outline-none", className)}
       {...props}
-    />
+    >
+      {children}
+    </TabsPrimitive.Panel>
   )
 }
 

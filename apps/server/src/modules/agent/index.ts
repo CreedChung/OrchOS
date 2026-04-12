@@ -31,15 +31,21 @@ export const agentController = new Elysia({ prefix: "/api/agents" })
   .post("/detect/register", async ({ body }) => {
     const detected = await AgentService.detect()
     const registered: typeof AgentModel.response.$inferInput[] = []
+    const skipped: { id: string; name: string; command: string; version?: string; path?: string; role: string; capabilities: string[]; model: string }[] = []
 
     for (const agent of detected.available) {
       if ((body.agentIds && body.agentIds.includes(agent.id)) || body.registerAll) {
-        const profile = AgentService.registerFromCLI(agent)
-        if (profile) registered.push(profile)
+        const existing = AgentService.getByName(agent.name)
+        if (existing) {
+          skipped.push(agent)
+        } else {
+          const profile = AgentService.registerFromCLI(agent)
+          if (profile) registered.push(profile)
+        }
       }
     }
 
-    return { registered, skipped: detected.available.filter((a) => !registered.find((r) => r.id === a.id)) }
+    return { registered, skipped }
   }, {
     body: t.Object({
       agentIds: t.Optional(t.Array(t.String())),
