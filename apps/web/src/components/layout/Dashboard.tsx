@@ -8,10 +8,11 @@ import { CommandBar } from "#/components/panels/CommandBar"
 import { CreateGoalDialog } from "#/components/dialogs/CreateGoalDialog"
 import { CreateRuleDialog } from "#/components/dialogs/CreateRuleDialog"
 import { SettingsDialog } from "#/components/dialogs/SettingsDialog"
+import { CreateAgentDialog } from "#/components/dialogs/CreateAgentDialog"
 import { GoalActions } from "#/components/panels/GoalActions"
 import { Toolbar } from "#/components/layout/Toolbar"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Target01Icon, Shield01Icon, ArrowRight01Icon, ToggleLeft, ToggleRight, Cancel01Icon, Circle, Wrench01Icon, SentIcon } from "@hugeicons/core-free-icons"
+import { Target01Icon, Shield01Icon, ArrowRight01Icon, ToggleLeft, ToggleRight, Cancel01Icon, Circle, Wrench01Icon, SentIcon, Add01Icon } from "@hugeicons/core-free-icons"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty"
 import { Button } from "#/components/ui/button"
 import { api } from "#/lib/api"
@@ -47,19 +48,27 @@ function AgentDetailView({
   rules,
   onRuleToggle,
   onRuleDelete,
+  onCreateAgent,
 }: {
   agents: AgentProfile[]
   activeAgentId: string | null
   rules: Rule[]
   onRuleToggle: (id: string, enabled: boolean) => void
   onRuleDelete: (id: string) => void
+  onCreateAgent: () => void
 }) {
   const activeAgent = agents.find((a) => a.id === activeAgentId)
 
   if (!activeAgent) {
     return (
       <div className="flex-1 overflow-y-auto p-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">Agents</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">{m.agents()}</h2>
+          <Button size="sm" onClick={onCreateAgent}>
+            <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
+            {m.create_agent()}
+          </Button>
+        </div>
         <div className="space-y-3">
           {agents.map((agent) => (
             <div key={agent.id} className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-4 py-3">
@@ -225,6 +234,7 @@ export function Dashboard() {
   const [showCommandBar, setShowCommandBar] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [showCreateRuleDialog, setShowCreateRuleDialog] = useState(false)
+  const [showCreateAgentDialog, setShowCreateAgentDialog] = useState(false)
   const [ruleFromProblem, setRuleFromProblem] = useState<Problem | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [activityPanelOpen, setActivityPanelOpen] = useState(false)
@@ -569,6 +579,16 @@ export function Dashboard() {
     }
   }
 
+  const handleCreateAgent = async (data: { name: string; role: string; capabilities: string[]; model: string; cliCommand?: string; runtimeId?: string }) => {
+    try {
+      await api.createAgent(data)
+      setShowCreateAgentDialog(false)
+      await refreshAll()
+    } catch (err) {
+      console.error("Failed to create agent:", err)
+    }
+  }
+
   // Render main content based on active view
   const renderMainContent = () => {
     switch (activeView) {
@@ -640,6 +660,7 @@ export function Dashboard() {
             rules={rules}
             onRuleToggle={handleRuleToggle}
             onRuleDelete={handleRuleDelete}
+            onCreateAgent={() => setShowCreateAgentDialog(true)}
           />
         )
 
@@ -651,6 +672,7 @@ export function Dashboard() {
             rules={rules}
             onRuleToggle={handleRuleToggle}
             onRuleDelete={handleRuleDelete}
+            onCreateAgent={() => setShowCreateAgentDialog(true)}
           />
         )
 
@@ -685,19 +707,16 @@ export function Dashboard() {
     "settings": { title: m.settings(), description: "Application settings and preferences." },
   }
 
-  if (loading) {
-    return (
+  return (
+    <I18nProvider settings={settings} onSettingsChange={setSettings}>
+    {loading ? (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex items-center gap-3 text-muted-foreground">
           <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-sm">{m.loading()}</span>
+          <span className="text-sm" suppressHydrationWarning>{m.loading()}</span>
         </div>
       </div>
-    )
-  }
-
-  return (
-    <I18nProvider settings={settings} onSettingsChange={setSettings}>
+    ) : (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
@@ -763,8 +782,16 @@ export function Dashboard() {
         onSettingsChange={setSettings}
         agents={agents}
         onAgentToggle={handleAgentToggle}
+        onAgentsRefresh={refreshAll}
+      />
+      <CreateAgentDialog
+        open={showCreateAgentDialog}
+        onClose={() => setShowCreateAgentDialog(false)}
+        runtimes={agents.filter((a) => a.cliCommand)}
+        onSubmit={handleCreateAgent}
       />
     </div>
+    )}
     </I18nProvider>
   )
 }

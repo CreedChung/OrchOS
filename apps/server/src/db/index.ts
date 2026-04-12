@@ -47,4 +47,5 @@ function migrate(sqlite: Database) {
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_commands_goal_id ON commands(goal_id)") } catch {}
   try { sqlite.run("ALTER TABLE agents ADD COLUMN cli_command TEXT") } catch {}
   try { sqlite.run("ALTER TABLE agents ADD COLUMN current_model TEXT") } catch {}
+  try { sqlite.run("ALTER TABLE agents ADD COLUMN runtime_id TEXT") } catch {}
 }

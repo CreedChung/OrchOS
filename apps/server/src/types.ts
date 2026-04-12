@@ -46,6 +46,7 @@ export interface AgentProfile {
   enabled: boolean
   cliCommand?: string
   currentModel?: string
+  runtimeId?: string
 }
 
 export interface StateEntry {

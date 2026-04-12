@@ -19,6 +19,7 @@ export abstract class AgentService {
       model: agent.model,
       enabled: agent.enabled !== undefined ? String(agent.enabled) : "true",
       cliCommand: agent.cliCommand || null,
+      runtimeId: agent.runtimeId || null,
     }).run()
 
     return { ...agent, id }
@@ -90,6 +91,7 @@ export abstract class AgentService {
       enabled: row.enabled === "true",
       cliCommand: row.cliCommand || undefined,
       currentModel: row.currentModel || undefined,
+      runtimeId: row.runtimeId || undefined,
     }
   }
 
@@ -138,6 +140,7 @@ export abstract class AgentService {
       model: definition.model,
       enabled: true,
       cliCommand: definition.command,
+      runtimeId: definition.id,
     })
   }
 

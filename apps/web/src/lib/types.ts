@@ -66,6 +66,9 @@ export interface AgentProfile {
   status: "idle" | "active" | "error"
   model: string
   enabled: boolean
+  cliCommand?: string
+  currentModel?: string
+  runtimeId?: string
   rules?: AgentRule[]
 }
 
@@ -101,14 +104,14 @@ export interface ActivityEntry {
 
 export type NotificationEvent = "goal_completed" | "goal_failed" | "agent_action" | "inbox_item" | "build_failed" | "review_rejected" | "mention"
 
-export const NOTIFICATION_EVENTS: { id: NotificationEvent; label: string }[] = [
-  { id: "goal_completed", label: "Goal Completed" },
-  { id: "goal_failed", label: "Goal Failed" },
-  { id: "agent_action", label: "Agent Action" },
-  { id: "inbox_item", label: "Inbox Item" },
-  { id: "build_failed", label: "Build Failed" },
-  { id: "review_rejected", label: "Review Rejected" },
-  { id: "mention", label: "Mention" },
+export const NOTIFICATION_EVENTS: { id: NotificationEvent; labelKey: string }[] = [
+  { id: "goal_completed", labelKey: "event_goal_completed" },
+  { id: "goal_failed", labelKey: "event_goal_failed" },
+  { id: "agent_action", labelKey: "event_agent_action" },
+  { id: "inbox_item", labelKey: "event_inbox_item" },
+  { id: "build_failed", labelKey: "event_build_failed" },
+  { id: "review_rejected", labelKey: "event_review_rejected" },
+  { id: "mention", labelKey: "event_mention" },
 ]
 
 export interface ControlSettings {

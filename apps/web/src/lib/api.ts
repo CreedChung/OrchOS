@@ -63,6 +63,30 @@ export interface AgentProfile {
   status: "idle" | "active" | "error"
   model: string
   enabled: boolean
+  cliCommand?: string
+  currentModel?: string
+  runtimeId?: string
+}
+
+export interface DetectedAgent {
+  id: string
+  name: string
+  command: string
+  version?: string
+  path?: string
+  role: string
+  capabilities: string[]
+  model: string
+}
+
+export interface DetectResponse {
+  available: DetectedAgent[]
+  unavailable: DetectedAgent[]
+}
+
+export interface RegisterResponse {
+  registered: AgentProfile[]
+  skipped: DetectedAgent[]
 }
 
 export interface StateEntry {
@@ -169,8 +193,15 @@ export const api = {
 
   // Agents
   listAgents: () => request<AgentProfile[]>("/api/agents"),
+  createAgent: (data: { name: string; role: string; capabilities: string[]; model: string; cliCommand?: string; runtimeId?: string }) =>
+    request<AgentProfile>("/api/agents", { method: "POST", body: JSON.stringify(data) }),
+  detectAgents: () => request<DetectResponse>("/api/agents/detect"),
+  registerDetectedAgents: (data: { agentIds?: string[]; registerAll?: boolean }) =>
+    request<RegisterResponse>("/api/agents/detect/register", { method: "POST", body: JSON.stringify(data) }),
   updateAgent: (id: string, data: { enabled?: boolean; status?: AgentProfile["status"] }) =>
     request<AgentProfile>(`/api/agents/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  healthCheckAgent: (agentId: string, level?: "basic" | "ping" | "full") =>
+    request<{ healthy: boolean; level: string; output: string; error?: string; responseTime: number; agentName: string; agentCommand: string; authRequired?: boolean }>(`/api/agents/${agentId}/health${level ? `?level=${level}` : ""}`),
 
   // Projects
   listProjects: () => request<Project[]>("/api/projects"),
