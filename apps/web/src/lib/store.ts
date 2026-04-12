@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import type { ControlSettings, SidebarView } from "#/lib/types"
+import type { ControlSettings } from "#/lib/types"
 
 type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_request"
 type GoalStatusFilter = "all" | "active" | "completed" | "paused"
@@ -9,7 +9,6 @@ type ThemeMode = "light" | "dark" | "auto"
 
 interface UIState {
   // Navigation & selection
-  activeView: SidebarView
   activeGoalId: string | null
   activeAgentId: string | null
   activeInboxId: string | null
@@ -31,7 +30,6 @@ interface UIState {
 }
 
 interface UIActions {
-  setActiveView: (view: SidebarView) => void
   setActiveGoalId: (id: string | null) => void
   setActiveAgentId: (id: string | null) => void
   setActiveInboxId: (id: string | null) => void
@@ -58,7 +56,6 @@ export const useUIStore = create<UIState & UIActions>()(
   persist(
     (set) => ({
       // Navigation & selection
-      activeView: "inbox" as SidebarView,
       activeGoalId: null,
       activeAgentId: null,
       activeInboxId: null,
@@ -78,7 +75,6 @@ export const useUIStore = create<UIState & UIActions>()(
       // Settings
       settings: defaultSettings,
 
-      setActiveView: (view) => set({ activeView: view }),
       setActiveGoalId: (id) => set({ activeGoalId: id }),
       setActiveAgentId: (id) => set({ activeAgentId: id }),
       setActiveInboxId: (id) => set({ activeInboxId: id }),

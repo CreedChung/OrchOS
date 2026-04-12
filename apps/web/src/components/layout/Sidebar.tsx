@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { cn } from "#/lib/utils";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import {
@@ -46,6 +47,7 @@ interface SidebarSection {
   label: string;
   items: {
     id: SidebarView;
+    to: string;
     icon: IconSvgElement;
     label: string;
     badge?: number;
@@ -58,7 +60,6 @@ interface SidebarProps {
   problems: Problem[];
   activeOrganizationId: string | null;
   activeView: SidebarView;
-  onViewChange: (view: SidebarView) => void;
   onOpenSettings: () => void;
   onOrganizationChange: (id: string) => void;
   onOrganizationRename: (id: string, name: string) => void;
@@ -70,7 +71,6 @@ export function Sidebar({
   problems,
   activeOrganizationId,
   activeView,
-  onViewChange,
   onOpenSettings,
   onOrganizationChange,
   onOrganizationRename,
@@ -91,32 +91,33 @@ export function Sidebar({
       items: [
         {
           id: "inbox",
+          to: "/dashboard/inbox",
           icon: InboxIcon,
           label: m.inbox(),
           badge: openInboxCount,
           badgeCritical: criticalCount > 0,
         },
-        { id: "goals", icon: Target01Icon, label: m.goals() },
+        { id: "goals", to: "/dashboard/goals", icon: Target01Icon, label: m.goals() },
       ],
     },
     {
       label: m.capabilities(),
       items: [
-        { id: "agents", icon: Robot02Icon, label: m.agents() },
-        { id: "mcp-servers", icon: FolderGitIcon, label: m.mcp_servers() },
-        { id: "skills", icon: Wrench01Icon, label: m.skills() },
+        { id: "agents", to: "/dashboard/agents", icon: Robot02Icon, label: m.agents() },
+        { id: "mcp-servers", to: "/dashboard/mcp-servers", icon: FolderGitIcon, label: m.mcp_servers() },
+        { id: "skills", to: "/dashboard/skills", icon: Wrench01Icon, label: m.skills() },
       ],
     },
     {
       label: m.environments(),
       items: [
-        { id: "environments", icon: Archive01Icon, label: m.environments() },
+        { id: "environments", to: "/dashboard/environments", icon: Archive01Icon, label: m.environments() },
       ],
     },
     {
       label: m.observability(),
       items: [
-        { id: "observability", icon: AiBrain01Icon, label: m.observability() },
+        { id: "observability", to: "/dashboard/observability", icon: AiBrain01Icon, label: m.observability() },
       ],
     },
   ];
@@ -196,12 +197,12 @@ export function Sidebar({
                 {section.label}
               </span>
               {section.items.map(
-                ({ id, icon: Icon, label, badge, badgeCritical }) => {
+                ({ id, to, icon: Icon, label, badge, badgeCritical }) => {
                   const isActive = activeView === id;
                   return (
-                    <button
+                    <Link
                       key={id}
-                      onClick={() => onViewChange(id)}
+                      to={to}
                       className={cn(
                         "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
                         isActive
@@ -223,7 +224,7 @@ export function Sidebar({
                           {badge}
                         </span>
                       )}
-                    </button>
+                    </Link>
                   );
                 },
               )}

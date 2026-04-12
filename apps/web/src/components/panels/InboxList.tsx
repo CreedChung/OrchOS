@@ -69,9 +69,11 @@ export function InboxList({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h2 className="text-sm font-semibold text-foreground">{m.inbox()}</h2>
-        {inboxItems.length > 0 && (
-          <span className="text-[10px] tabular-nums text-muted-foreground">{inboxItems.length}</span>
-        )}
+        <div className="flex items-center gap-1 h-7">
+          {inboxItems.length > 0 && (
+            <span className="text-[10px] tabular-nums text-muted-foreground">{inboxItems.length}</span>
+          )}
+        </div>
       </div>
 
       {/* List */}

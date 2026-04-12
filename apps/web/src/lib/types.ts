@@ -165,7 +165,7 @@ export interface Rule {
   createdAt: string
 }
 
-export type SidebarView = "inbox" | "goals" | "agents" | "agent-detail" | "command" | "mcp-servers" | "skills" | "commands" | "environments" | "observability" | "settings"
+export type SidebarView = "inbox" | "goals" | "agents" | "mcp-servers" | "skills" | "environments" | "observability"
 
 export interface AgentRule {
   id: string
