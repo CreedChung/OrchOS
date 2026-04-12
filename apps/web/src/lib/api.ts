@@ -14,6 +14,17 @@ export type Status = "success" | "failed" | "error" | "pending" | "running" | "w
 export type Action = "write_code" | "run_tests" | "fix_bug" | "commit" | "review"
 export type ProblemPriority = "critical" | "warning" | "info"
 export type ProblemStatus = "open" | "fixed" | "ignored" | "assigned"
+export type CommandStatus = "sent" | "executing" | "completed" | "failed"
+
+export interface Command {
+  id: string
+  instruction: string
+  agentNames: string[]
+  projectIds: string[]
+  goalId?: string
+  status: CommandStatus
+  createdAt: string
+}
 
 export interface Goal {
   id: string
@@ -23,6 +34,8 @@ export interface Goal {
   constraints: string[]
   status: "active" | "completed" | "paused"
   projectId?: string
+  commandId?: string
+  watchers: string[]
   createdAt: string
   updatedAt: string
 }
@@ -79,6 +92,7 @@ export interface ActivityEntry {
   action: string
   detail?: string
   reasoning?: string
+  diff?: string
 }
 
 export interface ControlSettings {
@@ -128,9 +142,9 @@ export const api = {
   // Goals
   listGoals: () => request<Goal[]>("/api/goals"),
   getGoal: (id: string) => request<Goal>(`/api/goals/${id}`),
-  createGoal: (data: { title: string; description?: string; successCriteria: string[]; constraints?: string[]; projectId?: string }) =>
+  createGoal: (data: { title: string; description?: string; successCriteria: string[]; constraints?: string[]; projectId?: string; commandId?: string; watchers?: string[] }) =>
     request<Goal>("/api/goals", { method: "POST", body: JSON.stringify(data) }),
-  updateGoal: (id: string, data: Partial<Pick<Goal, "title" | "description" | "successCriteria" | "constraints" | "status">>) =>
+  updateGoal: (id: string, data: Partial<Pick<Goal, "title" | "description" | "successCriteria" | "constraints" | "status" | "watchers"> & { projectId?: string; commandId?: string }>) =>
     request<Goal>(`/api/goals/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteGoal: (id: string) => request<{ success: boolean }>(`/api/goals/${id}`, { method: "DELETE" }),
 
@@ -215,4 +229,14 @@ export const api = {
     request<Rule>(`/api/rules/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteRule: (id: string) =>
     request<{ success: boolean }>(`/api/rules/${id}`, { method: "DELETE" }),
+
+  // Commands
+  listCommands: () => request<Command[]>("/api/commands"),
+  createCommand: (data: { instruction: string; agentNames?: string[]; projectIds?: string[] }) =>
+    request<Command>("/api/commands", { method: "POST", body: JSON.stringify(data) }),
+  getCommand: (id: string) => request<Command>(`/api/commands/${id}`),
+  updateCommand: (id: string, data: { status?: CommandStatus; goalId?: string }) =>
+    request<Command>(`/api/commands/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteCommand: (id: string) =>
+    request<{ success: boolean }>(`/api/commands/${id}`, { method: "DELETE" }),
 }

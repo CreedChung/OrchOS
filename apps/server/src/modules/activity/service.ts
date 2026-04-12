@@ -5,7 +5,7 @@ import { generateId, timeLabel, timestamp } from "../../utils"
 import type { ActivityEntry } from "../../types"
 
 export abstract class ActivityService {
-  static add(goalId: string, agent: string, action: string, detail?: string, reasoning?: string): ActivityEntry {
+  static add(goalId: string, agent: string, action: string, detail?: string, reasoning?: string, diff?: string): ActivityEntry {
     const id = generateId("act")
     const time = timeLabel()
 
@@ -17,9 +17,10 @@ export abstract class ActivityService {
       action,
       detail: detail ?? null,
       reasoning: reasoning ?? null,
+      diff: diff ?? null,
     }).run()
 
-    return { id, goalId, timestamp: time, agent, action, detail, reasoning }
+    return { id, goalId, timestamp: time, agent, action, detail, reasoning, diff }
   }
 
   static getByGoal(goalId: string, limit: number = 50): ActivityEntry[] {
@@ -39,6 +40,7 @@ export abstract class ActivityService {
       action: row.action,
       detail: row.detail ?? undefined,
       reasoning: row.reasoning ?? undefined,
+      diff: row.diff ?? undefined,
     }
   }
 }

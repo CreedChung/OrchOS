@@ -2,7 +2,19 @@ export type Status = "success" | "failed" | "error" | "pending" | "running" | "w
 
 export type Action = "write_code" | "run_tests" | "fix_bug" | "commit" | "review"
 
-export type EventType = "test_failed" | "review_rejected" | "build_success" | "state_changed" | "goal_created" | "goal_completed" | "agent_action"
+export type EventType = "test_failed" | "review_rejected" | "build_success" | "state_changed" | "goal_created" | "goal_completed" | "agent_action" | "command_sent"
+
+export type CommandStatus = "sent" | "executing" | "completed" | "failed"
+
+export interface Command {
+  id: string
+  instruction: string
+  agentNames: string[]
+  projectIds: string[]
+  goalId: string | null
+  status: CommandStatus
+  createdAt: string
+}
 
 export interface Goal {
   id: string
@@ -12,6 +24,8 @@ export interface Goal {
   constraints: string[]
   status: "active" | "completed" | "paused"
   projectId?: string
+  commandId?: string
+  watchers: string[]
   createdAt: string
   updatedAt: string
 }
@@ -59,6 +73,7 @@ export interface ActivityEntry {
   action: string
   detail?: string
   reasoning?: string
+  diff?: string
 }
 
 export interface Event {
@@ -80,6 +95,15 @@ export interface CreateGoalRequest {
   description?: string
   successCriteria: string[]
   constraints?: string[]
+  projectId?: string
+  commandId?: string
+  watchers?: string[]
+}
+
+export interface CreateCommandRequest {
+  instruction: string
+  agentNames?: string[]
+  projectIds?: string[]
 }
 
 export interface TriggerActionRequest {

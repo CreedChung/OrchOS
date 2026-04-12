@@ -4,16 +4,18 @@ import { Sidebar } from "#/components/Sidebar"
 import { ProblemInbox } from "#/components/ProblemInbox"
 import { StateBoard } from "#/components/StateBoard"
 import { ActivityPanel } from "#/components/ActivityPanel"
+import { CommandBar } from "#/components/CommandBar"
 import { CreateGoalDialog } from "#/components/CreateGoalDialog"
 import { CreateRuleDialog } from "#/components/CreateRuleDialog"
 import { SettingsDialog } from "#/components/SettingsDialog"
 import { GoalActions } from "#/components/GoalActions"
-import { Target, Shield, ArrowRight, ToggleLeft, ToggleRight, X, Circle, Wrench } from "lucide-react"
+import { Toolbar } from "#/components/Toolbar"
+import { Target, Shield, ArrowRight, ToggleLeft, ToggleRight, X, Circle, Wrench, Send } from "lucide-react"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty"
 import { Button } from "#/components/ui/button"
 import { api } from "#/lib/api"
 import { useWebSocket } from "#/lib/hooks"
-import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, ControlSettings, Project, Organization, Problem, ProblemStatus, Rule, SidebarView } from "#/lib/types"
+import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, ControlSettings, Project, Organization, Problem, ProblemStatus, Rule, SidebarView, Command } from "#/lib/types"
 
 const conditionLabels: Record<string, string> = {
   test_failed: "Test failed",
@@ -77,13 +79,11 @@ function AgentDetailView({
     )
   }
 
-  // Agent detail with embedded rules
   const agentRules = rules
 
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-3xl p-6">
-        {/* Agent Header */}
         <div className="mb-6">
           <div className="flex items-center gap-4">
             <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-lg font-bold text-primary">
@@ -112,7 +112,6 @@ function AgentDetailView({
           </div>
         </div>
 
-        {/* Capabilities */}
         <section className="mb-6">
           <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <div className="size-1.5 rounded-full bg-primary" />
@@ -131,7 +130,6 @@ function AgentDetailView({
           </div>
         </section>
 
-        {/* Rules — embedded in agent */}
         <section>
           <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <div className="size-1.5 rounded-full bg-primary" />
@@ -206,6 +204,7 @@ export function Dashboard() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [problems, setProblems] = useState<Problem[]>([])
   const [rules, setRules] = useState<Rule[]>([])
+  const [commands, setCommands] = useState<Command[]>([])
   const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<SidebarView>("inbox")
   const [activeGoalId, setActiveGoalId] = useState<string | null>(null)
@@ -215,12 +214,16 @@ export function Dashboard() {
   const [activities, setActivities] = useState<ActivityEntry[]>([])
   const [settings, setSettings] = useState<ControlSettings | null>({ autoCommit: false, autoFix: false, modelStrategy: "adaptive" })
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showCommandBar, setShowCommandBar] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [showCreateRuleDialog, setShowCreateRuleDialog] = useState(false)
   const [ruleFromProblem, setRuleFromProblem] = useState<Problem | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [activityPanelOpen, setActivityPanelOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const activeGoal = goals.find((g) => g.id === activeGoalId) ?? null
+  const activeCommand = activeGoal?.commandId ? commands.find((c) => c.id === activeGoal.commandId) : undefined
 
   const refreshAll = useCallback(async () => {
     const results = await Promise.allSettled([
@@ -231,6 +234,7 @@ export function Dashboard() {
       api.listOrganizations(),
       api.listProblems(),
       api.listRules(),
+      api.listCommands(),
     ])
     if (results[0].status === "fulfilled") setGoals(results[0].value)
     if (results[1].status === "fulfilled") setAgents(results[1].value)
@@ -244,6 +248,7 @@ export function Dashboard() {
     }
     if (results[5].status === "fulfilled") setProblems(results[5].value)
     if (results[6].status === "fulfilled") setRules(results[6].value)
+    if (results[7].status === "fulfilled") setCommands(results[7].value)
     for (const r of results) {
       if (r.status === "rejected") console.error("Failed to fetch data:", r.reason)
     }
@@ -281,6 +286,18 @@ export function Dashboard() {
     }
   })
 
+  // Keyboard shortcut: Cmd+K or Ctrl+K to open command bar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault()
+        setShowCommandBar(true)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
+
   // Problem actions
   const handleProblemAction = async (problemId: string, action: string) => {
     const problem = problems.find((p) => p.id === problemId)
@@ -301,7 +318,6 @@ export function Dashboard() {
     if (newStatus) {
       try {
         await api.updateProblem(problemId, { status: newStatus })
-        // If action is Fix/Apply fix and there's a goal, trigger the agent
         if ((action === "Fix" || action === "Apply fix" || action === "Apply suggestion") && problem.goalId) {
           await api.triggerAction(problem.goalId, "fix_bug", problem.stateId)
         }
@@ -383,6 +399,33 @@ export function Dashboard() {
       setActiveView("goals")
     } catch (err) {
       console.error("Failed to create goal:", err)
+    }
+  }
+
+  // Command submission: creates a Command, then a Goal linked to it
+  const handleCommand = async (data: { instruction: string; agentNames: string[]; projectIds: string[] }) => {
+    try {
+      // 1. Create the command
+      const command = await api.createCommand(data)
+      // 2. Create a goal from the command
+      const goal = await api.createGoal({
+        title: data.instruction.length > 60 ? data.instruction.slice(0, 60) + "..." : data.instruction,
+        description: data.instruction,
+        successCriteria: ["completed"],
+        commandId: command.id,
+        watchers: data.agentNames,
+        projectId: data.projectIds[0],
+      })
+      // 3. Link command back to goal
+      await api.updateCommand(command.id, { goalId: goal.id })
+      // 4. Update command status
+      await api.updateCommand(command.id, { status: "executing" })
+      setShowCommandBar(false)
+      await refreshAll()
+      setActiveGoalId(goal.id)
+      setActiveView("goals")
+    } catch (err) {
+      console.error("Command failed:", err)
     }
   }
 
@@ -484,6 +527,7 @@ export function Dashboard() {
             artifacts={artifacts}
             activities={activities}
             projects={projects}
+            command={activeCommand}
             problems={{
               critical: problems.filter((p) => p.status === "open" && p.priority === "critical" && p.goalId === activeGoalId).length,
               warning: problems.filter((p) => p.status === "open" && p.priority === "warning" && p.goalId === activeGoalId).length,
@@ -507,10 +551,18 @@ export function Dashboard() {
                 <Target />
               </EmptyMedia>
               <EmptyTitle>No goal selected</EmptyTitle>
-              <EmptyDescription>Select a goal from the sidebar or create a new one to get started.</EmptyDescription>
+              <EmptyDescription>Select a goal from the sidebar or send a command to get started.</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
-              <Button onClick={() => setShowCreateDialog(true)}>Create Goal</Button>
+              <div className="flex gap-2">
+                <Button onClick={() => setShowCommandBar(true)}>
+                  <Send className="size-3.5 mr-1.5" />
+                  Send Command
+                </Button>
+                <Button variant="outline" onClick={() => setShowCreateDialog(true)}>
+                  Create Goal
+                </Button>
+              </div>
             </EmptyContent>
           </Empty>
         )
@@ -565,6 +617,7 @@ export function Dashboard() {
           activeView={activeView}
           activeGoalId={activeGoalId}
           activeAgentId={activeAgentId}
+          searchQuery={searchQuery}
           onViewChange={setActiveView}
           onGoalSelect={(id) => {
             setActiveGoalId(id)
@@ -574,7 +627,6 @@ export function Dashboard() {
             setActiveAgentId(id)
             setActiveView("agent-detail")
           }}
-          onCreateGoal={() => setShowCreateDialog(true)}
           onOpenSettings={() => setShowSettingsDialog(true)}
           onOrganizationChange={setActiveOrganizationId}
           onOrganizationRename={handleOrganizationRename}
@@ -582,9 +634,31 @@ export function Dashboard() {
           onGoalRename={handleGoalRename}
           onGoalDelete={handleDeleteGoal}
         />
-        {renderMainContent()}
-        <ActivityPanel activities={activities} />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <Toolbar
+            activeView={activeView}
+            onNewCommand={() => setShowCommandBar(true)}
+            onCreateGoal={() => setShowCreateDialog(true)}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            activityPanelOpen={activityPanelOpen}
+            onToggleActivityPanel={() => setActivityPanelOpen((v) => !v)}
+          />
+          {renderMainContent()}
+        </div>
+        <ActivityPanel
+          activities={activities}
+          collapsed={!activityPanelOpen}
+          onToggle={() => setActivityPanelOpen((v) => !v)}
+        />
       </div>
+      <CommandBar
+        agents={agents}
+        projects={projects}
+        open={showCommandBar}
+        onSubmit={handleCommand}
+        onClose={() => setShowCommandBar(false)}
+      />
       <CreateGoalDialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}

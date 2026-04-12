@@ -1,5 +1,17 @@
 import { sqliteTable, text, index } from "drizzle-orm/sqlite-core"
 
+export const commands = sqliteTable("commands", {
+  id: text("id").primaryKey(),
+  instruction: text("instruction").notNull(),
+  agentNames: text("agent_names").notNull().default("[]"),
+  projectIds: text("project_ids").notNull().default("[]"),
+  goalId: text("goal_id"),
+  status: text("status").notNull().default("sent"),
+  createdAt: text("created_at").notNull(),
+}, (t) => [
+  index("idx_commands_goal_id").on(t.goalId),
+])
+
 export const goals = sqliteTable("goals", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
@@ -8,6 +20,8 @@ export const goals = sqliteTable("goals", {
   constraints: text("constraints").notNull().default("[]"),
   status: text("status").notNull().default("active"),
   projectId: text("project_id").references(() => projects.id),
+  commandId: text("command_id").references(() => commands.id),
+  watchers: text("watchers").notNull().default("[]"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 })
@@ -43,6 +57,7 @@ export const activities = sqliteTable("activities", {
   action: text("action").notNull(),
   detail: text("detail"),
   reasoning: text("reasoning"),
+  diff: text("diff"),
 }, (t) => [
   index("idx_activities_goal_id").on(t.goalId),
 ])

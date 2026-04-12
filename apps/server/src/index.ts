@@ -12,6 +12,7 @@ import { wsController } from "./modules/ws"
 import { organizationController } from "./modules/organization"
 import { problemController } from "./modules/problem"
 import { ruleController } from "./modules/rule"
+import { commandController } from "./modules/command"
 import { seedData } from "./db/seed"
 
 import "./db"
@@ -34,6 +35,7 @@ const app = new Elysia()
   .use(organizationController)
   .use(problemController)
   .use(ruleController)
+  .use(commandController)
   .listen(5173)
 
 console.log(

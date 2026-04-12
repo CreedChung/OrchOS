@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import { cn } from "#/lib/utils"
 import { ScrollArea } from "#/components/ui/scroll-area"
 import {
@@ -8,9 +8,6 @@ import {
   ChevronDown,
   Circle,
   Settings,
-  Search,
-  X,
-  Plus,
   Check,
   MoreHorizontal,
   Pencil,
@@ -36,10 +33,10 @@ interface SidebarProps {
   activeView: SidebarView
   activeGoalId: string | null
   activeAgentId: string | null
+  searchQuery: string
   onViewChange: (view: SidebarView) => void
   onGoalSelect: (id: string) => void
   onAgentSelect: (id: string) => void
-  onCreateGoal: () => void
   onOpenSettings: () => void
   onOrganizationChange: (id: string) => void
   onOrganizationRename: (id: string, name: string) => void
@@ -96,10 +93,10 @@ export function Sidebar({
   activeView,
   activeGoalId,
   activeAgentId,
+  searchQuery,
   onViewChange,
   onGoalSelect,
   onAgentSelect,
-  onCreateGoal,
   onOpenSettings,
   onOrganizationChange,
   onOrganizationRename,
@@ -107,7 +104,6 @@ export function Sidebar({
   onGoalRename,
   onGoalDelete,
 }: SidebarProps) {
-  const [searchQuery, setSearchQuery] = useState("")
 
   const openProblemCount = problems.filter((p) => p.status === "open").length
   const criticalCount = problems.filter((p) => p.status === "open" && p.priority === "critical").length
@@ -257,28 +253,6 @@ export function Sidebar({
         </div>
       </div>
 
-      {/* Search */}
-      <div className="border-b border-border px-2 py-2">
-        <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5">
-          <Search className="size-3.5 shrink-0 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search..."
-            className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="shrink-0 text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-3" />
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Context Panel: Changes based on active view */}
       <ScrollArea className="flex-1">
         <div className="p-2">
@@ -304,13 +278,6 @@ export function Sidebar({
 
           {activeView === "goals" && (
             <div className="space-y-0.5">
-              <button
-                onClick={onCreateGoal}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground mb-1"
-              >
-                <Plus className="size-3.5 shrink-0 opacity-60" />
-                <span>New Goal</span>
-              </button>
               {filteredGoals.map((goal) => (
                 <div
                   key={goal.id}

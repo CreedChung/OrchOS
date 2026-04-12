@@ -4,6 +4,17 @@ export type Action = "write_code" | "run_tests" | "fix_bug" | "commit" | "review
 
 export type ProblemPriority = "critical" | "warning" | "info"
 export type ProblemStatus = "open" | "fixed" | "ignored" | "assigned"
+export type CommandStatus = "sent" | "executing" | "completed" | "failed"
+
+export interface Command {
+  id: string
+  instruction: string
+  agentNames: string[]
+  projectIds: string[]
+  goalId?: string
+  status: CommandStatus
+  createdAt: string
+}
 
 export interface Goal {
   id: string
@@ -13,6 +24,8 @@ export interface Goal {
   constraints: string[]
   status: "active" | "completed" | "paused"
   projectId?: string
+  commandId?: string
+  watchers: string[]
   createdAt: string
   updatedAt: string
 }
@@ -70,6 +83,7 @@ export interface ActivityEntry {
   action: string
   detail?: string
   reasoning?: string
+  diff?: string
 }
 
 export interface ControlSettings {
@@ -106,7 +120,7 @@ export interface Rule {
   createdAt: string
 }
 
-export type SidebarView = "inbox" | "goals" | "agents" | "agent-detail"
+export type SidebarView = "inbox" | "goals" | "agents" | "agent-detail" | "command"
 
 export interface AgentRule {
   id: string

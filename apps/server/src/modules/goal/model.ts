@@ -7,6 +7,8 @@ export const GoalModel = {
     successCriteria: t.Array(t.String()),
     constraints: t.Optional(t.Array(t.String())),
     projectId: t.Optional(t.String()),
+    commandId: t.Optional(t.String()),
+    watchers: t.Optional(t.Array(t.String())),
   }),
   updateBody: t.Partial(
     t.Object({
@@ -16,6 +18,8 @@ export const GoalModel = {
       constraints: t.Array(t.String()),
       status: t.Union([t.Literal("active"), t.Literal("completed"), t.Literal("paused")]),
       projectId: t.String(),
+      commandId: t.String(),
+      watchers: t.Array(t.String()),
     })
   ),
   response: t.Object({
@@ -26,6 +30,8 @@ export const GoalModel = {
     constraints: t.Array(t.String()),
     status: t.Union([t.Literal("active"), t.Literal("completed"), t.Literal("paused")]),
     projectId: t.Optional(t.String()),
+    commandId: t.Optional(t.String()),
+    watchers: t.Array(t.String()),
     createdAt: t.String(),
     updatedAt: t.String(),
   }),

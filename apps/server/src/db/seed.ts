@@ -6,6 +6,7 @@ import { ActivityService } from "../modules/activity/service"
 import { OrganizationService } from "../modules/organization"
 import { ProblemService } from "../modules/problem/service"
 import { RuleService } from "../modules/rule/service"
+import { CommandService } from "../modules/command/service"
 import { db } from "./index"
 import { goals, organizations, problems, rules } from "./schema"
 import { sql } from "drizzle-orm"
@@ -30,13 +31,25 @@ export function seedData() {
   AgentService.register({ name: "Tester", role: "Test execution & analysis", capabilities: ["run_tests"], status: "idle", model: "local/tester", enabled: true })
   AgentService.register({ name: "Reviewer", role: "Code review & suggestions", capabilities: ["review"], status: "active", model: "cloud/reviewer", enabled: true })
 
+  // Create a command first, then link goal to it
+  const cmd1 = CommandService.create({
+    instruction: "Implement login system with session management",
+    agentNames: ["Codex", "Reviewer"],
+    projectIds: [proj1.id],
+  })
+
   const g1 = GoalService.create({
     title: "Implement login system",
     description: "Full auth flow with session management",
     successCriteria: ["tests pass", "code reviewed", "no lint errors"],
     constraints: ["use typescript"],
     projectId: proj1.id,
+    commandId: cmd1.id,
+    watchers: ["Codex", "Reviewer"],
   })
+
+  // Link command back to goal
+  CommandService.update(cmd1.id, { goalId: g1.id, status: "executing" })
 
   const g2 = GoalService.create({
     title: "Add payment integration",
@@ -67,9 +80,9 @@ export function seedData() {
 
   ActivityService.add(g1.id, "fixer", "Attempting fix on auth.ts", undefined, "Tests failed -> suspected null pointer in session handler")
   ActivityService.add(g1.id, "tester", "Running tests", "2 failed, 14 passed")
-  ActivityService.add(g1.id, "coder", "Modified auth.ts", "Added session validation")
+  ActivityService.add(g1.id, "coder", "Modified auth.ts", "Added session validation", undefined, "+ added session validation\n- removed deprecated handler")
   ActivityService.add(g1.id, "reviewer", "Reviewing PR #23", "Changes requested: missing error handling")
-  ActivityService.add(g1.id, "coder", "Created session.ts", "New file with session management")
+  ActivityService.add(g1.id, "coder", "Created session.ts", "New file with session management", undefined, "+ created session.ts\n+ added SessionManager class\n+ added validate() method")
   ActivityService.add(g1.id, "tester", "Running lint", "1 error, 3 warnings")
 
   StateService.createState(g2.id, "Tests", "pending")

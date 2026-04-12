@@ -1,7 +1,7 @@
 import { cn } from "#/lib/utils"
 import { Badge } from "#/components/ui/badge"
 import { StatusIcon } from "#/components/StatusIcon"
-import type { Goal, StateItem as StateItemType, Artifact, ActivityEntry, Status, Project } from "#/lib/types"
+import type { Goal, StateItem as StateItemType, Artifact, ActivityEntry, Status, Project, Command } from "#/lib/types"
 import {
   FileCode2,
   GitPullRequest,
@@ -16,6 +16,8 @@ import {
   XCircle,
   Clock,
   Zap,
+  Send,
+  Eye,
 } from "lucide-react"
 
 interface StateBoardProps {
@@ -24,6 +26,7 @@ interface StateBoardProps {
   artifacts: Artifact[]
   activities: ActivityEntry[]
   projects: Project[]
+  command?: Command
   problems: { critical: number; warning: number; info: number }
   onStateAction: (stateId: string, action: string) => void
   goalActions?: React.ReactNode
@@ -79,7 +82,14 @@ const stateStatusBg: Record<Status, string> = {
   warning: "bg-amber-500/5 border-amber-500/20",
 }
 
-export function StateBoard({ goal, states, artifacts, activities, projects, problems, onStateAction, goalActions, onAutoModeToggle }: StateBoardProps) {
+const commandStatusColor: Record<string, string> = {
+  sent: "text-blue-500",
+  executing: "text-amber-500",
+  completed: "text-emerald-500",
+  failed: "text-red-500",
+}
+
+export function StateBoard({ goal, states, artifacts, activities, projects, command, problems, onStateAction, goalActions, onAutoModeToggle }: StateBoardProps) {
   const isAutoMode = goal.status === "active"
   const failedStates = states.filter((s) => s.status === "failed" || s.status === "error")
   const successStates = states.filter((s) => s.status === "success")
@@ -102,6 +112,30 @@ export function StateBoard({ goal, states, artifacts, activities, projects, prob
             <p className="mt-1 text-sm text-muted-foreground">{goal.description}</p>
           )}
 
+          {/* Command Origin — shows the originating command if this goal was created from one */}
+          {command && (
+            <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Send className={cn("size-3.5", commandStatusColor[command.status] || "text-muted-foreground")} />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Command</span>
+                <Badge variant="outline" className="text-[9px] uppercase tracking-wider px-1.5 py-0">
+                  {command.status}
+                </Badge>
+              </div>
+              <p className="text-sm text-foreground/90">{command.instruction}</p>
+              {command.agentNames.length > 0 && (
+                <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                  <Bot className="size-3 text-muted-foreground" />
+                  {command.agentNames.map((name) => (
+                    <span key={name} className="inline-flex items-center rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-foreground/70">
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Project */}
           {goal.projectId && (() => {
             const project = projects.find((p) => p.id === goal.projectId)
@@ -115,6 +149,18 @@ export function StateBoard({ goal, states, artifacts, activities, projects, prob
               </div>
             )
           })()}
+
+          {/* Watchers */}
+          {goal.watchers.length > 0 && (
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Eye className="size-3" />
+              {goal.watchers.map((w) => (
+                <span key={w} className="inline-flex items-center rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-foreground/70">
+                  {w}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Success Criteria */}
           {goal.successCriteria.length > 0 && (
@@ -324,12 +370,12 @@ export function StateBoard({ goal, states, artifacts, activities, projects, prob
           </section>
         )}
 
-        {/* Timeline — lightweight, last 5 entries */}
+        {/* Activity Log — structured action log, last 5 */}
         {activities.length > 0 && (
           <section>
             <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <div className="size-1.5 rounded-full bg-primary" />
-              Timeline
+              Activity
             </h2>
             <div className="space-y-0">
               {activities.slice(0, 5).map((activity, idx) => {

@@ -20,6 +20,8 @@ export abstract class GoalService {
       constraints: JSON.stringify(req.constraints ?? []),
       status: "active",
       projectId: req.projectId ?? null,
+      commandId: req.commandId ?? null,
+      watchers: JSON.stringify(req.watchers ?? []),
       createdAt: now,
       updatedAt: now,
     }).run()
@@ -50,6 +52,8 @@ export abstract class GoalService {
     if (patch.constraints !== undefined) updates.constraints = JSON.stringify(patch.constraints)
     if (patch.status !== undefined) updates.status = patch.status
     if (patch.projectId !== undefined) updates.projectId = patch.projectId
+    if (patch.commandId !== undefined) updates.commandId = patch.commandId
+    if (patch.watchers !== undefined) updates.watchers = JSON.stringify(patch.watchers)
 
     if (Object.keys(updates).length === 0) return goal
 
@@ -91,6 +95,8 @@ export abstract class GoalService {
       constraints: JSON.parse(row.constraints),
       status: row.status as Goal["status"],
       projectId: row.projectId ?? undefined,
+      commandId: row.commandId ?? undefined,
+      watchers: JSON.parse(row.watchers || "[]"),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     }
