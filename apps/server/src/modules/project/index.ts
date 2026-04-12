@@ -8,7 +8,7 @@ export const projectController = new Elysia({ prefix: "/api/projects" })
     response: t.Array(ProjectModel.response),
   })
   .post("/", ({ body }) => {
-    return ProjectService.create(body.name, body.path)
+    return ProjectService.create(body.name, body.path, body.repositoryUrl)
   }, {
     body: ProjectModel.createBody,
     response: ProjectModel.response,

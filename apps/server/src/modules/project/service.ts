@@ -6,13 +6,13 @@ import type { Project } from "../../types"
 import type { ProjectModel } from "./model"
 
 export abstract class ProjectService {
-  static create(name: string, path: string): Project {
+  static create(name: string, path: string, repositoryUrl?: string): Project {
     const id = generateId("proj")
     const now = timestamp()
 
-    db.insert(projects).values({ id, name, path, createdAt: now }).run()
+    db.insert(projects).values({ id, name, path, repositoryUrl: repositoryUrl || null, createdAt: now }).run()
 
-    return { id, name, path, createdAt: now }
+    return { id, name, path, repositoryUrl, createdAt: now }
   }
 
   static get(id: string): Project | undefined {
@@ -35,6 +35,7 @@ export abstract class ProjectService {
     const updates: Partial<typeof projects.$inferInsert> = {}
     if (patch.name !== undefined) updates.name = patch.name
     if (patch.path !== undefined) updates.path = patch.path
+    if (patch.repositoryUrl !== undefined) updates.repositoryUrl = patch.repositoryUrl || null
 
     if (Object.keys(updates).length === 0) return ProjectService.get(id)
 
@@ -52,6 +53,7 @@ export abstract class ProjectService {
       id: row.id,
       name: row.name,
       path: row.path,
+      repositoryUrl: row.repositoryUrl || undefined,
       createdAt: row.createdAt,
     }
   }

@@ -44,6 +44,7 @@ export interface Project {
   id: string
   name: string
   path: string
+  repositoryUrl?: string
   createdAt: string
 }
 
@@ -232,9 +233,9 @@ export const api = {
   // Projects
   listProjects: () => request<Project[]>("/api/projects"),
   getProject: (id: string) => request<Project>(`/api/projects/${id}`),
-  createProject: (data: { name: string; path: string }) =>
+  createProject: (data: { name: string; path: string; repositoryUrl?: string }) =>
     request<Project>("/api/projects", { method: "POST", body: JSON.stringify(data) }),
-  updateProject: (id: string, data: Partial<Pick<Project, "name" | "path">>) =>
+  updateProject: (id: string, data: Partial<Pick<Project, "name" | "path" | "repositoryUrl">>) =>
     request<Project>(`/api/projects/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteProject: (id: string) => request<{ success: boolean }>(`/api/projects/${id}`, { method: "DELETE" }),
 

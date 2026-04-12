@@ -1,21 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Moon, Sun, Monitor } from 'lucide-react'
 import { m } from "#/paraglide/messages"
+import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs"
+import { useUIStore } from "#/lib/store"
 
 type ThemeMode = 'light' | 'dark' | 'auto'
-
-const themeOptions: { mode: ThemeMode; icon: typeof Sun; labelKey: string }[] = [
-  { mode: 'light', icon: Sun, labelKey: 'theme_light' },
-  { mode: 'dark', icon: Moon, labelKey: 'theme_dark' },
-  { mode: 'auto', icon: Monitor, labelKey: 'theme_system' },
-]
-
-function getInitialMode(): ThemeMode {
-  if (typeof window === 'undefined') return 'auto'
-  const stored = window.localStorage.getItem('theme')
-  if (stored === 'light' || stored === 'dark' || stored === 'auto') return stored
-  return 'auto'
-}
 
 function applyThemeMode(mode: ThemeMode) {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -34,49 +23,34 @@ function applyThemeMode(mode: ThemeMode) {
 }
 
 export default function ThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>('auto')
+  const theme = useUIStore((s) => s.theme)
+  const setTheme = useUIStore((s) => s.setTheme)
 
   useEffect(() => {
-    const initialMode = getInitialMode()
-    setMode(initialMode)
-    applyThemeMode(initialMode)
-  }, [])
+    applyThemeMode(theme as ThemeMode)
+  }, [theme])
 
   useEffect(() => {
-    if (mode !== 'auto') return
+    if (theme !== 'auto') return
     const media = window.matchMedia('(prefers-color-scheme: dark)')
     const onChange = () => applyThemeMode('auto')
     media.addEventListener('change', onChange)
     return () => media.removeEventListener('change', onChange)
-  }, [mode])
-
-  function setThemeMode(newMode: ThemeMode) {
-    setMode(newMode)
-    applyThemeMode(newMode)
-    window.localStorage.setItem('theme', newMode)
-  }
+  }, [theme])
 
   return (
-    <div className="flex gap-0.5 rounded-lg bg-muted p-0.5">
-      {themeOptions.map(({ mode: optMode, icon: Icon, labelKey }) => {
-        const label = (m as Record<string, () => string>)[labelKey]()
-        return (
-          <button
-            key={optMode}
-            type="button"
-            onClick={() => setThemeMode(optMode)}
-            aria-label={m.theme_switch_mode({ label })}
-            title={m.theme_switch_mode({ label })}
-            className={`flex flex-1 items-center justify-center rounded-md py-1.5 transition-all ${
-              mode === optMode
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Icon className="size-4" />
-          </button>
-        )
-      })}
-    </div>
+    <Tabs value={theme} onValueChange={(v) => setTheme(v as ThemeMode)}>
+      <TabsList>
+        <TabsTrigger value="light" aria-label={m.theme_switch_mode({ label: m.theme_light() })} title={m.theme_switch_mode({ label: m.theme_light() })}>
+          <Sun className="size-4" />
+        </TabsTrigger>
+        <TabsTrigger value="dark" aria-label={m.theme_switch_mode({ label: m.theme_dark() })} title={m.theme_switch_mode({ label: m.theme_dark() })}>
+          <Moon className="size-4" />
+        </TabsTrigger>
+        <TabsTrigger value="auto" aria-label={m.theme_switch_mode({ label: m.theme_system() })} title={m.theme_switch_mode({ label: m.theme_system() })}>
+          <Monitor className="size-4" />
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
   )
 }

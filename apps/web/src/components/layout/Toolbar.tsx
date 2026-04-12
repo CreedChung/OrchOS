@@ -1,12 +1,18 @@
 import { cn } from "#/lib/utils"
 import { Button } from "#/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Search01Icon, Cancel01Icon, SentIcon, Add01Icon, PanelRight, PanelLeft, GitPullRequestIcon, SquareIcon, InformationCircleIcon, Robot02Icon, Clock01Icon, CheckmarkCircleIcon, CancelCircleIcon } from "@hugeicons/core-free-icons"
+import { Search01Icon, Cancel01Icon, SentIcon, Add01Icon, PanelRight, PanelLeft, GitPullRequestIcon, SquareIcon, InformationCircleIcon, Robot02Icon, Clock01Icon, CheckmarkCircleIcon, CancelCircleIcon, Globe02Icon, Folder01Icon } from "@hugeicons/core-free-icons"
 import { m } from "#/paraglide/messages"
 import type { SidebarView, InboxSource } from "#/lib/types"
 
 type SourceFilter = "all" | InboxSource
 type GoalStatusFilter = "all" | "active" | "completed" | "paused"
+export type ScopeFilter = "all" | "global" | "project"
+
+const scopeFilterConfig: Record<Exclude<ScopeFilter, "all">, { icon: typeof Globe02Icon; label: string }> = {
+  global: { icon: Globe02Icon, label: m.global() },
+  project: { icon: Folder01Icon, label: m.project() },
+}
 
 const sourceFilterConfig: Record<InboxSource, { icon: typeof GitPullRequestIcon; label: string }> = {
   github_pr: { icon: GitPullRequestIcon, label: m.prs() },
@@ -35,6 +41,9 @@ interface ToolbarProps {
   goalStatusFilter: GoalStatusFilter
   onGoalStatusFilterChange: (filter: GoalStatusFilter) => void
   goalCounts: { all: number; active: number; completed: number; paused: number }
+  scopeFilter: ScopeFilter
+  onScopeFilterChange: (filter: ScopeFilter) => void
+  scopeCounts: { all: number; global: number; project: number }
 }
 
 export function Toolbar({
@@ -51,6 +60,9 @@ export function Toolbar({
   goalStatusFilter,
   onGoalStatusFilterChange,
   goalCounts,
+  scopeFilter,
+  onScopeFilterChange,
+  scopeCounts,
 }: ToolbarProps) {
   const showNewGoal = activeView === "goals"
   const showNewCommand = activeView === "goals" || activeView === "inbox"
@@ -82,6 +94,7 @@ export function Toolbar({
         </div>
       )}
 
+      {/* Goals: status-based filter tabs */}
       {activeView === "goals" && (
         <div className="flex items-center gap-1.5">
           {(["all", "active", "completed", "paused"] as GoalStatusFilter[]).map((filter) => {
@@ -100,6 +113,31 @@ export function Toolbar({
                 {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
                 <span className="capitalize">{filter === "all" ? m.all() : config?.label || filter}</span>
                 <span className="tabular-nums text-[10px] opacity-60">{goalCounts[filter]}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* MCP Servers / Skills: scope-based filter tabs */}
+      {(activeView === "mcp-servers" || activeView === "skills") && (
+        <div className="flex items-center gap-1.5">
+          {(["all", "global", "project"] as ScopeFilter[]).map((filter) => {
+            const config = filter === "all" ? null : scopeFilterConfig[filter]
+            return (
+              <button
+                key={filter}
+                onClick={() => onScopeFilterChange(filter)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                  scopeFilter === filter
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                )}
+              >
+                {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
+                <span className="capitalize">{filter === "all" ? m.all() : config?.label || filter}</span>
+                <span className="tabular-nums text-[10px] opacity-60">{scopeCounts[filter]}</span>
               </button>
             )
           })}

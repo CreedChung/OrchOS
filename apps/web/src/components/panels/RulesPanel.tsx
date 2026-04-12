@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { cn } from "#/lib/utils"
 import { ScrollArea } from "#/components/ui/scroll-area"
+import { ConfirmDialog } from "#/components/ui/confirm-dialog"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Shield01Icon, Add01Icon, Delete02Icon, ToggleLeft, ToggleRight, Cancel01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import { m } from "#/paraglide/messages"
@@ -35,6 +36,8 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
   const [name, setName] = useState("")
   const [condition, setCondition] = useState("test_failed")
   const [action, setAction] = useState("auto_fix")
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [ruleToDelete, setRuleToDelete] = useState<string | null>(null)
 
   const handleCreate = () => {
     if (!name.trim()) return
@@ -43,6 +46,18 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
     setCondition("test_failed")
     setAction("auto_fix")
     setShowCreate(false)
+  }
+
+  const handleDeleteClick = (id: string) => {
+    setRuleToDelete(id)
+    setDeleteConfirmOpen(true)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (ruleToDelete) {
+      onDeleteRule(ruleToDelete)
+      setRuleToDelete(null)
+    }
   }
 
   return (
@@ -152,9 +167,7 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
                 )}
               </button>
               <button
-                onClick={() => {
-                  if (confirm(m.delete_this_rule())) onDeleteRule(rule.id)
-                }}
+                onClick={() => handleDeleteClick(rule.id)}
                 className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
                 title={m.delete()}
               >
@@ -173,6 +186,16 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
           )}
         </div>
       </ScrollArea>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title={m.delete_this_rule()}
+        description={m.delete_this_rule()}
+        onConfirm={handleDeleteConfirm}
+        confirmLabel={m.delete()}
+        variant="destructive"
+      />
     </div>
   )
 }

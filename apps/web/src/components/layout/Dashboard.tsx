@@ -9,23 +9,24 @@ import { CreateGoalDialog } from "#/components/dialogs/CreateGoalDialog"
 import { CreateRuleDialog } from "#/components/dialogs/CreateRuleDialog"
 import { SettingsDialog } from "#/components/dialogs/SettingsDialog"
 import { CreateAgentDialog } from "#/components/dialogs/CreateAgentDialog"
+import { ObservabilityView } from "#/components/panels/ObservabilityView"
 import { GoalActions } from "#/components/panels/GoalActions"
+import { GoalList } from "#/components/panels/GoalList"
 import { Toolbar } from "#/components/layout/Toolbar"
 import { McpServersView } from "#/components/panels/McpServersView"
 import { SkillsView } from "#/components/panels/SkillsView"
+import { EnvironmentsView } from "#/components/panels/EnvironmentsView"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Target01Icon, Shield01Icon, ArrowRight01Icon, ToggleLeft, ToggleRight, Cancel01Icon, Circle, Wrench01Icon, SentIcon, Add01Icon } from "@hugeicons/core-free-icons"
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty"
+import { Shield01Icon, ArrowRight01Icon, ToggleLeft, ToggleRight, Cancel01Icon, Circle, Wrench01Icon, Add01Icon } from "@hugeicons/core-free-icons"
 import { Button } from "#/components/ui/button"
+import { ConfirmDialog } from "#/components/ui/confirm-dialog"
 import { api } from "#/lib/api"
 import { useWebSocket } from "#/lib/hooks"
 import { I18nProvider } from "#/lib/useI18n"
 import { m } from "#/paraglide/messages"
-import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, ControlSettings, Project, Organization, Problem, ProblemStatus, Rule, SidebarView, Command, InboxSource } from "#/lib/types"
+import { useUIStore } from "#/lib/store"
+import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, Project, Organization, Problem, ProblemStatus, Rule, SidebarView, Command } from "#/lib/types"
 import { isInboxItem, isSystemProblem } from "#/lib/types"
-
-type SourceFilter = "all" | InboxSource
-type GoalStatusFilter = "all" | "active" | "completed" | "paused"
 
 const conditionLabels: Record<string, string> = {
   test_failed: m.test_failed(),
@@ -59,7 +60,21 @@ function AgentDetailView({
   onRuleDelete: (id: string) => void
   onCreateAgent: () => void
 }) {
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [ruleToDelete, setRuleToDelete] = useState<string | null>(null)
   const activeAgent = agents.find((a) => a.id === activeAgentId)
+
+  const handleDeleteClick = (id: string) => {
+    setRuleToDelete(id)
+    setDeleteConfirmOpen(true)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (ruleToDelete) {
+      onRuleDelete(ruleToDelete)
+      setRuleToDelete(null)
+    }
+  }
 
   if (!activeAgent) {
     return (
@@ -190,9 +205,7 @@ function AgentDetailView({
                   )}
                 </button>
                 <button
-                  onClick={() => {
-                    if (confirm(m.delete_rule_confirm())) onRuleDelete(rule.id)
-                  }}
+                  onClick={() => handleDeleteClick(rule.id)}
                   className="shrink-0 text-muted-foreground hover:text-destructive"
                   title={m.delete()}
                 >
@@ -212,11 +225,35 @@ function AgentDetailView({
           </div>
         </section>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title={m.delete_rule_confirm()}
+        description={m.delete_rule_confirm()}
+        onConfirm={handleDeleteConfirm}
+        confirmLabel={m.delete()}
+        variant="destructive"
+      />
     </main>
   )
 }
 
 export function Dashboard() {
+  // Persisted state from zustand store
+  const {
+    activeView, setActiveView,
+    activeGoalId, setActiveGoalId,
+    activeAgentId,
+    activeOrganizationId, setActiveOrganizationId,
+    sourceFilter, setSourceFilter,
+    goalStatusFilter, setGoalStatusFilter,
+    scopeFilter, setScopeFilter,
+    activityPanelOpen, toggleActivityPanel,
+    settings: persistedSettings, setSettings,
+  } = useUIStore()
+
+  // Server data (not persisted - refetched on load)
   const [goals, setGoals] = useState<Goal[]>([])
   const [agents, setAgents] = useState<AgentProfile[]>([])
   const [projects, setProjects] = useState<Project[]>([])
@@ -226,14 +263,12 @@ export function Dashboard() {
   const [commands, setCommands] = useState<Command[]>([])
   const [mcpServers, setMcpServers] = useState<import("#/lib/api").McpServerProfile[]>([])
   const [skills, setSkills] = useState<import("#/lib/api").SkillProfile[]>([])
-  const [activeOrganizationId, setActiveOrganizationId] = useState<string | null>(null)
-  const [activeView, setActiveView] = useState<SidebarView>("inbox")
-  const [activeGoalId, setActiveGoalId] = useState<string | null>(null)
-  const [activeAgentId, setActiveAgentId] = useState<string | null>(null)
   const [states, setStates] = useState<StateItem[]>([])
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
   const [activities, setActivities] = useState<ActivityEntry[]>([])
-  const [settings, setSettings] = useState<ControlSettings | null>({ autoCommit: false, autoFix: false, modelStrategy: "adaptive", locale: "en", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", notifications: { system: true, sound: true, eventSounds: {} } })
+
+  // Transient UI state (not persisted)
+  const settings = persistedSettings
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showCommandBar, setShowCommandBar] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
@@ -241,9 +276,6 @@ export function Dashboard() {
   const [showCreateAgentDialog, setShowCreateAgentDialog] = useState(false)
   const [ruleFromProblem, setRuleFromProblem] = useState<Problem | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [activityPanelOpen, setActivityPanelOpen] = useState(false)
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all")
-  const [goalStatusFilter, setGoalStatusFilter] = useState<GoalStatusFilter>("all")
   const [loading, setLoading] = useState(true)
 
   const activeGoal = goals.find((g) => g.id === activeGoalId) ?? null
@@ -273,6 +305,15 @@ export function Dashboard() {
     paused: goals.filter((g) => g.status === "paused").length,
   }), [goals])
 
+  const scopeCounts = useMemo(() => {
+    const items = activeView === "skills" ? skills : mcpServers
+    return {
+      all: items.length,
+      global: items.filter((s: { scope: string }) => s.scope === "global").length,
+      project: items.filter((s: { scope: string }) => s.scope === "project").length,
+    }
+  }, [activeView, mcpServers, skills])
+
   const refreshAll = useCallback(async () => {
     const results = await Promise.allSettled([
       api.listGoals(),
@@ -292,7 +333,8 @@ export function Dashboard() {
     if (results[3].status === "fulfilled") setSettings(results[3].value)
     if (results[4].status === "fulfilled") {
       setOrganizations(results[4].value)
-      if (results[4].value.length > 0 && !activeOrganizationId) {
+      const currentOrgId = useUIStore.getState().activeOrganizationId
+      if (results[4].value.length > 0 && !currentOrgId) {
         setActiveOrganizationId(results[4].value[0].id)
       }
     }
@@ -305,7 +347,7 @@ export function Dashboard() {
       if (r.status === "rejected") console.error("Failed to fetch data:", r.reason)
     }
     setLoading(false)
-  }, [])
+  }, [setSettings, setActiveOrganizationId])
 
   const refreshGoalData = useCallback(async (goalId: string | null) => {
     if (!goalId) return
@@ -473,7 +515,7 @@ export function Dashboard() {
     }
   }
 
-  const handleCreateGoal = async (data: { title: string; description?: string; successCriteria: string[]; constraints?: string[] }) => {
+  const handleCreateGoal = async (data: { title: string; description?: string; successCriteria: string[]; constraints?: string[]; projectId?: string }) => {
     try {
       const goal = await api.createGoal(data)
       setShowCreateDialog(false)
@@ -602,53 +644,55 @@ export function Dashboard() {
         )
 
       case "goals":
-        return activeGoal ? (
-          <StateBoard
-            goal={activeGoal}
-            states={states}
-            artifacts={artifacts}
-            activities={activities}
-            projects={projects}
-            command={activeCommand}
-            problems={{
-              critical: problems.filter((p) => p.status === "open" && p.priority === "critical" && isSystemProblem(p) && p.goalId === activeGoalId).length,
-              warning: problems.filter((p) => p.status === "open" && p.priority === "warning" && isSystemProblem(p) && p.goalId === activeGoalId).length,
-              info: problems.filter((p) => p.status === "open" && p.priority === "info" && isSystemProblem(p) && p.goalId === activeGoalId).length,
-            }}
-            systemProblems={problems.filter((p) => p.status === "open" && isSystemProblem(p) && p.goalId === activeGoalId)}
-            onStateAction={handleStateAction}
-            onProblemAction={handleProblemAction}
-            onAutoModeToggle={activeGoal.status === "active" ? handlePauseGoal : handleResumeGoal}
-            goalActions={
-              <GoalActions
-                goal={activeGoal}
-                onPause={handlePauseGoal}
-                onResume={handleResumeGoal}
-                onDelete={handleDeleteGoal}
-              />
-            }
-          />
-        ) : (
-          <Empty className="flex-1">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <HugeiconsIcon icon={Target01Icon} />
-              </EmptyMedia>
-              <EmptyTitle>{m.no_goal_selected()}</EmptyTitle>
-              <EmptyDescription>{m.no_goal_selected_desc()}</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <div className="flex gap-2">
-                <Button onClick={() => setShowCommandBar(true)}>
-                  <HugeiconsIcon icon={SentIcon} className="size-3.5 mr-1.5" />
-                  {m.send_command()}
-                </Button>
-                <Button variant="outline" onClick={() => setShowCreateDialog(true)}>
-                  {m.create_goal_btn()}
-                </Button>
-              </div>
-            </EmptyContent>
-          </Empty>
+        return (
+          <div className="flex flex-1 overflow-hidden">
+            <GoalList
+              goals={goals}
+              projects={projects}
+              activeGoalId={activeGoalId}
+              statusFilter={goalStatusFilter}
+              searchQuery={searchQuery}
+              onSelectGoal={setActiveGoalId}
+              onNewCommand={() => setShowCommandBar(true)}
+              onCreateGoal={() => setShowCreateDialog(true)}
+            />
+            <div className="flex-1 overflow-hidden">
+              {activeGoal ? (
+                <StateBoard
+                  goal={activeGoal}
+                  states={states}
+                  artifacts={artifacts}
+                  activities={activities}
+                  projects={projects}
+                  command={activeCommand}
+                  problems={{
+                    critical: problems.filter((p) => p.status === "open" && p.priority === "critical" && isSystemProblem(p) && p.goalId === activeGoalId).length,
+                    warning: problems.filter((p) => p.status === "open" && p.priority === "warning" && isSystemProblem(p) && p.goalId === activeGoalId).length,
+                    info: problems.filter((p) => p.status === "open" && p.priority === "info" && isSystemProblem(p) && p.goalId === activeGoalId).length,
+                  }}
+                  systemProblems={problems.filter((p) => p.status === "open" && isSystemProblem(p) && p.goalId === activeGoalId)}
+                  onStateAction={handleStateAction}
+                  onProblemAction={handleProblemAction}
+                  onAutoModeToggle={activeGoal.status === "active" ? handlePauseGoal : handleResumeGoal}
+                  goalActions={
+                    <GoalActions
+                      goal={activeGoal}
+                      onPause={handlePauseGoal}
+                      onResume={handleResumeGoal}
+                      onDelete={handleDeleteGoal}
+                    />
+                  }
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">{m.no_goal_selected()}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">{m.no_goal_selected_desc()}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         )
 
       case "agents":
@@ -676,14 +720,25 @@ export function Dashboard() {
         )
 
       case "mcp-servers":
-        return <McpServersView servers={mcpServers} onRefresh={refreshAll} />
+        return <McpServersView servers={mcpServers} onRefresh={refreshAll} scopeFilter={scopeFilter} />
 
       case "skills":
-        return <SkillsView skills={skills} onRefresh={refreshAll} />
+        return <SkillsView skills={skills} onRefresh={refreshAll} scopeFilter={scopeFilter} />
 
       case "environments":
+        return <EnvironmentsView agents={agents} projects={projects} onRefresh={refreshAll} />
+
       case "observability":
       case "settings": {
+        if (activeView === "observability") {
+          return (
+            <ObservabilityView
+              agents={agents}
+              goals={goals}
+              problems={problems}
+            />
+          )
+        }
         const placeholder = placeholderViews[activeView]
         return placeholder ? renderPlaceholderContent(placeholder.title, placeholder.description) : null
       }
@@ -704,13 +759,12 @@ export function Dashboard() {
 
   const placeholderViews: Partial<Record<SidebarView, { title: string; description: string }>> = {
     "mcp-servers": { title: m.mcp_servers(), description: m.mcp_servers_desc() },
-    "environments": { title: m.environments(), description: m.environments_desc() },
     "observability": { title: m.observability(), description: m.observability_desc() },
     "settings": { title: m.settings(), description: m.settings_desc() },
   }
 
   return (
-    <I18nProvider settings={settings} onSettingsChange={setSettings}>
+    <I18nProvider>
     {loading ? (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex items-center gap-3 text-muted-foreground">
@@ -726,7 +780,7 @@ export function Dashboard() {
           problems={problems}
           activeOrganizationId={activeOrganizationId}
           activeView={activeView}
-          onViewChange={setActiveView}
+          onViewChange={(view) => { setActiveView(view); setScopeFilter("all") }}
           onOpenSettings={() => { setActiveView("settings"); setShowSettingsDialog(true) }}
           onOrganizationChange={setActiveOrganizationId}
           onOrganizationRename={handleOrganizationRename}
@@ -740,20 +794,23 @@ export function Dashboard() {
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             activityPanelOpen={activityPanelOpen}
-            onToggleActivityPanel={() => setActivityPanelOpen((v) => !v)}
+            onToggleActivityPanel={toggleActivityPanel}
             sourceFilter={sourceFilter}
             onSourceFilterChange={setSourceFilter}
             inboxCounts={inboxCounts}
             goalStatusFilter={goalStatusFilter}
             onGoalStatusFilterChange={setGoalStatusFilter}
             goalCounts={goalCounts}
+            scopeFilter={scopeFilter}
+            onScopeFilterChange={setScopeFilter}
+            scopeCounts={scopeCounts}
           />
           {renderMainContent()}
         </div>
         <ActivityPanel
           activities={activities}
           collapsed={!activityPanelOpen}
-          onToggle={() => setActivityPanelOpen((v) => !v)}
+          onToggle={toggleActivityPanel}
         />
       </div>
       <CommandBar
@@ -766,6 +823,7 @@ export function Dashboard() {
       <CreateGoalDialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
+        projects={projects}
         onSubmit={handleCreateGoal}
       />
       <CreateRuleDialog

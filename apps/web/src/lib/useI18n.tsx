@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, createContext, useContext, type ReactNode } from "react"
 import { getLocale, setLocale as paraglideSetLocale } from "#/paraglide/runtime"
-import type { ControlSettings } from "#/lib/types"
+import { useUIStore } from "#/lib/store"
 import { api } from "#/lib/api"
 
 interface I18nContextValue {
@@ -15,13 +15,11 @@ const I18nContext = createContext<I18nContextValue>({
 
 export function I18nProvider({
   children,
-  settings,
-  onSettingsChange,
 }: {
   children: ReactNode
-  settings: ControlSettings | null
-  onSettingsChange: (settings: ControlSettings) => void
 }) {
+  const settings = useUIStore((s) => s.settings)
+  const setSettings = useUIStore((s) => s.setSettings)
   const [locale, setLocaleState] = useState(() => settings?.locale || getLocale())
 
   useEffect(() => {
@@ -34,11 +32,13 @@ export function I18nProvider({
   const setLocaleWithSync = useCallback(async (newLocale: string) => {
     paraglideSetLocale(newLocale, { reload: false })
     setLocaleState(newLocale)
-    if (settings) {
+    try {
       const updated = await api.updateSettings({ locale: newLocale })
-      onSettingsChange(updated)
+      setSettings(updated)
+    } catch (err) {
+      console.error("Failed to sync locale to server:", err)
     }
-  }, [settings, onSettingsChange])
+  }, [setSettings])
 
   return (
     <I18nContext.Provider value={{ locale, setLocaleWithSync }}>

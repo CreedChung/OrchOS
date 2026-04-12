@@ -19,7 +19,7 @@ function migrate(sqlite: Database) {
   sqlite.run("CREATE TABLE IF NOT EXISTS artifacts (id TEXT PRIMARY KEY, goal_id TEXT NOT NULL, name TEXT NOT NULL, type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', detail TEXT, updated_at TEXT NOT NULL, FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE CASCADE)")
   sqlite.run("CREATE TABLE IF NOT EXISTS activities (id TEXT PRIMARY KEY, goal_id TEXT NOT NULL, timestamp TEXT NOT NULL, agent TEXT NOT NULL, action TEXT NOT NULL, detail TEXT, reasoning TEXT, diff TEXT)")
   sqlite.run("CREATE TABLE IF NOT EXISTS agents (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, role TEXT NOT NULL, capabilities TEXT NOT NULL DEFAULT '[]', status TEXT NOT NULL DEFAULT 'idle', model TEXT NOT NULL, enabled TEXT NOT NULL DEFAULT 'true')")
-  sqlite.run("CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, path TEXT NOT NULL, created_at TEXT NOT NULL)")
+  sqlite.run("CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, path TEXT NOT NULL, repository_url TEXT, created_at TEXT NOT NULL)")
   sqlite.run("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
   sqlite.run("CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, type TEXT NOT NULL, goal_id TEXT, payload TEXT NOT NULL DEFAULT '{}', timestamp TEXT NOT NULL)")
   sqlite.run("CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL)")
@@ -54,4 +54,5 @@ function migrate(sqlite: Database) {
   try { sqlite.run("CREATE TABLE IF NOT EXISTS skills (id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, enabled TEXT NOT NULL DEFAULT 'true', scope TEXT NOT NULL DEFAULT 'global', project_id TEXT REFERENCES projects(id), organization_id TEXT REFERENCES organizations(id), created_at TEXT NOT NULL, updated_at TEXT NOT NULL)") } catch {}
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_skills_project_id ON skills(project_id)") } catch {}
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_skills_organization_id ON skills(organization_id)") } catch {}
+  try { sqlite.run("ALTER TABLE projects ADD COLUMN repository_url TEXT") } catch {}
 }

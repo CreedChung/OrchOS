@@ -1,0 +1,95 @@
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
+import type { ControlSettings, SidebarView } from "#/lib/types"
+
+type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_request"
+type GoalStatusFilter = "all" | "active" | "completed" | "paused"
+type ScopeFilter = "all" | "global" | "project"
+type ThemeMode = "light" | "dark" | "auto"
+
+interface UIState {
+  // Navigation & selection
+  activeView: SidebarView
+  activeGoalId: string | null
+  activeAgentId: string | null
+  activeOrganizationId: string | null
+
+  // Filters
+  sourceFilter: SourceFilter
+  goalStatusFilter: GoalStatusFilter
+  scopeFilter: ScopeFilter
+
+  // Panel states
+  activityPanelOpen: boolean
+
+  // Theme
+  theme: ThemeMode
+
+  // Settings (persisted locally, also synced with server)
+  settings: ControlSettings | null
+}
+
+interface UIActions {
+  setActiveView: (view: SidebarView) => void
+  setActiveGoalId: (id: string | null) => void
+  setActiveAgentId: (id: string | null) => void
+  setActiveOrganizationId: (id: string | null) => void
+  setSourceFilter: (filter: SourceFilter) => void
+  setGoalStatusFilter: (filter: GoalStatusFilter) => void
+  setScopeFilter: (filter: ScopeFilter) => void
+  setActivityPanelOpen: (open: boolean) => void
+  toggleActivityPanel: () => void
+  setTheme: (mode: ThemeMode) => void
+  setSettings: (settings: ControlSettings) => void
+}
+
+const defaultSettings: ControlSettings = {
+  autoCommit: false,
+  autoFix: false,
+  modelStrategy: "adaptive",
+  locale: "en",
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+  notifications: { system: true, sound: true, eventSounds: {} },
+}
+
+export const useUIStore = create<UIState & UIActions>()(
+  persist(
+    (set) => ({
+      // Navigation & selection
+      activeView: "inbox" as SidebarView,
+      activeGoalId: null,
+      activeAgentId: null,
+      activeOrganizationId: null,
+
+      // Filters
+      sourceFilter: "all" as SourceFilter,
+      goalStatusFilter: "all" as GoalStatusFilter,
+      scopeFilter: "all" as ScopeFilter,
+
+      // Panel states
+      activityPanelOpen: false,
+
+      // Theme
+      theme: "auto" as ThemeMode,
+
+      // Settings
+      settings: defaultSettings,
+
+      setActiveView: (view) => set({ activeView: view }),
+      setActiveGoalId: (id) => set({ activeGoalId: id }),
+      setActiveAgentId: (id) => set({ activeAgentId: id }),
+      setActiveOrganizationId: (id) => set({ activeOrganizationId: id }),
+      setSourceFilter: (filter) => set({ sourceFilter: filter }),
+      setGoalStatusFilter: (filter) => set({ goalStatusFilter: filter }),
+      setScopeFilter: (filter) => set({ scopeFilter: filter }),
+      setActivityPanelOpen: (open) => set({ activityPanelOpen: open }),
+      toggleActivityPanel: () => set((s) => ({ activityPanelOpen: !s.activityPanelOpen })),
+      setTheme: (mode) => set({ theme: mode }),
+      setSettings: (settings) => set({ settings }),
+    }),
+    {
+      name: "orchos-ui",
+      version: 1,
+    }
+  )
+)

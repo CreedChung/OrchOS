@@ -53,11 +53,19 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
   const [detectResult, setDetectResult] = useState<DetectResponse | null>(null)
   const [detecting, setDetecting] = useState(false)
   const [registering, setRegistering] = useState<string | null>(null)
+  const [registerMessage, setRegisterMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const { locale: currentLocale, setLocaleWithSync } = useLocale()
 
   useEffect(() => {
     setLocalSettings(settings)
   }, [settings])
+
+  // Auto-detect runtimes when dialog opens and runtimes tab is active
+  useEffect(() => {
+    if (open && activeTab === "runtimes" && !detectResult && !detecting) {
+      handleDetect()
+    }
+  }, [open, activeTab])
 
   const currentSettings = localSettings ?? settings
 
@@ -114,13 +122,25 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
 
   const handleRegisterAgent = useCallback(async (agentId: string) => {
     setRegistering(agentId)
+    setRegisterMessage(null)
     try {
-      await api.registerDetectedAgents({ agentIds: [agentId] })
+      const result = await api.registerDetectedAgents({ agentIds: [agentId] })
       onAgentsRefresh()
-      const result = await api.detectAgents()
-      setDetectResult(result)
+      const detectResult = await api.detectAgents()
+      setDetectResult(detectResult)
+      
+      if (result.registered.length > 0) {
+        setRegisterMessage({ type: "success", text: m.agent_registered({ name: result.registered[0].name }) })
+      } else if (result.skipped.length > 0) {
+        setRegisterMessage({ type: "error", text: m.agent_already_registered({ name: result.skipped[0].name }) })
+      }
+      
+      // Auto-clear message after 3s
+      setTimeout(() => setRegisterMessage(null), 3000)
     } catch (err) {
       console.error("Register failed:", err)
+      setRegisterMessage({ type: "error", text: m.agent_register_failed() })
+      setTimeout(() => setRegisterMessage(null), 3000)
     } finally {
       setRegistering(null)
     }
@@ -128,13 +148,25 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
 
   const handleRegisterAll = useCallback(async () => {
     setRegistering("__all__")
+    setRegisterMessage(null)
     try {
-      await api.registerDetectedAgents({ registerAll: true })
+      const result = await api.registerDetectedAgents({ registerAll: true })
       onAgentsRefresh()
-      const result = await api.detectAgents()
-      setDetectResult(result)
+      const detectResult = await api.detectAgents()
+      setDetectResult(detectResult)
+      
+      if (result.registered.length > 0) {
+        setRegisterMessage({ type: "success", text: m.agents_registered({ count: result.registered.length }) })
+      } else {
+        setRegisterMessage({ type: "error", text: m.agents_already_registered() })
+      }
+      
+      // Auto-clear message after 3s
+      setTimeout(() => setRegisterMessage(null), 3000)
     } catch (err) {
       console.error("Register all failed:", err)
+      setRegisterMessage({ type: "error", text: m.agent_register_failed() })
+      setTimeout(() => setRegisterMessage(null), 3000)
     } finally {
       setRegistering(null)
     }
@@ -402,6 +434,18 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
 
             {activeTab === "runtimes" && (
               <div className="space-y-4">
+                {/* Registration feedback */}
+                {registerMessage && (
+                  <div className={cn(
+                    "rounded-lg border px-3 py-2 text-xs",
+                    registerMessage.type === "success"
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                      : "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400"
+                  )}>
+                    {registerMessage.text}
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground max-w-[240px]">
                     {m.runtimes_desc()}

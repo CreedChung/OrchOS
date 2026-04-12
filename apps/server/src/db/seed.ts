@@ -24,8 +24,8 @@ export function seedData() {
   const existingGoals = db.select({ count: sql<number>`count(*)` }).from(goals).get()
   if (existingGoals?.count > 0) return
 
-  const proj1 = ProjectService.create("OrchOS", "/Users/a1111/Project/OrchOS")
-  const proj2 = ProjectService.create("my-app", "/Users/a1111/Projects/my-app")
+  const proj1 = ProjectService.create("OrchOS", "/Users/a1111/Project/OrchOS", "https://github.com/user/orchos")
+  const proj2 = ProjectService.create("my-app", "/Users/a1111/Projects/my-app", "https://github.com/user/my-app")
 
   AgentService.register({ name: "Codex", role: "Code generation & editing", capabilities: ["write_code", "fix_bug"], status: "active", model: "local/codex", enabled: true })
   AgentService.register({ name: "Claude", role: "Reasoning & analysis", capabilities: ["write_code", "fix_bug", "review"], status: "idle", model: "cloud/claude-sonnet-4", enabled: true })

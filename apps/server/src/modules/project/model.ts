@@ -4,17 +4,20 @@ export const ProjectModel = {
   createBody: t.Object({
     name: t.String(),
     path: t.String(),
+    repositoryUrl: t.Optional(t.String()),
   }),
   updateBody: t.Partial(
     t.Object({
       name: t.String(),
       path: t.String(),
+      repositoryUrl: t.Optional(t.String()),
     })
   ),
   response: t.Object({
     id: t.String(),
     name: t.String(),
     path: t.String(),
+    repositoryUrl: t.Optional(t.String()),
     createdAt: t.String(),
   }),
   errorNotFound: t.Object({ error: t.Literal("Project not found") }),

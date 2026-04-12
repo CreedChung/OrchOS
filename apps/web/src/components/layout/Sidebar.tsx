@@ -37,6 +37,7 @@ import {
   DropdownMenuSeparator,
 } from "#/components/ui/dropdown-menu";
 import { RenameDialog } from "#/components/dialogs/RenameDialog";
+import { ConfirmDialog } from "#/components/ui/confirm-dialog";
 import { m } from "#/paraglide/messages";
 import type { Organization, Problem, SidebarView } from "#/lib/types";
 import { isInboxItem } from "#/lib/types";
@@ -76,6 +77,7 @@ export function Sidebar({
   onOrganizationDelete,
 }: SidebarProps) {
   const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const openInboxCount = problems.filter(
     (p) => p.status === "open" && isInboxItem(p),
   ).length;
@@ -175,10 +177,7 @@ export function Sidebar({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => {
-                  if (confirm(m.delete_organization()))
-                    onOrganizationDelete(activeOrganizationId);
-                }}
+                onClick={() => setDeleteConfirmOpen(true)}
               >
                 <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                 {m.delete()}
@@ -311,6 +310,18 @@ export function Sidebar({
           if (activeOrganizationId) onOrganizationRename(activeOrganizationId, name);
           setRenameOpen(false);
         }}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title={m.delete_organization()}
+        description={m.delete_organization()}
+        onConfirm={() => {
+          if (activeOrganizationId) onOrganizationDelete(activeOrganizationId);
+        }}
+        confirmLabel={m.delete()}
+        variant="destructive"
       />
     </aside>
   );

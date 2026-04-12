@@ -3,6 +3,7 @@ import { cn } from "#/lib/utils"
 import { m } from "#/paraglide/messages"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Play, Pause, Delete02Icon, MoreVertical, CheckmarkCircleIcon } from "@hugeicons/core-free-icons"
+import { ConfirmDialog } from "#/components/ui/confirm-dialog"
 import type { Goal } from "#/lib/types"
 
 interface GoalActionsProps {
@@ -20,6 +21,7 @@ const statusConfig = {
 
 export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsProps) {
   const [showMenu, setShowMenu] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const config = statusConfig[goal.status]
   const StatusIcon = config.icon
 
@@ -97,9 +99,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
             )}
             <button
               onClick={() => {
-                if (confirm(m.delete_goal_confirm())) {
-                  onDelete()
-                }
+                setDeleteConfirmOpen(true)
                 setShowMenu(false)
               }}
               className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-red-500 hover:bg-destructive/10"
@@ -110,6 +110,16 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title={m.delete_goal_confirm()}
+        description={m.delete_goal_confirm()}
+        onConfirm={onDelete}
+        confirmLabel={m.delete()}
+        variant="destructive"
+      />
     </div>
   )
 }

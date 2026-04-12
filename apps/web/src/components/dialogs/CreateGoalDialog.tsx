@@ -1,20 +1,23 @@
 import { useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Cancel01Icon, Add01Icon, Delete02Icon } from "@hugeicons/core-free-icons"
+import { Cancel01Icon, Add01Icon, Delete02Icon, FolderGitIcon } from "@hugeicons/core-free-icons"
 import { cn } from "#/lib/utils"
 import { m } from "#/paraglide/messages"
+import type { Project } from "#/lib/types"
 
 interface CreateGoalDialogProps {
   open: boolean
   onClose: () => void
-  onSubmit: (data: { title: string; description?: string; successCriteria: string[]; constraints?: string[] }) => void
+  projects: Project[]
+  onSubmit: (data: { title: string; description?: string; successCriteria: string[]; constraints?: string[]; projectId?: string }) => void
 }
 
-export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogProps) {
+export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGoalDialogProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [criteria, setCriteria] = useState<string[]>([""])
   const [constraints, setConstraints] = useState<string[]>([])
+  const [projectId, setProjectId] = useState<string>("")
 
   if (!open) return null
 
@@ -27,11 +30,13 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
       description: description.trim() || undefined,
       successCriteria: validCriteria,
       constraints: constraints.filter((c) => c.trim()),
+      projectId: projectId || undefined,
     })
     setTitle("")
     setDescription("")
     setCriteria([""])
     setConstraints([])
+    setProjectId("")
   }
 
   return (
@@ -76,6 +81,26 @@ export function CreateGoalDialog({ open, onClose, onSubmit }: CreateGoalDialogPr
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
+
+          {/* Project Selection */}
+          {projects.length > 0 && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                <HugeiconsIcon icon={FolderGitIcon} className="size-3 inline mr-1" />
+                {m.project()}
+              </label>
+              <select
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">{m.no_project()}</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Success Criteria */}
           <div>

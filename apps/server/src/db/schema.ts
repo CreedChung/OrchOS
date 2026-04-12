@@ -79,6 +79,7 @@ export const projects = sqliteTable("projects", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   path: text("path").notNull(),
+  repositoryUrl: text("repository_url"),
   createdAt: text("created_at").notNull(),
 })
 
