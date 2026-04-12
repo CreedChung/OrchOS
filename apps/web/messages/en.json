@@ -321,5 +321,9 @@
   "env_project_repo_placeholder": "https://github.com/owner/repo",
   "env_repo_link": "Repo",
   "all_projects": "All Projects",
-  "no_project": "No project"
+  "no_project": "No project",
+  "idle_status": "Idle",
+  "disabled_agents": "Disabled",
+  "no_agent_selected": "No agent selected",
+  "no_agent_selected_desc": "Select an agent from the list to view details."
 }

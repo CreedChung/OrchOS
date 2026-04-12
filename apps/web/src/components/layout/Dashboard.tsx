@@ -12,13 +12,13 @@ import { CreateAgentDialog } from "#/components/dialogs/CreateAgentDialog"
 import { ObservabilityView } from "#/components/panels/ObservabilityView"
 import { GoalActions } from "#/components/panels/GoalActions"
 import { GoalList } from "#/components/panels/GoalList"
+import { AgentList } from "#/components/panels/AgentList"
 import { Toolbar } from "#/components/layout/Toolbar"
 import { McpServersView } from "#/components/panels/McpServersView"
 import { SkillsView } from "#/components/panels/SkillsView"
 import { EnvironmentsView } from "#/components/panels/EnvironmentsView"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Shield01Icon, ArrowRight01Icon, ToggleLeft, ToggleRight, Cancel01Icon, Circle, Wrench01Icon, Add01Icon } from "@hugeicons/core-free-icons"
-import { Button } from "#/components/ui/button"
+import { Shield01Icon, ArrowRight01Icon, ToggleLeft, ToggleRight, Cancel01Icon, Circle, Wrench01Icon } from "@hugeicons/core-free-icons"
 import { ConfirmDialog } from "#/components/ui/confirm-dialog"
 import { api } from "#/lib/api"
 import { useWebSocket } from "#/lib/hooks"
@@ -46,23 +46,18 @@ const actionLabels: Record<string, string> = {
 }
 
 function AgentDetailView({
-  agents,
-  activeAgentId,
+  agent,
   rules,
   onRuleToggle,
   onRuleDelete,
-  onCreateAgent,
 }: {
-  agents: AgentProfile[]
-  activeAgentId: string | null
+  agent: AgentProfile
   rules: Rule[]
   onRuleToggle: (id: string, enabled: boolean) => void
   onRuleDelete: (id: string) => void
-  onCreateAgent: () => void
 }) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [ruleToDelete, setRuleToDelete] = useState<string | null>(null)
-  const activeAgent = agents.find((a) => a.id === activeAgentId)
 
   const handleDeleteClick = (id: string) => {
     setRuleToDelete(id)
@@ -76,72 +71,34 @@ function AgentDetailView({
     }
   }
 
-  if (!activeAgent) {
-    return (
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">{m.agents()}</h2>
-          <Button size="sm" onClick={onCreateAgent}>
-            <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
-            {m.create_agent()}
-          </Button>
-        </div>
-        <div className="space-y-3">
-          {agents.map((agent) => (
-            <div key={agent.id} className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-4 py-3">
-              <div className="flex size-10 items-center justify-center rounded-md bg-primary/10 text-sm font-bold text-primary">
-                {agent.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-foreground">{agent.name}</span>
-                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    {agent.model}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">{agent.role}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`size-2 rounded-full ${agent.status === "active" ? "bg-emerald-500" : agent.status === "error" ? "bg-red-500" : "bg-muted-foreground"}`} />
-                <span className="text-xs text-muted-foreground capitalize">{agent.status}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  const agentRules = rules
-
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-3xl p-6">
         <div className="mb-6">
           <div className="flex items-center gap-4">
             <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-lg font-bold text-primary">
-              {activeAgent.name.charAt(0).toUpperCase()}
+              {agent.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">{activeAgent.name}</h1>
+              <h1 className="text-xl font-bold text-foreground">{agent.name}</h1>
               <div className="flex items-center gap-2 mt-1">
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  {activeAgent.model}
+                  {agent.model}
                 </span>
                 <HugeiconsIcon
                   icon={Circle}
                   className={cn(
                     "size-2 fill-current",
-                    activeAgent.status === "active"
+                    agent.status === "active"
                       ? "text-emerald-500"
-                      : activeAgent.status === "error"
+                      : agent.status === "error"
                         ? "text-red-500"
                         : "text-muted-foreground"
                   )}
                 />
-                <span className="text-xs text-muted-foreground capitalize">{activeAgent.status}</span>
+                <span className="text-xs text-muted-foreground capitalize">{agent.status}</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">{activeAgent.role}</p>
+              <p className="text-sm text-muted-foreground mt-1">{agent.role}</p>
             </div>
           </div>
         </div>
@@ -152,7 +109,7 @@ function AgentDetailView({
             {m.capabilities()}
           </h2>
           <div className="flex flex-wrap gap-1.5">
-            {activeAgent.capabilities.map((cap) => (
+            {agent.capabilities.map((cap) => (
               <span
                 key={cap}
                 className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-accent/30 px-2.5 py-1 text-xs text-foreground"
@@ -170,7 +127,7 @@ function AgentDetailView({
             {m.automation_rules()}
           </h2>
           <div className="space-y-1.5">
-            {agentRules.map((rule) => (
+            {rules.map((rule) => (
               <div
                 key={rule.id}
                 className={cn(
@@ -213,7 +170,7 @@ function AgentDetailView({
                 </button>
               </div>
             ))}
-            {agentRules.length === 0 && (
+            {rules.length === 0 && (
               <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
                 <HugeiconsIcon icon={Shield01Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
                 <p className="text-sm text-muted-foreground">{m.no_rules_yet()}</p>
@@ -244,7 +201,7 @@ export function Dashboard() {
   const {
     activeView, setActiveView,
     activeGoalId, setActiveGoalId,
-    activeAgentId,
+    activeAgentId, setActiveAgentId,
     activeOrganizationId, setActiveOrganizationId,
     sourceFilter, setSourceFilter,
     goalStatusFilter, setGoalStatusFilter,
@@ -696,28 +653,36 @@ export function Dashboard() {
         )
 
       case "agents":
+      case "agent-detail": {
+        const activeAgent = agents.find((a) => a.id === activeAgentId)
         return (
-          <AgentDetailView
-            agents={agents}
-            activeAgentId={activeAgentId}
-            rules={rules}
-            onRuleToggle={handleRuleToggle}
-            onRuleDelete={handleRuleDelete}
-            onCreateAgent={() => setShowCreateAgentDialog(true)}
-          />
+          <div className="flex flex-1 overflow-hidden">
+            <AgentList
+              agents={agents}
+              activeAgentId={activeAgentId}
+              onSelectAgent={setActiveAgentId}
+              onCreateAgent={() => setShowCreateAgentDialog(true)}
+            />
+            <div className="flex-1 overflow-hidden">
+              {activeAgent ? (
+                <AgentDetailView
+                  agent={activeAgent}
+                  rules={rules}
+                  onRuleToggle={handleRuleToggle}
+                  onRuleDelete={handleRuleDelete}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">{m.no_agent_selected()}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">{m.no_agent_selected_desc()}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         )
-
-      case "agent-detail":
-        return (
-          <AgentDetailView
-            agents={agents}
-            activeAgentId={activeAgentId}
-            rules={rules}
-            onRuleToggle={handleRuleToggle}
-            onRuleDelete={handleRuleDelete}
-            onCreateAgent={() => setShowCreateAgentDialog(true)}
-          />
-        )
+      }
 
       case "mcp-servers":
         return <McpServersView servers={mcpServers} onRefresh={refreshAll} scopeFilter={scopeFilter} />
@@ -789,8 +754,6 @@ export function Dashboard() {
         <div className="flex flex-1 flex-col overflow-hidden">
           <Toolbar
             activeView={activeView}
-            onNewCommand={() => setShowCommandBar(true)}
-            onCreateGoal={() => setShowCreateDialog(true)}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             activityPanelOpen={activityPanelOpen}

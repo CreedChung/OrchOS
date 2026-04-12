@@ -3,7 +3,7 @@ import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import { Cancel01Icon, Settings02Icon, SlidersHorizontalIcon, Robot02Icon, InformationCircleIcon, LinkCircleIcon, NotificationIcon, Search01Icon, CloudIcon, Server, AddCircleHalfDotIcon } from "@hugeicons/core-free-icons"
 import { cn } from "#/lib/utils"
 import ThemeToggle from "#/components/layout/ThemeToggle"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger } from "#/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
 import { useLocale } from "#/lib/useI18n"
 import { AVAILABLE_LOCALES } from "#/lib/i18n"
 import { m } from "#/paraglide/messages"
@@ -215,7 +215,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
               )
             })}
           </nav>
-          <div className="border-t border-border p-2">
+          <div className="flex justify-center border-t border-border p-2">
             <ThemeToggle />
           </div>
         </div>
@@ -294,7 +294,9 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
                     onValueChange={handleLocaleChange}
                   >
                     <SelectTrigger className="w-[160px]">
-                      {AVAILABLE_LOCALES.find((l) => l.value === currentLocale)?.label || AVAILABLE_LOCALES[0].label}
+                      <SelectValue>
+                        {AVAILABLE_LOCALES.find((l) => l.value === currentLocale)?.label || AVAILABLE_LOCALES[0].label}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -575,9 +577,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
             {activeTab === "about" && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <HugeiconsIcon icon={Settings02Icon} className="size-5" />
-                  </div>
+                  <img src="/logo.svg" alt="OrchOS" className="size-10 rounded-lg" />
                   <div>
                     <p className="text-sm font-semibold text-foreground">OrchOS</p>
                     <p className="text-xs text-muted-foreground">v1.0.0</p>

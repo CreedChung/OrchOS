@@ -20,12 +20,14 @@ export function I18nProvider({
 }) {
   const settings = useUIStore((s) => s.settings)
   const setSettings = useUIStore((s) => s.setSettings)
-  const [locale, setLocaleState] = useState(() => settings?.locale || getLocale())
+  // Always initialize from Paraglide runtime locale to ensure consistency
+  const [locale, setLocaleState] = useState(() => getLocale())
 
+  // Sync settings locale to Paraglide if they differ
   useEffect(() => {
-    if (settings?.locale && settings.locale !== locale) {
-      setLocaleState(settings.locale)
+    if (settings?.locale && settings.locale !== getLocale()) {
       paraglideSetLocale(settings.locale, { reload: false })
+      setLocaleState(settings.locale)
     }
   }, [settings?.locale])
 

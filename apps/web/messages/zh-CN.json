@@ -321,5 +321,9 @@
   "env_project_repo_placeholder": "https://github.com/owner/repo",
   "env_repo_link": "仓库",
   "all_projects": "所有项目",
-  "no_project": "无项目"
+  "no_project": "无项目",
+  "idle_status": "空闲",
+  "disabled_agents": "已禁用",
+  "no_agent_selected": "未选择代理",
+  "no_agent_selected_desc": "从列表中选择一个代理以查看详情。"
 }

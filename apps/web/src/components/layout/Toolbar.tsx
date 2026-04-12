@@ -1,7 +1,7 @@
 import { cn } from "#/lib/utils"
 import { Button } from "#/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Search01Icon, Cancel01Icon, SentIcon, Add01Icon, PanelRight, PanelLeft, GitPullRequestIcon, SquareIcon, InformationCircleIcon, Robot02Icon, Clock01Icon, CheckmarkCircleIcon, CancelCircleIcon, Globe02Icon, Folder01Icon } from "@hugeicons/core-free-icons"
+import { Search01Icon, Cancel01Icon, PanelRight, PanelLeft, GitPullRequestIcon, SquareIcon, InformationCircleIcon, Robot02Icon, Clock01Icon, CheckmarkCircleIcon, CancelCircleIcon, Globe02Icon, Folder01Icon } from "@hugeicons/core-free-icons"
 import { m } from "#/paraglide/messages"
 import type { SidebarView, InboxSource } from "#/lib/types"
 
@@ -29,8 +29,6 @@ const goalStatusFilterConfig: Record<Exclude<GoalStatusFilter, "all">, { icon: t
 
 interface ToolbarProps {
   activeView: SidebarView
-  onNewCommand: () => void
-  onCreateGoal: () => void
   searchQuery: string
   onSearchChange: (query: string) => void
   activityPanelOpen: boolean
@@ -48,8 +46,6 @@ interface ToolbarProps {
 
 export function Toolbar({
   activeView,
-  onNewCommand,
-  onCreateGoal,
   searchQuery,
   onSearchChange,
   activityPanelOpen,
@@ -64,8 +60,6 @@ export function Toolbar({
   onScopeFilterChange,
   scopeCounts,
 }: ToolbarProps) {
-  const showNewGoal = activeView === "goals"
-  const showNewCommand = activeView === "goals" || activeView === "inbox"
 
   return (
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
@@ -166,23 +160,7 @@ export function Toolbar({
         </div>
       </div>
 
-      {/* Actions — shown based on active view */}
-      {(showNewGoal || showNewCommand) && (
-        <div className="flex items-center gap-1.5">
-          {showNewGoal && (
-            <Button variant="outline" size="xs" onClick={onCreateGoal}>
-              <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-              {m.new_goal()}
-            </Button>
-          )}
-          {showNewCommand && (
-            <Button size="xs" onClick={onNewCommand}>
-              <HugeiconsIcon icon={SentIcon} className="size-3.5" />
-              {m.command()}
-            </Button>
-          )}
-        </div>
-      )}
+
 
       {/* Activity panel toggle */}
       <Button
