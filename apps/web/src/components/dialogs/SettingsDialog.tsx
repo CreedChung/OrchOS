@@ -10,7 +10,7 @@ import { AVAILABLE_LOCALES } from "#/lib/i18n"
 import { m } from "#/paraglide/messages"
 import type { ControlSettings, NotificationEvent } from "#/lib/types"
 import { NOTIFICATION_EVENTS } from "#/lib/types"
-import { api, type DetectResponse, type AgentProfile } from "#/lib/api"
+import { api, type DetectRuntimesResponse, type RuntimeProfile } from "#/lib/api"
 
 type SettingsTab = "general" | "notifications" | "integrations" | "runtimes" | "about"
 
@@ -48,33 +48,38 @@ interface SettingsDialogProps {
   onClose: () => void
   settings: ControlSettings | null
   onSettingsChange: (settings: ControlSettings) => void
-  onAgentsRefresh: () => void
-  registeredAgents: AgentProfile[]
+  onRuntimesRefresh: () => void
+  registeredRuntimes: RuntimeProfile[]
 }
 
-function ModelBadge({ model }: { model: string }) {
-  const isCloud = model.startsWith("cloud/")
-  const isLocal = model.startsWith("local/") || (!model.startsWith("cloud/") && !model.startsWith("http"))
-  const label = isLocal ? m.model_local() : isCloud ? m.model_cloud() : model
+function ModelBadge({ model, isLocalRuntime }: { model: string; isLocalRuntime?: boolean }) {
+  // Determine model provider type from the model string prefix
+  const modelProvider = model.startsWith("cloud/") ? "cloud" : model.startsWith("local/") ? "local" : model.startsWith("http") ? "remote" : "local"
+  // A locally installed CLI runtime that uses a cloud model is still a "local runtime"
+  const showAsLocal = isLocalRuntime || modelProvider === "local"
+  const modelName = model.replace(/^(cloud|local)\//, "")
+  const label = showAsLocal ? m.model_local() : m.model_cloud()
   return (
     <span className={cn(
       "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-      isLocal ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" :
-      isCloud ? "bg-violet-500/10 text-violet-600 dark:text-violet-400" :
-      "bg-muted text-muted-foreground"
+      showAsLocal ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" :
+      "bg-violet-500/10 text-violet-600 dark:text-violet-400"
     )}>
-      {isLocal ? <HugeiconsIcon icon={Server} className="size-2.5" /> :
-       isCloud ? <HugeiconsIcon icon={CloudIcon} className="size-2.5" /> : null}
+      {showAsLocal ? <HugeiconsIcon icon={Server} className="size-2.5" /> :
+       <HugeiconsIcon icon={CloudIcon} className="size-2.5" />}
       {label}
+      {modelName && modelName !== model && (
+        <span className="opacity-60 ml-0.5">{modelName}</span>
+      )}
     </span>
   )
 }
 
-export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAgentsRefresh, registeredAgents }: SettingsDialogProps) {
+export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRuntimesRefresh, registeredRuntimes }: SettingsDialogProps) {
   const [localSettings, setLocalSettings] = useState<ControlSettings | null>(settings)
   const [activeTab, setActiveTab] = useState<SettingsTab>("general")
   const [activeIntegrationCat, setActiveIntegrationCat] = useState<IntegrationCategory>("code")
-  const [detectResult, setDetectResult] = useState<DetectResponse | null>(null)
+  const [detectResult, setDetectResult] = useState<DetectRuntimesResponse | null>(null)
   const [detecting, setDetecting] = useState(false)
   const [registering, setRegistering] = useState<string | null>(null)
   const [registerMessage, setRegisterMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
@@ -128,7 +133,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
   const handleDetect = useCallback(async () => {
     setDetecting(true)
     try {
-      const result = await api.detectAgents()
+      const result = await api.detectRuntimes()
       setDetectResult(result)
     } catch (err) {
       console.error("Detect failed:", err)
@@ -144,13 +149,13 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
     }
   }, [open, activeTab, handleDetect])
 
-  const handleRegisterAgent = useCallback(async (agentId: string) => {
-    setRegistering(agentId)
+  const handleRegisterAgent = useCallback(async (runtimeId: string) => {
+    setRegistering(runtimeId)
     setRegisterMessage(null)
     try {
-      const result = await api.registerDetectedAgents({ agentIds: [agentId] })
-      onAgentsRefresh()
-      const detectResult = await api.detectAgents()
+      const result = await api.registerDetectedRuntimes({ runtimeIds: [runtimeId] })
+      onRuntimesRefresh()
+      const detectResult = await api.detectRuntimes()
       setDetectResult(detectResult)
       
       if (result.registered.length > 0) {
@@ -168,15 +173,15 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
     } finally {
       setRegistering(null)
     }
-  }, [onAgentsRefresh])
+  }, [onRuntimesRefresh])
 
   const handleRegisterAll = useCallback(async () => {
     setRegistering("__all__")
     setRegisterMessage(null)
     try {
-      const result = await api.registerDetectedAgents({ registerAll: true })
-      onAgentsRefresh()
-      const detectResult = await api.detectAgents()
+      const result = await api.registerDetectedRuntimes({ registerAll: true })
+      onRuntimesRefresh()
+      const detectResult = await api.detectRuntimes()
       setDetectResult(detectResult)
       
       if (result.registered.length > 0) {
@@ -194,7 +199,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
     } finally {
       setRegistering(null)
     }
-  }, [onAgentsRefresh])
+  }, [onRuntimesRefresh])
 
   if (!open) return null
 
@@ -530,8 +535,8 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
                       {m.available()} ({detectResult.available.length})
                     </div>
                     {detectResult.available.map((agent) => {
-                      const isRegistered = registeredAgents.some(
-                        (r) => r.name === agent.name || r.runtimeId === agent.id
+                      const isRegistered = registeredRuntimes.some(
+                        (r) => r.name === agent.name || r.registryId === agent.id
                       )
                       return (
                         <div
@@ -554,7 +559,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-foreground">{agent.name}</span>
-                              <ModelBadge model={agent.model} />
+                              <ModelBadge model={agent.model} isLocalRuntime />
                               {agent.version && (
                                 <span className="text-[10px] text-muted-foreground">v{agent.version}</span>
                               )}
@@ -605,7 +610,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-foreground">{agent.name}</span>
-                            <ModelBadge model={agent.model} />
+                            <ModelBadge model={agent.model} isLocalRuntime />
                           </div>
                           <p className="text-xs text-muted-foreground">{agent.role}</p>
                         </div>

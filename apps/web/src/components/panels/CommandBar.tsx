@@ -2,32 +2,26 @@ import { useState } from "react"
 import { cn } from "#/lib/utils"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { SentIcon, Robot02Icon, FolderGitIcon, Cancel01Icon } from "@hugeicons/core-free-icons"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
 import { m } from "#/paraglide/messages"
-import type { AgentProfile, Project } from "#/lib/types"
+import type { RuntimeProfile, Project } from "#/lib/types"
 
 interface CommandBarProps {
   open: boolean
-  agents: AgentProfile[]
+  runtimes: RuntimeProfile[]
   projects: Project[]
   onSubmit: (data: { instruction: string; agentNames: string[]; projectIds: string[] }) => void
   onClose: () => void
 }
 
-export function CommandBar({ open, agents, projects, onSubmit, onClose }: CommandBarProps) {
+export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: CommandBarProps) {
   const [instruction, setInstruction] = useState("")
-  const [selectedAgents, setSelectedAgents] = useState<string[]>([])
+  const [selectedRuntimes, setSelectedRuntimes] = useState<string[]>([])
   const [selectedProjects, setSelectedProjects] = useState<string[]>([])
 
-  const enabledAgents = agents.filter((a) => a.enabled)
+  const enabledRuntimes = runtimes.filter((r) => r.enabled)
 
-  const toggleAgent = (name: string) => {
-    setSelectedAgents((prev) =>
+  const toggleRuntime = (name: string) => {
+    setSelectedRuntimes((prev) =>
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
     )
   }
@@ -43,11 +37,11 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
     if (!instruction.trim()) return
     onSubmit({
       instruction: instruction.trim(),
-      agentNames: selectedAgents,
+      agentNames: selectedRuntimes,
       projectIds: selectedProjects,
     })
     setInstruction("")
-    setSelectedAgents([])
+    setSelectedRuntimes([])
     setSelectedProjects([])
   }
 
@@ -92,13 +86,13 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
               {m.agents_label()}
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {enabledAgents.map((agent) => {
-                const isSelected = selectedAgents.includes(agent.name)
+              {enabledRuntimes.map((runtime) => {
+                const isSelected = selectedRuntimes.includes(runtime.name)
                 return (
                   <button
-                    key={agent.id}
+                    key={runtime.id}
                     type="button"
-                    onClick={() => toggleAgent(agent.name)}
+                    onClick={() => toggleRuntime(runtime.name)}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                       isSelected
@@ -107,14 +101,14 @@ export function CommandBar({ open, agents, projects, onSubmit, onClose }: Comman
                     )}
                   >
                     <HugeiconsIcon icon={Robot02Icon} className="size-3" />
-                    {agent.name}
-                    {agent.status === "active" && (
+                    {runtime.name}
+                    {runtime.status === "active" && (
                       <span className="size-1.5 rounded-full bg-emerald-500" />
                     )}
                   </button>
                 )
               })}
-              {enabledAgents.length === 0 && (
+              {enabledRuntimes.length === 0 && (
                 <span className="text-xs text-muted-foreground">{m.no_agents_available()}</span>
               )}
             </div>

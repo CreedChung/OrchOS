@@ -16,8 +16,8 @@ function AgentsPage() {
 
   const { activeAgentId, setActiveAgentId } = useUIStore()
 
-  // Only show user-created agent instances (those with runtimeId), not base runtimes
-  const agentInstances = agents.filter((a) => a.runtimeId)
+  // Show all agents (user-created). Runtimes are managed separately in Environments.
+  const agentInstances = agents
   const activeAgent = agentInstances.find((a) => a.id === activeAgentId)
 
   return (

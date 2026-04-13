@@ -4,6 +4,7 @@ import { cors } from "@elysiajs/cors"
 import { goalController } from "./modules/goal"
 import { projectController } from "./modules/project"
 import { agentController } from "./modules/agent"
+import { runtimeController } from "./modules/runtime"
 import { stateController, stateItemController, artifactItemController } from "./modules/state"
 import { activityController } from "./modules/activity"
 import { eventController } from "./modules/event"
@@ -16,6 +17,7 @@ import { commandController } from "./modules/command"
 import { mcpController } from "./modules/mcp"
 import { skillController } from "./modules/skill"
 import { sandboxController } from "./modules/sandbox"
+import { filesystemController } from "./modules/filesystem"
 import { seedData } from "./db/seed"
 
 import "./db"
@@ -31,6 +33,7 @@ const app = new Elysia()
   .use(artifactItemController)
   .use(activityController)
   .use(agentController)
+  .use(runtimeController)
   .use(eventController)
   .use(executionController)
   .use(settingsController)
@@ -42,6 +45,7 @@ const app = new Elysia()
   .use(mcpController)
   .use(skillController)
   .use(sandboxController)
+  .use(filesystemController)
   .listen(5173)
 
 console.log(

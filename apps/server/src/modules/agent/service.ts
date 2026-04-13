@@ -4,7 +4,6 @@ import { eq } from "drizzle-orm"
 import { generateId } from "../../utils"
 import type { AgentProfile, Action, ControlSettings } from "../../types"
 import type { AgentModel } from "./model"
-import { executor } from "../../modules/execution/executor"
 
 export abstract class AgentService {
   static register(agent: Omit<AgentProfile, "id">): AgentProfile {
@@ -93,67 +92,5 @@ export abstract class AgentService {
       currentModel: row.currentModel || undefined,
       runtimeId: row.runtimeId || undefined,
     }
-  }
-
-  static async detect(): Promise<{
-    available: { id: string; name: string; command: string; version?: string; path?: string; role: string; capabilities: string[]; model: string }[]
-    unavailable: { id: string; name: string; command: string; role: string; capabilities: string[]; model: string }[]
-  }> {
-    const detected = await executor.detectAgentCLIs()
-
-    const available = detected
-      .filter((d) => d.available)
-      .map((d) => ({
-        id: d.definition.id,
-        name: d.definition.name,
-        command: d.definition.command,
-        version: d.version,
-        path: d.path,
-        role: d.definition.role,
-        capabilities: d.definition.capabilities,
-        model: d.definition.model,
-      }))
-
-    const unavailable = detected
-      .filter((d) => !d.available)
-      .map((d) => ({
-        id: d.definition.id,
-        name: d.definition.name,
-        command: d.definition.command,
-        role: d.definition.role,
-        capabilities: d.definition.capabilities,
-        model: d.definition.model,
-      }))
-
-    return { available, unavailable }
-  }
-
-  static registerFromCLI(definition: { id: string; name: string; command: string; role: string; capabilities: string[]; model: string }): AgentProfile | undefined {
-    const existing = AgentService.getByName(definition.name)
-    if (existing) return existing
-
-    return AgentService.register({
-      name: definition.name,
-      role: definition.role,
-      capabilities: definition.capabilities as Action[],
-      status: "idle",
-      model: definition.model,
-      enabled: true,
-      cliCommand: definition.command,
-      runtimeId: definition.id,
-    })
-  }
-
-  static async healthCheck(agentId: string, options?: { level?: "basic" | "ping" | "full"; prompt?: string }) {
-    return executor.testAgentCLI(agentId, options)
-  }
-
-  static async getCurrentModel(agentId: string) {
-    const result = await executor.getAgentCurrentModel(agentId)
-    const agent = AgentService.list().find(a => a.runtimeId === agentId || a.id === agentId)
-    if (agent && result.model && result.source === "cli") {
-      db.update(agents).set({ currentModel: result.model }).where(eq(agents.id, agent.id)).run()
-    }
-    return result
   }
 }

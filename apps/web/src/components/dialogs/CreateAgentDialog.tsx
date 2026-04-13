@@ -3,7 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, CloudIcon, Server } from "@hugeicons/core-free-icons"
 import { cn } from "#/lib/utils"
 import { m } from "#/paraglide/messages"
-import type { AgentProfile } from "#/lib/types"
+import type { RuntimeProfile } from "#/lib/types"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger } from "#/components/ui/select"
 
 const CAPABILITY_OPTIONS = [
@@ -25,7 +25,7 @@ const CAPABILITY_COLORS: Record<string, { bg: string; text: string; border: stri
 interface CreateAgentDialogProps {
   open: boolean
   onClose: () => void
-  runtimes: AgentProfile[]
+  runtimes: RuntimeProfile[]
   onSubmit: (data: { name: string; role: string; capabilities: string[]; model: string; cliCommand?: string; runtimeId?: string }) => void
 }
 
@@ -63,7 +63,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
       role: role.trim(),
       capabilities: selectedCapabilities,
       model: model.trim() || (selectedRuntime?.model ?? "local/custom"),
-      cliCommand: selectedRuntime?.cliCommand,
+      cliCommand: selectedRuntime?.command,
       runtimeId: runtimeId ?? undefined,
     })
     setName("")

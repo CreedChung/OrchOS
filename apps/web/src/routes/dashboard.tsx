@@ -37,7 +37,7 @@ function DashboardLayout() {
   const activeView = getViewFromPath(location.pathname)
 
   const {
-    agents, projects, organizations, problems, activities,
+    runtimes, projects, organizations, problems, activities,
     settings, refreshAll,
     handleCreateGoal, handleCommand, handleCreateRule, handleCreateAgent,
     handleOrganizationRename, handleOrganizationDelete,
@@ -117,7 +117,7 @@ function DashboardLayout() {
           />
         </div>
         <CommandBar
-          agents={agents}
+          runtimes={runtimes}
           projects={projects}
           open={showCommandBar}
           onSubmit={handleCommand}
@@ -140,16 +140,16 @@ function DashboardLayout() {
           onClose={() => setShowSettingsDialog(false)}
           settings={settings}
           onSettingsChange={useUIStore.getState().setSettings}
-          onAgentsRefresh={refreshAll}
-          registeredAgents={agents}
+          onRuntimesRefresh={refreshAll}
+          registeredRuntimes={runtimes}
         />
         <CreateAgentDialog
           open={showCreateAgentDialog}
           onClose={() => setShowCreateAgentDialog(false)}
-          runtimes={agents.filter((a) => a.cliCommand)}
+          runtimes={runtimes}
           onSubmit={handleCreateAgent}
         />
-        <MorphPanel />
+        <MorphPanel runtimes={runtimes} />
       </div>
     </I18nProvider>
   )

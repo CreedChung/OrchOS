@@ -26,41 +26,6 @@ export const AgentModel = {
     runtimeId: t.Optional(t.String()),
   }),
   errorNotFound: t.Object({ error: t.Literal("Agent not found") }),
-  detectResponse: t.Object({
-    available: t.Array(t.Object({
-      id: t.String(),
-      name: t.String(),
-      command: t.String(),
-      version: t.Optional(t.String()),
-      path: t.Optional(t.String()),
-      role: t.String(),
-      capabilities: t.Array(t.String()),
-      model: t.String(),
-    })),
-    unavailable: t.Array(t.Object({
-      id: t.String(),
-      name: t.String(),
-      command: t.String(),
-      role: t.String(),
-      capabilities: t.Array(t.String()),
-      model: t.String(),
-    })),
-  }),
-  healthResponse: t.Object({
-    healthy: t.Boolean(),
-    level: t.Union([t.Literal("basic"), t.Literal("ping"), t.Literal("full")]),
-    output: t.String(),
-    error: t.Optional(t.String()),
-    responseTime: t.Number(),
-    agentName: t.String(),
-    agentCommand: t.String(),
-    authRequired: t.Optional(t.Boolean()),
-  }),
-  modelResponse: t.Object({
-    model: t.Optional(t.String()),
-    source: t.Union([t.Literal("cli"), t.Literal("config"), t.Literal("registry")]),
-    rawOutput: t.Optional(t.String()),
-  }),
 } as const
 
 export type AgentModel = {

@@ -62,6 +62,21 @@ export const activities = sqliteTable("activities", {
   index("idx_activities_goal_id").on(t.goalId),
 ])
 
+export const runtimes = sqliteTable("runtimes", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  command: text("command").notNull(),
+  version: text("version"),
+  path: text("path"),
+  role: text("role").notNull(),
+  capabilities: text("capabilities").notNull().default("[]"),
+  model: text("model").notNull(),
+  enabled: text("enabled").notNull().default("true"),
+  currentModel: text("current_model"),
+  status: text("status").notNull().default("idle"),
+  registryId: text("registry_id"),
+})
+
 export const agents = sqliteTable("agents", {
   id: text("id").primaryKey(),
   name: text("name").notNull().unique(),
@@ -72,7 +87,7 @@ export const agents = sqliteTable("agents", {
   enabled: text("enabled").notNull().default("true"),
   cliCommand: text("cli_command"),
   currentModel: text("current_model"),
-  runtimeId: text("runtime_id"),
+  runtimeId: text("runtime_id").references(() => runtimes.id),
 })
 
 export const projects = sqliteTable("projects", {

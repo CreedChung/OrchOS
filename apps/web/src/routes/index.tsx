@@ -10,11 +10,48 @@ import { GoalPreviewCard } from '#/components/ui/goal-preview-card'
 import { AgentPreviewCard } from '#/components/ui/agent-preview-card'
 import { InboxPreviewCard } from '#/components/ui/inbox-preview-card'
 import { GooeyFilter } from '#/components/ui/gooey-filter'
+import { FloatingIconsHero } from '#/components/ui/floating-icons-hero-section'
+import { Badge } from '#/components/ui/badge'
 import { useScreenSize } from '#/lib/use-screen-size'
 import { motion, AnimatePresence } from 'motion/react'
 import { cn } from '#/lib/utils'
+import {
+  AppWindow,
+  BellRing,
+  Blocks,
+  Bot,
+  Cable,
+  Cloud,
+  Command,
+  DatabaseZap,
+  GitBranch,
+  GitPullRequest,
+  KanbanSquare,
+  MessageSquareMore,
+  ShieldAlert,
+  Sparkles,
+  Workflow,
+} from 'lucide-react'
 
 export const Route = createFileRoute('/')({ component: HomePage })
+
+const integrationHeroIcons = [
+  { id: 1, icon: GitPullRequest, className: 'left-[8%] top-[12%]' },
+  { id: 2, icon: MessageSquareMore, className: 'right-[10%] top-[18%]' },
+  { id: 3, icon: KanbanSquare, className: 'bottom-[14%] left-[12%]' },
+  { id: 4, icon: ShieldAlert, className: 'bottom-[10%] right-[12%]' },
+  { id: 5, icon: GitBranch, className: 'left-[24%] top-[8%]' },
+  { id: 6, icon: Workflow, className: 'right-[27%] top-[8%]' },
+  { id: 7, icon: Bot, className: 'left-[20%] top-[58%]' },
+  { id: 8, icon: DatabaseZap, className: 'left-[35%] top-[26%]' },
+  { id: 9, icon: Cloud, className: 'right-[20%] top-[62%]' },
+  { id: 10, icon: BellRing, className: 'left-[68%] bottom-[8%]' },
+  { id: 11, icon: Command, className: 'right-[6%] top-[52%]' },
+  { id: 12, icon: Cable, className: 'left-[6%] top-[68%]' },
+  { id: 13, icon: Blocks, className: 'left-[52%] top-[10%]' },
+  { id: 14, icon: AppWindow, className: 'right-[40%] bottom-[10%]' },
+  { id: 15, icon: Sparkles, className: 'right-[32%] top-[32%]' },
+]
 
 function HomePageInner() {
   return (
@@ -66,7 +103,7 @@ function HomePageInner() {
 
           {/* How it works - Interactive Steps */}
           <section className="border-t border-border min-h-screen flex flex-col justify-center">
-            <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
+            <div className="mx-auto w-full max-w-[80rem] px-6 py-16 sm:px-8 sm:py-20">
               <SectionLabel text={m.section_how_it_works()} />
               <h2 className="mb-12 text-center text-2xl font-bold text-foreground sm:text-3xl">
                 {m.how_it_works_heading()}
@@ -77,20 +114,28 @@ function HomePageInner() {
           </section>
 
           {/* Integrations */}
-          <section className="border-t border-border bg-card/50">
-            <div className="mx-auto max-w-5xl px-4 py-16 sm:py-20">
-              <SectionLabel text={m.section_integrations()} />
-              <h2 className="mb-10 text-center text-2xl font-bold text-foreground sm:text-3xl">
-                {m.integrations_heading()}
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <IntegrationCard name={m.integration_github()} description={m.integration_github_desc()} />
-                <IntegrationCard name={m.integration_slack()} description={m.integration_slack_desc()} />
-                <IntegrationCard name={m.integration_linear()} description={m.integration_linear_desc()} />
-                <IntegrationCard name={m.integration_sentry()} description={m.integration_sentry_desc()} />
-              </div>
-            </div>
-          </section>
+          <FloatingIconsHero
+            className="border-t border-border bg-card/40"
+            eyebrow={m.section_integrations()}
+            title={m.integrations_heading()}
+            subtitle={m.connect_services_desc()}
+            ctaText={m.open_dashboard()}
+            ctaHref="/dashboard"
+            icons={integrationHeroIcons}
+          >
+            <Badge variant="outline" className="h-8 rounded-full border-border/70 bg-background/75 px-3 text-sm backdrop-blur-sm">
+              {m.integration_github()}
+            </Badge>
+            <Badge variant="outline" className="h-8 rounded-full border-border/70 bg-background/75 px-3 text-sm backdrop-blur-sm">
+              {m.integration_slack()}
+            </Badge>
+            <Badge variant="outline" className="h-8 rounded-full border-border/70 bg-background/75 px-3 text-sm backdrop-blur-sm">
+              {m.integration_linear()}
+            </Badge>
+            <Badge variant="outline" className="h-8 rounded-full border-border/70 bg-background/75 px-3 text-sm backdrop-blur-sm">
+              {m.integration_sentry()}
+            </Badge>
+          </FloatingIconsHero>
 
           {/* Architecture */}
           <section className="border-t border-border">
@@ -208,7 +253,7 @@ function HowItWorksSteps() {
   ]
 
   return (
-    <div className="w-full">
+    <div className="mx-auto w-full max-w-[72rem]">
       <GooeyFilter id="gooey-tab-filter" strength={gooeyStrength} />
 
       <div className="relative">
@@ -232,7 +277,7 @@ function HowItWorksSteps() {
             ))}
           </div>
           {/* Content panel - connected to the active tab so gooey merges them */}
-          <div className="w-full h-[400px] bg-accent rounded-b-lg overflow-hidden" />
+          <div className="h-[520px] w-full overflow-hidden rounded-b-lg bg-accent" />
         </div>
 
         {/* Interactive text overlay for tabs (no filter, stays sharp) */}
@@ -254,7 +299,7 @@ function HowItWorksSteps() {
         </div>
 
         {/* Card content overlay (no filter, stays sharp) */}
-        <div className="absolute top-10 md:top-12 left-0 right-0 bottom-0 h-[400px] p-1">
+        <div className="absolute inset-x-0 top-10 bottom-0 h-[520px] p-2 md:top-12 md:p-3">
           <AnimatePresence mode="popLayout">
             <motion.div
               key={activeStep}
@@ -278,15 +323,6 @@ function SectionLabel({ text }: { text: string }) {
     <p className="mb-2 text-center text-xs font-bold uppercase tracking-widest text-primary">
       {text}
     </p>
-  )
-}
-
-function IntegrationCard({ name, description }: { name: string; description: string }) {
-  return (
-    <div className="rounded-xl border border-border/50 bg-card p-5 shadow-sm">
-      <h3 className="mb-1 text-sm font-semibold text-foreground">{name}</h3>
-      <p className="text-xs leading-5 text-muted-foreground">{description}</p>
-    </div>
   )
 }
 

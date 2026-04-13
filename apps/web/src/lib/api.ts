@@ -69,7 +69,22 @@ export interface AgentProfile {
   runtimeId?: string
 }
 
-export interface DetectedAgent {
+export interface RuntimeProfile {
+  id: string
+  name: string
+  command: string
+  version?: string
+  path?: string
+  role: string
+  capabilities: string[]
+  model: string
+  enabled: boolean
+  currentModel?: string
+  status: "idle" | "active" | "error"
+  registryId?: string
+}
+
+export interface DetectedRuntime {
   id: string
   name: string
   command: string
@@ -80,14 +95,14 @@ export interface DetectedAgent {
   model: string
 }
 
-export interface DetectResponse {
-  available: DetectedAgent[]
-  unavailable: DetectedAgent[]
+export interface DetectRuntimesResponse {
+  available: DetectedRuntime[]
+  unavailable: DetectedRuntime[]
 }
 
-export interface RegisterResponse {
-  registered: AgentProfile[]
-  skipped: DetectedAgent[]
+export interface RegisterRuntimesResponse {
+  registered: RuntimeProfile[]
+  skipped: DetectedRuntime[]
 }
 
 export interface StateEntry {
@@ -222,13 +237,25 @@ export const api = {
   listAgents: () => request<AgentProfile[]>("/api/agents"),
   createAgent: (data: { name: string; role: string; capabilities: string[]; model: string; cliCommand?: string; runtimeId?: string }) =>
     request<AgentProfile>("/api/agents", { method: "POST", body: JSON.stringify(data) }),
-  detectAgents: () => request<DetectResponse>("/api/agents/detect"),
-  registerDetectedAgents: (data: { agentIds?: string[]; registerAll?: boolean }) =>
-    request<RegisterResponse>("/api/agents/detect/register", { method: "POST", body: JSON.stringify(data) }),
   updateAgent: (id: string, data: { enabled?: boolean; status?: AgentProfile["status"] }) =>
     request<AgentProfile>(`/api/agents/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
-  healthCheckAgent: (agentId: string, level?: "basic" | "ping" | "full") =>
-    request<{ healthy: boolean; level: string; output: string; error?: string; responseTime: number; agentName: string; agentCommand: string; authRequired?: boolean }>(`/api/agents/${agentId}/health${level ? `?level=${level}` : ""}`),
+
+  // Runtimes
+  listRuntimes: () => request<RuntimeProfile[]>("/api/runtimes"),
+  detectRuntimes: () => request<DetectRuntimesResponse>("/api/runtimes/detect"),
+  registerDetectedRuntimes: (data: { runtimeIds?: string[]; registerAll?: boolean }) =>
+    request<RegisterRuntimesResponse>("/api/runtimes/detect/register", { method: "POST", body: JSON.stringify(data) }),
+  updateRuntime: (id: string, data: { enabled?: boolean; status?: RuntimeProfile["status"] }) =>
+    request<RuntimeProfile>(`/api/runtimes/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  healthCheckRuntime: (runtimeId: string, level?: "basic" | "ping" | "full") =>
+    request<{ healthy: boolean; level: string; output: string; error?: string; responseTime: number; agentName: string; agentCommand: string; authRequired?: boolean }>(`/api/runtimes/${runtimeId}/health${level ? `?level=${level}` : ""}`),
+
+  // Runtime Chat
+  chatWithRuntime: (runtimeId: string, prompt: string) =>
+    request<{ success: boolean; output: string; error?: string; agentName: string; responseTime: number }>(
+      `/api/runtimes/${runtimeId}/chat`,
+      { method: "POST", body: JSON.stringify({ prompt }) }
+    ),
 
   // Projects
   listProjects: () => request<Project[]>("/api/projects"),
@@ -243,6 +270,12 @@ export const api = {
       method: "POST",
       body: JSON.stringify(options || {}),
     }),
+
+  // Filesystem
+  browseDirectory: (path?: string) =>
+    request<{ currentPath: string; parentPath?: string; directories: { name: string; path: string }[] }>(
+      `/api/filesystem/browse${path ? `?path=${encodeURIComponent(path)}` : ""}`
+    ),
 
   // History
   getHistory: (goalId?: string, limit?: number) =>

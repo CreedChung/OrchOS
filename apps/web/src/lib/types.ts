@@ -73,6 +73,21 @@ export interface AgentProfile {
   rules?: AgentRule[]
 }
 
+export interface RuntimeProfile {
+  id: string
+  name: string
+  command: string
+  version?: string
+  path?: string
+  role: string
+  capabilities: string[]
+  model: string
+  enabled: boolean
+  currentModel?: string
+  status: "idle" | "active" | "error"
+  registryId?: string
+}
+
 export interface StateItem {
   id: string
   goalId: string

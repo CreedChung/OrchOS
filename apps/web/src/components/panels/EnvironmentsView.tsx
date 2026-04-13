@@ -22,13 +22,14 @@ import { Badge } from "#/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "#/components/ui/card"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "#/components/ui/tabs"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import { api, type DetectedAgent } from "#/lib/api"
+import { DirectoryPickerDialog } from "#/components/ui/directory-picker-dialog"
+import { api, type DetectedRuntime } from "#/lib/api"
 import { cn } from "#/lib/utils"
 import { m } from "#/paraglide/messages"
-import type { AgentProfile, Project } from "#/lib/types"
+import type { RuntimeProfile, Project } from "#/lib/types"
 
 interface EnvironmentsViewProps {
-  agents: AgentProfile[]
+  runtimes: RuntimeProfile[]
   projects: Project[]
   onRefresh: () => void
 }
@@ -44,6 +45,7 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
   const [loading, setLoading] = useState(false)
   const [cloningId, setCloningId] = useState<string | null>(null)
   const [cloneResults, setCloneResults] = useState<Record<string, { success: boolean; output: string; error?: string; path: string }>>({})
+  const [showDirectoryPicker, setShowDirectoryPicker] = useState(false)
 
   useEffect(() => { setProjects(initialProjects) }, [initialProjects])
 
@@ -226,10 +228,20 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
                     onChange={(e) => setFormData({ ...formData, path: e.target.value })}
                     placeholder={m.env_project_path_placeholder()}
                     className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    readOnly
                   />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowDirectoryPicker(true)}
+                    title="Browse for directory"
+                  >
+                    <HugeiconsIcon icon={FolderIcon} className="size-3.5 mr-1" />
+                    Browse
+                  </Button>
                 </div>
                 <p className="text-xs text-muted-foreground/60 mt-1">
-                  Auto-generated from repo name. You can edit it.
+                  Auto-generated from repo name. Click Browse to choose a different location.
                 </p>
               </div>
             </div>
@@ -248,15 +260,27 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Local Directory</label>
-                <input
-                  type="text"
-                  value={formData.path}
-                  onChange={(e) => setFormData({ ...formData, path: e.target.value })}
-                  placeholder="/Users/username/Projects/my-project"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.path}
+                    onChange={(e) => setFormData({ ...formData, path: e.target.value })}
+                    placeholder="/Users/username/Projects/my-project"
+                    className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
+                    readOnly
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowDirectoryPicker(true)}
+                    title="Browse for directory"
+                  >
+                    <HugeiconsIcon icon={FolderIcon} className="size-3.5 mr-1" />
+                    Browse
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground/60 mt-1">
-                  Enter the absolute path to your local project directory
+                  Click Browse to select your local project directory
                 </p>
               </div>
             </div>
@@ -372,30 +396,46 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
           <p className="text-xs text-muted-foreground/60 mt-1">{m.env_no_projects_desc()}</p>
         </div>
       )}
+
+      <DirectoryPickerDialog
+        open={showDirectoryPicker}
+        onOpenChange={setShowDirectoryPicker}
+        currentPath={formData.path || undefined}
+        onSelect={(selectedPath) => {
+          setFormData((prev) => {
+            // Auto-fill name from directory if empty
+            const dirName = selectedPath.split("/").pop() || selectedPath
+            const displayName = dirName.charAt(0).toUpperCase() + dirName.slice(1)
+            return {
+              ...prev,
+              path: selectedPath,
+              name: prev.name || displayName,
+            }
+          })
+        }}
+      />
     </div>
   )
 }
 
 // ── Runtimes Tab ──────────────────────────────────────────
 
-function RuntimesTab({ agents, onRefresh }: { agents: AgentProfile[]; onRefresh: () => void }) {
+function RuntimesTab({ runtimes, onRefresh }: { runtimes: RuntimeProfile[]; onRefresh: () => void }) {
   const [detecting, setDetecting] = useState(false)
-  const [available, setAvailable] = useState<DetectedAgent[]>([])
-  const [unavailable, setUnavailable] = useState<DetectedAgent[]>([])
+  const [available, setAvailable] = useState<DetectedRuntime[]>([])
+  const [unavailable, setUnavailable] = useState<DetectedRuntime[]>([])
   const [registering, setRegistering] = useState<string | null>(null)
   const [registerResults, setRegisterResults] = useState<Record<string, "ok" | "skip" | "fail">>({})
-
-  const runtimeAgents = agents.filter((a) => a.cliCommand)
 
   const handleDetect = useCallback(async () => {
     setDetecting(true)
     setRegisterResults({})
     try {
-      const res = await api.detectAgents()
+      const res = await api.detectRuntimes()
       setAvailable(res.available)
       setUnavailable(res.unavailable)
     } catch (err) {
-      console.error("Failed to detect agents:", err)
+      console.error("Failed to detect runtimes:", err)
     } finally {
       setDetecting(false)
     }
@@ -406,14 +446,14 @@ function RuntimesTab({ agents, onRefresh }: { agents: AgentProfile[]; onRefresh:
     handleDetect()
   }, [handleDetect])
 
-  const handleRegister = async (agentId: string) => {
-    setRegistering(agentId)
+  const handleRegister = async (runtimeId: string) => {
+    setRegistering(runtimeId)
     try {
-      await api.registerDetectedAgents({ agentIds: [agentId] })
-      setRegisterResults((prev) => ({ ...prev, [agentId]: "ok" }))
+      await api.registerDetectedRuntimes({ runtimeIds: [runtimeId] })
+      setRegisterResults((prev) => ({ ...prev, [runtimeId]: "ok" }))
       onRefresh()
     } catch {
-      setRegisterResults((prev) => ({ ...prev, [agentId]: "fail" }))
+      setRegisterResults((prev) => ({ ...prev, [runtimeId]: "fail" }))
     } finally {
       setRegistering(null)
     }
@@ -422,7 +462,7 @@ function RuntimesTab({ agents, onRefresh }: { agents: AgentProfile[]; onRefresh:
   const handleRegisterAll = async () => {
     setRegistering("__all__")
     try {
-      await api.registerDetectedAgents({ registerAll: true })
+      await api.registerDetectedRuntimes({ registerAll: true })
       onRefresh()
     } catch (err) {
       console.error("Failed to register all:", err)
@@ -459,25 +499,25 @@ function RuntimesTab({ agents, onRefresh }: { agents: AgentProfile[]; onRefresh:
           {available.length > 0 && (
             <div className="space-y-1.5">
               <span className="text-xs font-medium text-muted-foreground">{m.available()}</span>
-              {available.map((agent) => {
-                const result = registerResults[agent.id]
-                const alreadyRegistered = runtimeAgents.some((a) => a.cliCommand === agent.command)
+              {available.map((runtime) => {
+                const result = registerResults[runtime.id]
+                const alreadyRegistered = runtimes.some((r) => r.registryId === runtime.id || r.command === runtime.command)
                 return (
-                  <div key={agent.id} className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2">
+                  <div key={runtime.id} className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2">
                     <div className="flex size-7 items-center justify-center rounded-md bg-emerald-500/10">
                       <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-3.5 text-emerald-500" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <span className="text-sm font-medium text-foreground">{agent.name}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">{agent.command}</span>
+                      <span className="text-sm font-medium text-foreground">{runtime.name}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">{runtime.command}</span>
                     </div>
                     {result === "ok" ? (
                       <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/30">{m.agent_registered({ name: "" }).trim()}</Badge>
                     ) : alreadyRegistered ? (
                       <Badge variant="outline" className="text-[10px]">{m.agent_already_registered({ name: "" }).trim()}</Badge>
                     ) : (
-                      <Button size="sm" variant="outline" onClick={() => handleRegister(agent.id)} disabled={registering === agent.id}>
-                        {registering === agent.id ? m.registering() : m.register()}
+                      <Button size="sm" variant="outline" onClick={() => handleRegister(runtime.id)} disabled={registering === runtime.id}>
+                        {registering === runtime.id ? m.registering() : m.register()}
                       </Button>
                     )}
                   </div>
@@ -490,14 +530,14 @@ function RuntimesTab({ agents, onRefresh }: { agents: AgentProfile[]; onRefresh:
           {unavailable.length > 0 && (
             <div className="space-y-1.5">
               <span className="text-xs font-medium text-muted-foreground">{m.not_installed()}</span>
-              {unavailable.map((agent) => (
-                <div key={agent.id} className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2 opacity-60">
+              {unavailable.map((runtime) => (
+                <div key={runtime.id} className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2 opacity-60">
                   <div className="flex size-7 items-center justify-center rounded-md bg-muted">
                     <HugeiconsIcon icon={Cancel01Icon} className="size-3.5 text-muted-foreground" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="text-sm font-medium text-foreground">{agent.name}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">{agent.command}</span>
+                    <span className="text-sm font-medium text-foreground">{runtime.name}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{runtime.command}</span>
                   </div>
                   <Badge variant="outline" className="text-[10px]">{m.not_found()}</Badge>
                 </div>
@@ -516,24 +556,24 @@ function RuntimesTab({ agents, onRefresh }: { agents: AgentProfile[]; onRefresh:
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {runtimeAgents.length > 0 ? (
+          {runtimes.length > 0 ? (
             <div className="space-y-2">
-              {runtimeAgents.map((agent) => (
-                <div key={agent.id} className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2">
+              {runtimes.map((runtime) => (
+                <div key={runtime.id} className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2">
                   <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
                     <HugeiconsIcon icon={CodeIcon} className="size-3.5 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="text-sm font-medium text-foreground">{agent.name}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">{agent.cliCommand}</span>
+                    <span className="text-sm font-medium text-foreground">{runtime.name}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{runtime.command}</span>
                   </div>
-                  <Badge variant="outline" className="text-[10px]">{agent.model}</Badge>
+                  <Badge variant="outline" className="text-[10px]">{runtime.model}</Badge>
                   <button
-                    onClick={() => api.updateAgent(agent.id, { enabled: !agent.enabled }).then(onRefresh)}
+                    onClick={() => api.updateRuntime(runtime.id, { enabled: !runtime.enabled }).then(onRefresh)}
                     className="text-muted-foreground hover:text-foreground"
-                    title={agent.enabled ? m.disable() : m.enable()}
+                    title={runtime.enabled ? m.disable() : m.enable()}
                   >
-                    {agent.enabled ? (
+                    {runtime.enabled ? (
                       <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
                     ) : (
                       <HugeiconsIcon icon={ToggleLeft} className="size-5" />
@@ -731,7 +771,7 @@ function EnvVarsTab() {
 
 // ── Main Component ────────────────────────────────────────
 
-export function EnvironmentsView({ agents, projects, onRefresh }: EnvironmentsViewProps) {
+export function EnvironmentsView({ runtimes, projects, onRefresh }: EnvironmentsViewProps) {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-4xl p-6 space-y-6">
@@ -763,7 +803,7 @@ export function EnvironmentsView({ agents, projects, onRefresh }: EnvironmentsVi
           </TabsContent>
 
           <TabsContent value="runtimes" className="mt-4">
-            <RuntimesTab agents={agents} onRefresh={onRefresh} />
+            <RuntimesTab runtimes={runtimes} onRefresh={onRefresh} />
           </TabsContent>
 
           <TabsContent value="env-vars" className="mt-4">

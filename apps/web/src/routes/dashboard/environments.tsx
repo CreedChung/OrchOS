@@ -5,7 +5,7 @@ import { useDashboard } from '#/lib/dashboard-context'
 export const Route = createFileRoute('/dashboard/environments')({ component: EnvironmentsPage })
 
 function EnvironmentsPage() {
-  const { agents, projects, refreshAll } = useDashboard()
+  const { runtimes, projects, refreshAll } = useDashboard()
 
-  return <EnvironmentsView agents={agents} projects={projects} onRefresh={refreshAll} />
+  return <EnvironmentsView runtimes={runtimes} projects={projects} onRefresh={refreshAll} />
 }

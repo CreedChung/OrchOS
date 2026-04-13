@@ -1,0 +1,170 @@
+import { useState, useEffect, useCallback } from "react"
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
+import { HugeiconsIcon } from "@hugeicons/react"
+import {
+  FolderIcon,
+  ArrowLeft01Icon,
+  Home01Icon,
+  Loading01Icon,
+} from "@hugeicons/core-free-icons"
+import { Button } from "#/components/ui/button"
+import { api } from "#/lib/api"
+import { cn } from "#/lib/utils"
+
+interface DirectoryPickerDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSelect: (path: string) => void
+  currentPath?: string
+}
+
+interface DirEntry {
+  name: string
+  path: string
+}
+
+export function DirectoryPickerDialog({
+  open,
+  onOpenChange,
+  onSelect,
+  currentPath: initialPath,
+}: DirectoryPickerDialogProps) {
+  const [path, setPath] = useState(initialPath || "~")
+  const [directories, setDirectories] = useState<DirEntry[]>([])
+  const [parentPath, setParentPath] = useState<string | undefined>()
+  const [loading, setLoading] = useState(false)
+  const [selectedPath, setSelectedPath] = useState<string | null>(null)
+
+  const loadDirectory = useCallback(async (dirPath: string) => {
+    setLoading(true)
+    try {
+      const result = await api.browseDirectory(dirPath)
+      setPath(result.currentPath)
+      setParentPath(result.parentPath)
+      setDirectories(result.directories)
+      setSelectedPath(null)
+    } catch (err) {
+      console.error("Failed to browse directory:", err)
+      setDirectories([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (open) {
+      loadDirectory(initialPath || "~")
+    }
+  }, [open, initialPath, loadDirectory])
+
+  const handleNavigate = (dirPath: string) => {
+    loadDirectory(dirPath)
+  }
+
+  const handleGoUp = () => {
+    if (parentPath) {
+      loadDirectory(parentPath)
+    }
+  }
+
+  const handleGoHome = () => {
+    loadDirectory("~")
+  }
+
+  const handleSelect = () => {
+    if (selectedPath) {
+      onSelect(selectedPath)
+      onOpenChange(false)
+    } else {
+      // If nothing is selected, use the current path
+      onSelect(path)
+      onOpenChange(false)
+    }
+  }
+
+  const handleSelectCurrent = () => {
+    onSelect(path)
+    onOpenChange(false)
+  }
+
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <DialogPrimitive.Popup
+            className="relative z-50 w-full max-w-md rounded-lg border border-border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <DialogPrimitive.Title className="text-sm font-semibold text-foreground">
+                Select Directory
+              </DialogPrimitive.Title>
+            </div>
+
+            {/* Current path bar */}
+            <div className="flex items-center gap-1.5 border-b border-border px-3 py-2">
+              <Button size="icon-xs" variant="ghost" onClick={handleGoUp} disabled={!parentPath}>
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="size-3.5" />
+              </Button>
+              <Button size="icon-xs" variant="ghost" onClick={handleGoHome}>
+                <HugeiconsIcon icon={Home01Icon} className="size-3.5" />
+              </Button>
+              <div className="flex-1 rounded-md bg-muted px-2.5 py-1 text-xs font-mono text-foreground truncate">
+                {path}
+              </div>
+            </div>
+
+            {/* Directory list */}
+            <div className="h-72 overflow-y-auto p-1">
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <HugeiconsIcon icon={Loading01Icon} className="size-5 text-muted-foreground animate-spin" />
+                </div>
+              ) : directories.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                  <HugeiconsIcon icon={FolderIcon} className="size-6 mb-2 opacity-30" />
+                  <p className="text-xs">No subdirectories found</p>
+                </div>
+              ) : (
+                <div className="space-y-0.5">
+                  {directories.map((dir) => (
+                    <button
+                      key={dir.path}
+                      className={cn(
+                        "flex items-center gap-2 w-full rounded-md px-2.5 py-1.5 text-sm text-left transition-colors",
+                        selectedPath === dir.path
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground hover:bg-muted"
+                      )}
+                      onClick={() => setSelectedPath(dir.path)}
+                      onDoubleClick={() => handleNavigate(dir.path)}
+                    >
+                      <HugeiconsIcon icon={FolderIcon} className="size-3.5 shrink-0 text-primary/70" />
+                      <span className="truncate">{dir.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between border-t border-border px-4 py-3">
+              <Button size="sm" variant="outline" onClick={handleSelectCurrent}>
+                Use This Directory
+              </Button>
+              <div className="flex gap-2">
+                <DialogPrimitive.Close className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted">
+                  Cancel
+                </DialogPrimitive.Close>
+                <Button size="sm" onClick={handleSelect} disabled={!selectedPath}>
+                  Open
+                </Button>
+              </div>
+            </div>
+          </DialogPrimitive.Popup>
+        </div>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  )
+}

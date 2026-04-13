@@ -50,6 +50,21 @@ export interface AgentProfile {
   runtimeId?: string
 }
 
+export interface RuntimeProfile {
+  id: string
+  name: string
+  command: string
+  version?: string
+  path?: string
+  role: string
+  capabilities: Action[]
+  model: string
+  enabled: boolean
+  currentModel?: string
+  status: "idle" | "active" | "error"
+  registryId?: string
+}
+
 export interface StateEntry {
   id: string
   goalId: string

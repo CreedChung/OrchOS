@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react"
 import { useNavigate } from "@tanstack/react-router"
-import { api, type McpServerProfile, type SkillProfile } from "#/lib/api"
+import { api, type McpServerProfile, type SkillProfile, type RuntimeProfile } from "#/lib/api"
 import { useWebSocket } from "#/lib/hooks"
 import { useUIStore } from "#/lib/store"
 import type { Goal, StateItem, Artifact, ActivityEntry, AgentProfile, Project, Organization, Problem, ProblemStatus, Rule, Command, ControlSettings } from "#/lib/types"
@@ -45,6 +45,7 @@ interface DashboardContextType {
   // Server data
   goals: Goal[]
   agents: AgentProfile[]
+  runtimes: RuntimeProfile[]
   projects: Project[]
   organizations: Organization[]
   problems: Problem[]
@@ -147,6 +148,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   // Server data (not persisted - refetched on load)
   const [goals, setGoals] = useState<Goal[]>([])
   const [agents, setAgents] = useState<AgentProfile[]>([])
+  const [runtimes, setRuntimes] = useState<RuntimeProfile[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [problems, setProblems] = useState<Problem[]>([])
@@ -210,16 +212,17 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }), [skills])
 
   const agentModelCounts = useMemo<AgentModelCounts>(() => ({
-    all: agents.length,
-    local: agents.filter((a) => a.model.startsWith("local/")).length,
-    cloud: agents.filter((a) => !a.model.startsWith("local/")).length,
-  }), [agents])
+    all: runtimes.length,
+    local: runtimes.filter((r) => r.model.startsWith("local/")).length,
+    cloud: runtimes.filter((r) => !r.model.startsWith("local/")).length,
+  }), [runtimes])
 
   // Data fetching
   const refreshAll = useCallback(async () => {
     const results = await Promise.allSettled([
       api.listGoals(),
       api.listAgents(),
+      api.listRuntimes(),
       api.listProjects(),
       api.getSettings(),
       api.listOrganizations(),
@@ -231,20 +234,21 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     ])
     if (results[0].status === "fulfilled") setGoals(results[0].value)
     if (results[1].status === "fulfilled") setAgents(results[1].value)
-    if (results[2].status === "fulfilled") setProjects(results[2].value)
-    if (results[3].status === "fulfilled") setSettings(results[3].value)
-    if (results[4].status === "fulfilled") {
-      setOrganizations(results[4].value)
+    if (results[2].status === "fulfilled") setRuntimes(results[2].value)
+    if (results[3].status === "fulfilled") setProjects(results[3].value)
+    if (results[4].status === "fulfilled") setSettings(results[4].value)
+    if (results[5].status === "fulfilled") {
+      setOrganizations(results[5].value)
       const currentOrgId = useUIStore.getState().activeOrganizationId
-      if (results[4].value.length > 0 && !currentOrgId) {
-        setActiveOrganizationId(results[4].value[0].id)
+      if (results[5].value.length > 0 && !currentOrgId) {
+        setActiveOrganizationId(results[5].value[0].id)
       }
     }
-    if (results[5].status === "fulfilled") setProblems(results[5].value)
-    if (results[6].status === "fulfilled") setRules(results[6].value)
-    if (results[7].status === "fulfilled") setCommands(results[7].value)
-    if (results[8].status === "fulfilled") setMcpServers(results[8].value)
-    if (results[9].status === "fulfilled") setSkills(results[9].value)
+    if (results[6].status === "fulfilled") setProblems(results[6].value)
+    if (results[7].status === "fulfilled") setRules(results[7].value)
+    if (results[8].status === "fulfilled") setCommands(results[8].value)
+    if (results[9].status === "fulfilled") setMcpServers(results[9].value)
+    if (results[10].status === "fulfilled") setSkills(results[10].value)
     for (const r of results) {
       if (r.status === "rejected") console.error("Failed to fetch data:", r.reason)
     }
@@ -531,7 +535,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }, [refreshAll])
 
   const value: DashboardContextType = {
-    goals, agents, projects, organizations, problems, rules, commands,
+    goals, agents, runtimes, projects, organizations, problems, rules, commands,
     mcpServers, skills, states, artifacts, activities, settings: persistedSettings, loading,
     activeGoal, activeCommand, inboxCounts, systemProblemCounts, goalCounts,
     mcpScopeCounts, skillsScopeCounts, agentModelCounts,

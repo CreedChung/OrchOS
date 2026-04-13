@@ -57,4 +57,19 @@ function migrate(sqlite: Database) {
   try { sqlite.run("ALTER TABLE projects ADD COLUMN repository_url TEXT") } catch {}
   try { sqlite.run("CREATE TABLE IF NOT EXISTS sandboxes (id TEXT PRIMARY KEY, project_id TEXT REFERENCES projects(id), agent_type TEXT NOT NULL DEFAULT 'pi', status TEXT NOT NULL DEFAULT 'creating', created_at TEXT NOT NULL)") } catch {}
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_sandboxes_project_id ON sandboxes(project_id)") } catch {}
+  try { sqlite.run("CREATE TABLE IF NOT EXISTS runtimes (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, command TEXT NOT NULL, version TEXT, path TEXT, role TEXT NOT NULL, capabilities TEXT NOT NULL DEFAULT '[]', model TEXT NOT NULL, enabled TEXT NOT NULL DEFAULT 'true', current_model TEXT, status TEXT NOT NULL DEFAULT 'idle', registry_id TEXT)") } catch {}
+  // Migrate existing runtime-like agents to runtimes table
+  try {
+    const existingRuntimes = sqlite.query("SELECT id FROM runtimes LIMIT 1").get()
+    if (!existingRuntimes) {
+      const runtimeAgents = sqlite.query("SELECT id, name, role, capabilities, status, model, enabled, cli_command, current_model, runtime_id FROM agents WHERE cli_command IS NOT NULL").all()
+      for (const agent of runtimeAgents as any[]) {
+        sqlite.run("INSERT OR IGNORE INTO runtimes (id, name, command, role, capabilities, model, enabled, current_model, status, registry_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [agent.id, agent.name, agent.cli_command, agent.role, agent.capabilities, agent.model, agent.enabled, agent.current_model, agent.status, agent.runtime_id])
+        // Update agents that reference this runtime to use the new runtime_id
+        sqlite.run("UPDATE agents SET runtime_id = ? WHERE runtime_id = ?", [agent.id, agent.runtime_id || agent.id])
+      }
+      // Remove runtime-like agents from agents table (they now live in runtimes)
+      sqlite.run("DELETE FROM agents WHERE cli_command IS NOT NULL AND runtime_id IN (SELECT id FROM runtimes)")
+    }
+  } catch {}
 }

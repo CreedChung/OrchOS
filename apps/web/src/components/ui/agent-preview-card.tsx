@@ -149,7 +149,7 @@ export function AgentPreviewCard() {
       {/* Body: List + Detail */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Agent List */}
-        <div className="w-44 shrink-0 border-r border-border">
+        <div className="w-52 shrink-0 border-r border-border md:w-60">
           <ScrollArea className="h-full">
             <div className="p-1.5 space-y-0.5">
               {filteredAgents.map((agent) => {

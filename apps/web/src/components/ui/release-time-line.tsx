@@ -120,12 +120,23 @@ export default function TimeLine_01({
             return (
               <div
                 key={index}
-                className="relative flex flex-col gap-4 md:flex-row md:gap-16"
+                className={
+                  "relative flex gap-4 " +
+                  (isSingleEntry
+                    ? "mx-auto max-w-2xl flex-col items-center"
+                    : "flex-col md:flex-row md:gap-16")
+                }
                 ref={(el) => setItemRef(el, index)}
                 aria-current={isActive ? "true" : "false"}
               >
                 {/* Sticky meta column */}
-                <div className="top-8 flex h-min w-64 shrink-0 items-center gap-4 md:sticky">
+                <div
+                  className={
+                    isSingleEntry
+                      ? "flex w-full items-center justify-center gap-4 text-center"
+                      : "top-8 flex h-min w-64 shrink-0 items-center gap-4 md:sticky"
+                  }
+                >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${
                       isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
@@ -147,13 +158,16 @@ export default function TimeLine_01({
                 <div
                   ref={(el) => setSentinelRef(el, index)}
                   aria-hidden
-                  className="absolute -top-24 left-0 h-12 w-12 opacity-0"
+                  className={
+                    "absolute -top-24 h-12 w-12 opacity-0 " +
+                    (isSingleEntry ? "left-1/2 -translate-x-1/2" : "left-0")
+                  }
                 />
 
                 {/* Content column */}
                 <article
                   className={
-                    "flex flex-col rounded-2xl border p-3 transition-all duration-300 " +
+                    "w-full flex flex-col rounded-2xl border p-3 transition-all duration-300 " +
                     (isActive
                       ? "border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-black shadow-lg"
                       : "border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-black")
