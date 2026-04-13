@@ -44,3 +44,10 @@ export const projectController = new Elysia({ prefix: "/api/projects" })
       404: ProjectModel.errorNotFound,
     },
   })
+  .post("/:id/clone", async ({ params: { id }, body }) => {
+    const result = await ProjectService.clone(id, { force: body?.force })
+    return result
+  }, {
+    body: t.Optional(ProjectModel.cloneBody),
+    response: ProjectModel.cloneResponse,
+  })

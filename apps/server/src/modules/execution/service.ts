@@ -8,6 +8,7 @@ import { AgentService } from "../agent/service"
 import { ActivityService } from "../activity/service"
 import { eventBus } from "../event/event-bus"
 import { executor } from "./executor"
+import { SandboxService } from "../sandbox/service"
 import { generateId, timestamp } from "../../utils"
 import type { ExecutionModel } from "./model"
 
@@ -133,7 +134,29 @@ export class ExecutionService {
         let output = ""
         let fileName = ""
 
-        if (agent?.cliCommand) {
+        // Try sandbox session first if a running VM exists for this project's agent
+        const sandboxVMs = SandboxService.listVMs()
+        const activeVM = sandboxVMs.find((v) => v.status === "running")
+        let usedSandbox = false
+
+        if (activeVM) {
+          try {
+            const session = await SandboxService.createSession(activeVM.vmId, {
+              agentType: agent?.runtimeId || undefined,
+              env: process.env.ANTHROPIC_API_KEY ? { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY } : undefined,
+            })
+            const promptResult = await SandboxService.sendPrompt(session.sessionId, prompt)
+            codeGenerated = promptResult.success
+            output = promptResult.text
+            usedSandbox = true
+            SandboxService.closeSession(session.sessionId)
+          } catch (err) {
+            // Sandbox failed, fall through to CLI execution
+            output = `Sandbox error: ${err instanceof Error ? err.message : String(err)}. Falling back to CLI.`
+          }
+        }
+
+        if (!usedSandbox && agent?.cliCommand) {
           const invokeResult = await executor.run(
             `${agent.cliCommand} -p '${prompt.replace(/'/g, "'\\''")}' 2>&1`,
             { cwd: projectPath, timeout: 120000 }
@@ -148,7 +171,7 @@ export class ExecutionService {
               fileName = changedFiles[0]
             }
           }
-        } else {
+        } else if (!usedSandbox) {
           const buildResult = await executor.runBuild(projectPath)
           if (buildResult.success) {
             codeGenerated = true

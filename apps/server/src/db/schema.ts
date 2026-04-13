@@ -146,6 +146,16 @@ export const mcpServers = sqliteTable("mcp_servers", {
   index("idx_mcp_servers_organization_id").on(t.organizationId),
 ])
 
+export const sandboxes = sqliteTable("sandboxes", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id").references(() => projects.id),
+  agentType: text("agent_type").notNull().default("pi"),
+  status: text("status").notNull().default("creating"),
+  createdAt: text("created_at").notNull(),
+}, (t) => [
+  index("idx_sandboxes_project_id").on(t.projectId),
+])
+
 export const skills = sqliteTable("skills", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

@@ -55,4 +55,6 @@ function migrate(sqlite: Database) {
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_skills_project_id ON skills(project_id)") } catch {}
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_skills_organization_id ON skills(organization_id)") } catch {}
   try { sqlite.run("ALTER TABLE projects ADD COLUMN repository_url TEXT") } catch {}
+  try { sqlite.run("CREATE TABLE IF NOT EXISTS sandboxes (id TEXT PRIMARY KEY, project_id TEXT REFERENCES projects(id), agent_type TEXT NOT NULL DEFAULT 'pi', status TEXT NOT NULL DEFAULT 'creating', created_at TEXT NOT NULL)") } catch {}
+  try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_sandboxes_project_id ON sandboxes(project_id)") } catch {}
 }

@@ -238,6 +238,11 @@ export const api = {
   updateProject: (id: string, data: Partial<Pick<Project, "name" | "path" | "repositoryUrl">>) =>
     request<Project>(`/api/projects/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteProject: (id: string) => request<{ success: boolean }>(`/api/projects/${id}`, { method: "DELETE" }),
+  cloneProject: (id: string, options?: { force?: boolean }) =>
+    request<{ success: boolean; output: string; error?: string; path: string }>(`/api/projects/${id}/clone`, {
+      method: "POST",
+      body: JSON.stringify(options || {}),
+    }),
 
   // History
   getHistory: (goalId?: string, limit?: number) =>

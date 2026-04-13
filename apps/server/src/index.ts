@@ -15,6 +15,7 @@ import { ruleController } from "./modules/rule"
 import { commandController } from "./modules/command"
 import { mcpController } from "./modules/mcp"
 import { skillController } from "./modules/skill"
+import { sandboxController } from "./modules/sandbox"
 import { seedData } from "./db/seed"
 
 import "./db"
@@ -40,6 +41,7 @@ const app = new Elysia()
   .use(commandController)
   .use(mcpController)
   .use(skillController)
+  .use(sandboxController)
   .listen(5173)
 
 console.log(

@@ -2,7 +2,7 @@ export type Status = "success" | "failed" | "error" | "pending" | "running" | "w
 
 export type Action = "write_code" | "run_tests" | "fix_bug" | "commit" | "review"
 
-export type EventType = "test_failed" | "review_rejected" | "build_success" | "state_changed" | "goal_created" | "goal_completed" | "agent_action" | "command_sent"
+export type EventType = "test_failed" | "review_rejected" | "build_success" | "state_changed" | "goal_created" | "goal_completed" | "agent_action" | "command_sent" | "sandbox_created" | "sandbox_disposed" | "sandbox_session_event"
 
 export type CommandStatus = "sent" | "executing" | "completed" | "failed"
 
@@ -134,6 +134,22 @@ export interface CreateCommandRequest {
   instruction: string
   agentNames?: string[]
   projectIds?: string[]
+}
+
+export interface SandboxInstance {
+  id: string
+  projectId: string
+  agentType: string
+  status: "creating" | "running" | "disposed" | "error"
+  createdAt: string
+}
+
+export interface SandboxSession {
+  sessionId: string
+  vmId: string
+  agentType: string
+  status: "active" | "closed"
+  createdAt: string
 }
 
 export interface TriggerActionRequest {

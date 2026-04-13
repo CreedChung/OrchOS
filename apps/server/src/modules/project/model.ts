@@ -22,6 +22,15 @@ export const ProjectModel = {
   }),
   errorNotFound: t.Object({ error: t.Literal("Project not found") }),
   successDeleted: t.Object({ success: t.Literal(true) }),
+  cloneResponse: t.Object({
+    success: t.Boolean(),
+    output: t.String(),
+    error: t.Optional(t.String()),
+    path: t.String(),
+  }),
+  cloneBody: t.Object({
+    force: t.Optional(t.Boolean()),
+  }),
 } as const
 
 export type ProjectModel = {

@@ -7,8 +7,11 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",
+    "@rivet-dev/agent-os-common": "^0.0.260331072558",
+    "@rivet-dev/agent-os-core": "^0.1.1",
     "drizzle-orm": "^0.45.2",
-    "elysia": "^1.4.28"
+    "elysia": "^1.4.28",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "bun-types": "latest",

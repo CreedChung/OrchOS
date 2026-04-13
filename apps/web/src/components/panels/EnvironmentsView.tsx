@@ -14,6 +14,8 @@ import {
   CheckmarkCircle01Icon,
   Link01Icon,
   Edit02Icon,
+  Download01Icon,
+  Loading01Icon,
 } from "@hugeicons/core-free-icons"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
@@ -36,11 +38,28 @@ interface EnvironmentsViewProps {
 function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Project[]; onRefresh: () => void }) {
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [showForm, setShowForm] = useState(false)
+  const [formMode, setFormMode] = useState<"clone" | "local">("clone")
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({ name: "", path: "", repositoryUrl: "" })
   const [loading, setLoading] = useState(false)
+  const [cloningId, setCloningId] = useState<string | null>(null)
+  const [cloneResults, setCloneResults] = useState<Record<string, { success: boolean; output: string; error?: string; path: string }>>({})
 
   useEffect(() => { setProjects(initialProjects) }, [initialProjects])
+
+  // Auto-fill name and path from repo URL
+  useEffect(() => {
+    if (formData.repositoryUrl && formMode === "clone") {
+      const repoName = formData.repositoryUrl.split("/").pop()?.replace(/\.git$/, "") || ""
+      if (repoName && !formData.name) {
+        setFormData((prev) => ({
+          ...prev,
+          name: repoName.charAt(0).toUpperCase() + repoName.slice(1),
+          path: `~/Projects/${repoName}`,
+        }))
+      }
+    }
+  }, [formData.repositoryUrl, formMode])
 
   const handleCreate = async () => {
     if (!formData.name || !formData.path) return
@@ -49,11 +68,25 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
       await api.createProject({
         name: formData.name,
         path: formData.path,
-        repositoryUrl: formData.repositoryUrl.trim() || undefined,
+        repositoryUrl: formMode === "clone" ? formData.repositoryUrl.trim() || undefined : undefined,
       })
       setFormData({ name: "", path: "", repositoryUrl: "" })
       setShowForm(false)
       onRefresh()
+
+      // Auto-clone if repository URL provided
+      if (formMode === "clone" && formData.repositoryUrl) {
+        // We'll clone after the project is created (need to get the new project ID)
+        setTimeout(async () => {
+          const newProjects = await api.listProjects()
+          const newProject = newProjects.find(
+            (p) => p.name === formData.name && p.repositoryUrl === formData.repositoryUrl
+          )
+          if (newProject) {
+            handleClone(newProject.id)
+          }
+        }, 500)
+      }
     } catch (err) {
       console.error("Failed to create project:", err)
     } finally {
@@ -64,6 +97,7 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
   const handleEdit = (project: Project) => {
     setEditingId(project.id)
     setFormData({ name: project.name, path: project.path, repositoryUrl: project.repositoryUrl || "" })
+    setFormMode(project.repositoryUrl ? "clone" : "local")
     setShowForm(true)
   }
 
@@ -97,6 +131,22 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
     }
   }
 
+  const handleClone = async (id: string, force: boolean = false) => {
+    setCloningId(id)
+    try {
+      const result = await api.cloneProject(id, { force })
+      setCloneResults((prev) => ({ ...prev, [id]: result }))
+    } catch (err) {
+      console.error("Failed to clone:", err)
+      setCloneResults((prev) => ({
+        ...prev,
+        [id]: { success: false, output: "", error: err instanceof Error ? err.message : "Clone failed", path: "" },
+      }))
+    } finally {
+      setCloningId(null)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -104,6 +154,7 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
         <Button size="sm" onClick={() => {
           setEditingId(null)
           setFormData({ name: "", path: "", repositoryUrl: "" })
+          setFormMode("clone")
           setShowForm(!showForm)
         }}>
           <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
@@ -112,40 +163,108 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
       </div>
 
       {showForm && (
-        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-          <div>
-            <label className="text-xs text-muted-foreground">{m.env_project_name()}</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder={m.env_project_name_placeholder()}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">{m.env_project_path()}</label>
-            <input
-              type="text"
-              value={formData.path}
-              onChange={(e) => setFormData({ ...formData, path: e.target.value })}
-              placeholder={m.env_project_path_placeholder()}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">{m.env_project_repo_url()}</label>
-            <input
-              type="text"
-              value={formData.repositoryUrl}
-              onChange={(e) => setFormData({ ...formData, repositoryUrl: e.target.value })}
-              placeholder={m.env_project_repo_placeholder()}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-            />
-          </div>
+        <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+          {/* Mode selector */}
+          {!editingId && (
+            <div className="flex gap-2 p-1 bg-muted rounded-lg">
+              <button
+                onClick={() => setFormMode("clone")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  formMode === "clone"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <HugeiconsIcon icon={Download01Icon} className="size-4" />
+                Clone Remote
+              </button>
+              <button
+                onClick={() => setFormMode("local")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  formMode === "local"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <HugeiconsIcon icon={FolderIcon} className="size-4" />
+                Import Local
+              </button>
+            </div>
+          )}
+
+          {formMode === "clone" ? (
+            /* Clone mode: repository URL first */
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground">{m.env_project_repo_url()}</label>
+                <input
+                  type="text"
+                  value={formData.repositoryUrl}
+                  onChange={(e) => setFormData({ ...formData, repositoryUrl: e.target.value })}
+                  placeholder={m.env_project_repo_placeholder()}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">{m.env_project_name()}</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder={m.env_project_name_placeholder()}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">{m.env_project_path()}</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.path}
+                    onChange={(e) => setFormData({ ...formData, path: e.target.value })}
+                    placeholder={m.env_project_path_placeholder()}
+                    className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground/60 mt-1">
+                  Auto-generated from repo name. You can edit it.
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* Local mode: directory path input */
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground">{m.env_project_name()}</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder={m.env_project_name_placeholder()}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Local Directory</label>
+                <input
+                  type="text"
+                  value={formData.path}
+                  onChange={(e) => setFormData({ ...formData, path: e.target.value })}
+                  placeholder="/Users/username/Projects/my-project"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
+                />
+                <p className="text-xs text-muted-foreground/60 mt-1">
+                  Enter the absolute path to your local project directory
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Button size="sm" onClick={editingId ? handleUpdate : handleCreate} disabled={loading || !formData.name || !formData.path}>
-              {loading ? m.creating() : editingId ? m.save() : m.create()}
+              {loading ? m.creating() : editingId ? m.save() : formMode === "clone" ? "Clone & Create" : "Import Project"}
             </Button>
             <Button size="sm" variant="outline" onClick={() => { setShowForm(false); setEditingId(null) }}>
               {m.cancel()}
@@ -155,51 +274,95 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
       )}
 
       <div className="space-y-2">
-        {projects.map((project) => (
-          <div
-            key={project.id}
-            className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-4 py-3"
-          >
-            <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
-              <HugeiconsIcon icon={FolderIcon} className="size-4 text-primary" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-foreground">{project.name}</span>
+        {projects.map((project) => {
+          const isCloning = cloningId === project.id
+          const cloneResult = cloneResults[project.id]
+          const hasRepo = cloneResult?.success
+
+          return (
+            <div
+              key={project.id}
+              className="flex flex-col gap-2 rounded-lg border border-border/50 bg-card px-4 py-3"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
+                  <HugeiconsIcon icon={FolderIcon} className="size-4 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">{project.name}</span>
+                    {project.repositoryUrl && (
+                      <a
+                        href={project.repositoryUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-primary/70 hover:text-primary transition-colors"
+                        title={project.repositoryUrl}
+                      >
+                        <HugeiconsIcon icon={Link01Icon} className="size-3" />
+                        {m.env_repo_link()}
+                      </a>
+                    )}
+                    {hasRepo && (
+                      <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/30">
+                        Cloned
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{project.path}</p>
+                  {project.repositoryUrl && (
+                    <p className="text-xs text-muted-foreground/60 truncate font-mono mt-0.5">{project.repositoryUrl}</p>
+                  )}
+                </div>
                 {project.repositoryUrl && (
-                  <a
-                    href={project.repositoryUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-primary/70 hover:text-primary transition-colors"
-                    title={project.repositoryUrl}
+                  <button
+                    onClick={() => handleClone(project.id, !!cloneResult?.success)}
+                    disabled={isCloning}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+                      isCloning
+                        ? "bg-muted text-muted-foreground cursor-wait"
+                        : "bg-primary/10 text-primary hover:bg-primary/20"
+                    )}
+                    title={isCloning ? "Cloning..." : "Clone repository"}
                   >
-                    <HugeiconsIcon icon={Link01Icon} className="size-3" />
-                    {m.env_repo_link()}
-                  </a>
+                    <HugeiconsIcon
+                      icon={isCloning ? Loading01Icon : Download01Icon}
+                      className={cn("size-3.5", isCloning && "animate-spin")}
+                    />
+                    {isCloning ? "Cloning..." : "Clone"}
+                  </button>
                 )}
+                <button
+                  onClick={() => handleEdit(project)}
+                  className="text-muted-foreground hover:text-foreground"
+                  title={m.edit_status()}
+                >
+                  <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                </button>
+                <button
+                  onClick={() => handleDelete(project.id)}
+                  className="text-muted-foreground hover:text-destructive"
+                  title={m.delete()}
+                >
+                  <HugeiconsIcon icon={Delete02Icon} className="size-4" />
+                </button>
               </div>
-              <p className="text-xs text-muted-foreground truncate">{project.path}</p>
-              {project.repositoryUrl && (
-                <p className="text-xs text-muted-foreground/60 truncate font-mono mt-0.5">{project.repositoryUrl}</p>
+
+              {/* Clone result/error */}
+              {cloneResult && !cloneResult.success && cloneResult.error && (
+                <div className="ml-11 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {cloneResult.error}
+                </div>
+              )}
+              {cloneResult?.success && (
+                <div className="ml-11 rounded-md bg-emerald-500/10 px-3 py-2 text-xs text-emerald-600 dark:text-emerald-400">
+                  Cloned to: {cloneResult.path}
+                </div>
               )}
             </div>
-            <button
-              onClick={() => handleEdit(project)}
-              className="text-muted-foreground hover:text-foreground"
-              title={m.edit_status()}
-            >
-              <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-            </button>
-            <button
-              onClick={() => handleDelete(project.id)}
-              className="text-muted-foreground hover:text-destructive"
-              title={m.delete()}
-            >
-              <HugeiconsIcon icon={Delete02Icon} className="size-4" />
-            </button>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {projects.length === 0 && !showForm && (

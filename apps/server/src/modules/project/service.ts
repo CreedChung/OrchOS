@@ -4,6 +4,9 @@ import { eq, desc } from "drizzle-orm"
 import { generateId, timestamp } from "../../utils"
 import type { Project } from "../../types"
 import type { ProjectModel } from "./model"
+import { executor } from "../execution/executor"
+import { existsSync, mkdirSync } from "fs"
+import { join } from "path"
 
 export abstract class ProjectService {
   static create(name: string, path: string, repositoryUrl?: string): Project {
@@ -46,6 +49,64 @@ export abstract class ProjectService {
   static delete(id: string): boolean {
     const result = db.delete(projects).where(eq(projects.id, id)).run()
     return result.changes > 0
+  }
+
+  static async clone(id: string, options: { force?: boolean } = {}): Promise<{
+    success: boolean
+    output: string
+    error?: string
+    path: string
+  }> {
+    const project = ProjectService.get(id)
+    if (!project) {
+      return { success: false, output: "", error: "Project not found", path: "" }
+    }
+    if (!project.repositoryUrl) {
+      return { success: false, output: "", error: "Project has no repository URL", path: project.path }
+    }
+
+    // Ensure the parent directory exists
+    const parentDir = project.path.split("/").slice(0, -1).join("/")
+    if (parentDir && !existsSync(parentDir)) {
+      try {
+        mkdirSync(parentDir, { recursive: true })
+      } catch (err) {
+        return {
+          success: false,
+          output: "",
+          error: `Failed to create directory: ${err instanceof Error ? err.message : String(err)}`,
+          path: project.path,
+        }
+      }
+    }
+
+    // Check if directory already exists
+    const repoName = project.repositoryUrl.split("/").pop()?.replace(/\.git$/, "") || ""
+    const targetPath = join(project.path, repoName)
+
+    if (existsSync(targetPath)) {
+      if (options.force) {
+        // Remove existing directory for fresh clone
+        await executor.run(`rm -rf "${targetPath}"`)
+      } else {
+        return {
+          success: false,
+          output: "",
+          error: `Directory "${targetPath}" already exists. Use force option to overwrite.`,
+          path: targetPath,
+        }
+      }
+    }
+
+    // Execute git clone
+    const result = await executor.git(`clone "${project.repositoryUrl}" "${targetPath}"`)
+
+    return {
+      success: result.success,
+      output: result.output.trim(),
+      error: result.success ? undefined : result.error,
+      path: targetPath,
+    }
   }
 
   static mapRow(row: typeof projects.$inferSelect): Project {
