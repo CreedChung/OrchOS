@@ -27,72 +27,17 @@ export interface TimeLine_01Props {
 export const defaultEntries: TimeLine_01Entry[] = [
   {
     icon: Package,
-    title: "Advanced Component Pack",
-    subtitle: "Version 2.1.0 • Feb 2025",
+    title: "Hello, World",
+    subtitle: "Version 0.1.0 • Apr 2025",
     description:
-      "OrchOS now ships with an advanced component pack including complex layouts, enterprise-ready data tables, and animated navigation menus.",
+      "OrchOS 的首个公开版本，包含核心基础设施和基础 UI 组件，为后续功能迭代奠定基础。",
     items: [
-      "New Data Grid with sorting, filtering, and pagination",
-      "Kanban board with drag-and-drop support",
-      "Animated mega menu component",
-      "Masonry grid layout for galleries and portfolios",
-      "Extended accessibility support across all components",
+      "Dashboard 界面与侧边栏导航",
+      "多语言支持（中文 / English）",
+      "Agent 管理与对话交互",
+      "Settings 面板与主题切换",
+      "Changelog 与 Landing Page",
     ],
-    image:
-      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop",
-    button: {
-      url: "/dashboard",
-      text: "Explore Components",
-    },
-  },
-  {
-    icon: Sparkles,
-    title: "Theme Builder & Design Tokens",
-    subtitle: "Version 2.0.0 • Jan 2025",
-    description:
-      "We've introduced a fully customizable theme builder powered by design tokens so you can tailor OrchOS to match any brand identity.",
-    items: [
-      "Real-time theme preview in the dashboard",
-      "Customizable color palettes, typography, and spacing",
-      "Preset themes for quick project setup",
-      "Export tokens to CSS variables or JSON",
-    ],
-    image:
-      "https://images.unsplash.com/photo-1557683316-973673baf926?w=800&h=400&fit=crop",
-  },
-  {
-    icon: Zap,
-    title: "Motion & Interaction Update",
-    subtitle: "Version 1.8.0 • Dec 2024",
-    description:
-      "Micro-interactions across OrchOS have been enhanced with Framer Motion, delivering a smoother and more engaging user experience.",
-    items: [
-      "Animated dropdown menus and modals",
-      "Smooth transitions between pages",
-      "Custom easing curves for a premium feel",
-      "Reduced layout shift for better stability",
-    ],
-    image:
-      "https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=800&h=400&fit=crop",
-  },
-  {
-    icon: Calendar,
-    title: "Initial Pro Release",
-    subtitle: "Version 1.5.0 • Oct 2024",
-    description:
-      "OrchOS Pro is here — a premium set of components, templates, and utilities designed for production-grade applications.",
-    items: [
-      "Full Figma design kit",
-      "Extended form components with validation",
-      "Chart components with Recharts integration",
-      "Ready-to-use dashboard layouts",
-    ],
-    image:
-      "https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?w=800&h=400&fit=crop",
-    button: {
-      url: "/dashboard",
-      text: "View OrchOS Pro",
-    },
   },
 ];
 
@@ -154,6 +99,8 @@ export default function TimeLine_01({
     setActiveIndex(0);
   }, []);
 
+  const isSingleEntry = entries.length === 1;
+
   return (
     <section className={`py-32 ${className ?? ""}`}>
       <div className="container">
@@ -168,7 +115,7 @@ export default function TimeLine_01({
 
         <div className="mx-auto mt-16 max-w-3xl space-y-16 md:mt-24 md:space-y-24">
           {entries.map((entry, index) => {
-            const isActive = index === activeIndex;
+            const isActive = isSingleEntry || index === activeIndex;
 
             return (
               <div

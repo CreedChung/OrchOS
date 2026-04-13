@@ -121,7 +121,7 @@ export function StateBoard({ goal, states, artifacts, activities, projects, comm
             <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
               <div className="flex items-center gap-2 mb-1">
                 <HugeiconsIcon icon={SentIcon} className={cn("size-3.5", commandStatusColor[command.status] || "text-muted-foreground")} />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Command</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{m.state_command()}</span>
                 <Badge variant="outline" className="text-[9px] uppercase tracking-wider px-1.5 py-0">
                   {command.status}
                 </Badge>

@@ -164,7 +164,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
                 <p className="text-[10px] text-muted-foreground/60 mt-0.5">{m.no_runtimes_registered_desc()}</p>
               </div>
             )}
-            <p className="mt-1 text-[10px] text-muted-foreground/60">Choose which runtime to use: Codex, Claude, etc.</p>
+            <p className="mt-1 text-[10px] text-muted-foreground/60">{m.create_agent_hint()}</p>
           </div>
 
           {/* Capabilities */}

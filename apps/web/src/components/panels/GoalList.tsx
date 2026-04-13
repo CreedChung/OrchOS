@@ -14,6 +14,12 @@ import type { Goal, Project } from "#/lib/types"
 
 type GoalStatusFilter = "all" | "active" | "completed" | "paused"
 
+const goalStatusLabel: Record<string, string> = {
+  active: m.goal_active(),
+  completed: m.goal_completed(),
+  paused: m.goal_paused(),
+}
+
 interface GoalListProps {
   goals: Goal[]
   projects: Project[]
@@ -193,7 +199,7 @@ function GoalItem({
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">
           <Badge variant="outline" className={cn("text-[9px] px-1 py-0 h-4", isActive && "border-accent-foreground/20")}>
-            {goal.status}
+            {goalStatusLabel[goal.status] || goal.status}
           </Badge>
           {project?.repositoryUrl && (
             <a

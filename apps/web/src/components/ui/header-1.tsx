@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import { Link } from '@tanstack/react-router';
 import ThemeToggle from '#/components/layout/ThemeToggle';
 import LocaleToggle from '#/components/layout/LocaleToggle';
+import { m } from '#/paraglide/messages';
 
 export function Header() {
 	const [open, setOpen] = React.useState(false);
@@ -15,15 +16,15 @@ export function Header() {
 
 	const links = [
 		{
-			label: 'Home',
+			label: m.nav_home(),
 			to: '/',
 		},
 		{
-			label: 'Changelog',
+			label: m.nav_changelog(),
 			to: '/changelog',
 		},
 		{
-			label: 'About',
+			label: m.nav_about(),
 			to: '/about',
 		},
 	];
@@ -46,8 +47,8 @@ export function Header() {
 				'border-transparent': !scrolled,
 			})}
 		>
-			<nav className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
-				<Link to="/" className="hover:bg-accent flex items-center gap-2 rounded-md p-2">
+			<nav className="flex h-14 w-full items-center justify-between pl-6 pr-4">
+				<Link to="/" className="hover:bg-accent flex items-center gap-2 rounded-md p-2 ml-32">
 					<OrchOSLogoIcon className="size-6" />
 					<span className="text-sm font-semibold text-foreground">OrchOS</span>
 				</Link>
@@ -57,10 +58,10 @@ export function Header() {
 							{link.label}
 						</Link>
 					))}
-					<Link to="/changelog">
-						<Button variant="outline">开始使用</Button>
+					<Link to="/dashboard" className="mr-20">
+						<Button variant="outline">{m.nav_get_started()}</Button>
 					</Link>
-					<div className="ml-auto">
+					<div className="ml-auto flex items-center gap-1">
 						<LocaleToggle />
 						<ThemeToggle />
 					</div>
@@ -96,9 +97,9 @@ export function Header() {
 				<div className="flex flex-col gap-2">
 					<LocaleToggle />
 					<ThemeToggle />
-					<Link to="/changelog" onClick={() => setOpen(false)}>
+					<Link to="/dashboard" onClick={() => setOpen(false)}>
 						<Button variant="outline" className="w-full bg-transparent">
-							开始使用
+							{m.nav_get_started()}
 						</Button>
 					</Link>
 				</div>

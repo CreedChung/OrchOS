@@ -79,20 +79,23 @@ export function ControlPanel({ settings, onSettingsChange }: ControlPanelProps) 
           <div>
             <span className="mb-2 block text-sm text-foreground">{m.model_strategy()}</span>
             <div className="flex gap-1.5">
-              {(["local-first", "cloud-first", "adaptive"] as const).map((strategy) => (
-                <button
-                  key={strategy}
-                  onClick={() => handleStrategyChange(strategy)}
-                  className={cn(
-                    "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                    settings.modelStrategy === strategy
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-border text-foreground hover:bg-accent"
-                  )}
-                >
-                  {strategy.replace("-", " ")}
-                </button>
-              ))}
+              {(["local-first", "cloud-first", "adaptive"] as const).map((strategy) => {
+                const labelMap = { "local-first": m.model_local(), "cloud-first": m.model_cloud(), "adaptive": m.adaptive() }
+                return (
+                  <button
+                    key={strategy}
+                    onClick={() => handleStrategyChange(strategy)}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      settings.modelStrategy === strategy
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border text-foreground hover:bg-accent"
+                    )}
+                  >
+                    {labelMap[strategy]}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>

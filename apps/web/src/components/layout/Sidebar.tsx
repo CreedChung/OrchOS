@@ -243,8 +243,8 @@ export function Sidebar({
           <InfoCardMedia
             media={[
               {
-                src: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&q=80",
-                alt: "Infrastructure",
+                src: "/background.png",
+                alt: "OrchOS",
               },
             ]}
             shrinkHeight={60}

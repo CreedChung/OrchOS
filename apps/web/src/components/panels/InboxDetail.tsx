@@ -139,11 +139,13 @@ export function InboxDetail({ item, onConvertToGoal, onDismiss }: InboxDetailPro
             </Button>
 
             <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon-sm">
-                  <HugeiconsIcon icon={MoreHorizontal} className="size-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" size="icon-sm">
+                    <HugeiconsIcon icon={MoreHorizontal} className="size-3.5" />
+                  </Button>
+                }
+              />
               <DropdownMenuContent align="start" className="min-w-36">
                 <DropdownMenuItem onClick={() => onDismiss(item.id)}>
                   <HugeiconsIcon icon={ViewOffIcon} className="size-3.5" />

@@ -6,6 +6,20 @@ import { ConfirmDialog } from "#/components/ui/confirm-dialog"
 import { m } from "#/paraglide/messages"
 import type { AgentProfile, Rule } from "#/lib/types"
 
+const statusLabelMap: Record<string, string> = {
+  idle: m.status_idle(),
+  active: m.status_active(),
+  error: m.status_error(),
+}
+
+const capLabelMap: Record<string, string> = {
+  write_code: m.cap_write_code(),
+  fix_bug: m.cap_fix_bug(),
+  run_tests: m.cap_run_tests(),
+  commit: m.cap_commit(),
+  review: m.cap_review(),
+}
+
 const conditionLabels: Record<string, string> = {
   test_failed: m.test_failed(),
   lint_error: m.lint_error(),
@@ -74,7 +88,7 @@ export function AgentDetailView({
                         : "text-muted-foreground"
                   )}
                 />
-                <span className="text-xs text-muted-foreground capitalize">{agent.status}</span>
+                <span className="text-xs text-muted-foreground">{statusLabelMap[agent.status] || agent.status}</span>
               </div>
               <p className="text-sm text-muted-foreground mt-1">{agent.role}</p>
             </div>
@@ -93,7 +107,7 @@ export function AgentDetailView({
                 className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-accent/30 px-2.5 py-1 text-xs text-foreground"
               >
                 <HugeiconsIcon icon={Wrench01Icon} className="size-3 text-primary/60" />
-                {cap.replace(/_/g, " ")}
+                {capLabelMap[cap] || cap.replace(/_/g, " ")}
               </span>
             ))}
           </div>

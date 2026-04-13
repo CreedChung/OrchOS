@@ -212,7 +212,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="flex h-[480px] w-full max-w-2xl overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+      <div className="flex h-[600px] w-full max-w-4xl overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
         {/* Left: Tabs */}
         <div className="flex w-48 shrink-0 flex-col border-r border-border bg-muted/30">
           <div className="flex h-12 items-center px-4">

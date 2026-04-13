@@ -1,4 +1,5 @@
-import { getLocale, AVAILABLE_LOCALES, changeLocale } from "#/lib/i18n"
+import { AVAILABLE_LOCALES } from "#/lib/i18n"
+import { useLocale } from "#/lib/useI18n"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,20 +16,22 @@ const LOCALE_LABELS: Record<string, string> = {
 }
 
 export default function LocaleToggle() {
-  const currentLocale = getLocale()
+  const { locale: currentLocale, setLocaleWithSync } = useLocale()
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-9" aria-label="Switch language">
-          <Languages className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" className="size-9" aria-label="Switch language">
+            <Languages className="size-4" />
+          </Button>
+        }
+      />
       <DropdownMenuContent align="end">
         {AVAILABLE_LOCALES.map((locale) => (
           <DropdownMenuItem
             key={locale.value}
-            onClick={() => changeLocale(locale.value)}
+            onClick={() => setLocaleWithSync(locale.value)}
           >
             {LOCALE_LABELS[locale.value]}
             {currentLocale === locale.value && (

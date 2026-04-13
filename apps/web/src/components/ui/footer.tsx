@@ -1,6 +1,7 @@
 "use client"
 import { motion } from "motion/react"
 import { Link } from "@tanstack/react-router"
+import { m } from "#/paraglide/messages"
 
 const containerVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -47,13 +48,13 @@ const backgroundVariants = {
 
 const footerData = {
   sections: [
-    { title: "Product", links: [{ label: "Home", to: "/" }, { label: "Dashboard", to: "/dashboard" }, { label: "Changelog", to: "/changelog" }] },
-    { title: "Company", links: [{ label: "About", to: "/about" }, { label: "GitHub", to: "https://github.com/CreedChung/OrchOS" }] },
-    { title: "Resources", links: [{ label: "Documentation", to: "#" }, { label: "Community", to: "#" }, { label: "Help Center", to: "#" }] },
+    { title: m.footer_product(), links: [{ label: m.nav_home(), to: "/" }, { label: m.open_dashboard(), to: "/dashboard" }, { label: m.nav_changelog(), to: "/changelog" }] },
+    { title: m.footer_company(), links: [{ label: m.nav_about(), to: "/about" }, { label: m.integration_github(), to: "https://github.com/CreedChung/OrchOS" }] },
+    { title: m.footer_resources(), links: [{ label: m.footer_documentation(), to: "#" }, { label: m.footer_community(), to: "#" }, { label: m.footer_help_center(), to: "#" }] },
   ],
-  title: "OrchOS",
-  subtitle: "Built with OrchOS",
-  copyright: `©${new Date().getFullYear()} OrchOS. All rights reserved.`,
+  title: m.about_orchos(),
+  subtitle: m.built_with_orchos(),
+  copyright: `©${new Date().getFullYear()} ${m.about_orchos()}. ${m.footer_rights()}`,
 }
 
 const NavSection = ({ title, links, index }: { title: string; links: { label: string; to: string }[]; index: number }) => (

@@ -3,15 +3,14 @@ import Header from '#/components/layout/Header'
 import Footer from '#/components/layout/Footer'
 import { m } from '#/paraglide/messages'
 import { I18nProvider } from '#/lib/useI18n'
-import { AppleHelloEffectEnglish } from '#/components/apple-hello-effect/apple-hello-effect-english'
+import { ShimmerText } from '#/components/ui/shimmer-text'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
-function HomePage() {
+function HomePageInner() {
   return (
-    <I18nProvider>
-      <div className="flex min-h-screen flex-col bg-background">
-        <Header />
+    <div className="flex min-h-screen flex-col bg-background">
+      <Header />
         <main className="flex-1">
 
           {/* Hero */}
@@ -31,8 +30,10 @@ function HomePage() {
               <p className="mb-3 max-w-2xl text-lg text-muted-foreground sm:text-xl">
                 {m.hero_tagline()}
               </p>
-              <div className="mb-10 flex items-center justify-center text-primary">
-                <AppleHelloEffectEnglish durationScale={0.8} />
+              <div className="mb-10">
+                <ShimmerText className="text-4xl font-bold tracking-tight text-primary sm:text-6xl">
+                  OrchOS.
+                </ShimmerText>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <Link
@@ -202,6 +203,13 @@ function HomePage() {
         </main>
         <Footer />
       </div>
+  )
+}
+
+function HomePage() {
+  return (
+    <I18nProvider>
+      <HomePageInner />
     </I18nProvider>
   )
 }
