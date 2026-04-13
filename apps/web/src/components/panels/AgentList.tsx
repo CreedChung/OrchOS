@@ -85,6 +85,7 @@ export function AgentList({
             <div className="py-8 text-center">
               <HugeiconsIcon icon={Robot02Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
               <p className="text-sm text-muted-foreground">{m.no_agents_available()}</p>
+              <p className="text-xs text-muted-foreground/60 mt-1 px-4">{m.no_agent_instances_desc()}</p>
               <Button size="sm" className="mt-3" onClick={onCreateAgent}>
                 <HugeiconsIcon icon={Add01Icon} className="size-3 mr-1" />
                 {m.create_agent()}

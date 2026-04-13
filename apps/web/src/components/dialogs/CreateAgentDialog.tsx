@@ -142,7 +142,6 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
                     {runtimes.map((rt) => {
                       const isLocal = rt.model.startsWith("local/")
                       const isCloud = rt.model.startsWith("cloud/")
-                      const modelLabel = rt.model.includes("/") ? rt.model.split("/").slice(1).join("/") : rt.model
                       return (
                         <SelectItem key={rt.id} value={rt.id}>
                           <span className="flex items-center gap-2">
@@ -153,7 +152,6 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
                             ) : null}
                             <span>{rt.name}</span>
                           </span>
-                          <span className="ms-auto text-muted-foreground text-xs">{modelLabel}</span>
                         </SelectItem>
                       )
                     })}
@@ -166,6 +164,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
                 <p className="text-[10px] text-muted-foreground/60 mt-0.5">{m.no_runtimes_registered_desc()}</p>
               </div>
             )}
+            <p className="mt-1 text-[10px] text-muted-foreground/60">Choose which runtime to use: Codex, Claude, etc.</p>
           </div>
 
           {/* Capabilities */}

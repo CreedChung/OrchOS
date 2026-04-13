@@ -3,6 +3,7 @@ import Header from '#/components/layout/Header'
 import Footer from '#/components/layout/Footer'
 import { m } from '#/paraglide/messages'
 import { I18nProvider } from '#/lib/useI18n'
+import { AppleHelloEffectEnglish } from '#/components/apple-hello-effect/apple-hello-effect-english'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
@@ -30,9 +31,9 @@ function HomePage() {
               <p className="mb-3 max-w-2xl text-lg text-muted-foreground sm:text-xl">
                 {m.hero_tagline()}
               </p>
-              <p className="mb-10 max-w-xl text-4xl font-bold tracking-tight text-primary sm:text-6xl">
-                OrchOS.
-              </p>
+              <div className="mb-10 flex items-center justify-center text-primary">
+                <AppleHelloEffectEnglish durationScale={0.8} />
+              </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <Link
                   to="/dashboard"

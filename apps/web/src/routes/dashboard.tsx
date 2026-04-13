@@ -6,6 +6,7 @@ import { CreateGoalDialog } from '#/components/dialogs/CreateGoalDialog'
 import { CreateRuleDialog } from '#/components/dialogs/CreateRuleDialog'
 import { SettingsDialog } from '#/components/dialogs/SettingsDialog'
 import { CreateAgentDialog } from '#/components/dialogs/CreateAgentDialog'
+import { MorphPanel } from '#/components/ui/ai-input'
 import { Toolbar } from '#/components/layout/Toolbar'
 import { I18nProvider } from '#/lib/useI18n'
 import { m } from '#/paraglide/messages'
@@ -148,6 +149,7 @@ function DashboardLayout() {
           runtimes={agents.filter((a) => a.cliCommand)}
           onSubmit={handleCreateAgent}
         />
+        <MorphPanel />
       </div>
     </I18nProvider>
   )

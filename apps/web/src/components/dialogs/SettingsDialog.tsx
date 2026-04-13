@@ -4,6 +4,7 @@ import { Cancel01Icon, Settings02Icon, SlidersHorizontalIcon, Robot02Icon, Infor
 import { cn } from "#/lib/utils"
 import ThemeToggle from "#/components/layout/ThemeToggle"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "#/components/ui/tabs"
 import { useLocale } from "#/lib/useI18n"
 import { AVAILABLE_LOCALES } from "#/lib/i18n"
 import { m } from "#/paraglide/messages"
@@ -423,27 +424,19 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onAg
                 <p className="text-xs text-muted-foreground">
                   {m.connect_services_desc()}
                 </p>
-                {/* Category tabs */}
-                <div className="flex gap-1 rounded-lg border border-border/50 bg-muted/30 p-1">
-                  {integrationCategoryDefs.map((cat) => {
-                    const Icon = cat.icon
-                    return (
-                      <button
-                        key={cat.id}
-                        onClick={() => setActiveIntegrationCat(cat.id)}
-                        className={cn(
-                          "flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
-                          activeIntegrationCat === cat.id
-                            ? "bg-accent text-accent-foreground shadow-sm"
-                            : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                        )}
-                      >
-                        <HugeiconsIcon icon={Icon} className="size-3.5" />
-                        {cat.labelKey()}
-                      </button>
-                    )
-                  })}
-                </div>
+                <Tabs value={activeIntegrationCat} onValueChange={(v) => setActiveIntegrationCat(v as IntegrationCategory)}>
+                  <TabsList>
+                    {integrationCategoryDefs.map((cat) => {
+                      const Icon = cat.icon
+                      return (
+                        <TabsTrigger key={cat.id} value={cat.id}>
+                          <HugeiconsIcon icon={Icon} className="size-3.5" />
+                          {cat.labelKey()}
+                        </TabsTrigger>
+                      )
+                    })}
+                  </TabsList>
+                </Tabs>
                 {/* Filtered integration list */}
                 <div className="space-y-2">
                   {integrationItems

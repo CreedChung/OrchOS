@@ -15,12 +15,15 @@ function AgentsPage() {
   } = useDashboard()
 
   const { activeAgentId, setActiveAgentId } = useUIStore()
-  const activeAgent = agents.find((a) => a.id === activeAgentId)
+
+  // Only show user-created agent instances (those with runtimeId), not base runtimes
+  const agentInstances = agents.filter((a) => a.runtimeId)
+  const activeAgent = agentInstances.find((a) => a.id === activeAgentId)
 
   return (
     <div className="flex flex-1 overflow-hidden">
       <AgentList
-        agents={agents}
+        agents={agentInstances}
         activeAgentId={activeAgentId}
         onSelectAgent={setActiveAgentId}
         onCreateAgent={() => setShowCreateAgentDialog(true)}

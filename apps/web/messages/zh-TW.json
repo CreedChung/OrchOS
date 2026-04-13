@@ -340,6 +340,7 @@
   "disabled_agents": "已停用",
   "no_agent_selected": "未選擇代理",
   "no_agent_selected_desc": "從列表中選擇一個代理以查看詳情。",
+  "no_agent_instances_desc": "從已註冊的執行環境建立代理實例",
   "no_inbox_selected": "未選擇項目",
   "no_inbox_selected_desc": "從列表中選擇一個項目以查看詳情。",
   "landing_subtitle": "AI 代理編排系統",

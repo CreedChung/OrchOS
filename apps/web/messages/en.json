@@ -340,6 +340,7 @@
   "disabled_agents": "Disabled",
   "no_agent_selected": "No agent selected",
   "no_agent_selected_desc": "Select an agent from the list to view details.",
+  "no_agent_instances_desc": "Create an agent instance from a registered runtime",
   "no_inbox_selected": "No item selected",
   "no_inbox_selected_desc": "Select an item from the list to view details.",
   "landing_subtitle": "AI Agent Orchestration System",
