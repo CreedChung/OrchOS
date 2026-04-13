@@ -1,9 +1,18 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState } from 'react'
 import Header from '#/components/layout/Header'
 import Footer from '#/components/layout/Footer'
 import { m } from '#/paraglide/messages'
 import { I18nProvider } from '#/lib/useI18n'
 import { ShimmerText } from '#/components/ui/shimmer-text'
+import { FeaturesBento } from '#/components/ui/features-bento'
+import { GoalPreviewCard } from '#/components/ui/goal-preview-card'
+import { AgentPreviewCard } from '#/components/ui/agent-preview-card'
+import { InboxPreviewCard } from '#/components/ui/inbox-preview-card'
+import { GooeyFilter } from '#/components/ui/gooey-filter'
+import { useScreenSize } from '#/lib/use-screen-size'
+import { motion, AnimatePresence } from 'motion/react'
+import { cn } from '#/lib/utils'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
@@ -53,44 +62,17 @@ function HomePageInner() {
           </section>
 
           {/* Features */}
-          <section className="border-t border-border bg-card/50">
-            <div className="mx-auto max-w-5xl px-4 py-16 sm:py-20">
-              <SectionLabel text={m.section_features()} />
-              <h2 className="mb-10 text-center text-2xl font-bold text-foreground sm:text-3xl">
-                {m.features_heading()}
-              </h2>
-              <div className="grid gap-6 sm:grid-cols-3">
-                <FeatureCard
-                  icon={<AgentsIcon />}
-                  title={m.feature_agents_title()}
-                  description={m.feature_agents_desc()}
-                />
-                <FeatureCard
-                  icon={<GoalsIcon />}
-                  title={m.feature_goals_title()}
-                  description={m.feature_goals_desc()}
-                />
-                <FeatureCard
-                  icon={<AutomationIcon />}
-                  title={m.feature_automation_title()}
-                  description={m.feature_automation_desc()}
-                />
-              </div>
-            </div>
-          </section>
+          <FeaturesBento />
 
-          {/* How it works */}
-          <section className="border-t border-border">
-            <div className="mx-auto max-w-5xl px-4 py-16 sm:py-20">
+          {/* How it works - Interactive Steps */}
+          <section className="border-t border-border min-h-screen flex flex-col justify-center">
+            <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
               <SectionLabel text={m.section_how_it_works()} />
-              <h2 className="mb-10 text-center text-2xl font-bold text-foreground sm:text-3xl">
+              <h2 className="mb-12 text-center text-2xl font-bold text-foreground sm:text-3xl">
                 {m.how_it_works_heading()}
               </h2>
-              <div className="grid gap-8 sm:grid-cols-3">
-                <StepCard step={1} title={m.step_1_title()} description={m.step_1_desc()} />
-                <StepCard step={2} title={m.step_2_title()} description={m.step_2_desc()} />
-                <StepCard step={3} title={m.step_3_title()} description={m.step_3_desc()} />
-              </div>
+
+              <HowItWorksSteps />
             </div>
           </section>
 
@@ -214,35 +196,88 @@ function HomePage() {
   )
 }
 
+function HowItWorksSteps() {
+  const [activeStep, setActiveStep] = useState(1)
+  const screenSize = useScreenSize()
+  const gooeyStrength = screenSize.lessThan("md") ? 8 : 15
+
+  const tabs = [
+    { step: 1, label: m.step_1_title(), card: <GoalPreviewCard /> },
+    { step: 2, label: m.step_2_title(), card: <AgentPreviewCard /> },
+    { step: 3, label: m.step_3_title(), card: <InboxPreviewCard /> },
+  ]
+
+  return (
+    <div className="w-full">
+      <GooeyFilter id="gooey-tab-filter" strength={gooeyStrength} />
+
+      <div className="relative">
+        {/* Gooey layer: tab backgrounds + content panel, all sharing the goo filter */}
+        <div style={{ filter: "url(#gooey-tab-filter)" }}>
+          <div className="flex w-full">
+            {tabs.map((tab) => (
+              <div key={tab.step} className="relative flex-1 h-10 md:h-12">
+                {activeStep === tab.step && (
+                  <motion.div
+                    layoutId="gooey-active-tab"
+                    className="absolute inset-0 bg-accent rounded-t-lg"
+                    transition={{
+                      type: "spring",
+                      bounce: 0.0,
+                      duration: 0.4,
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          {/* Content panel - connected to the active tab so gooey merges them */}
+          <div className="w-full h-[400px] bg-accent rounded-b-lg overflow-hidden" />
+        </div>
+
+        {/* Interactive text overlay for tabs (no filter, stays sharp) */}
+        <div className="absolute top-0 left-0 right-0 flex w-full">
+          {tabs.map((tab) => (
+            <button
+              key={tab.step}
+              onClick={() => setActiveStep(tab.step)}
+              className={cn(
+                "flex-1 h-10 md:h-12 flex items-center justify-center text-xs md:text-sm font-medium transition-colors z-10",
+                activeStep === tab.step
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground/80",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Card content overlay (no filter, stays sharp) */}
+        <div className="absolute top-10 md:top-12 left-0 right-0 bottom-0 h-[400px] p-1">
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              key={activeStep}
+              initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -20, filter: "blur(8px)" }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="h-full w-full"
+            >
+              {tabs.find((t) => t.step === activeStep)?.card}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SectionLabel({ text }: { text: string }) {
   return (
     <p className="mb-2 text-center text-xs font-bold uppercase tracking-widest text-primary">
       {text}
     </p>
-  )
-}
-
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <div className="rounded-xl border border-border/50 bg-card p-6 shadow-sm">
-      <div className="mb-3 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        {icon}
-      </div>
-      <h3 className="mb-2 text-base font-semibold text-foreground">{title}</h3>
-      <p className="text-sm leading-6 text-muted-foreground">{description}</p>
-    </div>
-  )
-}
-
-function StepCard({ step, title, description }: { step: number; title: string; description: string }) {
-  return (
-    <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
-      <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-        {step}
-      </div>
-      <h3 className="mb-2 text-base font-semibold text-foreground">{title}</h3>
-      <p className="text-sm leading-6 text-muted-foreground">{description}</p>
-    </div>
   )
 }
 
@@ -252,35 +287,6 @@ function IntegrationCard({ name, description }: { name: string; description: str
       <h3 className="mb-1 text-sm font-semibold text-foreground">{name}</h3>
       <p className="text-xs leading-5 text-muted-foreground">{description}</p>
     </div>
-  )
-}
-
-function AgentsIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-5">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function GoalsIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-5">
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="6" />
-      <circle cx="12" cy="12" r="2" />
-    </svg>
-  )
-}
-
-function AutomationIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-5">
-      <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83" strokeLinecap="round" />
-    </svg>
   )
 }
 

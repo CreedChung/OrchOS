@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react"
+import { treaty } from "@elysiajs/eden"
 import { api } from "./api"
-import type { Goal, StateEntry, Artifact, ActivityEntry, AgentProfile, ControlSettings, Project, HistoryEntry } from "./api"
+
+const server = treaty("localhost:5173")
 
 function useAsyncData<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null)
@@ -64,36 +66,28 @@ export function useHistory(goalId?: string, limit?: number) {
 }
 
 export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) {
-  const wsRef = useRef<WebSocket | null>(null)
   const onEventRef = useRef(onEvent)
   onEventRef.current = onEvent
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:5173/ws")
-    wsRef.current = ws
+    const ws = (server.ws as any).subscribe()
 
-    ws.onopen = () => {
-      console.log("WebSocket connected")
-    }
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        if (data.type === "event") {
-          onEventRef.current(data.data)
-        }
-      } catch {
-        // ignore parse errors
+    ws.on("message", (message: any) => {
+      if (message?.type === "event" && message.data) {
+        onEventRef.current(message.data as Record<string, unknown>)
       }
-    }
+    })
 
-    ws.onclose = () => {
+    ws.on("open", () => {
+      console.log("WebSocket connected")
+    })
+
+    ws.on("close", () => {
       console.log("WebSocket disconnected")
-    }
+    })
 
     return () => {
       ws.close()
-      wsRef.current = null
     }
   }, [])
 }
