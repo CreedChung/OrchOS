@@ -10,8 +10,9 @@ export const Route = createFileRoute('/dashboard/agents')({ component: AgentsPag
 function AgentsPage() {
   const {
     agents, rules,
-    handleRuleToggle, handleRuleDelete,
+    handleRuleToggle, handleRuleDelete, handleUpdateAgent,
     showCreateAgentDialog, setShowCreateAgentDialog,
+    refreshAll,
   } = useDashboard()
 
   const { activeAgentId, setActiveAgentId } = useUIStore()
@@ -27,6 +28,7 @@ function AgentsPage() {
         activeAgentId={activeAgentId}
         onSelectAgent={setActiveAgentId}
         onCreateAgent={() => setShowCreateAgentDialog(true)}
+        onAgentUpdated={refreshAll}
       />
       <div className="flex-1 overflow-hidden">
         {activeAgent ? (
@@ -35,6 +37,8 @@ function AgentsPage() {
             rules={rules}
             onRuleToggle={handleRuleToggle}
             onRuleDelete={handleRuleDelete}
+            onAgentUpdated={refreshAll}
+            onUpdateAgent={handleUpdateAgent}
           />
         ) : (
           <div className="flex h-full items-center justify-center">

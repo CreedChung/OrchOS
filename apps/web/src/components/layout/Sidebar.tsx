@@ -29,6 +29,7 @@ import {
   AiBrain01Icon,
   UserCircleIcon,
   Logout03Icon,
+  Chat01Icon,
 } from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
@@ -98,6 +99,7 @@ export function Sidebar({
           badgeCritical: criticalCount > 0,
         },
         { id: "goals", to: "/dashboard/goals", icon: Target01Icon, label: m.goals() },
+        { id: "creation", to: "/dashboard/creation", icon: Chat01Icon, label: m.creation() },
       ],
     },
     {

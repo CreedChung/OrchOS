@@ -101,6 +101,7 @@ interface DashboardContextType {
 
   // Agent actions
   handleCreateAgent: (data: { name: string; role: string; capabilities: string[]; model: string; cliCommand?: string; runtimeId?: string }) => Promise<void>
+  handleUpdateAgent: (id: string, data: Partial<{ name: string; role: string; capabilities: string[]; status: AgentProfile["status"]; model: string; enabled: boolean; cliCommand: string; runtimeId: string; avatarUrl: string }>) => Promise<void>
 
   // Command actions
   handleCommand: (data: { instruction: string; agentNames: string[]; projectIds: string[] }) => Promise<void>
@@ -534,6 +535,15 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
   }, [refreshAll])
 
+  const handleUpdateAgent = useCallback(async (id: string, data: Partial<{ name: string; role: string; capabilities: string[]; status: AgentProfile["status"]; model: string; enabled: boolean; cliCommand: string; runtimeId: string; avatarUrl: string }>) => {
+    try {
+      await api.updateAgent(id, data)
+      await refreshAll()
+    } catch (err) {
+      console.error("Failed to update agent:", err)
+    }
+  }, [refreshAll])
+
   const value: DashboardContextType = {
     goals, agents, runtimes, projects, organizations, problems, rules, commands,
     mcpServers, skills, states, artifacts, activities, settings: persistedSettings, loading,
@@ -545,7 +555,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     handleStateAction,
     handleCreateGoal, handlePauseGoal, handleResumeGoal, handleDeleteGoal, handleGoalRename,
     handleOrganizationRename, handleOrganizationDelete,
-    handleCreateAgent, handleCommand,
+    handleCreateAgent, handleUpdateAgent, handleCommand,
     showCreateDialog, setShowCreateDialog,
     showCommandBar, setShowCommandBar,
     showSettingsDialog, setShowSettingsDialog,

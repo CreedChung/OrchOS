@@ -5,28 +5,28 @@ import { Button } from "#/components/ui/button"
 import { ConfirmDialog } from "#/components/ui/confirm-dialog"
 import { CreateSkillDialog } from "#/components/dialogs/CreateSkillDialog"
 import { api, type SkillProfile } from "#/lib/api"
+import type { Project } from "#/lib/types"
 import { cn } from "#/lib/utils"
 import { m } from "#/paraglide/messages"
 
 interface SkillsViewProps {
   skills: SkillProfile[]
+  projects: Project[]
   onRefresh: () => void
   scopeFilter?: "all" | "global" | "project"
 }
 
-export function SkillsView({ skills: initialSkills, onRefresh, scopeFilter = "all" }: SkillsViewProps) {
+export function SkillsView({ skills: initialSkills, projects, onRefresh, scopeFilter = "all" }: SkillsViewProps) {
   const [skills, setSkills] = useState<SkillProfile[]>(initialSkills)
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     setSkills(initialSkills)
   }, [initialSkills])
 
   const handleCreated = async () => {
-    setLoading(false)
     onRefresh()
   }
 
@@ -83,9 +83,17 @@ export function SkillsView({ skills: initialSkills, onRefresh, scopeFilter = "al
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-foreground">{skill.name}</span>
+                {skill.sourceType === "repository" && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                    Repo
+                  </span>
+                )}
               </div>
               {skill.description && (
                 <p className="text-xs text-muted-foreground line-clamp-1">{skill.description}</p>
+              )}
+              {skill.installPath && (
+                <p className="text-[11px] text-muted-foreground/80 truncate">{skill.installPath}</p>
               )}
             </div>
             <button
@@ -133,7 +141,12 @@ export function SkillsView({ skills: initialSkills, onRefresh, scopeFilter = "al
         variant="destructive"
       />
 
-      <CreateSkillDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
+      <CreateSkillDialog
+        open={createOpen}
+        projects={projects}
+        onClose={() => setCreateOpen(false)}
+        onCreated={handleCreated}
+      />
     </div>
   )
 }

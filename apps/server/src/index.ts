@@ -18,6 +18,7 @@ import { mcpController } from "./modules/mcp"
 import { skillController } from "./modules/skill"
 import { sandboxController } from "./modules/sandbox"
 import { filesystemController } from "./modules/filesystem"
+import { conversationController } from "./modules/conversation"
 import { seedData } from "./db/seed"
 
 import "./db"
@@ -46,6 +47,7 @@ const app = new Elysia()
   .use(skillController)
   .use(sandboxController)
   .use(filesystemController)
+  .use(conversationController)
   .listen(5173)
 
 console.log(

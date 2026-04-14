@@ -88,6 +88,7 @@ export const agents = sqliteTable("agents", {
   cliCommand: text("cli_command"),
   currentModel: text("current_model"),
   runtimeId: text("runtime_id").references(() => runtimes.id),
+  avatarUrl: text("avatar_url"),
 })
 
 export const projects = sqliteTable("projects", {
@@ -171,6 +172,28 @@ export const sandboxes = sqliteTable("sandboxes", {
   index("idx_sandboxes_project_id").on(t.projectId),
 ])
 
+export const conversations = sqliteTable("conversations", {
+  id: text("id").primaryKey(),
+  title: text("title"),
+  projectId: text("project_id").references(() => projects.id),
+  agentId: text("agent_id").references(() => agents.id),
+  runtimeId: text("runtime_id").references(() => runtimes.id),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+})
+
+export const messages = sqliteTable("messages", {
+  id: text("id").primaryKey(),
+  conversationId: text("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  error: text("error"),
+  responseTime: text("response_time"),
+  createdAt: text("created_at").notNull(),
+}, (t) => [
+  index("idx_messages_conversation_id").on(t.conversationId),
+])
+
 export const skills = sqliteTable("skills", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -179,6 +202,10 @@ export const skills = sqliteTable("skills", {
   scope: text("scope").notNull().default("global"), // "global" | "project"
   projectId: text("project_id").references(() => projects.id),
   organizationId: text("organization_id").references(() => organizations.id),
+  sourceType: text("source_type").notNull().default("manual"),
+  sourceUrl: text("source_url"),
+  installPath: text("install_path"),
+  manifestPath: text("manifest_path"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 }, (t) => [

@@ -168,32 +168,18 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
         <div className="rounded-lg border border-border bg-card p-4 space-y-4">
           {/* Mode selector */}
           {!editingId && (
-            <div className="flex gap-2 p-1 bg-muted rounded-lg">
-              <button
-                onClick={() => setFormMode("clone")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  formMode === "clone"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <HugeiconsIcon icon={Download01Icon} className="size-4" />
-                Clone Remote
-              </button>
-              <button
-                onClick={() => setFormMode("local")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  formMode === "local"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <HugeiconsIcon icon={FolderIcon} className="size-4" />
-                Import Local
-              </button>
-            </div>
+            <Tabs value={formMode} onValueChange={(v) => setFormMode(v as "clone" | "local")}>
+              <TabsList>
+                <TabsTrigger value="clone">
+                  <HugeiconsIcon icon={Download01Icon} className="size-4" />
+                  Clone Remote
+                </TabsTrigger>
+                <TabsTrigger value="local">
+                  <HugeiconsIcon icon={FolderIcon} className="size-4" />
+                  Import Local
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           )}
 
           {formMode === "clone" ? (

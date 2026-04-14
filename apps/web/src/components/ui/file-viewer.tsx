@@ -346,7 +346,7 @@ function FileHeader({
   }
 
   return (
-    <div className="flex items-center justify-between border-b border-border px-3 py-2">
+    <div className="flex min-h-14 items-center justify-between border-b border-border px-4 py-3">
       <div className="flex min-w-0 items-center gap-2">
         <Badge variant="outline" className="text-[11px]">
           {getFileType(file.path)}
@@ -649,7 +649,7 @@ function FileTree({
         isDesktop ? "border-r border-border" : "border-b border-border"
       )}
     >
-      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+      <div className="flex min-h-14 items-center justify-between gap-2 border-b border-border px-4 py-3">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <FileCode className="size-4" />

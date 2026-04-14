@@ -67,6 +67,7 @@ export interface AgentProfile {
   cliCommand?: string
   currentModel?: string
   runtimeId?: string
+  avatarUrl?: string
 }
 
 export interface RuntimeProfile {
@@ -206,8 +207,56 @@ export interface SkillProfile {
   scope: "global" | "project"
   projectId?: string
   organizationId?: string
+  sourceType: "manual" | "repository"
+  sourceUrl?: string
+  installPath?: string
+  manifestPath?: string
   createdAt: string
   updatedAt: string
+}
+
+export interface SkillRepositoryCandidate {
+  name: string
+  description?: string
+  relativePath: string
+}
+
+export interface SkillRepositoryAnalysis {
+  analysisId: string
+  source: string
+  riskLevel: "low" | "medium" | "high"
+  safeToInstall: boolean
+  summary: string
+  warnings: string[]
+  installTarget: string
+  installableSkills: SkillRepositoryCandidate[]
+}
+
+export interface SkillRepositoryInstallResponse {
+  installed: SkillProfile[]
+  installTarget: string
+  warnings: string[]
+  riskLevel: "low" | "medium" | "high"
+}
+
+export interface Conversation {
+  id: string
+  title?: string
+  projectId?: string
+  agentId?: string
+  runtimeId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ConversationMessage {
+  id: string
+  conversationId: string
+  role: "user" | "assistant"
+  content: string
+  error?: string
+  responseTime?: number
+  createdAt: string
 }
 
 // API functions
@@ -237,8 +286,18 @@ export const api = {
   listAgents: () => request<AgentProfile[]>("/api/agents"),
   createAgent: (data: { name: string; role: string; capabilities: string[]; model: string; cliCommand?: string; runtimeId?: string }) =>
     request<AgentProfile>("/api/agents", { method: "POST", body: JSON.stringify(data) }),
-  updateAgent: (id: string, data: { enabled?: boolean; status?: AgentProfile["status"] }) =>
+  updateAgent: (id: string, data: { name?: string; role?: string; capabilities?: string[]; status?: AgentProfile["status"]; model?: string; enabled?: boolean; cliCommand?: string; runtimeId?: string; avatarUrl?: string }) =>
     request<AgentProfile>(`/api/agents/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  uploadAgentAvatar: async (id: string, file: File) => {
+    const formData = new FormData()
+    formData.append("file", file)
+    const res = await fetch(`${API_BASE}/api/agents/${id}/avatar`, {
+      method: "POST",
+      body: formData,
+    })
+    if (!res.ok) throw new Error(`API error: ${res.status}`)
+    return res.json() as Promise<AgentProfile>
+  },
 
   // Runtimes
   listRuntimes: () => request<RuntimeProfile[]>("/api/runtimes"),
@@ -374,7 +433,17 @@ export const api = {
     return request<SkillProfile[]>(`/api/skills${qs ? `?${qs}` : ""}`)
   },
   getSkill: (id: string) => request<SkillProfile>(`/api/skills/${id}`),
-  createSkill: (data: { name: string; description?: string; scope?: "global" | "project"; projectId?: string; organizationId?: string }) =>
+  createSkill: (data: {
+    name: string
+    description?: string
+    scope?: "global" | "project"
+    projectId?: string
+    organizationId?: string
+    sourceType?: "manual" | "repository"
+    sourceUrl?: string
+    installPath?: string
+    manifestPath?: string
+  }) =>
     request<SkillProfile>("/api/skills", { method: "POST", body: JSON.stringify(data) }),
   updateSkill: (id: string, data: Partial<Pick<SkillProfile, "name" | "description" | "enabled" | "scope">>) =>
     request<SkillProfile>(`/api/skills/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
@@ -382,4 +451,27 @@ export const api = {
     request<{ success: boolean }>(`/api/skills/${id}`, { method: "DELETE" }),
   toggleSkill: (id: string, enabled: boolean) =>
     request<SkillProfile>(`/api/skills/${id}/toggle`, { method: "POST", body: JSON.stringify({ enabled }) }),
+  analyzeSkillRepository: (data: {
+    source: string
+    scope?: "global" | "project"
+    projectId?: string
+    organizationId?: string
+  }) =>
+    request<SkillRepositoryAnalysis>("/api/skills/analyze-repository", { method: "POST", body: JSON.stringify(data) }),
+  installSkillRepository: (data: { analysisId: string; selectedSkills?: string[]; allowHighRisk?: boolean }) =>
+    request<SkillRepositoryInstallResponse>("/api/skills/install-repository", { method: "POST", body: JSON.stringify(data) }),
+
+  // Conversations
+  listConversations: () => request<Conversation[]>("/api/conversations"),
+  getConversation: (id: string) => request<Conversation>(`/api/conversations/${id}`),
+  createConversation: (data: { title?: string; projectId?: string; agentId?: string; runtimeId?: string }) =>
+    request<Conversation>("/api/conversations", { method: "POST", body: JSON.stringify(data) }),
+  updateConversation: (id: string, data: { title?: string; projectId?: string; agentId?: string; runtimeId?: string }) =>
+    request<Conversation>(`/api/conversations/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteConversation: (id: string) =>
+    request<{ success: boolean }>(`/api/conversations/${id}`, { method: "DELETE" }),
+  getConversationMessages: (id: string) =>
+    request<ConversationMessage[]>(`/api/conversations/${id}/messages`),
+  sendConversationMessage: (id: string, content: string) =>
+    request<ConversationMessage>(`/api/conversations/${id}/messages`, { method: "POST", body: JSON.stringify({ content }) }),
 }

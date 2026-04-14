@@ -40,6 +40,25 @@ export abstract class AgentService {
     return db.select().from(agents).all().map(AgentService.mapRow)
   }
 
+  static update(id: string, data: Partial<Pick<AgentProfile, "name" | "role" | "capabilities" | "status" | "model" | "enabled" | "cliCommand" | "runtimeId" | "avatarUrl">>): AgentProfile | undefined {
+    const updates: Record<string, unknown> = {}
+    if (data.name !== undefined) updates.name = data.name
+    if (data.role !== undefined) updates.role = data.role
+    if (data.capabilities !== undefined) updates.capabilities = JSON.stringify(data.capabilities)
+    if (data.status !== undefined) updates.status = data.status
+    if (data.model !== undefined) updates.model = data.model
+    if (data.enabled !== undefined) updates.enabled = String(data.enabled)
+    if (data.cliCommand !== undefined) updates.cliCommand = data.cliCommand || null
+    if (data.runtimeId !== undefined) updates.runtimeId = data.runtimeId || null
+    if (data.avatarUrl !== undefined) updates.avatarUrl = data.avatarUrl
+
+    if (Object.keys(updates).length === 0) return AgentService.get(id)
+
+    const result = db.update(agents).set(updates).where(eq(agents.id, id)).run()
+    if (result.changes === 0) return undefined
+    return AgentService.get(id)
+  }
+
   static updateStatus(id: string, status: AgentProfile["status"]): AgentProfile | undefined {
     const result = db.update(agents).set({ status }).where(eq(agents.id, id)).run()
     if (result.changes === 0) return undefined
@@ -48,6 +67,12 @@ export abstract class AgentService {
 
   static updateEnabled(id: string, enabled: boolean): AgentProfile | undefined {
     const result = db.update(agents).set({ enabled: String(enabled) }).where(eq(agents.id, id)).run()
+    if (result.changes === 0) return undefined
+    return AgentService.get(id)
+  }
+
+  static updateAvatar(id: string, avatarUrl: string): AgentProfile | undefined {
+    const result = db.update(agents).set({ avatarUrl }).where(eq(agents.id, id)).run()
     if (result.changes === 0) return undefined
     return AgentService.get(id)
   }
@@ -91,6 +116,7 @@ export abstract class AgentService {
       cliCommand: row.cliCommand || undefined,
       currentModel: row.currentModel || undefined,
       runtimeId: row.runtimeId || undefined,
+      avatarUrl: row.avatarUrl || undefined,
     }
   }
 }

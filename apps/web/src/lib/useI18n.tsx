@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, createContext, useContext, type ReactNode } from "react"
-import { getLocale, setLocale as paraglideSetLocale } from "#/paraglide/runtime"
 import { useUIStore } from "#/lib/store"
 import { api } from "#/lib/api"
+import { getInitialLocale, syncRuntimeLocale } from "#/lib/i18n-runtime"
 
 interface I18nContextValue {
   locale: string
@@ -21,14 +21,12 @@ export function I18nProvider({
   const settings = useUIStore((s) => s.settings)
   const setSettings = useUIStore((s) => s.setSettings)
 
-  // Always start with Paraglide's getLocale() to match SSR output,
-  // then sync from client settings in useEffect to avoid hydration mismatch
-  const [locale, setLocaleState] = useState(() => getLocale())
+  const [locale, setLocaleState] = useState(() => getInitialLocale())
 
   // Sync Paraglide to our locale
   useEffect(() => {
-    if (locale && locale !== getLocale()) {
-      paraglideSetLocale(locale, { reload: false })
+    if (locale) {
+      syncRuntimeLocale(locale)
     }
   }, [locale])
 
@@ -41,7 +39,7 @@ export function I18nProvider({
 
   const setLocaleWithSync = useCallback(async (newLocale: string) => {
     setLocaleState(newLocale)
-    paraglideSetLocale(newLocale, { reload: false })
+    syncRuntimeLocale(newLocale)
     try {
       const updated = await api.updateSettings({ locale: newLocale })
       setSettings(updated)

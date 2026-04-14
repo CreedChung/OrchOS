@@ -20,7 +20,7 @@ export const Route = createFileRoute('/dashboard')({
 
 function getViewFromPath(pathname: string): SidebarView {
   const segment = pathname.replace('/dashboard/', '').replace('/dashboard', '')
-  const validViews: SidebarView[] = ["inbox", "goals", "agents", "mcp-servers", "skills", "environments", "observability"]
+  const validViews: SidebarView[] = ["inbox", "goals", "creation", "agents", "mcp-servers", "skills", "environments", "observability"]
   return validViews.includes(segment as SidebarView) ? (segment as SidebarView) : "inbox"
 }
 

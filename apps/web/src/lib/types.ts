@@ -70,6 +70,7 @@ export interface AgentProfile {
   cliCommand?: string
   currentModel?: string
   runtimeId?: string
+  avatarUrl?: string
   rules?: AgentRule[]
 }
 
@@ -180,7 +181,7 @@ export interface Rule {
   createdAt: string
 }
 
-export type SidebarView = "inbox" | "goals" | "agents" | "mcp-servers" | "skills" | "environments" | "observability"
+export type SidebarView = "inbox" | "goals" | "creation" | "agents" | "mcp-servers" | "skills" | "environments" | "observability"
 
 export interface AgentRule {
   id: string

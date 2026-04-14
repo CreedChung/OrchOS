@@ -12,7 +12,7 @@ export function ComponentFileViewerWrapper({ component }: { component: ApiCompon
 
   if (!isMounted) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
         <div className="min-h-[640px] rounded-2xl border border-border bg-card flex items-center justify-center">
           <div className="text-muted-foreground text-sm">Loading...</div>
         </div>
@@ -21,7 +21,7 @@ export function ComponentFileViewerWrapper({ component }: { component: ApiCompon
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <ComponentFileViewer component={component} />
     </div>
   )

@@ -6,6 +6,7 @@ import {
 } from "@hugeicons/core-free-icons"
 import { Button } from "#/components/ui/button"
 import { ScrollArea } from "#/components/ui/scroll-area"
+import { AvatarUpload } from "#/components/ui/avatar-upload"
 import { m } from "#/paraglide/messages"
 import type { AgentProfile } from "#/lib/types"
 
@@ -14,6 +15,7 @@ interface AgentListProps {
   activeAgentId: string | null
   onSelectAgent: (id: string) => void
   onCreateAgent: () => void
+  onAgentUpdated?: () => void
 }
 
 const agentStatusColor: Record<AgentProfile["status"], string> = {
@@ -33,6 +35,7 @@ export function AgentList({
   activeAgentId,
   onSelectAgent,
   onCreateAgent,
+  onAgentUpdated,
 }: AgentListProps) {
   const enabledAgents = agents.filter((a) => a.enabled)
   const disabledAgents = agents.filter((a) => !a.enabled)
@@ -58,6 +61,7 @@ export function AgentList({
                   agent={agent}
                   isActive={agent.id === activeAgentId}
                   onClick={() => onSelectAgent(agent.id)}
+                  onAvatarUploaded={onAgentUpdated}
                 />
               ))}
             </>
@@ -76,6 +80,7 @@ export function AgentList({
                   agent={agent}
                   isActive={agent.id === activeAgentId}
                   onClick={() => onSelectAgent(agent.id)}
+                  onAvatarUploaded={onAgentUpdated}
                 />
               ))}
             </>
@@ -102,14 +107,15 @@ function AgentItem({
   agent,
   isActive,
   onClick,
+  onAvatarUploaded,
 }: {
   agent: AgentProfile
   isActive: boolean
   onClick: () => void
+  onAvatarUploaded?: () => void
 }) {
   return (
-    <button
-      onClick={onClick}
+    <div
       className={cn(
         "flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
         isActive
@@ -118,13 +124,14 @@ function AgentItem({
         !agent.enabled && "opacity-50"
       )}
     >
-      <div className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-bold",
-        isActive ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary"
-      )}>
-        {agent.name.charAt(0).toUpperCase()}
-      </div>
-      <div className="min-w-0 flex-1">
+      <AvatarUpload
+        agentId={agent.id}
+        avatarUrl={agent.avatarUrl}
+        name={agent.name}
+        size="sm"
+        onUploaded={onAvatarUploaded}
+      />
+      <button onClick={onClick} className="min-w-0 flex-1 text-left">
         <p className={cn("text-xs font-medium truncate", isActive && "text-accent-foreground")}>
           {agent.name}
         </p>
@@ -133,7 +140,7 @@ function AgentItem({
           <span className="text-[10px] text-muted-foreground">{agentStatusLabel[agent.status]}</span>
         </div>
         <p className="text-[10px] text-muted-foreground/60 truncate mt-0.5">{agent.model}</p>
-      </div>
-    </button>
+      </button>
+    </div>
   )
 }

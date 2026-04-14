@@ -48,13 +48,21 @@ function migrate(sqlite: Database) {
   try { sqlite.run("ALTER TABLE agents ADD COLUMN cli_command TEXT") } catch {}
   try { sqlite.run("ALTER TABLE agents ADD COLUMN current_model TEXT") } catch {}
   try { sqlite.run("ALTER TABLE agents ADD COLUMN runtime_id TEXT") } catch {}
+  try { sqlite.run("ALTER TABLE agents ADD COLUMN avatar_url TEXT") } catch {}
   try { sqlite.run("CREATE TABLE IF NOT EXISTS mcp_servers (id TEXT PRIMARY KEY, name TEXT NOT NULL, command TEXT NOT NULL, args TEXT NOT NULL DEFAULT '[]', env TEXT NOT NULL DEFAULT '{}', enabled TEXT NOT NULL DEFAULT 'true', scope TEXT NOT NULL DEFAULT 'global', project_id TEXT REFERENCES projects(id), organization_id TEXT REFERENCES organizations(id), created_at TEXT NOT NULL, updated_at TEXT NOT NULL)") } catch {}
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_mcp_servers_project_id ON mcp_servers(project_id)") } catch {}
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_mcp_servers_organization_id ON mcp_servers(organization_id)") } catch {}
-  try { sqlite.run("CREATE TABLE IF NOT EXISTS skills (id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, enabled TEXT NOT NULL DEFAULT 'true', scope TEXT NOT NULL DEFAULT 'global', project_id TEXT REFERENCES projects(id), organization_id TEXT REFERENCES organizations(id), created_at TEXT NOT NULL, updated_at TEXT NOT NULL)") } catch {}
+  try { sqlite.run("CREATE TABLE IF NOT EXISTS skills (id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, enabled TEXT NOT NULL DEFAULT 'true', scope TEXT NOT NULL DEFAULT 'global', project_id TEXT REFERENCES projects(id), organization_id TEXT REFERENCES organizations(id), source_type TEXT NOT NULL DEFAULT 'manual', source_url TEXT, install_path TEXT, manifest_path TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)") } catch {}
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_skills_project_id ON skills(project_id)") } catch {}
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_skills_organization_id ON skills(organization_id)") } catch {}
+  try { sqlite.run("ALTER TABLE skills ADD COLUMN source_type TEXT NOT NULL DEFAULT 'manual'") } catch {}
+  try { sqlite.run("ALTER TABLE skills ADD COLUMN source_url TEXT") } catch {}
+  try { sqlite.run("ALTER TABLE skills ADD COLUMN install_path TEXT") } catch {}
+  try { sqlite.run("ALTER TABLE skills ADD COLUMN manifest_path TEXT") } catch {}
   try { sqlite.run("ALTER TABLE projects ADD COLUMN repository_url TEXT") } catch {}
+  try { sqlite.run("CREATE TABLE IF NOT EXISTS conversations (id TEXT PRIMARY KEY, title TEXT, project_id TEXT REFERENCES projects(id), agent_id TEXT REFERENCES agents(id), runtime_id TEXT REFERENCES runtimes(id), created_at TEXT NOT NULL, updated_at TEXT NOT NULL)") } catch {}
+  try { sqlite.run("CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, conversation_id TEXT NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, error TEXT, response_time TEXT, created_at TEXT NOT NULL, FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE)") } catch {}
+  try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id)") } catch {}
   try { sqlite.run("CREATE TABLE IF NOT EXISTS sandboxes (id TEXT PRIMARY KEY, project_id TEXT REFERENCES projects(id), agent_type TEXT NOT NULL DEFAULT 'pi', status TEXT NOT NULL DEFAULT 'creating', created_at TEXT NOT NULL)") } catch {}
   try { sqlite.run("CREATE INDEX IF NOT EXISTS idx_sandboxes_project_id ON sandboxes(project_id)") } catch {}
   try { sqlite.run("CREATE TABLE IF NOT EXISTS runtimes (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, command TEXT NOT NULL, version TEXT, path TEXT, role TEXT NOT NULL, capabilities TEXT NOT NULL DEFAULT '[]', model TEXT NOT NULL, enabled TEXT NOT NULL DEFAULT 'true', current_model TEXT, status TEXT NOT NULL DEFAULT 'idle', registry_id TEXT)") } catch {}

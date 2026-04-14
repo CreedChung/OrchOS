@@ -1,10 +1,14 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { TooltipProvider } from '#/components/ui/tooltip'
+import { getLocale } from '#/paraglide/runtime'
+import { initializeClientLocale } from '#/lib/i18n-runtime'
 
 import appCss from '../styles.css?url'
 
 const THEME_INIT_SCRIPT = `(function(){try{var raw=window.localStorage.getItem('orchos-ui');var mode='auto';if(raw){var parsed=JSON.parse(raw);if(parsed&&parsed.state&&parsed.state.theme){mode=parsed.state.theme}}var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`
+
+initializeClientLocale()
 
 export const Route = createRootRoute({
   head: () => ({
@@ -46,7 +50,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={getLocale()} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />

@@ -32,10 +32,35 @@ export const skillController = new Elysia({ prefix: "/api/skills" })
       scope: body.scope,
       projectId: body.projectId,
       organizationId: body.organizationId,
+      sourceType: body.sourceType,
+      sourceUrl: body.sourceUrl,
+      installPath: body.installPath,
+      manifestPath: body.manifestPath,
     })
   }, {
     body: SkillModel.createBody,
     response: SkillModel.response,
+  })
+  .post("/analyze-repository", async ({ body }) => {
+    return SkillService.analyzeRepository({
+      source: body.source,
+      scope: body.scope,
+      projectId: body.projectId,
+      organizationId: body.organizationId,
+    })
+  }, {
+    body: SkillModel.analyzeRepositoryBody,
+    response: SkillModel.analyzeRepositoryResponse,
+  })
+  .post("/install-repository", ({ body }) => {
+    return SkillService.installFromAnalysis({
+      analysisId: body.analysisId,
+      selectedSkills: body.selectedSkills,
+      allowHighRisk: body.allowHighRisk,
+    })
+  }, {
+    body: SkillModel.installRepositoryBody,
+    response: SkillModel.installRepositoryResponse,
   })
   .patch("/:id", ({ params: { id }, body }) => {
     const skill = SkillService.update(id, {

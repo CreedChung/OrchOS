@@ -48,6 +48,7 @@ export interface AgentProfile {
   cliCommand?: string
   currentModel?: string
   runtimeId?: string
+  avatarUrl?: string
 }
 
 export interface RuntimeProfile {
@@ -131,8 +132,29 @@ export interface SkillProfile {
   scope: "global" | "project"
   projectId?: string
   organizationId?: string
+  sourceType: "manual" | "repository"
+  sourceUrl?: string
+  installPath?: string
+  manifestPath?: string
   createdAt: string
   updatedAt: string
+}
+
+export interface SkillRepositoryCandidate {
+  name: string
+  description?: string
+  relativePath: string
+}
+
+export interface SkillRepositoryAnalysis {
+  analysisId: string
+  source: string
+  riskLevel: "low" | "medium" | "high"
+  safeToInstall: boolean
+  summary: string
+  warnings: string[]
+  installTarget: string
+  installableSkills: SkillRepositoryCandidate[]
 }
 
 export interface CreateGoalRequest {

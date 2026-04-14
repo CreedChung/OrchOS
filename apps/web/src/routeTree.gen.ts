@@ -20,6 +20,7 @@ import { Route as DashboardMcpServersRouteImport } from './routes/dashboard/mcp-
 import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
 import { Route as DashboardGoalsRouteImport } from './routes/dashboard/goals'
 import { Route as DashboardEnvironmentsRouteImport } from './routes/dashboard/environments'
+import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
 import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
 
 const DashboardRoute = DashboardRouteImport.update({
@@ -77,6 +78,11 @@ const DashboardEnvironmentsRoute = DashboardEnvironmentsRouteImport.update({
   path: '/environments',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardCreationRoute = DashboardCreationRouteImport.update({
+  id: '/creation',
+  path: '/creation',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardAgentsRoute = DashboardAgentsRouteImport.update({
   id: '/agents',
   path: '/agents',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/changelog': typeof ChangelogRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/agents': typeof DashboardAgentsRoute
+  '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/environments': typeof DashboardEnvironmentsRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/changelog': typeof ChangelogRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
+  '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/environments': typeof DashboardEnvironmentsRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/changelog': typeof ChangelogRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/agents': typeof DashboardAgentsRoute
+  '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/environments': typeof DashboardEnvironmentsRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/dashboard'
     | '/dashboard/agents'
+    | '/dashboard/creation'
     | '/dashboard/environments'
     | '/dashboard/goals'
     | '/dashboard/inbox'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/changelog'
     | '/dashboard/agents'
+    | '/dashboard/creation'
     | '/dashboard/environments'
     | '/dashboard/goals'
     | '/dashboard/inbox'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/dashboard'
     | '/dashboard/agents'
+    | '/dashboard/creation'
     | '/dashboard/environments'
     | '/dashboard/goals'
     | '/dashboard/inbox'
@@ -255,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardEnvironmentsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/creation': {
+      id: '/dashboard/creation'
+      path: '/creation'
+      fullPath: '/dashboard/creation'
+      preLoaderRoute: typeof DashboardCreationRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/agents': {
       id: '/dashboard/agents'
       path: '/agents'
@@ -267,6 +286,7 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteChildren {
   DashboardAgentsRoute: typeof DashboardAgentsRoute
+  DashboardCreationRoute: typeof DashboardCreationRoute
   DashboardEnvironmentsRoute: typeof DashboardEnvironmentsRoute
   DashboardGoalsRoute: typeof DashboardGoalsRoute
   DashboardInboxRoute: typeof DashboardInboxRoute
@@ -278,6 +298,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAgentsRoute: DashboardAgentsRoute,
+  DashboardCreationRoute: DashboardCreationRoute,
   DashboardEnvironmentsRoute: DashboardEnvironmentsRoute,
   DashboardGoalsRoute: DashboardGoalsRoute,
   DashboardInboxRoute: DashboardInboxRoute,
