@@ -1,7 +1,9 @@
 import { Elysia, t } from "elysia";
+import { authPlugin } from "../auth";
 import { FilesystemService } from "./service";
 
 export const filesystemController = new Elysia({ prefix: "/api/filesystem" })
+  .use(authPlugin)
   .requireAuth(true)
   .get(
   "/browse",

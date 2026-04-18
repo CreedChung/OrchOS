@@ -1,9 +1,11 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { ProjectService } from "./service";
 import { ProjectModel } from "./model";
 
 export const projectController = new Elysia({ prefix: "/api/projects" })
+  .use(authPlugin)
   .requireAuth(true)
   .get("/", () => ProjectService.list(), {
     response: t.Array(ProjectModel.response),

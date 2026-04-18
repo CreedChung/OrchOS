@@ -1,9 +1,11 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { StateService } from "./service";
 import { StateModel } from "./model";
 
 export const stateController = new Elysia({ prefix: "/api/goals/:goalId" })
+  .use(authPlugin)
   .requireAuth(true)
   .get("/states", ({ params: { goalId } }) => StateService.getStatesByGoal(goalId), {
     response: t.Array(StateModel.stateResponse),
@@ -39,6 +41,7 @@ export const stateController = new Elysia({ prefix: "/api/goals/:goalId" })
   );
 
 export const stateItemController = new Elysia({ prefix: "/api/states" })
+  .use(authPlugin)
   .requireAuth(true)
   .patch(
     "/:id",
@@ -71,6 +74,7 @@ export const stateItemController = new Elysia({ prefix: "/api/states" })
   );
 
 export const artifactItemController = new Elysia({ prefix: "/api/artifacts" })
+  .use(authPlugin)
   .requireAuth(true)
   .patch(
   "/:id",

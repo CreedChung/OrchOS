@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 
-import { createAuthPlugin } from "./modules/auth";
+import { authPlugin } from "./modules/auth";
 import { goalController } from "./modules/goal";
 import { projectController } from "./modules/project";
 import { agentController } from "./modules/agent";
@@ -25,9 +25,6 @@ import { seedData } from "./db/seed";
 import "./db";
 
 seedData();
-
-const jwtKey = process.env.CLERK_JWT_KEY?.trim() ?? "";
-const authPlugin = createAuthPlugin(jwtKey);
 
 const app = new Elysia()
   .use(cors())

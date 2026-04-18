@@ -120,7 +120,10 @@ export function MorphPanel({ runtimes }: MorphPanelProps) {
 }
 
 function DockBar() {
-  const { triggerOpen } = useFormContext();
+  const { showForm, triggerOpen } = useFormContext();
+
+  if (showForm) return null;
+
   return (
     <footer className="mt-auto flex h-[44px] items-center justify-center whitespace-nowrap select-none">
       <div className="flex w-full items-center justify-center gap-2 px-3">

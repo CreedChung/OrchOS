@@ -1,7 +1,9 @@
 import { Elysia } from "elysia";
+import { authPlugin } from "../auth";
 import { eventBus } from "../event/event-bus";
 
 export const wsController = new Elysia({ prefix: "/" })
+  .use(authPlugin)
   .requireAuth(true)
   .ws("/ws", {
   open(ws) {

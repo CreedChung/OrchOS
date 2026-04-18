@@ -1,9 +1,11 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { SkillService } from "./service";
 import { SkillModel } from "./model";
 
 export const skillController = new Elysia({ prefix: "/api/skills" })
+  .use(authPlugin)
   .requireAuth(true)
   .get(
     "/",

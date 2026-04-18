@@ -1,8 +1,10 @@
 import { Elysia, t } from "elysia";
+import { authPlugin } from "../auth";
 import { ActivityService } from "./service";
 import { ActivityModel } from "./model";
 
 export const activityController = new Elysia({ prefix: "/api" })
+  .use(authPlugin)
   .requireAuth(true)
   .get(
     "/activities",

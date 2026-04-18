@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { RuleService } from "./service";
 
 const RuleResponse = t.Object({
@@ -12,6 +13,7 @@ const RuleResponse = t.Object({
 });
 
 export const ruleController = new Elysia({ prefix: "/api/rules" })
+  .use(authPlugin)
   .requireAuth(true)
   .get("/", () => RuleService.list(), {
     response: t.Array(RuleResponse),

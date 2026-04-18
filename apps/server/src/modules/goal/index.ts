@@ -1,10 +1,12 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { GoalService } from "./service";
 import { GoalModel } from "./model";
 import { StateService } from "../state/service";
 
 export const goalController = new Elysia({ prefix: "/api/goals" })
+  .use(authPlugin)
   .requireAuth(true)
   .get("/", () => GoalService.list(), {
     response: t.Array(GoalModel.response),

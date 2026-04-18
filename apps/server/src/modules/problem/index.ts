@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { ProblemService } from "./service";
 
 const ProblemResponse = t.Object({
@@ -22,6 +23,7 @@ const ProblemResponse = t.Object({
 });
 
 export const problemController = new Elysia({ prefix: "/api/problems" })
+  .use(authPlugin)
   .requireAuth(true)
   .get(
     "/",

@@ -21,9 +21,12 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isLoaded, isSignedIn } = useAuth();
-
   if (!isClerkConfigured) return <>{children}</>;
+  return <ClerkAuthGate>{children}</ClerkAuthGate>;
+}
+
+function ClerkAuthGate({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
 
   if (!isLoaded) {
     return (

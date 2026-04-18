@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { eq } from "drizzle-orm";
 import { db } from "../../db";
 import { organizations } from "../../db/schema";
@@ -56,6 +57,7 @@ const updateBody = t.Object({
 });
 
 export const organizationController = new Elysia({ prefix: "/api/organizations" })
+  .use(authPlugin)
   .requireAuth(true)
   .get("/", () => OrganizationService.list(), {
     response: t.Array(OrganizationModel.response),

@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { AgentService } from "./service";
 import { AgentModel } from "./model";
 import { S3Client } from "bun";
@@ -12,6 +13,7 @@ const s3 = new S3Client({
 });
 
 export const agentController = new Elysia({ prefix: "/api/agents" })
+  .use(authPlugin)
   .requireAuth(true)
   .get("/", () => AgentService.list(), {
     response: t.Array(AgentModel.response),

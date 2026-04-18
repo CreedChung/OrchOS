@@ -289,11 +289,44 @@ export function Sidebar({
 }
 
 function ClerkUserProfile({ onOpenSettings }: { onOpenSettings: () => void }) {
-  const { user, isLoaded } = useUser();
-  const { signOut } = useClerk();
   const isClerkConfigured = !!(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim());
 
-  if (!isClerkConfigured || !isLoaded) {
+  if (!isClerkConfigured) {
+    return (
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
+          </div>
+          <span className="flex-1 truncate text-left">{m.user()}</span>
+          <HugeiconsIcon icon={ChevronUp} className="size-3 shrink-0 opacity-50" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="top" className="min-w-48 mb-1">
+          <div className="flex items-center gap-2.5 px-2 py-2">
+            <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">U</div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground truncate">{m.user()}</p>
+              <p className="text-xs text-muted-foreground truncate">user@orchos.dev</p>
+            </div>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onOpenSettings}>
+            <HugeiconsIcon icon={Settings02Icon} className="size-3.5" />
+            {m.settings()}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  return <ClerkAuthenticatedProfile onOpenSettings={onOpenSettings} />;
+}
+
+function ClerkAuthenticatedProfile({ onOpenSettings }: { onOpenSettings: () => void }) {
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
+
+  if (!isLoaded) {
     return (
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">

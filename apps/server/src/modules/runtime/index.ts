@@ -1,9 +1,11 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { RuntimeService } from "./service";
 import { RuntimeModel } from "./model";
 
 export const runtimeController = new Elysia({ prefix: "/api/runtimes" })
+  .use(authPlugin)
   .requireAuth(true)
   .get("/", () => RuntimeService.list(), {
     response: t.Array(RuntimeModel.response),

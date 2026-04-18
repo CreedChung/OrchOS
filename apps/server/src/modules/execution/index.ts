@@ -1,10 +1,12 @@
 import { Elysia } from "elysia";
+import { authPlugin } from "../auth";
 import { ExecutionService } from "./service";
 import { ExecutionModel } from "./model";
 
 const engine = new ExecutionService();
 
 export const executionController = new Elysia({ prefix: "/api/goals/:goalId" })
+  .use(authPlugin)
   .requireAuth(true)
   .post(
     "/actions",
@@ -28,6 +30,7 @@ export const executionController = new Elysia({ prefix: "/api/goals/:goalId" })
   );
 
 export const settingsController = new Elysia({ prefix: "/api/settings" })
+  .use(authPlugin)
   .requireAuth(true)
   .get("/", () => engine.getSettings(), {
     response: ExecutionModel.settingsResponse,

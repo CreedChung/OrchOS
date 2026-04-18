@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { CommandService } from "./service";
 
 const CommandResponse = t.Object({
@@ -18,6 +19,7 @@ const CommandResponse = t.Object({
 });
 
 export const commandController = new Elysia({ prefix: "/api/commands" })
+  .use(authPlugin)
   .requireAuth(true)
   .get("/", () => CommandService.list(), {
     response: t.Array(CommandResponse),

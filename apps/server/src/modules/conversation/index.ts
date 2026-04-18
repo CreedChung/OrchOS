@@ -1,9 +1,11 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { ConversationService } from "./service";
 import { ConversationModel } from "./model";
 
 export const conversationController = new Elysia({ prefix: "/api/conversations" })
+  .use(authPlugin)
   .requireAuth(true)
   .get("/", () => ConversationService.list(), {
     response: t.Array(ConversationModel.response),

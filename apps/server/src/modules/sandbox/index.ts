@@ -1,9 +1,11 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
+import { authPlugin } from "../auth";
 import { SandboxService } from "./service";
 import { SandboxModel } from "./model";
 
 export const sandboxController = new Elysia({ prefix: "/api/sandbox" })
+  .use(authPlugin)
   .requireAuth(true)
 
   // --- VM Management ---

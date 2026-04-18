@@ -8,6 +8,14 @@ export const Route = createFileRoute("/sign-in")({
 });
 
 function SignInPage() {
+  if (!isClerkConfigured) {
+    return (
+      <AuthPage mode="signIn">
+        <MissingClerkConfig />
+      </AuthPage>
+    );
+  }
+
   return (
     <>
       <SignedIn>
@@ -15,16 +23,12 @@ function SignInPage() {
       </SignedIn>
       <SignedOut>
         <AuthPage mode="signIn">
-          {isClerkConfigured ? (
-            <SignIn
-              path="/sign-in"
-              routing="path"
-              signUpUrl="/sign-up"
-              fallbackRedirectUrl="/dashboard"
-            />
-          ) : (
-            <MissingClerkConfig />
-          )}
+          <SignIn
+            path="/sign-in"
+            routing="path"
+            signUpUrl="/sign-up"
+            fallbackRedirectUrl="/dashboard"
+          />
         </AuthPage>
       </SignedOut>
     </>
