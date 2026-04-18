@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as AboutRouteImport } from './routes/about'
@@ -22,7 +24,18 @@ import { Route as DashboardGoalsRouteImport } from './routes/dashboard/goals'
 import { Route as DashboardEnvironmentsRouteImport } from './routes/dashboard/environments'
 import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
 import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
+import { Route as ApiSplatRouteImport } from './routes/api.$'
 
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -88,12 +101,20 @@ const DashboardAgentsRoute = DashboardAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiSplatRoute = ApiSplatRouteImport.update({
+  id: '/api/$',
+  path: '/api/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/changelog': typeof ChangelogRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/api/$': typeof ApiSplatRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/environments': typeof DashboardEnvironmentsRoute
@@ -108,6 +129,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/changelog': typeof ChangelogRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/api/$': typeof ApiSplatRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/environments': typeof DashboardEnvironmentsRoute
@@ -124,6 +148,9 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/changelog': typeof ChangelogRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/api/$': typeof ApiSplatRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/environments': typeof DashboardEnvironmentsRoute
@@ -141,6 +168,9 @@ export interface FileRouteTypes {
     | '/about'
     | '/changelog'
     | '/dashboard'
+    | '/sign-in'
+    | '/sign-up'
+    | '/api/$'
     | '/dashboard/agents'
     | '/dashboard/creation'
     | '/dashboard/environments'
@@ -155,6 +185,9 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/changelog'
+    | '/sign-in'
+    | '/sign-up'
+    | '/api/$'
     | '/dashboard/agents'
     | '/dashboard/creation'
     | '/dashboard/environments'
@@ -170,6 +203,9 @@ export interface FileRouteTypes {
     | '/about'
     | '/changelog'
     | '/dashboard'
+    | '/sign-in'
+    | '/sign-up'
+    | '/api/$'
     | '/dashboard/agents'
     | '/dashboard/creation'
     | '/dashboard/environments'
@@ -186,10 +222,27 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ChangelogRoute: typeof ChangelogRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
+  ApiSplatRoute: typeof ApiSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -281,6 +334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAgentsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -317,6 +377,9 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ChangelogRoute: ChangelogRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
+  ApiSplatRoute: ApiSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
