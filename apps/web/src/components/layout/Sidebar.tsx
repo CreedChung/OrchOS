@@ -346,8 +346,8 @@ function ClerkUserProfile({ onOpenSettings }: { onOpenSettings: () => void }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" sideOffset={8} className="mb-1 min-w-[var(--radix-dropdown-menu-trigger-width)]">
             <DropdownMenuItem onClick={() => setProfileOpen(true)}>
-              <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-              {`${m.rename()} ${m.user()}`}
+              <HugeiconsIcon icon={UserCircleIcon} className="size-3.5" />
+              {m.profile_settings()}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onOpenSettings}>
               <HugeiconsIcon icon={Settings02Icon} className="size-3.5" />
@@ -430,8 +430,8 @@ function ClerkAuthenticatedProfile({ onOpenSettings }: { onOpenSettings: () => v
         </DropdownMenuTrigger>
         <DropdownMenuContent side="top" align="start" sideOffset={8} className="mb-1 min-w-[var(--radix-dropdown-menu-trigger-width)]">
           <DropdownMenuItem onClick={() => setProfileOpen(true)}>
-            <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-            {`${m.rename()} ${m.user()}`}
+            <HugeiconsIcon icon={UserCircleIcon} className="size-3.5" />
+            {m.profile_settings()}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onOpenSettings}>
             <HugeiconsIcon icon={Settings02Icon} className="size-3.5" />

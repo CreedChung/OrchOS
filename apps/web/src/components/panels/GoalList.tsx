@@ -1,8 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Target01Icon, FolderGitIcon, Add01Icon } from "@hugeicons/core-free-icons";
-import { Button } from "@/components/ui/button";
+import { Target01Icon, FolderGitIcon } from "@hugeicons/core-free-icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { m } from "@/paraglide/messages";
 import type { Goal, Project } from "@/lib/types";
@@ -22,7 +21,6 @@ interface GoalListProps {
   statusFilter: GoalStatusFilter;
   searchQuery: string;
   onSelectGoal: (id: string) => void;
-  onCreateGoal: () => void;
 }
 
 const goalStatusColor: Record<Goal["status"], string> = {
@@ -38,7 +36,6 @@ export function GoalList({
   statusFilter,
   searchQuery,
   onSelectGoal,
-  onCreateGoal,
 }: GoalListProps) {
   // Filter goals
   const filtered = goals.filter((g) => {
@@ -68,13 +65,8 @@ export function GoalList({
   return (
     <div className="flex h-full w-72 flex-col border-r border-border bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+      <div className="border-b border-border px-4 py-3">
         <h2 className="text-sm font-semibold text-foreground">{m.goals()}</h2>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon-sm" onClick={onCreateGoal} title={m.create_goal()}>
-            <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-          </Button>
-        </div>
       </div>
 
       {/* List */}
@@ -155,12 +147,6 @@ export function GoalList({
               />
               <p className="text-sm text-muted-foreground">{m.no_goal_selected()}</p>
               <p className="text-xs text-muted-foreground/60 mt-1">{m.no_goal_selected_desc()}</p>
-              <div className="flex justify-center mt-3">
-                <Button size="sm" onClick={onCreateGoal}>
-                  <HugeiconsIcon icon={Add01Icon} className="size-3 mr-1" />
-                  {m.new_goal()}
-                </Button>
-              </div>
             </div>
           )}
         </div>

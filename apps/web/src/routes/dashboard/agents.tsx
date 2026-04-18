@@ -14,7 +14,6 @@ function AgentsPage() {
     handleRuleToggle,
     handleRuleDelete,
     handleUpdateAgent,
-    setShowCreateAgentDialog,
     refreshAll,
   } = useDashboard();
 
@@ -30,7 +29,6 @@ function AgentsPage() {
         agents={agentInstances}
         activeAgentId={activeAgentId}
         onSelectAgent={setActiveAgentId}
-        onCreateAgent={() => setShowCreateAgentDialog(true)}
         onAgentUpdated={refreshAll}
       />
       <div className="flex-1 overflow-hidden">

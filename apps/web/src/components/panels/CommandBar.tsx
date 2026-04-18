@@ -1,9 +1,17 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { SentIcon, Robot02Icon, FolderGitIcon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import {
+  SentIcon,
+  Robot02Icon,
+  FolderGitIcon,
+  Cancel01Icon,
+  ArrowUp01Icon,
+} from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
 import type { RuntimeProfile, Project } from "@/lib/types";
+import { BorderBeam } from "border-beam";
+import { Button } from "@/components/ui/button";
 
 interface CommandBarProps {
   open: boolean;
@@ -49,7 +57,7 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-2xl overflow-hidden">
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-border">
           <div className="flex items-center gap-2">
@@ -64,113 +72,99 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {/* Instruction Input */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.command_label()}
-            </label>
-            <textarea
-              value={instruction}
-              onChange={(e) => setInstruction(e.target.value)}
-              placeholder={m.command_placeholder()}
-              rows={3}
-              className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-              autoFocus
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4 p-5">
+          <BorderBeam
+            size="md"
+            theme="auto"
+            colorVariant="ocean"
+            strength={0.65}
+            duration={2.6}
+            className="rounded-2xl"
+          >
+            <div className="rounded-2xl border border-border bg-background px-4 py-4">
+              <textarea
+                value={instruction}
+                onChange={(e) => setInstruction(e.target.value)}
+                placeholder={m.command_placeholder()}
+                rows={1}
+                autoFocus
+                className="min-h-[88px] w-full resize-none bg-transparent px-1 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              />
 
-          {/* Agent Selection */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.agents_label()}
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {enabledRuntimes.map((runtime) => {
-                const isSelected = selectedRuntimes.includes(runtime.name);
-                return (
-                  <button
-                    key={runtime.id}
-                    type="button"
-                    onClick={() => toggleRuntime(runtime.name)}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                      isSelected
-                        ? "border-primary/50 bg-primary/10 text-primary"
-                        : "border-border/50 bg-card text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                    )}
-                  >
-                    <HugeiconsIcon icon={Robot02Icon} className="size-3" />
-                    {runtime.name}
-                    {runtime.status === "active" && (
-                      <span className="size-1.5 rounded-full bg-emerald-500" />
-                    )}
-                  </button>
-                );
-              })}
-              {enabledRuntimes.length === 0 && (
-                <span className="text-xs text-muted-foreground">{m.no_agents_available()}</span>
-              )}
-            </div>
-          </div>
-
-          {/* Project / Context Selection */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.context()}
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {projects.map((project) => {
-                const isSelected = selectedProjects.includes(project.id);
-                return (
-                  <button
-                    key={project.id}
-                    type="button"
-                    onClick={() => toggleProject(project.id)}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                      isSelected
-                        ? "border-primary/50 bg-primary/10 text-primary"
-                        : "border-border/50 bg-card text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                    )}
-                  >
-                    <HugeiconsIcon icon={FolderGitIcon} className="size-3" />
-                    {project.name}
-                  </button>
-                );
-              })}
-              {projects.length === 0 && (
-                <span className="text-xs text-muted-foreground">{m.no_projects_configured()}</span>
-              )}
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-[10px] text-muted-foreground">{m.command_to_goal()}</span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-              >
-                {m.cancel()}
-              </button>
-              <button
-                type="submit"
-                disabled={!instruction.trim()}
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
-                  instruction.trim()
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-muted text-muted-foreground cursor-not-allowed",
+              <div className="mt-3 flex flex-wrap gap-2 border-t border-border/60 pt-3">
+                {enabledRuntimes.map((runtime) => {
+                  const isSelected = selectedRuntimes.includes(runtime.name);
+                  return (
+                    <button
+                      key={runtime.id}
+                      type="button"
+                      onClick={() => toggleRuntime(runtime.name)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                        isSelected
+                          ? "border-primary/50 bg-primary/10 text-primary"
+                          : "border-border/50 bg-card text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                      )}
+                    >
+                      <HugeiconsIcon icon={Robot02Icon} className="size-3" />
+                      {runtime.name}
+                      {runtime.status === "active" && <span className="size-1.5 rounded-full bg-emerald-500" />}
+                    </button>
+                  );
+                })}
+                {enabledRuntimes.length === 0 && (
+                  <span className="inline-flex items-center rounded-full border border-dashed border-border/60 px-2.5 py-1 text-xs text-muted-foreground">
+                    {m.no_agents_available()}
+                  </span>
                 )}
-              >
-                <HugeiconsIcon icon={SentIcon} className="size-3.5" />
-                {m.send()}
-              </button>
+              </div>
+
+              <div className="mt-2 flex flex-wrap gap-2">
+                {projects.map((project) => {
+                  const isSelected = selectedProjects.includes(project.id);
+                  return (
+                    <button
+                      key={project.id}
+                      type="button"
+                      onClick={() => toggleProject(project.id)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                        isSelected
+                          ? "border-primary/50 bg-primary/10 text-primary"
+                          : "border-border/50 bg-card text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                      )}
+                    >
+                      <HugeiconsIcon icon={FolderGitIcon} className="size-3" />
+                      {project.name}
+                    </button>
+                  );
+                })}
+                {projects.length === 0 && (
+                  <span className="inline-flex items-center rounded-full border border-dashed border-border/60 px-2.5 py-1 text-xs text-muted-foreground">
+                    {m.no_projects_configured()}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-4 flex items-end justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground/70">
+                    {m.command_label()}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/60">{m.command_to_goal()}</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+                    {m.cancel()}
+                  </Button>
+                  <Button type="submit" size="icon-sm" disabled={!instruction.trim()}>
+                    <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
+          </BorderBeam>
         </form>
       </div>
     </div>

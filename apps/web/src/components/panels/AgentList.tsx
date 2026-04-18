@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Robot02Icon, Add01Icon } from "@hugeicons/core-free-icons";
-import { Button } from "@/components/ui/button";
+import { Robot02Icon } from "@hugeicons/core-free-icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { m } from "@/paraglide/messages";
@@ -11,7 +10,6 @@ interface AgentListProps {
   agents: AgentProfile[];
   activeAgentId: string | null;
   onSelectAgent: (id: string) => void;
-  onCreateAgent: () => void;
   onAgentUpdated?: () => void;
 }
 
@@ -31,7 +29,6 @@ export function AgentList({
   agents,
   activeAgentId,
   onSelectAgent,
-  onCreateAgent,
   onAgentUpdated,
 }: AgentListProps) {
   const enabledAgents = agents.filter((a) => a.enabled);
@@ -40,11 +37,8 @@ export function AgentList({
   return (
     <div className="flex h-full w-72 flex-col border-r border-border bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+      <div className="border-b border-border px-4 py-3">
         <h2 className="text-sm font-semibold text-foreground">{m.agents()}</h2>
-        <Button variant="ghost" size="icon-sm" onClick={onCreateAgent} title={m.create_agent()}>
-          <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-        </Button>
       </div>
 
       {/* List */}
@@ -93,10 +87,6 @@ export function AgentList({
               <p className="text-xs text-muted-foreground/60 mt-1 px-4">
                 {m.no_agent_instances_desc()}
               </p>
-              <Button size="sm" className="mt-3" onClick={onCreateAgent}>
-                <HugeiconsIcon icon={Add01Icon} className="size-3 mr-1" />
-                {m.create_agent()}
-              </Button>
             </div>
           )}
         </div>

@@ -114,6 +114,9 @@ export function Toolbar({
   environmentSection,
   onEnvironmentSectionChange,
 }: ToolbarProps) {
+  const creationDeletedLabel =
+    typeof m.creation_deleted === "function" ? m.creation_deleted() : "Deleted";
+
   return (
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
       {activeView === "creation" && (
@@ -122,7 +125,7 @@ export function Toolbar({
             { value: "all", label: m.all() },
             { value: "active", label: m.creation_active() },
             { value: "archived", label: m.creation_archived() },
-            { value: "deleted", label: m.creation_deleted() },
+            { value: "deleted", label: creationDeletedLabel },
           ] as const).map((filter) => (
             <button
               key={filter.value}
