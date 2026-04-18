@@ -125,6 +125,18 @@ function ModelBadge({ model, isLocalRuntime }: { model: string; isLocalRuntime?:
   );
 }
 
+function RuntimeModeBadge({
+  mode,
+}: {
+  mode: "acp-native" | "acp-adapter" | "cli-fallback";
+}) {
+  return (
+    <span className="rounded-md border border-border bg-card px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+      {mode === "acp-native" ? "ACP Native" : mode === "acp-adapter" ? "ACP Adapter" : "CLI Fallback"}
+    </span>
+  );
+}
+
 export function SettingsDialog({
   open,
   onClose,
@@ -705,6 +717,7 @@ export function SettingsDialog({
                                 {agent.name}
                               </span>
                               <ModelBadge model={agent.model} isLocalRuntime />
+                              <RuntimeModeBadge mode={agent.communicationMode} />
                               {agent.version && (
                                 <span className="text-[10px] text-muted-foreground">
                                   v{agent.version}
@@ -760,6 +773,7 @@ export function SettingsDialog({
                               {agent.name}
                             </span>
                             <ModelBadge model={agent.model} isLocalRuntime />
+                            <RuntimeModeBadge mode={agent.communicationMode} />
                           </div>
                           <p className="text-xs text-muted-foreground">{agent.role}</p>
                         </div>
@@ -790,7 +804,7 @@ export function SettingsDialog({
             {activeTab === "about" && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <img src="/logo.svg" alt="OrchOS" className="size-10 rounded-lg" />
+                  <img src="/logo.svg" alt="OrchOS" className="size-10" />
                   <div>
                     <p className="text-sm font-semibold text-foreground">OrchOS</p>
                     <p className="text-xs text-muted-foreground">v1.0.0</p>

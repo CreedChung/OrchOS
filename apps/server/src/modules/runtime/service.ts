@@ -3,6 +3,7 @@ import { runtimes } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateId } from "@/utils";
 import { executor } from "@/modules/execution/executor";
+import { getAcpAgentConfig, getAcpCurrentModel, probeAcpAgent, promptManagedAcpAgent } from "@/modules/runtime/acp";
 
 export interface RuntimeProfile {
   id: string;
@@ -13,6 +14,12 @@ export interface RuntimeProfile {
   role: string;
   capabilities: string[];
   model: string;
+  protocol: "acp" | "cli";
+  transport: "stdio" | "tcp";
+  acpCommand?: string;
+  acpArgs: string[];
+  acpEnv: Record<string, string>;
+  communicationMode: "acp-native" | "acp-adapter" | "cli-fallback";
   enabled: boolean;
   currentModel?: string;
   status: "idle" | "active" | "error";
@@ -28,6 +35,12 @@ export abstract class RuntimeService {
     role: string;
     capabilities: string[];
     model: string;
+    protocol: "acp" | "cli";
+    transport: "stdio" | "tcp";
+    acpCommand?: string;
+    acpArgs?: string[];
+    acpEnv?: Record<string, string>;
+    communicationMode: "acp-native" | "acp-adapter" | "cli-fallback";
     registryId?: string;
   }): RuntimeProfile {
     const id = generateId("runtime");
@@ -42,6 +55,12 @@ export abstract class RuntimeService {
         role: definition.role,
         capabilities: JSON.stringify(definition.capabilities),
         model: definition.model,
+        protocol: definition.protocol,
+        transport: definition.transport,
+        acpCommand: definition.acpCommand || null,
+        acpArgs: JSON.stringify(definition.acpArgs || []),
+        acpEnv: JSON.stringify(definition.acpEnv || {}),
+        communicationMode: definition.communicationMode,
         enabled: "true",
         status: "idle",
         registryId: definition.registryId || null,
@@ -93,41 +112,101 @@ export abstract class RuntimeService {
       role: string;
       capabilities: string[];
       model: string;
+      protocol: "acp" | "cli";
+      transport: "stdio" | "tcp";
+      acpCommand?: string;
+      acpArgs: string[];
+      acpEnv: Record<string, string>;
+      communicationMode: "acp-native" | "acp-adapter" | "cli-fallback";
+      error?: string;
     }[];
     unavailable: {
       id: string;
       name: string;
       command: string;
+      version?: string;
+      path?: string;
       role: string;
       capabilities: string[];
       model: string;
+      protocol: "acp" | "cli";
+      transport: "stdio" | "tcp";
+      acpCommand?: string;
+      acpArgs: string[];
+      acpEnv: Record<string, string>;
+      communicationMode: "acp-native" | "acp-adapter" | "cli-fallback";
+      error?: string;
     }[];
   }> {
     const detected = await executor.detectAgentCLIs();
 
-    const available = detected
-      .filter((d) => d.available)
-      .map((d) => ({
-        id: d.definition.id,
-        name: d.definition.name,
-        command: d.definition.command,
-        version: d.version,
-        path: d.path,
-        role: d.definition.role,
-        capabilities: d.definition.capabilities,
-        model: d.definition.model,
-      }));
+    const available: Awaited<ReturnType<typeof RuntimeService.detect>>["available"] = [];
+    const unavailable: Awaited<ReturnType<typeof RuntimeService.detect>>["unavailable"] = [];
 
-    const unavailable = detected
-      .filter((d) => !d.available)
-      .map((d) => ({
-        id: d.definition.id,
-        name: d.definition.name,
-        command: d.definition.command,
-        role: d.definition.role,
-        capabilities: d.definition.capabilities,
-        model: d.definition.model,
-      }));
+    for (const detectedRuntime of detected) {
+      const base = {
+        id: detectedRuntime.definition.id,
+        name: detectedRuntime.definition.name,
+        command: detectedRuntime.definition.command,
+        version: detectedRuntime.version,
+        path: detectedRuntime.path,
+        role: detectedRuntime.definition.role,
+        capabilities: detectedRuntime.definition.capabilities,
+        model: detectedRuntime.definition.model,
+      };
+      const acpConfig = getAcpAgentConfig(base);
+
+      if (acpConfig) {
+        try {
+          await probeAcpAgent(acpConfig);
+          available.push({
+            ...base,
+            protocol: "acp",
+            transport: "stdio",
+            acpCommand: acpConfig.command,
+            acpArgs: acpConfig.args,
+            acpEnv: acpConfig.env || {},
+            communicationMode: acpConfig.communicationMode,
+          });
+          continue;
+        } catch (error) {
+          unavailable.push({
+            ...base,
+            protocol: "acp",
+            transport: "stdio",
+            acpCommand: acpConfig.command,
+            acpArgs: acpConfig.args,
+            acpEnv: acpConfig.env || {},
+            communicationMode: acpConfig.communicationMode,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          continue;
+        }
+      }
+
+      if (detectedRuntime.available) {
+        available.push({
+          ...base,
+          protocol: "cli",
+          transport: "stdio",
+          acpCommand: undefined,
+          acpArgs: [],
+          acpEnv: {},
+          communicationMode: "cli-fallback",
+        });
+      } else {
+        unavailable.push({
+          ...base,
+          protocol: "cli",
+          transport: "stdio",
+          acpCommand: undefined,
+          acpArgs: [],
+          acpEnv: {},
+          communicationMode: "cli-fallback",
+          error: `${detectedRuntime.definition.command} not found in PATH`,
+        });
+      }
+    }
 
     return { available, unavailable };
   }
@@ -141,6 +220,12 @@ export abstract class RuntimeService {
     role: string;
     capabilities: string[];
     model: string;
+    protocol: "acp" | "cli";
+    transport: "stdio" | "tcp";
+    acpCommand?: string;
+    acpArgs: string[];
+    acpEnv: Record<string, string>;
+    communicationMode: "acp-native" | "acp-adapter" | "cli-fallback";
   }): RuntimeProfile | undefined {
     // Check by name first (existing registration)
     const existing = RuntimeService.getByName(definition.name);
@@ -150,6 +235,12 @@ export abstract class RuntimeService {
       if (definition.version && existing.version !== definition.version)
         updates.version = definition.version;
       if (definition.path && existing.path !== definition.path) updates.path = definition.path;
+      updates.protocol = definition.protocol;
+      updates.transport = definition.transport;
+      updates.acpCommand = definition.acpCommand || "";
+      updates.acpArgs = JSON.stringify(definition.acpArgs || []);
+      updates.acpEnv = JSON.stringify(definition.acpEnv || {});
+      updates.communicationMode = definition.communicationMode;
       if (Object.keys(updates).length > 0) {
         db.update(runtimes).set(updates).where(eq(runtimes.id, existing.id)).run();
       }
@@ -164,6 +255,12 @@ export abstract class RuntimeService {
       role: definition.role,
       capabilities: definition.capabilities,
       model: definition.model,
+      protocol: definition.protocol,
+      transport: definition.transport,
+      acpCommand: definition.acpCommand,
+      acpArgs: definition.acpArgs,
+      acpEnv: definition.acpEnv,
+      communicationMode: definition.communicationMode,
       registryId: definition.id,
     });
   }
@@ -175,9 +272,29 @@ export abstract class RuntimeService {
     return executor.testAgentCLI(runtimeId, options);
   }
 
-  static async getCurrentModel(runtimeId: string) {
-    const result = await executor.getAgentCurrentModel(runtimeId);
+  static async getCurrentModel(runtimeId: string): Promise<{
+    model?: string;
+    source: "acp" | "cli" | "config" | "registry";
+    rawOutput?: string;
+  }> {
     const runtime = RuntimeService.getByRegistryId(runtimeId) || RuntimeService.get(runtimeId);
+
+    if (runtime) {
+      const acpConfig = getAcpAgentConfig(runtime);
+      if (acpConfig) {
+        try {
+          const result = await getAcpCurrentModel(acpConfig);
+          if (result.model) {
+            db.update(runtimes).set({ currentModel: result.model }).where(eq(runtimes.id, runtime.id)).run();
+          }
+          return { model: result.model, source: "acp", rawOutput: result.rawOutput };
+        } catch {
+          // Fall back to legacy CLI probing when ACP is unavailable.
+        }
+      }
+    }
+
+    const result = await executor.getAgentCurrentModel(runtimeId);
     if (runtime && result.model && result.source === "cli") {
       db.update(runtimes)
         .set({ currentModel: result.model })
@@ -190,6 +307,7 @@ export abstract class RuntimeService {
   static async chat(
     runtimeId: string,
     prompt: string,
+    options?: { conversationId?: string },
   ): Promise<{
     success: boolean;
     output: string;
@@ -206,6 +324,25 @@ export abstract class RuntimeService {
         agentName: runtimeId,
         responseTime: 0,
       };
+    }
+
+    const acpConfig = getAcpAgentConfig(runtime);
+    if (acpConfig) {
+      try {
+        const startTime = Date.now();
+        const result = await promptManagedAcpAgent(acpConfig, prompt, undefined, options?.conversationId);
+        const responseTime = Date.now() - startTime;
+
+        return {
+          success: result.output.trim().length > 0,
+          output: result.output.trim(),
+          error: result.output.trim().length > 0 ? undefined : result.rawOutput || "ACP agent returned no output",
+          agentName: runtime.name,
+          responseTime,
+        };
+      } catch {
+        // Fall back to legacy CLI invocation for agents without a working ACP adapter.
+      }
     }
 
     const startTime = Date.now();
@@ -233,6 +370,13 @@ export abstract class RuntimeService {
       role: row.role,
       capabilities: JSON.parse(row.capabilities),
       model: row.model,
+      protocol: (row.protocol as RuntimeProfile["protocol"]) || "cli",
+      transport: (row.transport as RuntimeProfile["transport"]) || "stdio",
+      acpCommand: row.acpCommand || undefined,
+      acpArgs: JSON.parse(row.acpArgs || "[]"),
+      acpEnv: JSON.parse(row.acpEnv || "{}"),
+      communicationMode:
+        (row.communicationMode as RuntimeProfile["communicationMode"]) || "cli-fallback",
       enabled: row.enabled === "true",
       currentModel: row.currentModel || undefined,
       status: row.status as RuntimeProfile["status"],

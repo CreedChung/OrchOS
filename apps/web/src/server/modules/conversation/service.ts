@@ -220,7 +220,7 @@ export abstract class ConversationService {
 
     try {
       const startTime = Date.now();
-      const result = await RuntimeService.chat(db, runtimeId, prompt);
+      const result = await RuntimeService.chat(db, runtimeId, prompt, { conversationId });
       const responseTime = Date.now() - startTime;
 
       const msg = await ConversationService.addMessage(

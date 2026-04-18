@@ -65,7 +65,7 @@ export function GoalList({
   return (
     <div className="flex h-full w-72 flex-col border-r border-border bg-background">
       {/* Header */}
-      <div className="border-b border-border px-4 py-3">
+      <div className="flex h-14 items-center border-b border-border px-4">
         <h2 className="text-sm font-semibold text-foreground">{m.goals()}</h2>
       </div>
 

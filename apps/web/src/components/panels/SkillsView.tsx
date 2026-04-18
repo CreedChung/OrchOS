@@ -105,7 +105,7 @@ export function SkillsView({
     <>
     <div className="flex flex-1 overflow-hidden">
       <div className="flex h-full w-72 flex-col border-r border-border bg-background">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex h-14 items-center justify-between border-b border-border px-4 py-3">
           <h2 className="text-sm font-semibold text-foreground">{m.skills()}</h2>
           <Button variant="ghost" size="icon-sm" onClick={() => setCreateOpen(true)} title={m.add()}>
             <HugeiconsIcon icon={Add01Icon} className="size-3.5" />

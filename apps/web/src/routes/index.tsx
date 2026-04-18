@@ -8,12 +8,9 @@ import { FeaturesBento } from "@/components/ui/features-bento";
 import { GoalPreviewCard } from "@/components/ui/goal-preview-card";
 import { AgentPreviewCard } from "@/components/ui/agent-preview-card";
 import { InboxPreviewCard } from "@/components/ui/inbox-preview-card";
-import { GooeyFilter } from "@/components/ui/gooey-filter";
 import { FloatingIconsHero } from "@/components/ui/floating-icons-hero-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useScreenSize } from "@/lib/use-screen-size";
-import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import {
   AppWindow,
@@ -108,7 +105,7 @@ function HomePageInner() {
               </Button>
             </div>
 
-            <div className="mt-auto h-[180px] w-full self-center overflow-hidden rounded-t-md border-x border-t border-white/10 bg-black/20 shadow-2xl backdrop-blur-sm sm:h-[220px] lg:h-[260px]">
+            <div className="group mt-auto h-[180px] w-full self-center overflow-hidden rounded-t-md border-x border-t border-white/10 bg-black/20 shadow-2xl transition-[height] duration-300 ease-out backdrop-blur-sm hover:h-[260px] sm:h-[220px] sm:hover:h-[320px] lg:h-[260px] lg:hover:h-[400px]">
               <img
                 src="/hero.png"
                 alt="OrchOS Hero"
@@ -265,77 +262,141 @@ function HomePage() {
 }
 
 function HowItWorksSteps() {
+  const { locale } = useLocale();
   const [activeStep, setActiveStep] = useState(1);
-  const screenSize = useScreenSize();
-  const gooeyStrength = screenSize.lessThan("md") ? 8 : 15;
 
-  const tabs = [
-    { step: 1, label: m.step_1_title(), card: <GoalPreviewCard /> },
-    { step: 2, label: m.step_2_title(), card: <AgentPreviewCard /> },
-    { step: 3, label: m.step_3_title(), card: <InboxPreviewCard /> },
+  const steps = [
+    {
+      step: 1,
+      label: m.step_1_title(),
+      title: m.step_1_title(),
+      description:
+        locale === "zh-CN"
+          ? "先定义明确目标、约束与验收标准，把工作拆成可执行结果。"
+          : locale === "zh-TW"
+            ? "先定義明確目標、約束與驗收標準，將工作拆成可執行結果。"
+            : "Start with a clear goal, constraints, and success criteria so work stays grounded in outcomes.",
+      card: <GoalPreviewCard />,
+    },
+    {
+      step: 2,
+      label: m.step_2_title(),
+      title: m.step_2_title(),
+      description:
+        locale === "zh-CN"
+          ? "按能力分配代理，让不同角色并行协作，而不是把所有任务塞给一个助手。"
+          : locale === "zh-TW"
+            ? "按能力分配代理，讓不同角色並行協作，而不是把所有任務塞給一個助手。"
+            : "Assign the right agents for the job so specialized roles can work in parallel with clear responsibility.",
+      card: <AgentPreviewCard />,
+    },
+    {
+      step: 3,
+      label: m.step_3_title(),
+      title: m.step_3_title(),
+      description:
+        locale === "zh-CN"
+          ? "执行过程中持续接收反馈、处理异常并迭代，自动化流程不会脱离你的控制。"
+          : locale === "zh-TW"
+            ? "執行過程中持續接收回饋、處理異常並迭代，自動化流程不會脫離你的控制。"
+            : "Keep the loop running with feedback, approvals, and iteration so automation stays visible and controllable.",
+      card: <InboxPreviewCard />,
+    },
   ];
+  const currentStep = steps[activeStep - 1] ?? steps[0];
 
   return (
-    <div className="mx-auto w-full max-w-[72rem]">
-      <GooeyFilter id="gooey-tab-filter" strength={gooeyStrength} />
-
-      <div className="relative">
-        {/* Gooey layer: tab backgrounds + content panel, all sharing the goo filter */}
-        <div style={{ filter: "url(#gooey-tab-filter)" }}>
-          <div className="flex w-full">
-            {tabs.map((tab) => (
-              <div key={tab.step} className="relative flex-1 h-10 md:h-12">
-                {activeStep === tab.step && (
-                  <motion.div
-                    layoutId="gooey-active-tab"
-                    className="absolute inset-0 bg-accent rounded-t-lg"
-                    transition={{
-                      type: "spring",
-                      bounce: 0.0,
-                      duration: 0.4,
-                    }}
-                  />
-                )}
-              </div>
-            ))}
+    <div className="mx-auto w-full max-w-[76rem]">
+      <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10">
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <div className="rounded-3xl border border-border bg-card/70 p-3 shadow-sm backdrop-blur-sm">
+            <div className="space-y-2">
+              {steps.map((step) => (
+                <button
+                  key={step.step}
+                  type="button"
+                  onClick={() => setActiveStep(step.step)}
+                  className={cn(
+                    "flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left transition-colors",
+                    activeStep === step.step
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                  )}
+                  aria-current={activeStep === step.step ? "step" : undefined}
+                >
+                  <div
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
+                      activeStep === step.step
+                        ? "border-primary/30 bg-primary/10 text-primary"
+                        : "border-border bg-background text-muted-foreground",
+                    )}
+                  >
+                    {step.step}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">{step.label}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{step.description}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-          {/* Content panel - connected to the active tab so gooey merges them */}
-          <div className="h-[520px] w-full overflow-hidden rounded-b-lg bg-accent" />
-        </div>
+        </aside>
 
-        {/* Interactive text overlay for tabs (no filter, stays sharp) */}
-        <div className="absolute top-0 left-0 right-0 flex w-full">
-          {tabs.map((tab) => (
-            <button
-              key={tab.step}
-              onClick={() => setActiveStep(tab.step)}
-              className={cn(
-                "flex-1 h-10 md:h-12 flex items-center justify-center text-xs md:text-sm font-medium transition-colors z-10",
-                activeStep === tab.step
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground/80",
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <section className="rounded-[2rem] border border-border bg-card/40 p-4 shadow-sm backdrop-blur-sm sm:p-6">
+          <div className="mb-5 flex items-start gap-4">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-sm font-semibold text-primary">
+              {currentStep.step}
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-foreground sm:text-2xl">{currentStep.title}</h3>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
+                {currentStep.description}
+              </p>
+            </div>
+          </div>
 
-        {/* Card content overlay (no filter, stays sharp) */}
-        <div className="absolute inset-x-0 top-10 bottom-0 h-[520px] p-2 md:top-12 md:p-3">
-          <AnimatePresence mode="popLayout">
-            <motion.div
-              key={activeStep}
-              initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -20, filter: "blur(8px)" }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="h-full w-full"
+          <div className="overflow-hidden rounded-[1.5rem] border border-border/80 bg-background/70 p-2 sm:p-3">
+            <div className="h-[520px] w-full">{currentStep.card}</div>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full"
+              onClick={() => setActiveStep((prev) => (prev === 1 ? steps.length : prev - 1))}
             >
-              {tabs.find((t) => t.step === activeStep)?.card}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+              {locale === "zh-CN" ? "上一步" : locale === "zh-TW" ? "上一步" : "Previous"}
+            </Button>
+
+            <div className="flex items-center gap-2">
+              {steps.map((step) => (
+                <button
+                  key={step.step}
+                  type="button"
+                  onClick={() => setActiveStep(step.step)}
+                  className={cn(
+                    "h-2.5 rounded-full transition-all",
+                    activeStep === step.step ? "w-8 bg-primary" : "w-2.5 bg-border hover:bg-primary/50",
+                  )}
+                  aria-label={step.title}
+                  aria-current={activeStep === step.step ? "true" : undefined}
+                />
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full"
+              onClick={() => setActiveStep((prev) => (prev === steps.length ? 1 : prev + 1))}
+            >
+              {locale === "zh-CN" ? "下一步" : locale === "zh-TW" ? "下一步" : "Next"}
+            </Button>
+          </div>
+        </section>
       </div>
     </div>
   );

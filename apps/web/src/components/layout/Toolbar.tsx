@@ -7,6 +7,7 @@ import {
   Cancel01Icon,
   PanelRight,
   PanelLeft,
+  Menu01Icon,
   GitPullRequestIcon,
   SquareIcon,
   InformationCircleIcon,
@@ -18,6 +19,8 @@ import {
   Folder01Icon,
   CodeIcon,
   CloudIcon,
+  Archive01Icon,
+  Delete02Icon,
 } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
 import type { SidebarView, InboxSource } from "@/lib/types";
@@ -60,6 +63,11 @@ const agentModelFilterConfig: Record<
 > = {
   local: { icon: CodeIcon, label: m.model_local() },
   cloud: { icon: CloudIcon, label: m.model_cloud() },
+};
+
+const allFilterConfig = {
+  icon: Menu01Icon,
+  label: m.all(),
 };
 
 interface ToolbarProps {
@@ -163,10 +171,10 @@ export function Toolbar({
       {activeView === "creation" && (
         <div className="flex items-center gap-1.5">
           {([
-            { value: "all", label: m.all() },
-            { value: "active", label: m.creation_active() },
-            { value: "archived", label: m.creation_archived() },
-            { value: "deleted", label: creationDeletedLabel },
+            { value: "all", label: m.all(), icon: Menu01Icon },
+            { value: "active", label: m.creation_active(), icon: Clock01Icon },
+            { value: "archived", label: m.creation_archived(), icon: Archive01Icon },
+            { value: "deleted", label: creationDeletedLabel, icon: Delete02Icon },
           ] as const).map((filter) => (
             <button
               key={filter.value}
@@ -178,6 +186,7 @@ export function Toolbar({
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
               )}
             >
+              <HugeiconsIcon icon={filter.icon} className="size-3" />
               <span>{filter.label}</span>
             </button>
           ))}
@@ -213,7 +222,7 @@ export function Toolbar({
         <div className="flex items-center gap-1.5">
           {(["all", "github_pr", "github_issue", "mention", "agent_request"] as SourceFilter[]).map(
             (filter) => {
-              const config = filter === "all" ? null : sourceFilterConfig[filter];
+              const config = filter === "all" ? allFilterConfig : sourceFilterConfig[filter];
               return (
                 <button
                   key={filter}
@@ -225,9 +234,9 @@ export function Toolbar({
                       : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                   )}
                 >
-                  {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
+                  <HugeiconsIcon icon={config.icon} className="size-3" />
                   <span className="capitalize">
-                    {filter === "all" ? m.all() : config?.label || filter}
+                    {config.label || filter}
                   </span>
                   <span className="tabular-nums text-[10px] opacity-60">
                     {inboxCounts[filter as keyof typeof inboxCounts]}
@@ -243,7 +252,7 @@ export function Toolbar({
       {activeView === "goals" && (
         <div className="flex items-center gap-1.5">
           {(["all", "active", "completed", "paused"] as GoalStatusFilter[]).map((filter) => {
-            const config = filter === "all" ? null : goalStatusFilterConfig[filter];
+            const config = filter === "all" ? allFilterConfig : goalStatusFilterConfig[filter];
             return (
               <button
                 key={filter}
@@ -255,9 +264,9 @@ export function Toolbar({
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
-                {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
+                <HugeiconsIcon icon={config.icon} className="size-3" />
                 <span className="capitalize">
-                  {filter === "all" ? m.all() : config?.label || filter}
+                  {config.label || filter}
                 </span>
                 <span className="tabular-nums text-[10px] opacity-60">{goalCounts[filter]}</span>
               </button>
@@ -270,7 +279,7 @@ export function Toolbar({
       {activeView === "agents" && (
         <div className="flex items-center gap-1.5">
           {(["all", "local", "cloud"] as AgentModelFilter[]).map((filter) => {
-            const config = filter === "all" ? null : agentModelFilterConfig[filter];
+            const config = filter === "all" ? allFilterConfig : agentModelFilterConfig[filter];
             return (
               <button
                 key={filter}
@@ -282,8 +291,8 @@ export function Toolbar({
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
-                {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
-                <span>{filter === "all" ? m.all() : config?.label || filter}</span>
+                <HugeiconsIcon icon={config.icon} className="size-3" />
+                <span>{config.label || filter}</span>
                 <span className="tabular-nums text-[10px] opacity-60">
                   {agentModelCounts[filter]}
                 </span>
@@ -297,7 +306,7 @@ export function Toolbar({
       {(activeView === "mcp-servers" || activeView === "skills") && (
         <div className="flex items-center gap-1.5">
           {(["all", "global", "project"] as ScopeFilter[]).map((filter) => {
-            const config = filter === "all" ? null : scopeFilterConfig[filter];
+            const config = filter === "all" ? allFilterConfig : scopeFilterConfig[filter];
             return (
               <button
                 key={filter}
@@ -309,9 +318,9 @@ export function Toolbar({
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
-                {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
+                <HugeiconsIcon icon={config.icon} className="size-3" />
                 <span className="capitalize">
-                  {filter === "all" ? m.all() : config?.label || filter}
+                  {config.label || filter}
                 </span>
                 <span className="tabular-nums text-[10px] opacity-60">{scopeCounts[filter]}</span>
               </button>

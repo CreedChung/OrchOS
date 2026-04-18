@@ -577,6 +577,13 @@ function RuntimesTab({
                       <span className="text-sm font-medium text-foreground">{runtime.name}</span>
                       <span className="ml-2 text-xs text-muted-foreground">{runtime.command}</span>
                     </div>
+                    <Badge variant="outline" className="text-[10px]">
+                      {runtime.communicationMode === "acp-native"
+                        ? "ACP Native"
+                        : runtime.communicationMode === "acp-adapter"
+                          ? "ACP Adapter"
+                          : "CLI Fallback"}
+                    </Badge>
                     {result === "ok" ? (
                       <Badge
                         variant="outline"
@@ -621,6 +628,13 @@ function RuntimesTab({
                     <span className="ml-2 text-xs text-muted-foreground">{runtime.command}</span>
                   </div>
                   <Badge variant="outline" className="text-[10px]">
+                    {runtime.communicationMode === "acp-native"
+                      ? "ACP Native"
+                      : runtime.communicationMode === "acp-adapter"
+                        ? "ACP Adapter"
+                        : "CLI Fallback"}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px]">
                     {m.not_found()}
                   </Badge>
                 </div>
@@ -653,6 +667,13 @@ function RuntimesTab({
                     <span className="text-sm font-medium text-foreground">{runtime.name}</span>
                     <span className="ml-2 text-xs text-muted-foreground">{runtime.command}</span>
                   </div>
+                  <Badge variant="outline" className="text-[10px]">
+                    {runtime.communicationMode === "acp-native"
+                      ? "ACP Native"
+                      : runtime.communicationMode === "acp-adapter"
+                        ? "ACP Adapter"
+                        : "CLI Fallback"}
+                  </Badge>
                   <Badge variant="outline" className="text-[10px]">
                     {runtime.model}
                   </Badge>
@@ -964,8 +985,13 @@ export function EnvironmentsView({ runtimes, projects, onRefresh }: Environments
               ))}
 
               {projects.length === 0 && (
-                <div className="rounded-md border border-dashed border-border/60 px-3 py-4 text-center text-xs text-muted-foreground">
-                  {m.env_no_projects()}
+                <div className="py-8 text-center">
+                  <HugeiconsIcon
+                    icon={FolderIcon}
+                    className="mx-auto mb-2 size-6 text-muted-foreground/30"
+                  />
+                  <p className="text-sm text-muted-foreground">{m.env_no_projects()}</p>
+                  <p className="mt-1 text-xs text-muted-foreground/60">{m.env_no_projects_desc()}</p>
                 </div>
               )}
             </div>
@@ -992,7 +1018,7 @@ export function EnvironmentsView({ runtimes, projects, onRefresh }: Environments
                             : "bg-muted text-muted-foreground",
                         )}
                       >
-                        {runtime.enabled ? m.enabled() : m.disabled()}
+                        {runtime.enabled ? m.active() : "Disabled"}
                       </span>
                     </div>
                     <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{runtime.command}</p>
@@ -1001,16 +1027,26 @@ export function EnvironmentsView({ runtimes, projects, onRefresh }: Environments
               ))}
 
               {runtimes.length === 0 && (
-                <div className="rounded-md border border-dashed border-border/60 px-3 py-4 text-center text-xs text-muted-foreground">
-                  {m.no_runtimes_registered()}
+                <div className="py-8 text-center">
+                  <HugeiconsIcon
+                    icon={Rocket01Icon}
+                    className="mx-auto mb-2 size-6 text-muted-foreground/30"
+                  />
+                  <p className="text-sm text-muted-foreground">{m.no_runtimes_registered()}</p>
+                  <p className="mt-1 text-xs text-muted-foreground/60">{m.no_runtimes_registered_desc()}</p>
                 </div>
               )}
             </div>
           )}
 
           {activeSection === "env-vars" && (
-            <div className="rounded-md border border-dashed border-border/60 px-3 py-4 text-center text-xs text-muted-foreground">
-              {m.env_variables()}
+            <div className="py-8 text-center">
+              <HugeiconsIcon
+                icon={VariableIcon}
+                className="mx-auto mb-2 size-6 text-muted-foreground/30"
+              />
+              <p className="text-sm text-muted-foreground">{m.env_no_vars()}</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">{m.env_no_vars_desc()}</p>
             </div>
           )}
         </div>
