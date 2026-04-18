@@ -11,6 +11,7 @@ export interface ExecutorConfig {
   cwd?: string;
   timeout?: number;
   env?: Record<string, string>;
+  stdin?: string;
 }
 
 const DEFAULT_TIMEOUT = 60000;
@@ -19,26 +20,38 @@ export interface AgentCLIDefinition {
   id: string;
   name: string;
   command: string;
-  versionFlag?: string;
+  aliases?: string[];
+  versionArgs?: string[];
+  versionArgSets?: string[][];
+  helpArgs?: string[];
+  helpArgSets?: string[][];
   role: string;
   capabilities: string[];
   model: string;
-  /** How to invoke this CLI with a prompt (stdin or args) */
-  invokeTemplate?: {
-    /** Command template: $PROMPT will be replaced with the test message */
-    cmdTemplate: string;
-    /** Text that indicates a successful response (substring match) */
+  invoke?: {
+    mode: "argv" | "stdin";
+    args?: string[];
+    stdinTemplate?: string;
     successIndicators: string[];
-    /** Timeout override for this agent */
     timeout?: number;
+    truncateLines?: number;
   };
-  /** How to query the current model from this CLI */
+  invokeFallbacks?: Array<{
+    mode: "argv" | "stdin";
+    args?: string[];
+    stdinTemplate?: string;
+    successIndicators?: string[];
+    timeout?: number;
+    truncateLines?: number;
+  }>;
   modelQuery?: {
-    /** Command to run to get the current model */
     cmd: string;
-    /** Regex or index path to extract the model name from output */
     extractPattern?: string;
   };
+  modelQueries?: Array<{
+    cmd: string;
+    extractPattern?: string;
+  }>;
 }
 
 const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
@@ -46,75 +59,230 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
     id: "pi",
     name: "Pi",
     command: "pi",
-    versionFlag: "--version",
+    aliases: ["pi cli"],
+    versionArgs: ["--version"],
+    versionArgSets: [["--version"], ["version"]],
+    helpArgs: ["--help"],
+    helpArgSets: [["--help"], ["help"]],
     role: "Conversational AI assistant",
     capabilities: ["write_code", "fix_bug", "review"],
     model: "local/pi",
-    invokeTemplate: {
-      cmdTemplate: "echo '$PROMPT' | pi --output-format text 2>&1 | head -20",
+    invoke: {
+      mode: "stdin",
+      args: ["--output-format", "text"],
+      stdinTemplate: "$PROMPT",
       successIndicators: ["pi"],
       timeout: 30000,
+      truncateLines: 20,
     },
+    invokeFallbacks: [
+      {
+        mode: "stdin",
+        stdinTemplate: "$PROMPT",
+      },
+    ],
   },
   {
     id: "claude-code",
     name: "Claude Code",
     command: "claude",
-    versionFlag: "--version",
+    aliases: ["claude", "claude code", "anthropic claude"],
+    versionArgs: ["--version"],
+    versionArgSets: [["--version"], ["version"]],
+    helpArgs: ["--help"],
+    helpArgSets: [["--help"]],
     role: "Code generation & reasoning",
     capabilities: ["write_code", "fix_bug", "review"],
     model: "cloud/claude-sonnet-4",
-    invokeTemplate: {
-      cmdTemplate: `claude -p '$PROMPT' 2>&1 | head -20`,
+    invoke: {
+      mode: "argv",
+      args: ["-p", "$PROMPT"],
       successIndicators: ["claude"],
       timeout: 60000,
+      truncateLines: 20,
     },
-    modelQuery: {
-      cmd: "claude --version 2>&1",
-      extractPattern: "Claude Code",
-    },
+    invokeFallbacks: [
+      {
+        mode: "stdin",
+        stdinTemplate: "$PROMPT",
+      },
+    ],
+    modelQueries: [
+      {
+        cmd: "claude --version 2>&1",
+        extractPattern: "Claude Code",
+      },
+      {
+        cmd: "claude version 2>&1",
+        extractPattern: "Claude Code",
+      },
+    ],
   },
   {
     id: "codex",
     name: "Codex",
     command: "codex",
-    versionFlag: "--version",
+    aliases: ["openai codex", "codex cli"],
+    versionArgs: ["--version"],
+    versionArgSets: [["--version"], ["version"]],
+    helpArgs: ["--help"],
+    helpArgSets: [["--help"]],
     role: "Code generation & editing",
     capabilities: ["write_code", "fix_bug"],
     model: "local/codex",
-    invokeTemplate: {
-      cmdTemplate: `echo '$PROMPT' | codex 2>&1 | head -20`,
+    invoke: {
+      mode: "stdin",
+      stdinTemplate: "$PROMPT",
       successIndicators: ["codex", "CodeX"],
       timeout: 30000,
+      truncateLines: 20,
     },
+    invokeFallbacks: [
+      {
+        mode: "argv",
+        args: ["-p", "$PROMPT"],
+      },
+    ],
+    modelQueries: [{ cmd: "codex --version 2>&1" }, { cmd: "codex version 2>&1" }],
   },
   {
     id: "opencode",
     name: "OpenCode",
     command: "opencode",
-    versionFlag: "--version",
+    aliases: ["open code", "open-code"],
+    versionArgs: ["--version"],
+    versionArgSets: [["--version"], ["version"]],
+    helpArgs: ["--help"],
+    helpArgSets: [["--help"]],
     role: "Open-source code generation",
     capabilities: ["write_code", "fix_bug", "review"],
     model: "local/opencode",
-    invokeTemplate: {
-      cmdTemplate: `echo '$PROMPT' | opencode 2>&1 | head -20`,
+    invoke: {
+      mode: "stdin",
+      stdinTemplate: "$PROMPT",
       successIndicators: ["opencode", "OpenCode"],
       timeout: 30000,
+      truncateLines: 20,
     },
+    invokeFallbacks: [
+      {
+        mode: "argv",
+        args: ["-p", "$PROMPT"],
+      },
+    ],
+    modelQueries: [{ cmd: "opencode --version 2>&1" }, { cmd: "opencode version 2>&1" }],
   },
   {
     id: "amp",
     name: "Amp",
     command: "amp",
-    versionFlag: "--version",
+    aliases: ["sourcegraph amp"],
+    versionArgs: ["--version"],
+    versionArgSets: [["--version"], ["version"]],
+    helpArgs: ["--help"],
+    helpArgSets: [["--help"]],
     role: "AI-powered development",
     capabilities: ["write_code", "fix_bug", "run_tests"],
     model: "local/amp",
-    invokeTemplate: {
-      cmdTemplate: `echo '$PROMPT' | amp 2>&1 | head -20`,
+    invoke: {
+      mode: "stdin",
+      stdinTemplate: "$PROMPT",
       successIndicators: ["amp", "Amp"],
       timeout: 30000,
+      truncateLines: 20,
     },
+    invokeFallbacks: [
+      {
+        mode: "argv",
+        args: ["-p", "$PROMPT"],
+      },
+    ],
+    modelQueries: [{ cmd: "amp --version 2>&1" }, { cmd: "amp version 2>&1" }],
+  },
+  {
+    id: "gemini-cli",
+    name: "Gemini CLI",
+    command: "gemini",
+    aliases: ["gemini", "google gemini", "gemini code"],
+    versionArgs: ["--version"],
+    versionArgSets: [["--version"], ["version"]],
+    helpArgs: ["--help"],
+    helpArgSets: [["--help"], ["help"]],
+    role: "Google Gemini coding assistant",
+    capabilities: ["write_code", "fix_bug", "review", "run_tests"],
+    model: "cloud/gemini-2.5-pro",
+    invoke: {
+      mode: "argv",
+      args: ["-p", "$PROMPT"],
+      successIndicators: ["gemini", "google"],
+      timeout: 60000,
+      truncateLines: 20,
+    },
+    invokeFallbacks: [
+      {
+        mode: "stdin",
+        stdinTemplate: "$PROMPT",
+      },
+    ],
+    modelQueries: [{ cmd: "gemini --version 2>&1" }, { cmd: "gemini version 2>&1" }],
+  },
+  {
+    id: "aider",
+    name: "Aider",
+    command: "aider",
+    aliases: ["aider chat", "aider ai"],
+    versionArgs: ["--version"],
+    versionArgSets: [["--version"], ["version"]],
+    helpArgs: ["--help"],
+    helpArgSets: [["--help"]],
+    role: "Terminal pair-programming assistant",
+    capabilities: ["write_code", "fix_bug", "review", "run_tests"],
+    model: "cloud/aider",
+    invoke: {
+      mode: "argv",
+      args: ["--message", "$PROMPT"],
+      successIndicators: ["aider"],
+      timeout: 60000,
+      truncateLines: 20,
+    },
+    invokeFallbacks: [
+      {
+        mode: "argv",
+        args: ["-m", "$PROMPT"],
+      },
+      {
+        mode: "stdin",
+        stdinTemplate: "$PROMPT",
+      },
+    ],
+    modelQueries: [{ cmd: "aider --version 2>&1" }, { cmd: "aider version 2>&1" }],
+  },
+  {
+    id: "qwen-code",
+    name: "Qwen Code",
+    command: "qwen",
+    aliases: ["qwen", "qwen coder", "qwen-cli"],
+    versionArgs: ["--version"],
+    versionArgSets: [["--version"], ["version"]],
+    helpArgs: ["--help"],
+    helpArgSets: [["--help"], ["help"]],
+    role: "Qwen coding assistant",
+    capabilities: ["write_code", "fix_bug", "review"],
+    model: "cloud/qwen-coder",
+    invoke: {
+      mode: "argv",
+      args: ["-p", "$PROMPT"],
+      successIndicators: ["qwen"],
+      timeout: 60000,
+      truncateLines: 20,
+    },
+    invokeFallbacks: [
+      {
+        mode: "stdin",
+        stdinTemplate: "$PROMPT",
+      },
+    ],
+    modelQueries: [{ cmd: "qwen --version 2>&1" }, { cmd: "qwen version 2>&1" }],
   },
 ];
 
@@ -125,18 +293,95 @@ export interface DetectedAgentCLI {
   path?: string;
 }
 
+export interface AgentInvocationResult extends ExecutionResult {
+  agentId: string;
+  agentName: string;
+  agentCommand: string;
+}
+
+type SpawnCommand =
+  | string
+  | {
+      cmd: string[];
+    };
+
+function findAgentCLI(agentIdOrCommand: string): AgentCLIDefinition | undefined {
+  const normalized = agentIdOrCommand.trim().toLowerCase();
+  if (!normalized) return undefined;
+
+  return AGENT_CLI_REGISTRY.find((agent) => {
+    return (
+      agent.id.toLowerCase() === normalized ||
+      agent.name.toLowerCase() === normalized ||
+      agent.command.toLowerCase() === normalized ||
+      agent.aliases?.some((alias) => alias.toLowerCase() === normalized)
+    );
+  });
+}
+
+function replacePromptToken(value: string, prompt: string): string {
+  return value.replaceAll("$PROMPT", prompt);
+}
+
+function truncateLines(output: string, maxLines?: number): string {
+  if (!maxLines || maxLines <= 0) return output;
+  return output.split("\n").slice(0, maxLines).join("\n");
+}
+
+function getCheckArgSets(agent: AgentCLIDefinition, kind: "version" | "help"): string[][] {
+  if (kind === "version") {
+    if (agent.versionArgSets?.length) return agent.versionArgSets;
+    if (agent.versionArgs?.length) return [agent.versionArgs];
+    return [];
+  }
+
+  if (agent.helpArgSets?.length) return agent.helpArgSets;
+  if (agent.helpArgs?.length) return [agent.helpArgs];
+  return [];
+}
+
+function getInvokeStrategies(agent: AgentCLIDefinition): NonNullable<AgentCLIDefinition["invoke"]>[] {
+  const strategies: NonNullable<AgentCLIDefinition["invoke"]>[] = [];
+  if (agent.invoke) strategies.push(agent.invoke);
+  if (agent.invokeFallbacks?.length) {
+    for (const fallback of agent.invokeFallbacks) {
+      strategies.push({
+        successIndicators: agent.invoke?.successIndicators || [],
+        timeout: agent.invoke?.timeout,
+        truncateLines: agent.invoke?.truncateLines,
+        ...fallback,
+      });
+    }
+  }
+  return strategies;
+}
+
+function getModelQueries(agent: AgentCLIDefinition): NonNullable<AgentCLIDefinition["modelQueries"]> {
+  if (agent.modelQueries?.length) return agent.modelQueries;
+  if (agent.modelQuery) return [agent.modelQuery];
+  return [];
+}
+
 export const executor = {
-  async run(command: string, config: ExecutorConfig = {}): Promise<ExecutionResult> {
-    const { cwd = process.cwd(), timeout = DEFAULT_TIMEOUT, env = {} } = config;
+  async run(command: SpawnCommand, config: ExecutorConfig = {}): Promise<ExecutionResult> {
+    const { cwd = process.cwd(), timeout = DEFAULT_TIMEOUT, env = {}, stdin } = config;
 
     try {
+      const cmd = typeof command === "string" ? ["sh", "-c", command] : command.cmd;
       const proc = spawn({
-        cmd: ["sh", "-c", command],
+        cmd,
         cwd,
         env: { ...process.env, ...env },
+        stdin: stdin !== undefined ? "pipe" : undefined,
         stdout: "pipe",
         stderr: "pipe",
       });
+
+      if (stdin !== undefined && proc.stdin) {
+        const writer = proc.stdin.getWriter();
+        await writer.write(new TextEncoder().encode(stdin));
+        await writer.close();
+      }
 
       const timer = setTimeout(() => {
         proc.kill();
@@ -236,13 +481,16 @@ export const executor = {
           detected.available = true;
           detected.path = whichResult.output.trim();
 
-          if (agent.versionFlag) {
-            const versionResult = await this.run(`${agent.command} ${agent.versionFlag}`);
+          for (const argSet of getCheckArgSets(agent, "version")) {
+            const versionResult = await this.run({ cmd: [agent.command, ...argSet] });
             if (versionResult.success) {
-              const versionOutput = versionResult.output.trim().split("\n")[0].trim();
-              // Extract version number only (e.g., "v2.1.86" from "Claude Code v2.1.86")
+              const versionOutput = `${versionResult.output}${versionResult.error ? `\n${versionResult.error}` : ""}`
+                .trim()
+                .split("\n")[0]
+                .trim();
               const versionMatch = versionOutput.match(/v?\d+(\.\d+)+/);
               detected.version = versionMatch ? versionMatch[0] : versionOutput;
+              break;
             }
           }
         }
@@ -254,6 +502,92 @@ export const executor = {
     }
 
     return results;
+  },
+
+  async invokeAgentCLI(
+    agentIdOrCommand: string,
+    prompt: string,
+    config: ExecutorConfig = {},
+  ): Promise<AgentInvocationResult> {
+    const agent = findAgentCLI(agentIdOrCommand);
+    if (!agent) {
+      return {
+        success: false,
+        output: "",
+        error: `Unknown agent runtime: ${agentIdOrCommand}`,
+        exitCode: 1,
+        agentId: agentIdOrCommand,
+        agentName: agentIdOrCommand,
+        agentCommand: agentIdOrCommand,
+      };
+    }
+
+    const strategies = getInvokeStrategies(agent);
+    if (strategies.length === 0) {
+      return {
+        success: false,
+        output: "",
+        error: `No invoke configuration for ${agent.name}`,
+        exitCode: 1,
+        agentId: agent.id,
+        agentName: agent.name,
+        agentCommand: agent.command,
+      };
+    }
+
+    let lastResult: ExecutionResult | undefined;
+    let lastStrategy: NonNullable<AgentCLIDefinition["invoke"]> | undefined;
+
+    for (const strategy of strategies) {
+      const args = (strategy.args || []).map((arg) => replacePromptToken(arg, prompt));
+      const stdin =
+        strategy.mode === "stdin"
+          ? replacePromptToken(strategy.stdinTemplate || "$PROMPT", prompt)
+          : undefined;
+
+      const result = await this.run(
+        { cmd: [agent.command, ...args] },
+        {
+          ...config,
+          stdin,
+          timeout: config.timeout ?? strategy.timeout ?? DEFAULT_TIMEOUT,
+        },
+      );
+
+      lastResult = result;
+      lastStrategy = strategy;
+
+      if (result.success || result.exitCode !== 127) {
+        const combinedOutput = `${result.output}${result.error ? `\n${result.error}` : ""}`.trim();
+        return {
+          ...result,
+          output: truncateLines(combinedOutput, strategy.truncateLines),
+          error: result.error,
+          agentId: agent.id,
+          agentName: agent.name,
+          agentCommand: agent.command,
+        };
+      }
+    }
+
+    const finalResult = lastResult || {
+      success: false,
+      output: "",
+      error: `Failed to start ${agent.command}`,
+      exitCode: 127,
+    };
+
+    return {
+      ...finalResult,
+      output: truncateLines(
+        `${finalResult.output}${finalResult.error ? `\n${finalResult.error}` : ""}`.trim(),
+        lastStrategy?.truncateLines,
+      ),
+      error: finalResult.error,
+      agentId: agent.id,
+      agentName: agent.name,
+      agentCommand: agent.command,
+    };
   },
 
   async testAgentCLI(
@@ -300,10 +634,20 @@ export const executor = {
     // Basic: verify CLI responds to --version/--help (no auth needed)
     if (level === "basic") {
       const startTime = Date.now();
-      const checkCmd = agent.versionFlag
-        ? `${agent.command} ${agent.versionFlag}`
-        : `${agent.command} --help`;
-      const result = await this.run(checkCmd, { timeout: 10000 });
+      const checkArgSets = [
+        ...getCheckArgSets(agent, "version"),
+        ...getCheckArgSets(agent, "help"),
+      ];
+      let result: ExecutionResult = {
+        success: false,
+        output: "",
+        error: `${agent.command} health check failed`,
+        exitCode: 1,
+      };
+      for (const argSet of checkArgSets.length ? checkArgSets : [["--help"]]) {
+        result = await this.run({ cmd: [agent.command, ...argSet] }, { timeout: 10000 });
+        if (result.success || result.exitCode !== 127) break;
+      }
       const responseTime = Date.now() - startTime;
 
       return {
@@ -319,12 +663,12 @@ export const executor = {
 
     // Ping/Full: attempt prompt-based invocation (may require auth)
     if (level === "ping" || level === "full") {
-      if (!agent.invokeTemplate) {
+      if (getInvokeStrategies(agent).length === 0) {
         return {
           healthy: false,
           level,
           output: "",
-          error: `No invoke template for ${agent.name}`,
+          error: `No invoke configuration for ${agent.name}`,
           responseTime: 0,
           agentName: agent.name,
           agentCommand: agent.command,
@@ -332,17 +676,13 @@ export const executor = {
       }
       const testPrompt =
         options.prompt || (level === "ping" ? "hello" : "Say hello and tell me your name.");
-      const cmd = agent.invokeTemplate.cmdTemplate.replace(
-        "$PROMPT",
-        testPrompt.replace(/'/g, "'\\''"),
-      );
-      const timeout =
-        level === "ping"
-          ? Math.min(agent.invokeTemplate.timeout || 15000, 15000)
-          : agent.invokeTemplate.timeout || 60000;
-
       const startTime = Date.now();
-      const result = await this.run(cmd, { timeout });
+      const result = await this.invokeAgentCLI(agent.id, testPrompt, {
+        timeout:
+          level === "ping"
+            ? Math.min(agent.invoke?.timeout || 15000, 15000)
+            : agent.invoke?.timeout || 60000,
+      });
       const responseTime = Date.now() - startTime;
 
       const authLikelyMissing =
@@ -368,8 +708,10 @@ export const executor = {
       // Full
       const healthy =
         result.success &&
-        agent.invokeTemplate.successIndicators.some((indicator) =>
-          result.output.toLowerCase().includes(indicator.toLowerCase()),
+        getInvokeStrategies(agent).some((strategy) =>
+          strategy.successIndicators.some((indicator) =>
+            result.output.toLowerCase().includes(indicator.toLowerCase()),
+          ),
         );
       return {
         healthy,
@@ -405,18 +747,21 @@ export const executor = {
     }
 
     // Try CLI query first
-    if (agent.modelQuery) {
+    const modelQueries = getModelQueries(agent);
+    if (modelQueries.length) {
       try {
-        const result = await this.run(agent.modelQuery.cmd);
-        if (result.success && result.output.trim()) {
-          let modelOutput = result.output.trim().split("\n")[0].trim();
-          if (agent.modelQuery.extractPattern) {
-            const match = result.output.match(new RegExp(agent.modelQuery.extractPattern, "i"));
-            if (match) {
-              modelOutput = match[0].trim();
+        for (const modelQuery of modelQueries) {
+          const result = await this.run(modelQuery.cmd);
+          if (result.success && result.output.trim()) {
+            let modelOutput = result.output.trim().split("\n")[0].trim();
+            if (modelQuery.extractPattern) {
+              const match = result.output.match(new RegExp(modelQuery.extractPattern, "i"));
+              if (match) {
+                modelOutput = match[0].trim();
+              }
             }
+            return { model: modelOutput, source: "cli", rawOutput: result.output.trim() };
           }
-          return { model: modelOutput, source: "cli", rawOutput: result.output.trim() };
         }
       } catch {
         // Fall through to registry

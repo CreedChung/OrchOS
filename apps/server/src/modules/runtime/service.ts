@@ -215,12 +215,9 @@ export abstract class RuntimeService {
     }
 
     const startTime = Date.now();
-    const result = await executor.run(
-      `${runtime.command} -p '${prompt.replace(/'/g, "'\\''")}' 2>&1`,
-      {
-        timeout: 120000,
-      },
-    );
+    const result = await executor.invokeAgentCLI(runtime.registryId || runtime.name || runtime.command, prompt, {
+      timeout: 120000,
+    });
     const responseTime = Date.now() - startTime;
 
     return {
