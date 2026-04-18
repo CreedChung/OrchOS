@@ -7,6 +7,7 @@ export const ConversationModel = {
     agentId: t.Optional(t.String()),
     runtimeId: t.Optional(t.String()),
     archived: t.Optional(t.Boolean()),
+    deleted: t.Optional(t.Boolean()),
   }),
   updateBody: t.Object({
     title: t.Optional(t.String()),
@@ -14,6 +15,7 @@ export const ConversationModel = {
     agentId: t.Optional(t.String()),
     runtimeId: t.Optional(t.String()),
     archived: t.Optional(t.Boolean()),
+    deleted: t.Optional(t.Boolean()),
   }),
   sendMessageBody: t.Object({
     content: t.String(),
@@ -25,6 +27,7 @@ export const ConversationModel = {
     agentId: t.Optional(t.String()),
     runtimeId: t.Optional(t.String()),
     archived: t.Boolean(),
+    deleted: t.Boolean(),
     createdAt: t.String(),
     updatedAt: t.String(),
   }),

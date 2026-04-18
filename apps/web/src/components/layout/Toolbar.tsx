@@ -25,7 +25,7 @@ type SourceFilter = "all" | InboxSource;
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
 export type ScopeFilter = "all" | "global" | "project";
 export type AgentModelFilter = "all" | "local" | "cloud";
-export type CreationArchiveFilter = "all" | "active" | "archived";
+export type CreationArchiveFilter = "all" | "active" | "archived" | "deleted";
 export type EnvironmentSection = "projects" | "runtimes" | "env-vars";
 
 const scopeFilterConfig: Record<
@@ -122,6 +122,7 @@ export function Toolbar({
             { value: "all", label: m.all() },
             { value: "active", label: m.creation_active() },
             { value: "archived", label: m.creation_archived() },
+            { value: "deleted", label: m.creation_deleted() },
           ] as const).map((filter) => (
             <button
               key={filter.value}

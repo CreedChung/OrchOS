@@ -9,7 +9,7 @@ import {
   Loading01Icon,
   Robot02Icon,
   Server,
-  ArrowRight01Icon,
+  ArrowUp01Icon,
   Folder01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
@@ -54,8 +54,9 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
   );
 
   const filteredConversations = useMemo(() => {
-    if (archiveFilter === "archived") return conversations.filter((c) => c.archived);
-    if (archiveFilter === "active") return conversations.filter((c) => !c.archived);
+    if (archiveFilter === "deleted") return conversations.filter((c) => c.deleted);
+    if (archiveFilter === "archived") return conversations.filter((c) => c.archived && !c.deleted);
+    if (archiveFilter === "active") return conversations.filter((c) => !c.archived && !c.deleted);
     return conversations;
   }, [archiveFilter, conversations]);
 
@@ -113,7 +114,7 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
       return;
     }
 
-    if (archiveFilter === "archived" || autoCreatingConversationRef.current) {
+    if (archiveFilter === "archived" || archiveFilter === "deleted" || autoCreatingConversationRef.current) {
       return;
     }
 
@@ -147,6 +148,7 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
         agentId?: string;
         runtimeId?: string;
         archived?: boolean;
+        deleted?: boolean;
       },
     ) => {
       try {
@@ -189,16 +191,20 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    void handleUpdateConversation(conv.id, { archived: !conv.archived });
+                    void handleUpdateConversation(conv.id,
+                      conv.deleted
+                        ? { deleted: false, archived: false }
+                        : { archived: !conv.archived, deleted: false },
+                    );
                   }}
                   className={cn(
                     "shrink-0 text-muted-foreground transition-opacity hover:text-foreground",
-                    conv.archived ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                    conv.archived || conv.deleted ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                   )}
-                  title={conv.archived ? "Unarchive" : m.archive()}
+                  title={conv.deleted || conv.archived ? m.restore_conversation() : m.archive()}
                   type="button"
                 >
-                  {conv.archived ? (
+                  {conv.archived || conv.deleted ? (
                     <ArchiveRestore className="size-3" />
                   ) : (
                     <ArchiveX className="size-3" />
@@ -207,10 +213,21 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (conv.deleted) {
+                      void api
+                        .deleteConversation(conv.id, { permanent: true })
+                        .then(() => loadConversations())
+                        .catch((err) => {
+                          console.error("Failed to permanently delete conversation:", err);
+                        });
+                      return;
+                    }
                     setConvToDelete(conv.id);
                     setDeleteConfirmOpen(true);
                   }}
                   className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                  title={conv.deleted ? m.delete_forever() : m.delete()}
+                  type="button"
                 >
                   <HugeiconsIcon icon={Delete02Icon} className="size-3" />
                 </button>
@@ -286,6 +303,7 @@ interface ChatAreaProps {
       agentId?: string;
       runtimeId?: string;
       archived?: boolean;
+      deleted?: boolean;
     },
   ) => Promise<void>;
   onSendMessage: (content: string) => Promise<ConversationMessage>;
@@ -566,7 +584,7 @@ function ChatArea({
                 {sending ? (
                   <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
                 ) : (
-                  <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+                  <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
                 )}
               </Button>
             </div>

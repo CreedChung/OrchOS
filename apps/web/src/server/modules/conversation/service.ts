@@ -12,6 +12,7 @@ export interface Conversation {
   agentId?: string;
   runtimeId?: string;
   archived: boolean;
+  deleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +36,7 @@ export abstract class ConversationService {
       agentId?: string;
       runtimeId?: string;
       archived?: boolean;
+      deleted?: boolean;
     },
   ): Promise<Conversation> {
     const id = generateId("conv");
@@ -49,6 +51,7 @@ export abstract class ConversationService {
         agentId: data.agentId || null,
         runtimeId: data.runtimeId || null,
         archived: data.archived ? "true" : "false",
+        deleted: data.deleted ? "true" : "false",
         createdAt: now,
         updatedAt: now,
       })
@@ -61,6 +64,7 @@ export abstract class ConversationService {
       agentId: data.agentId,
       runtimeId: data.runtimeId,
       archived: data.archived ?? false,
+      deleted: data.deleted ?? false,
       createdAt: now,
       updatedAt: now,
     };
@@ -86,6 +90,7 @@ export abstract class ConversationService {
       agentId?: string;
       runtimeId?: string;
       archived?: boolean;
+      deleted?: boolean;
     },
   ): Promise<Conversation | undefined> {
     const updates: Record<string, unknown> = {};
@@ -94,6 +99,7 @@ export abstract class ConversationService {
     if (data.agentId !== undefined) updates.agentId = data.agentId || null;
     if (data.runtimeId !== undefined) updates.runtimeId = data.runtimeId || null;
     if (data.archived !== undefined) updates.archived = data.archived ? "true" : "false";
+    if (data.deleted !== undefined) updates.deleted = data.deleted ? "true" : "false";
     updates.updatedAt = new Date().toISOString();
 
     if (Object.keys(updates).length === 1 && updates.updatedAt) {
@@ -109,8 +115,22 @@ export abstract class ConversationService {
   }
 
   static async delete(db: AppDb, id: string): Promise<boolean> {
+    const result = await db
+      .update(conversations)
+      .set({ deleted: "true", archived: "false", updatedAt: new Date().toISOString() })
+      .where(eq(conversations.id, id))
+      .run();
+    return getRowsAffected(result) > 0;
+  }
+
+  static async hardDelete(db: AppDb, id: string): Promise<boolean> {
     const result = await db.delete(conversations).where(eq(conversations.id, id)).run();
     return getRowsAffected(result) > 0;
+  }
+
+  static async clearDeleted(db: AppDb): Promise<number> {
+    const result = await db.delete(conversations).where(eq(conversations.deleted, "true")).run();
+    return getRowsAffected(result);
   }
 
   static async getMessages(db: AppDb, conversationId: string): Promise<Message[]> {
@@ -233,6 +253,7 @@ export abstract class ConversationService {
       agentId: row.agentId || undefined,
       runtimeId: row.runtimeId || undefined,
       archived: row.archived === "true",
+      deleted: row.deleted === "true",
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

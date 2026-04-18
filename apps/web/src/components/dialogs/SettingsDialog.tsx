@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { toast } from "sonner";
 import {
   Cancel01Icon,
   Settings02Icon,
@@ -86,6 +87,7 @@ interface SettingsDialogProps {
   settings: ControlSettings | null;
   onSettingsChange: (settings: ControlSettings) => void;
   onRuntimesRefresh: () => void;
+  onConversationsRefresh?: () => void | Promise<void>;
   registeredRuntimes: RuntimeProfile[];
 }
 
@@ -128,6 +130,7 @@ export function SettingsDialog({
   settings,
   onSettingsChange,
   onRuntimesRefresh,
+  onConversationsRefresh,
   registeredRuntimes,
 }: SettingsDialogProps) {
   const [localSettings, setLocalSettings] = useState<ControlSettings | null>(settings);
@@ -140,11 +143,26 @@ export function SettingsDialog({
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const [deletedConversationCount, setDeletedConversationCount] = useState(0);
+  const [clearingTrash, setClearingTrash] = useState(false);
   const { locale: currentLocale, setLocaleWithSync } = useLocale();
 
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    void api
+      .listConversations()
+      .then((conversations) => {
+        setDeletedConversationCount(conversations.filter((conversation) => conversation.deleted).length);
+      })
+      .catch((err) => {
+        console.error("Failed to load deleted conversations:", err);
+      });
+  }, [open]);
 
   const currentSettings = localSettings ?? settings;
 
@@ -272,6 +290,23 @@ export function SettingsDialog({
       setRegistering(null);
     }
   }, [onRuntimesRefresh]);
+
+  const handleClearTrash = useCallback(async () => {
+    setClearingTrash(true);
+    try {
+      const result = await api.clearDeletedConversations();
+      setDeletedConversationCount(0);
+      await onConversationsRefresh?.();
+      toast.success(
+        result.count > 0 ? m.creation_trash_cleared({ count: result.count }) : m.creation_trash_empty(),
+      );
+    } catch (err) {
+      console.error("Failed to clear trash:", err);
+      toast.error(m.creation_trash_clear_failed());
+    } finally {
+      setClearingTrash(false);
+    }
+  }, []);
 
   if (!open) return null;
 
@@ -407,6 +442,28 @@ export function SettingsDialog({
                       </SelectGroup>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-border/50 px-4 py-3">
+                  <div className="max-w-[320px]">
+                    <span className="text-sm font-medium text-foreground">{m.creation_trash()}</span>
+                    <p className="text-xs text-muted-foreground">
+                      {m.creation_trash_desc({ count: deletedConversationCount })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => void handleClearTrash()}
+                    disabled={clearingTrash || deletedConversationCount === 0}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      clearingTrash || deletedConversationCount === 0
+                        ? "cursor-not-allowed bg-muted text-muted-foreground"
+                        : "bg-destructive/10 text-destructive hover:bg-destructive/20",
+                    )}
+                    type="button"
+                  >
+                    {clearingTrash ? m.clearing() : m.clear_trash()}
+                  </button>
                 </div>
               </div>
             )}

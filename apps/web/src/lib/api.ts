@@ -246,6 +246,7 @@ export interface Conversation {
   agentId?: string;
   runtimeId?: string;
   archived: boolean;
+  deleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -586,17 +587,30 @@ export const api = {
     projectId?: string;
     agentId?: string;
     runtimeId?: string;
+    deleted?: boolean;
   }) => request<Conversation>("/api/conversations", { method: "POST", body: JSON.stringify(data) }),
   updateConversation: (
     id: string,
-    data: { title?: string; projectId?: string; agentId?: string; runtimeId?: string },
+    data: {
+      title?: string;
+      projectId?: string;
+      agentId?: string;
+      runtimeId?: string;
+      archived?: boolean;
+      deleted?: boolean;
+    },
   ) =>
     request<Conversation>(`/api/conversations/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
-  deleteConversation: (id: string) =>
-    request<{ success: boolean }>(`/api/conversations/${id}`, { method: "DELETE" }),
+  deleteConversation: (id: string, options?: { permanent?: boolean }) =>
+    request<{ success: boolean }>(
+      `/api/conversations/${id}${options?.permanent ? "?permanent=true" : ""}`,
+      { method: "DELETE" },
+    ),
+  clearDeletedConversations: () =>
+    request<{ success: boolean; count: number }>("/api/conversations/deleted", { method: "DELETE" }),
   getConversationMessages: (id: string) =>
     request<ConversationMessage[]>(`/api/conversations/${id}/messages`),
   sendConversationMessage: (id: string, content: string) =>

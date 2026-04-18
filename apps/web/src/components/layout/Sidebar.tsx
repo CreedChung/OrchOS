@@ -59,6 +59,7 @@ interface SidebarSection {
     to: string;
     icon: IconSvgElement;
     label: string;
+    shortcut?: string;
     badge?: number;
     badgeCritical?: boolean;
   }[];
@@ -87,15 +88,28 @@ export function Sidebar({
 }: SidebarProps) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
   const openInboxCount = problems.filter((p) => p.status === "open" && isInboxItem(p)).length;
   const criticalCount = problems.filter(
     (p) => p.status === "open" && isInboxItem(p) && p.priority === "critical",
   ).length;
 
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad|iPod/.test(window.navigator.platform));
+  }, []);
+
   const sections: SidebarSection[] = [
     {
       label: "",
-      items: [{ id: "creation", to: "/dashboard/creation", icon: Chat01Icon, label: m.creation() }],
+      items: [
+        {
+          id: "creation",
+          to: "/dashboard/creation",
+          icon: Chat01Icon,
+          label: m.creation(),
+          shortcut: `${isMac ? "Cmd" : "Ctrl"}+K`,
+        },
+      ],
     },
     {
       label: m.workspace(),
@@ -208,7 +222,7 @@ export function Sidebar({
               <span className="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {section.label}
               </span>
-              {section.items.map(({ id, to, icon: Icon, label, badge, badgeCritical }) => {
+              {section.items.map(({ id, to, icon: Icon, label, shortcut, badge, badgeCritical }) => {
                 const isActive = activeView === id;
                 return (
                   <Link
@@ -223,6 +237,20 @@ export function Sidebar({
                   >
                     <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
                     <span className="flex-1 text-left">{label}</span>
+                    {shortcut && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums",
+                          isActive
+                            ? "border-sidebar-foreground/15 bg-sidebar-background/60 text-sidebar-foreground/60"
+                            : "border-border/60 bg-background/70 text-muted-foreground",
+                        )}
+                        aria-label={`Shortcut ${shortcut}`}
+                      >
+                        <HugeiconsIcon icon={Key01Icon} className="size-3 shrink-0" />
+                        {shortcut}
+                      </span>
+                    )}
                     {badge != null && badge > 0 && (
                       <span
                         className={cn(

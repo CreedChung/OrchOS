@@ -42,4 +42,8 @@ function runLightweightMigrations(db: AppDb) {
   if (hasTable("conversations") && !hasColumn("conversations", "archived")) {
     sqlite.run("ALTER TABLE conversations ADD COLUMN archived TEXT NOT NULL DEFAULT 'false'");
   }
+
+  if (hasTable("conversations") && !hasColumn("conversations", "deleted")) {
+    sqlite.run("ALTER TABLE conversations ADD COLUMN deleted TEXT NOT NULL DEFAULT 'false'");
+  }
 }

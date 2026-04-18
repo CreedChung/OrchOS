@@ -188,6 +188,7 @@ export const conversations = sqliteTable("conversations", {
   agentId: text("agent_id").references(() => agents.id),
   runtimeId: text("runtime_id").references(() => runtimes.id),
   archived: text("archived").notNull().default("false"),
+  deleted: text("deleted").notNull().default("false"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });

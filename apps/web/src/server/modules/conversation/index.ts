@@ -59,14 +59,27 @@ export function createConversationController(db: AppDb) {
       },
     )
     .delete(
+      "/deleted",
+      async () => {
+        const count = await ConversationService.clearDeleted(db);
+        return { success: true, count };
+      },
+      {
+        response: t.Object({ success: t.Boolean(), count: t.Number() }),
+      },
+    )
+    .delete(
       "/:id",
-      async ({ params: { id } }) => {
-        const success = await ConversationService.delete(db, id);
+      async ({ params: { id }, query }) => {
+        const success = query.permanent
+          ? await ConversationService.hardDelete(db, id)
+          : await ConversationService.delete(db, id);
         if (!success) throw status(404, "Conversation not found");
         return { success: true };
       },
       {
         params: t.Object({ id: t.String() }),
+        query: t.Object({ permanent: t.Optional(t.Boolean()) }),
         response: t.Object({ success: t.Boolean() }),
       },
     )

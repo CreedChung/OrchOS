@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowRight01Icon,
+  ArrowUp01Icon,
   Cancel01Icon,
   Loading01Icon,
   Robot02Icon,
@@ -350,7 +350,7 @@ export function FeaturesBento() {
                     {sending ? (
                       <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
                     ) : (
-                      <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+                      <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
                     )}
                   </Button>
                 </div>

@@ -15,7 +15,7 @@ import {
   CloudIcon,
   Robot02Icon,
   Loading01Icon,
-  ArrowRight01Icon,
+  ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -358,7 +358,7 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                   {sending ? (
                     <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
                   ) : (
-                    <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+                      <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
                   )}
                 </Button>
               </div>
