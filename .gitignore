@@ -37,5 +37,15 @@ yarn-error.log*
 .DS_Store
 *.pem
 
+# Local runtime state
+.wrangler/
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
 
 plan.md
