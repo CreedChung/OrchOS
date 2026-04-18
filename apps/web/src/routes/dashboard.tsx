@@ -123,6 +123,8 @@ function DashboardLayout() {
     setScopeFilter,
     creationArchiveFilter,
     setCreationArchiveFilter,
+    environmentSection,
+    setEnvironmentSection,
     activityPanelOpen,
     toggleActivityPanel,
   } = useUIStore();
@@ -174,6 +176,8 @@ function DashboardLayout() {
               scopeCounts={scopeCounts}
               creationArchiveFilter={creationArchiveFilter}
               onCreationArchiveFilterChange={setCreationArchiveFilter}
+              environmentSection={environmentSection}
+              onEnvironmentSectionChange={setEnvironmentSection}
               agentModelFilter={agentModelFilter}
               onAgentModelFilterChange={setAgentModelFilter}
               agentModelCounts={agentModelCounts}

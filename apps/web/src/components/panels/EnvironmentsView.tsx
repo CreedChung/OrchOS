@@ -31,6 +31,7 @@ import {
 } from "#/components/ui/select";
 import { DirectoryPickerDialog } from "#/components/ui/directory-picker-dialog";
 import { api, type DetectedRuntime } from "#/lib/api";
+import { useUIStore } from "#/lib/store";
 import { cn } from "#/lib/utils";
 import { m } from "#/paraglide/messages";
 import type { RuntimeProfile, Project } from "#/lib/types";
@@ -46,9 +47,11 @@ interface EnvironmentsViewProps {
 function ProjectsTab({
   projects: initialProjects,
   onRefresh,
+  createRequestKey,
 }: {
   projects: Project[];
   onRefresh: () => void;
+  createRequestKey: number;
 }) {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [showForm, setShowForm] = useState(false);
@@ -65,6 +68,14 @@ function ProjectsTab({
   useEffect(() => {
     setProjects(initialProjects);
   }, [initialProjects]);
+
+  useEffect(() => {
+    if (createRequestKey === 0) return;
+    setEditingId(null);
+    setFormData({ name: "", path: "", repositoryUrl: "" });
+    setFormMode("clone");
+    setShowForm(true);
+  }, [createRequestKey]);
 
   // Auto-fill name and path from repo URL
   useEffect(() => {
@@ -182,21 +193,7 @@ function ProjectsTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{m.env_projects_desc()}</p>
-        <Button
-          size="sm"
-          onClick={() => {
-            setEditingId(null);
-            setFormData({ name: "", path: "", repositoryUrl: "" });
-            setFormMode("clone");
-            setShowForm(!showForm);
-          }}
-        >
-          <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
-          {m.add()}
-        </Button>
-      </div>
+      <p className="text-sm text-muted-foreground">{m.env_projects_desc()}</p>
 
       {showForm && (
         <div className="rounded-lg border border-border bg-card p-4 space-y-4">
@@ -887,44 +884,40 @@ function EnvVarsTab() {
 // ── Main Component ────────────────────────────────────────
 
 export function EnvironmentsView({ runtimes, projects, onRefresh }: EnvironmentsViewProps) {
+  const { environmentSection: activeSection } = useUIStore();
+  const [projectCreateRequestKey, setProjectCreateRequestKey] = useState(0);
+
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-4xl p-6 space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">{m.environments()}</h1>
-          <p className="text-sm text-muted-foreground">{m.environments_desc()}</p>
+    <div className="flex flex-1 overflow-hidden">
+      <div className="flex h-full w-72 flex-col border-r border-border bg-background">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <h2 className="text-sm font-semibold text-foreground">{m.environments()}</h2>
+          {activeSection === "projects" && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setProjectCreateRequestKey((current) => current + 1)}
+              title={m.add()}
+            >
+              <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+            </Button>
+          )}
+          {activeSection !== "projects" && <div className="size-8 shrink-0" aria-hidden="true" />}
         </div>
+      </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="projects">
-          <TabsList>
-            <TabsTrigger value="projects">
-              <HugeiconsIcon icon={FolderIcon} className="size-3.5" />
-              {m.env_projects()}
-            </TabsTrigger>
-            <TabsTrigger value="runtimes">
-              <HugeiconsIcon icon={Rocket01Icon} className="size-3.5" />
-              {m.runtimes()}
-            </TabsTrigger>
-            <TabsTrigger value="env-vars">
-              <HugeiconsIcon icon={VariableIcon} className="size-3.5" />
-              {m.env_variables()}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="projects" className="mt-4">
-            <ProjectsTab projects={projects} onRefresh={onRefresh} />
-          </TabsContent>
-
-          <TabsContent value="runtimes" className="mt-4">
-            <RuntimesTab runtimes={runtimes} onRefresh={onRefresh} />
-          </TabsContent>
-
-          <TabsContent value="env-vars" className="mt-4">
-            <EnvVarsTab />
-          </TabsContent>
-        </Tabs>
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-4xl p-6">
+          {activeSection === "projects" && (
+            <ProjectsTab
+              projects={projects}
+              onRefresh={onRefresh}
+              createRequestKey={projectCreateRequestKey}
+            />
+          )}
+          {activeSection === "runtimes" && <RuntimesTab runtimes={runtimes} onRefresh={onRefresh} />}
+          {activeSection === "env-vars" && <EnvVarsTab />}
+        </div>
       </div>
     </div>
   );

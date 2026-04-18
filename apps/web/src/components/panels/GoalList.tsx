@@ -1,7 +1,7 @@
 import { cn } from "#/lib/utils";
 import { Badge } from "#/components/ui/badge";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Target01Icon, FolderGitIcon, SentIcon, Add01Icon } from "@hugeicons/core-free-icons";
+import { Target01Icon, FolderGitIcon, Add01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "#/components/ui/button";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { m } from "#/paraglide/messages";
@@ -22,7 +22,6 @@ interface GoalListProps {
   statusFilter: GoalStatusFilter;
   searchQuery: string;
   onSelectGoal: (id: string) => void;
-  onNewCommand: () => void;
   onCreateGoal: () => void;
 }
 
@@ -39,7 +38,6 @@ export function GoalList({
   statusFilter,
   searchQuery,
   onSelectGoal,
-  onNewCommand,
   onCreateGoal,
 }: GoalListProps) {
   // Filter goals
@@ -73,9 +71,6 @@ export function GoalList({
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h2 className="text-sm font-semibold text-foreground">{m.goals()}</h2>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon-sm" onClick={onNewCommand} title={m.send_command()}>
-            <HugeiconsIcon icon={SentIcon} className="size-3.5" />
-          </Button>
           <Button variant="ghost" size="icon-sm" onClick={onCreateGoal} title={m.create_goal()}>
             <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
           </Button>
@@ -160,11 +155,7 @@ export function GoalList({
               />
               <p className="text-sm text-muted-foreground">{m.no_goal_selected()}</p>
               <p className="text-xs text-muted-foreground/60 mt-1">{m.no_goal_selected_desc()}</p>
-              <div className="flex gap-2 justify-center mt-3">
-                <Button size="sm" variant="outline" onClick={onNewCommand}>
-                  <HugeiconsIcon icon={SentIcon} className="size-3 mr-1" />
-                  {m.command()}
-                </Button>
+              <div className="flex justify-center mt-3">
                 <Button size="sm" onClick={onCreateGoal}>
                   <HugeiconsIcon icon={Add01Icon} className="size-3 mr-1" />
                   {m.new_goal()}

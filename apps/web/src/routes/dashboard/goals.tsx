@@ -24,7 +24,6 @@ function GoalsPage() {
     handlePauseGoal,
     handleResumeGoal,
     handleDeleteGoal,
-    setShowCommandBar,
     setShowCreateDialog,
     searchQuery,
   } = useDashboard();
@@ -40,7 +39,6 @@ function GoalsPage() {
         statusFilter={goalStatusFilter}
         searchQuery={searchQuery}
         onSelectGoal={setActiveGoalId}
-        onNewCommand={() => setShowCommandBar(true)}
         onCreateGoal={() => setShowCreateDialog(true)}
       />
       <div className="flex-1 overflow-hidden">

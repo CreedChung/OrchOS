@@ -41,6 +41,8 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [convToDelete, setConvToDelete] = useState<string | null>(null);
+  const [hasLoadedConversations, setHasLoadedConversations] = useState(false);
+  const autoCreatingConversationRef = useRef(false);
 
   const enabledRuntimes = useMemo(() => runtimes.filter((r) => r.enabled), [runtimes]);
 
@@ -61,6 +63,8 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
       setConversations(list);
     } catch (err) {
       console.error("Failed to load conversations:", err);
+    } finally {
+      setHasLoadedConversations(true);
     }
   }, []);
 
@@ -84,6 +88,28 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
       setMessages([]);
     }
   }, [activeConversationId, loadMessages]);
+
+  useEffect(() => {
+    if (!hasLoadedConversations) return;
+
+    if (activeConversationId && filteredConversations.some((conv) => conv.id === activeConversationId)) {
+      return;
+    }
+
+    if (filteredConversations.length > 0) {
+      setActiveConversationId(filteredConversations[0].id);
+      return;
+    }
+
+    if (archiveFilter === "archived" || autoCreatingConversationRef.current) {
+      return;
+    }
+
+    autoCreatingConversationRef.current = true;
+    void handleNewConversation().finally(() => {
+      autoCreatingConversationRef.current = false;
+    });
+  }, [activeConversationId, archiveFilter, filteredConversations, handleNewConversation, hasLoadedConversations]);
 
   const handleNewConversation = useCallback(async () => {
     try {
@@ -128,9 +154,9 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
   return (
     <div className="flex flex-1 overflow-hidden">
       {/* Conversation list sidebar */}
-      <div className="flex w-60 flex-col border-r border-border bg-muted/30">
-        <div className="flex h-11 items-center justify-between border-b border-border px-3">
-          <span className="text-sm font-medium text-foreground">{m.creation()}</span>
+      <div className="flex h-full w-72 flex-col border-r border-border bg-background">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <h2 className="text-sm font-semibold text-foreground">{m.creation()}</h2>
           <Button size="icon-sm" variant="ghost" onClick={handleNewConversation}>
             <HugeiconsIcon icon={Add01Icon} className="size-4" />
           </Button>
@@ -202,17 +228,7 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <div className="text-center max-w-sm">
-              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 mb-3">
-                <HugeiconsIcon icon={Chat01Icon} className="size-6 text-primary" />
-              </div>
-              <h3 className="text-sm font-medium text-foreground">{m.creation()}</h3>
-              <p className="text-xs text-muted-foreground/60 mt-1">{m.creation_empty_desc()}</p>
-              <Button size="sm" className="mt-3" onClick={handleNewConversation}>
-                <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
-                {m.new_conversation()}
-              </Button>
-            </div>
+            <HugeiconsIcon icon={Loading01Icon} className="size-5 animate-spin text-muted-foreground/50" />
           </div>
         )}
       </div>

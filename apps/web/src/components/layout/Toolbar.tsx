@@ -26,6 +26,7 @@ type GoalStatusFilter = "all" | "active" | "completed" | "paused";
 export type ScopeFilter = "all" | "global" | "project";
 export type AgentModelFilter = "all" | "local" | "cloud";
 export type CreationArchiveFilter = "all" | "active" | "archived";
+export type EnvironmentSection = "projects" | "runtimes" | "env-vars";
 
 const scopeFilterConfig: Record<
   Exclude<ScopeFilter, "all">,
@@ -86,6 +87,8 @@ interface ToolbarProps {
   scopeCounts: { all: number; global: number; project: number };
   creationArchiveFilter: CreationArchiveFilter;
   onCreationArchiveFilterChange: (filter: CreationArchiveFilter) => void;
+  environmentSection: EnvironmentSection;
+  onEnvironmentSectionChange: (section: EnvironmentSection) => void;
 }
 
 export function Toolbar({
@@ -108,6 +111,8 @@ export function Toolbar({
   scopeCounts,
   creationArchiveFilter,
   onCreationArchiveFilterChange,
+  environmentSection,
+  onEnvironmentSectionChange,
 }: ToolbarProps) {
   return (
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
@@ -129,6 +134,30 @@ export function Toolbar({
               )}
             >
               <span>{filter.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {activeView === "environments" && (
+        <div className="flex items-center gap-1.5">
+          {([
+            { value: "projects", label: m.env_projects(), icon: Folder01Icon },
+            { value: "runtimes", label: m.runtimes(), icon: CodeIcon },
+            { value: "env-vars", label: m.env_variables(), icon: CloudIcon },
+          ] as const).map((section) => (
+            <button
+              key={section.value}
+              onClick={() => onEnvironmentSectionChange(section.value)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                environmentSection === section.value
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+              )}
+            >
+              <HugeiconsIcon icon={section.icon} className="size-3" />
+              <span>{section.label}</span>
             </button>
           ))}
         </div>
