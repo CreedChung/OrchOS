@@ -3,8 +3,7 @@ import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { m } from "@/paraglide/messages";
-import { I18nProvider } from "@/lib/useI18n";
-import { ShimmerText } from "@/components/ui/shimmer-text";
+import { I18nProvider, useLocale } from "@/lib/useI18n";
 import { FeaturesBento } from "@/components/ui/features-bento";
 import { GoalPreviewCard } from "@/components/ui/goal-preview-card";
 import { AgentPreviewCard } from "@/components/ui/agent-preview-card";
@@ -12,6 +11,7 @@ import { InboxPreviewCard } from "@/components/ui/inbox-preview-card";
 import { GooeyFilter } from "@/components/ui/gooey-filter";
 import { FloatingIconsHero } from "@/components/ui/floating-icons-hero-section";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useScreenSize } from "@/lib/use-screen-size";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -54,41 +54,58 @@ const integrationHeroIcons = [
 ];
 
 function HomePageInner() {
+  const { locale } = useLocale();
+
+  const heroCopy =
+    locale === "zh-CN"
+      ? {
+          line1: "从智能体到",
+          line2: "自动化。",
+          subtitle: "编排、协同并扩展你的 AI 劳动力。",
+        }
+      : locale === "zh-TW"
+        ? {
+            line1: "從智能體到",
+            line2: "自動化。",
+            subtitle: "編排、協調並擴展你的 AI 勞動力。",
+          }
+        : {
+            line1: "From Agents to",
+            line2: "Automation.",
+            subtitle: "Orchestrate, coordinate, and scale your AI workforce.",
+          };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative flex h-screen -mt-14 items-center justify-center px-4 pt-14">
+        <section className="relative flex h-screen -mt-14 items-start justify-start px-6 pt-14 sm:px-10 lg:pl-40 lg:pr-14">
           <div className="absolute inset-0 z-0">
             <img src="/background.png" alt="" className="size-full object-cover" />
-            <div className="absolute inset-0 bg-background/40" />
           </div>
-          <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center text-center">
-            <div className="mb-4">
-              <OrchOSLogoIcon className="size-14 sm:size-16" />
-            </div>
-            <p className="mb-3 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-              {m.hero_tagline()}
+          <div className="relative z-10 flex max-w-5xl flex-col items-start pt-16 text-left sm:pt-20 lg:pt-24">
+            <p
+              className="mb-3 max-w-3xl font-serif leading-tight text-white"
+              style={{ fontSize: "clamp(2.25rem, 6vw, 3.75rem)" }}
+            >
+              {locale === "en" ? (
+                <>
+                  From <span className="italic">Agents</span> to
+                </>
+              ) : (
+                heroCopy.line1
+              )}
+              <br />
+              <span className="text-primary italic">{heroCopy.line2}</span>
             </p>
-            <div className="mb-10">
-              <ShimmerText className="text-4xl font-bold tracking-tight text-primary sm:text-6xl">
-                OrchOS.
-              </ShimmerText>
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
-              >
-                {m.open_dashboard()}
-              </Link>
-              <Link
-                to="/about"
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-3 text-sm font-medium text-foreground shadow-sm transition hover:bg-accent"
-              >
-                {m.learn_more()}
-              </Link>
+            <p className="mb-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
+              {heroCopy.subtitle}
+            </p>
+            <div className="flex flex-wrap items-center justify-start gap-3">
+              <Button asChild className="h-auto rounded-2xl px-6 py-3 shadow-sm">
+                <Link to="/dashboard">{m.open_dashboard()}</Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -213,20 +230,14 @@ function HomePageInner() {
               </h2>
               <p className="mb-8 max-w-lg text-sm text-muted-foreground">{m.cta_desc()}</p>
               <div className="flex flex-wrap items-center justify-center gap-3">
-                <Link
-                  to="/dashboard"
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
-                >
-                  {m.open_dashboard()}
-                </Link>
-                <a
-                  href="https://github.com/orchos"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-3 text-sm font-medium text-foreground shadow-sm transition hover:bg-accent"
-                >
-                  {m.view_on_github()}
-                </a>
+                <Button asChild className="h-auto px-6 py-3 shadow-sm">
+                  <Link to="/dashboard">{m.open_dashboard()}</Link>
+                </Button>
+                <Button asChild variant="outline" className="h-auto bg-card px-6 py-3 shadow-sm">
+                  <a href="https://github.com/orchos" target="_blank" rel="noreferrer">
+                    {m.view_on_github()}
+                  </a>
+                </Button>
               </div>
             </div>
           </div>
@@ -327,20 +338,5 @@ function SectionLabel({ text }: { text: string }) {
     <p className="mb-2 text-center text-xs font-bold uppercase tracking-widest text-primary">
       {text}
     </p>
-  );
-}
-
-function OrchOSLogoIcon(props: React.ComponentProps<"svg">) {
-  return (
-    <svg viewBox="0 0 185 185" fill="none" {...props}>
-      <rect width="185" height="185" rx="38" fill="#0048EF" />
-      <circle cx="77" cy="86" r="40" stroke="white" strokeWidth="16" />
-      <circle cx="77" cy="86" r="17.5" stroke="white" strokeWidth="15" />
-      <rect x="67" y="106" width="20" height="41" fill="white" />
-      <rect x="117" y="86" width="20" height="41" fill="white" />
-      <rect x="137" y="107" width="20" height="40" fill="white" />
-      <rect x="67" y="147" width="20" height="50" transform="rotate(-90 67 147)" fill="white" />
-      <rect x="117" y="127" width="20" height="35" transform="rotate(-90 117 127)" fill="white" />
-    </svg>
   );
 }

@@ -73,7 +73,6 @@ const footerData = {
     },
   ],
   title: m.about_orchos(),
-  subtitle: m.built_with_orchos(),
   copyright: `©${new Date().getFullYear()} ${m.about_orchos()}. ${m.footer_rights()}`,
 };
 
@@ -188,18 +187,14 @@ export default function StickyFooter() {
               className="flex flex-col md:flex-row justify-between items-start md:items-end relative z-10 gap-4 md:gap-6 mt-6"
             >
               <div className="flex-1">
-                <motion.h1
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 1, duration: 0.8, ease: "easeOut" as const }}
-                  whileHover={{
-                    scale: 1.02,
-                    transition: { type: "spring", stiffness: 300, damping: 20 },
-                  }}
-                  className="text-[12vw] md:text-[10vw] lg:text-[8vw] xl:text-[6vw] leading-[0.8] font-serif bg-gradient-to-r from-foreground via-muted-foreground to-foreground/60 bg-clip-text text-transparent cursor-default"
-                >
-                  {footerData.title}
-                </motion.h1>
+                <div className="relative inline-flex max-w-full items-center justify-center leading-[0.8]">
+                  <h1
+                    className="relative z-10 cursor-default font-serif italic leading-[0.8] text-foreground"
+                    style={{ fontSize: "clamp(3.5rem, 10vw, 8rem)" }}
+                  >
+                    {footerData.title}
+                  </h1>
+                </div>
 
                 <motion.div
                   initial={{ opacity: 0, width: 0 }}
@@ -218,14 +213,6 @@ export default function StickyFooter() {
                       ease: "easeInOut" as const,
                     }}
                   />
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.4, duration: 0.5 }}
-                    className="text-muted-foreground text-xs md:text-sm font-sans hover:text-foreground transition-colors duration-300"
-                  >
-                    {footerData.subtitle}
-                  </motion.p>
                 </motion.div>
               </div>
 

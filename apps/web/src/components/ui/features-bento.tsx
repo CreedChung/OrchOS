@@ -1,15 +1,110 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Robot02Icon } from "@hugeicons/core-free-icons";
+import {
+  ArrowRight01Icon,
+  Cancel01Icon,
+  Loading01Icon,
+  Robot02Icon,
+} from "@hugeicons/core-free-icons";
+import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
+import type { RuntimeProfile } from "@/lib/types";
+
+interface AskMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  error?: string;
+  responseTime?: number;
+}
 
 export function FeaturesBento() {
+  const [open, setOpen] = useState(false);
+  const [runtimes, setRuntimes] = useState<RuntimeProfile[]>([]);
+  const [messages, setMessages] = useState<AskMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const selectedRuntime = useMemo(() => runtimes.find((runtime) => runtime.enabled) ?? null, [runtimes]);
+
+  useEffect(() => {
+    void api
+      .listRuntimes()
+      .then(setRuntimes)
+      .catch((err) => console.error("Failed to load runtimes:", err));
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, sending]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOpen(true);
+      }
+
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleSend = useCallback(async () => {
+    if (!input.trim() || !selectedRuntime || sending) return;
+
+    const userMessage: AskMessage = {
+      id: `ask_${Date.now()}`,
+      role: "user",
+      content: input.trim(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setSending(true);
+
+    try {
+      const result = await api.chatWithRuntime(selectedRuntime.id, userMessage.content);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ask_${Date.now()}_response`,
+          role: "assistant",
+          content: result.output || result.error || "No response",
+          error: result.success ? undefined : result.error,
+          responseTime: result.responseTime,
+        },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ask_${Date.now()}_error`,
+          role: "assistant",
+          content: err instanceof Error ? err.message : "Failed to send message",
+          error: "Request failed",
+        },
+      ]);
+    } finally {
+      setSending(false);
+    }
+  }, [input, selectedRuntime, sending]);
+
   return (
-    <section className="dark:bg-muted/25 bg-zinc-50 py-16 md:py-32">
-      <div className="mx-auto max-w-5xl px-6">
-        <div className="mx-auto grid gap-2 sm:grid-cols-5">
+    <>
+      <section className="dark:bg-muted/25 bg-zinc-50 py-16 md:py-32">
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="mx-auto grid gap-2 sm:grid-cols-5">
           {/* Main: Multi-Agent Coordination */}
           <Card className="group overflow-hidden shadow-black/5 sm:col-span-3 sm:rounded-none sm:rounded-tl-xl">
             <CardHeader>
@@ -73,7 +168,10 @@ export function FeaturesBento() {
           </Card>
 
           {/* Bottom Left: Hotkeys */}
-          <Card className="group p-6 shadow-black/5 sm:col-span-2 sm:rounded-none sm:rounded-bl-xl md:p-12">
+          <Card
+            className="group cursor-pointer p-6 shadow-black/5 sm:col-span-2 sm:rounded-none sm:rounded-bl-xl md:p-12"
+            onClick={() => setOpen(true)}
+          >
             <p className="mx-auto mb-12 max-w-md text-balance text-center text-lg font-semibold sm:text-2xl">
               {m.ai_ask()}
             </p>
@@ -140,8 +238,130 @@ export function FeaturesBento() {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {open ? (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-[12vh] backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-xl border border-border bg-card shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <div className="flex items-center gap-2">
+                <HugeiconsIcon icon={Robot02Icon} className="size-4 text-primary" />
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">{m.ai_ask()}</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedRuntime ? `Fixed chat with ${selectedRuntime.name}` : m.no_agents_available()}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+              </button>
+            </div>
+
+            <div className="flex h-[520px] flex-col">
+              <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+                {messages.length === 0 ? (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+                    <HugeiconsIcon icon={Robot02Icon} className="size-6 opacity-20" />
+                    <p className="text-sm text-foreground">{m.ai_ask()}</p>
+                    <p className="max-w-sm text-xs text-muted-foreground/70">
+                      {selectedRuntime
+                        ? `Start a fixed conversation with ${selectedRuntime.name}.`
+                        : m.no_agents_available()}
+                    </p>
+                  </div>
+                ) : null}
+
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "rounded-xl px-4 py-3 text-sm",
+                      message.role === "user"
+                        ? "ml-12 bg-primary/10 text-foreground"
+                        : message.error
+                          ? "mr-12 bg-destructive/10 text-destructive"
+                          : "mr-12 bg-muted text-foreground",
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
+                    {message.responseTime ? (
+                      <p className="mt-1 text-[10px] text-muted-foreground/60">{message.responseTime}ms</p>
+                    ) : null}
+                  </div>
+                ))}
+
+                {sending ? (
+                  <div className="mr-12 rounded-xl bg-muted px-4 py-3 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <HugeiconsIcon icon={Loading01Icon} className="size-4 animate-spin" />
+                      <span className="text-xs">{m.thinking()}</span>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleSend();
+                }}
+                className="border-t border-border px-5 py-4"
+              >
+                <div className="flex items-end gap-2 rounded-xl border border-border bg-background px-3 py-3">
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder={selectedRuntime ? `Ask ${selectedRuntime.name}...` : m.no_agents_available()}
+                    className="min-h-[68px] max-h-[220px] flex-1 resize-none bg-transparent px-2 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
+                    disabled={!selectedRuntime || sending}
+                    rows={1}
+                    spellCheck={false}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setOpen(false);
+                      }
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void handleSend();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    size="icon-sm"
+                    disabled={!input.trim() || !selectedRuntime || sending}
+                    className="mb-1 shrink-0"
+                  >
+                    {sending ? (
+                      <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                    ) : (
+                      <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+                    )}
+                  </Button>
+                </div>
+                <p className="mt-1.5 text-center text-[10px] text-muted-foreground/50">
+                  Enter to send · Shift+Enter for new line · {selectedRuntime?.name || m.ai_ask()}
+                </p>
+              </form>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

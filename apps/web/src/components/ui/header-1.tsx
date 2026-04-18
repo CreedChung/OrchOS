@@ -9,10 +9,45 @@ import { Link } from "@tanstack/react-router";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import LocaleToggle from "@/components/layout/LocaleToggle";
 import { m } from "@/paraglide/messages";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { GithubIcon } from "@hugeicons/core-free-icons";
 
 export function Header() {
   const [open, setOpen] = React.useState(false);
   const scrolled = useScroll(10);
+  const [starCount, setStarCount] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadStarCount() {
+      try {
+        const response = await fetch("/api/github-stars", {
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+
+        const data = (await response.json()) as { stargazers_count?: number };
+        if (typeof data.stargazers_count === "number") {
+          setStarCount(data.stargazers_count);
+        }
+      } catch {
+        // Leave the button usable even if the GitHub API is unavailable.
+      }
+    }
+
+    void loadStarCount();
+
+    return () => controller.abort();
+  }, []);
+
+  const formattedStarCount =
+    starCount === null
+      ? null
+      : new Intl.NumberFormat("en", {
+          notation: "compact",
+          maximumFractionDigits: 1,
+        }).format(starCount);
 
   const links = [
     {
@@ -53,7 +88,7 @@ export function Header() {
       <nav className="flex h-14 w-full items-center justify-between pl-6 pr-4">
         <Link to="/" className="hover:bg-accent flex items-center gap-2 rounded-md p-2 ml-32">
           <OrchOSLogoIcon className="size-6" />
-          <span className="text-sm font-semibold text-foreground">OrchOS</span>
+          <span className="font-serif text-sm font-semibold italic text-foreground">OrchOS</span>
         </Link>
         <div className="hidden items-center gap-2 md:flex">
           {links.map((link) => (
@@ -61,9 +96,20 @@ export function Header() {
               {link.label}
             </Link>
           ))}
-          <Link to="/dashboard" className="mr-20">
-            <Button variant="outline">{m.nav_get_started()}</Button>
-          </Link>
+          <a
+            href="https://github.com/CreedChung/OrchOS"
+            target="_blank"
+            rel="noreferrer"
+            className="mr-20"
+          >
+            <Button variant="outline">
+              <HugeiconsIcon icon={GithubIcon} className="size-4" />
+              GitHub
+              {formattedStarCount ? (
+                <span className="text-xs text-muted-foreground">{formattedStarCount}</span>
+              ) : null}
+            </Button>
+          </a>
           <div className="ml-auto flex items-center gap-1">
             <LocaleToggle />
             <ThemeToggle />
@@ -100,11 +146,20 @@ export function Header() {
         <div className="flex flex-col gap-2">
           <LocaleToggle />
           <ThemeToggle />
-          <Link to="/dashboard" onClick={() => setOpen(false)}>
+          <a
+            href="https://github.com/CreedChung/OrchOS"
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setOpen(false)}
+          >
             <Button variant="outline" className="w-full bg-transparent">
-              {m.nav_get_started()}
+              <HugeiconsIcon icon={GithubIcon} className="size-4" />
+              GitHub
+              {formattedStarCount ? (
+                <span className="text-xs text-muted-foreground">{formattedStarCount}</span>
+              ) : null}
             </Button>
-          </Link>
+          </a>
         </div>
       </MobileMenu>
     </header>

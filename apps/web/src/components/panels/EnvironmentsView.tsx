@@ -884,8 +884,28 @@ function EnvVarsTab() {
 // ── Main Component ────────────────────────────────────────
 
 export function EnvironmentsView({ runtimes, projects, onRefresh }: EnvironmentsViewProps) {
-  const { environmentSection: activeSection } = useUIStore();
+  const { environmentSection: activeSection, setEnvironmentSection } = useUIStore();
   const [projectCreateRequestKey, setProjectCreateRequestKey] = useState(0);
+  const sections = [
+    {
+      id: "projects" as const,
+      title: m.env_projects(),
+      description: m.env_projects_desc(),
+      icon: FolderIcon,
+    },
+    {
+      id: "runtimes" as const,
+      title: m.runtimes(),
+      description: m.runtimes_desc(),
+      icon: Rocket01Icon,
+    },
+    {
+      id: "env-vars" as const,
+      title: m.env_variables(),
+      description: m.env_vars_desc(),
+      icon: VariableIcon,
+    },
+  ];
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -903,6 +923,38 @@ export function EnvironmentsView({ runtimes, projects, onRefresh }: Environments
             </Button>
           )}
           {activeSection !== "projects" && <div className="size-8 shrink-0" aria-hidden="true" />}
+        </div>
+
+        <div className="space-y-0.5 p-2">
+          {sections.map((section) => {
+            const isActive = activeSection === section.id;
+
+            return (
+              <button
+                key={section.id}
+                onClick={() => setEnvironmentSection(section.id)}
+                className={cn(
+                  "flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
+                  isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "text-foreground/80 hover:bg-accent/50",
+                )}
+                type="button"
+              >
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                  <HugeiconsIcon icon={section.icon} className="size-3.5 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={cn("truncate text-xs font-medium", isActive && "text-accent-foreground")}>
+                    {section.title}
+                  </p>
+                  <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground">
+                    {section.description}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 

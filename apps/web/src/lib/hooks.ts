@@ -70,6 +70,7 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
   onEventRef.current = onEvent;
 
   useEffect(() => {
+    let isShuttingDown = false;
     const ws = (server.ws as any).subscribe();
 
     ws.on("message", (message: any) => {
@@ -83,10 +84,15 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
     });
 
     ws.on("close", () => {
-      console.log("WebSocket disconnected");
+      if (isShuttingDown) {
+        return;
+      }
+
+      console.warn("WebSocket disconnected unexpectedly");
     });
 
     return () => {
+      isShuttingDown = true;
       ws.close();
     };
   }, []);

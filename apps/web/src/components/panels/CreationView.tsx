@@ -13,6 +13,8 @@ import {
   Folder01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
+import { BorderBeam } from "border-beam";
+import { ArchiveRestore, ArchiveX } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -139,7 +141,13 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
   const handleUpdateConversation = useCallback(
     async (
       id: string,
-      data: { title?: string; projectId?: string; agentId?: string; runtimeId?: string },
+      data: {
+        title?: string;
+        projectId?: string;
+        agentId?: string;
+        runtimeId?: string;
+        archived?: boolean;
+      },
     ) => {
       try {
         await api.updateConversation(id, data);
@@ -155,7 +163,7 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
     <div className="flex flex-1 overflow-hidden">
       {/* Conversation list sidebar */}
       <div className="flex h-full w-72 flex-col border-r border-border bg-background">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex h-14 items-center justify-between border-b border-border px-4">
           <h2 className="text-sm font-semibold text-foreground">{m.creation()}</h2>
           <Button size="icon-sm" variant="ghost" onClick={handleNewConversation}>
             <HugeiconsIcon icon={Add01Icon} className="size-4" />
@@ -178,6 +186,24 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
                 <span className="flex-1 truncate text-left text-xs">
                   {conv.title || m.untitled_conversation()}
                 </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void handleUpdateConversation(conv.id, { archived: !conv.archived });
+                  }}
+                  className={cn(
+                    "shrink-0 text-muted-foreground transition-opacity hover:text-foreground",
+                    conv.archived ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                  )}
+                  title={conv.archived ? "Unarchive" : m.archive()}
+                  type="button"
+                >
+                  {conv.archived ? (
+                    <ArchiveRestore className="size-3" />
+                  ) : (
+                    <ArchiveX className="size-3" />
+                  )}
+                </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -254,7 +280,13 @@ interface ChatAreaProps {
   projects: Project[];
   onUpdateConversation: (
     id: string,
-    data: { title?: string; projectId?: string; agentId?: string; runtimeId?: string },
+    data: {
+      title?: string;
+      projectId?: string;
+      agentId?: string;
+      runtimeId?: string;
+      archived?: boolean;
+    },
   ) => Promise<void>;
   onSendMessage: (content: string) => Promise<ConversationMessage>;
   onReloadMessages?: () => Promise<void>;
@@ -331,7 +363,7 @@ function ChatArea({
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex h-11 items-center gap-3 border-b border-border px-4">
+      <div className="flex h-14 items-center justify-between gap-3 border-b border-border px-4">
         {/* Title */}
         {editingTitle ? (
           <input
@@ -496,40 +528,49 @@ function ChatArea({
       {/* Input area */}
       <div className="border-t border-border px-4 py-3">
         <div className="mx-auto max-w-3xl">
-          <div className="flex items-end gap-2 rounded-xl border border-border bg-background p-2">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={
-                selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()
-              }
-              className="flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground"
-              rows={1}
-              onKeyDown={handleKeys}
-              spellCheck={false}
-              disabled={sending}
-              style={{ minHeight: "36px", maxHeight: "120px" }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = "auto";
-                target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
-              }}
-            />
-            <Button
-              type="button"
-              size="icon-sm"
-              disabled={!input.trim() || sending}
-              onClick={handleSend}
-              className="shrink-0"
-            >
-              {sending ? (
-                <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
-              ) : (
-                <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
-              )}
-            </Button>
-          </div>
+          <BorderBeam
+            size="md"
+            theme="auto"
+            colorVariant="ocean"
+            strength={0.65}
+            duration={2.6}
+            className="rounded-xl"
+          >
+            <div className="flex items-end gap-2 rounded-xl border border-border bg-background px-3 py-4">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={
+                  selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()
+                }
+                className="flex-1 resize-none bg-transparent px-2 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
+                rows={1}
+                onKeyDown={handleKeys}
+                spellCheck={false}
+                disabled={sending}
+                style={{ minHeight: "68px", maxHeight: "220px" }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = "auto";
+                  target.style.height = `${Math.min(target.scrollHeight, 220)}px`;
+                }}
+              />
+              <Button
+                type="button"
+                size="icon-sm"
+                disabled={!input.trim() || sending}
+                onClick={handleSend}
+                className="mb-1 shrink-0"
+              >
+                {sending ? (
+                  <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                ) : (
+                  <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+                )}
+              </Button>
+            </div>
+          </BorderBeam>
           <p className="text-[10px] text-muted-foreground/50 mt-1.5 text-center">
             Enter to send · Shift+Enter for new line ·{" "}
             {selectedRuntime ? `${selectedRuntime.name}` : m.select_agent()}
