@@ -219,7 +219,7 @@ export type SidebarView =
   | "agents"
   | "mcp-servers"
   | "skills"
-  | "environments"
+  | "projects"
   | "observability";
 
 export interface AgentRule {

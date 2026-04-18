@@ -55,7 +55,7 @@ function getViewFromPath(pathname: string): SidebarView {
     "agents",
     "mcp-servers",
     "skills",
-    "environments",
+    "projects",
     "observability",
   ];
   return validViews.includes(segment as SidebarView) ? (segment as SidebarView) : "inbox";
@@ -123,8 +123,6 @@ function DashboardLayout() {
     setScopeFilter,
     creationArchiveFilter,
     setCreationArchiveFilter,
-    environmentSection,
-    setEnvironmentSection,
     activityPanelOpen,
     toggleActivityPanel,
   } = useUIStore();
@@ -176,8 +174,6 @@ function DashboardLayout() {
               scopeCounts={scopeCounts}
               creationArchiveFilter={creationArchiveFilter}
               onCreationArchiveFilterChange={setCreationArchiveFilter}
-              environmentSection={environmentSection}
-              onEnvironmentSectionChange={setEnvironmentSection}
               agentModelFilter={agentModelFilter}
               onAgentModelFilterChange={setAgentModelFilter}
               agentModelCounts={agentModelCounts}

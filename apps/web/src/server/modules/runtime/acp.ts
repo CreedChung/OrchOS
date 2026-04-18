@@ -336,12 +336,71 @@ type ManagedSession = {
 };
 
 const managedSessions = new Map<string, ManagedSession>();
+const ACP_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+const ACP_SWEEP_INTERVAL_MS = 60 * 1000;
+
+let sweepTimer: ReturnType<typeof setInterval> | undefined;
+let cleanupRegistered = false;
+
+function isSessionExpired(session: ManagedSession, now: number) {
+  return now - session.lastUsedAt >= ACP_IDLE_TIMEOUT_MS;
+}
+
+async function destroyManagedSession(sessionKey: string) {
+  const session = managedSessions.get(sessionKey);
+  if (!session) return;
+  managedSessions.delete(sessionKey);
+  await session.close().catch(() => undefined);
+}
+
+async function sweepManagedSessions() {
+  const now = Date.now();
+  const expiredKeys = [...managedSessions.entries()]
+    .filter(([, session]) => isSessionExpired(session, now))
+    .map(([key]) => key);
+
+  await Promise.all(expiredKeys.map((key) => destroyManagedSession(key)));
+}
+
+function ensureSweepTimer() {
+  if (sweepTimer) return;
+  sweepTimer = setInterval(() => {
+    void sweepManagedSessions();
+  }, ACP_SWEEP_INTERVAL_MS);
+}
+
+async function cleanupAllManagedSessions() {
+  const keys = [...managedSessions.keys()];
+  await Promise.all(keys.map((key) => destroyManagedSession(key)));
+  if (sweepTimer) {
+    clearInterval(sweepTimer);
+    sweepTimer = undefined;
+  }
+}
+
+function registerCleanupHooks() {
+  if (cleanupRegistered) return;
+  cleanupRegistered = true;
+
+  process.once("beforeExit", () => {
+    void cleanupAllManagedSessions();
+  });
+  process.once("SIGINT", () => {
+    void cleanupAllManagedSessions().finally(() => process.exit(130));
+  });
+  process.once("SIGTERM", () => {
+    void cleanupAllManagedSessions().finally(() => process.exit(143));
+  });
+}
 
 function getConfigKey(config: AcpAgentConfig) {
   return JSON.stringify({ command: config.command, args: config.args, env: config.env || {} });
 }
 
 async function createManagedSession(config: AcpAgentConfig, cwd?: string, key?: string): Promise<ManagedSession> {
+  ensureSweepTimer();
+  registerCleanupHooks();
+
   const bun = await import("bun");
   const proc = bun.spawn({
     cmd: [config.command, ...config.args],
@@ -428,6 +487,8 @@ export async function promptManagedAcpAgent(
   sessionKey?: string,
 ) {
   if (!sessionKey) return promptAcpAgent(config, prompt, cwd);
+
+  await sweepManagedSessions();
 
   const configKey = getConfigKey(config);
   let session = managedSessions.get(sessionKey);

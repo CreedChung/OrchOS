@@ -84,6 +84,18 @@ export const runtimeController = new Elysia({ prefix: "/api/runtimes" })
         if (!runtime) throw status(404, "Runtime not found");
         return runtime;
       }
+      if (
+        body.protocol !== undefined ||
+        body.transport !== undefined ||
+        body.acpCommand !== undefined ||
+        body.acpArgs !== undefined ||
+        body.acpEnv !== undefined ||
+        body.communicationMode !== undefined
+      ) {
+        const runtime = RuntimeService.updateConfig(id, body);
+        if (!runtime) throw status(404, "Runtime not found");
+        return runtime;
+      }
       throw status(400, "No valid fields to update");
     },
     {
@@ -91,6 +103,18 @@ export const runtimeController = new Elysia({ prefix: "/api/runtimes" })
       body: t.Object({
         status: t.Optional(t.Union([t.Literal("idle"), t.Literal("active"), t.Literal("error")])),
         enabled: t.Optional(t.Boolean()),
+        protocol: t.Optional(t.Union([t.Literal("acp"), t.Literal("cli")])),
+        transport: t.Optional(t.Union([t.Literal("stdio"), t.Literal("tcp")])),
+        acpCommand: t.Optional(t.String()),
+        acpArgs: t.Optional(t.Array(t.String())),
+        acpEnv: t.Optional(t.Record(t.String(), t.String())),
+        communicationMode: t.Optional(
+          t.Union([
+            t.Literal("acp-native"),
+            t.Literal("acp-adapter"),
+            t.Literal("cli-fallback"),
+          ]),
+        ),
       }),
       response: {
         200: RuntimeModel.response,

@@ -32,7 +32,7 @@ import {
   Delete02Icon,
   FolderGitIcon,
   Wrench01Icon,
-  Archive01Icon,
+  Folder01Icon,
   AiBrain01Icon,
   UserCircleIcon,
   Logout03Icon,
@@ -140,13 +140,13 @@ export function Sidebar({
       ],
     },
     {
-      label: m.environments(),
+      label: m.project(),
       items: [
         {
-          id: "environments",
-          to: "/dashboard/environments",
-          icon: Archive01Icon,
-          label: m.environments(),
+          id: "projects",
+          to: "/dashboard/projects",
+          icon: Folder01Icon,
+          label: m.project(),
         },
       ],
     },

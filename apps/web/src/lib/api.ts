@@ -1,7 +1,19 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL?.trim() ?? "").replace(/\/+$/, "");
+const RAW_API_BASE =
+  import.meta.env.VITE_API_BASE_URL?.trim() ?? import.meta.env.VITE_API_BASE?.trim() ?? "";
+
+export const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
+export const DEFAULT_BACKEND_BASE_URL = "http://127.0.0.1:5173";
+
+export function resolveApiUrl(path: string) {
+  if (API_BASE) {
+    return `${API_BASE}${path}`;
+  }
+
+  return new URL(path, DEFAULT_BACKEND_BASE_URL).toString();
+}
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(resolveApiUrl(path), {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
@@ -355,7 +367,19 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
-  updateRuntime: (id: string, data: { enabled?: boolean; status?: RuntimeProfile["status"] }) =>
+  updateRuntime: (
+    id: string,
+    data: {
+      enabled?: boolean;
+      status?: RuntimeProfile["status"];
+      protocol?: RuntimeProfile["protocol"];
+      transport?: RuntimeProfile["transport"];
+      acpCommand?: string;
+      acpArgs?: string[];
+      acpEnv?: Record<string, string>;
+      communicationMode?: RuntimeProfile["communicationMode"];
+    },
+  ) =>
     request<RuntimeProfile>(`/api/runtimes/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   healthCheckRuntime: (runtimeId: string, level?: "basic" | "ping" | "full") =>
     request<{

@@ -1,8 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { treaty } from "@elysiajs/eden";
-import { api } from "./api";
+import { api, resolveApiUrl } from "./api";
 
-const server = treaty("localhost:5173");
+const WS_RECONNECT_DELAY_MS = 1000;
+
+function getWsBaseUrl() {
+  const apiUrl = new URL(resolveApiUrl("/ws"));
+  apiUrl.protocol = apiUrl.protocol === "https:" ? "wss:" : "ws:";
+  apiUrl.pathname = "";
+  apiUrl.search = "";
+  apiUrl.hash = "";
+  return apiUrl.toString().replace(/\/$/, "");
+}
 
 function useAsyncData<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
@@ -71,29 +80,56 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
 
   useEffect(() => {
     let isShuttingDown = false;
-    const ws = (server.ws as any).subscribe();
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let ws: {
+      on: (event: string, handler: (...args: unknown[]) => void) => void;
+      close: () => void;
+    } | null = null;
 
-    ws.on("message", (message: any) => {
-      if (message?.type === "event" && message.data) {
-        onEventRef.current(message.data as Record<string, unknown>);
-      }
-    });
-
-    ws.on("open", () => {
-      console.log("WebSocket connected");
-    });
-
-    ws.on("close", () => {
+    const connect = () => {
       if (isShuttingDown) {
         return;
       }
 
-      console.warn("WebSocket disconnected unexpectedly");
-    });
+      ws = (treaty(getWsBaseUrl()).ws as any).subscribe();
+
+      ws.on("message", (message: any) => {
+        if (message?.type === "event" && message.data) {
+          onEventRef.current(message.data as Record<string, unknown>);
+        }
+      });
+
+      ws.on("open", () => {
+        console.log("WebSocket connected");
+      });
+
+      ws.on("close", (event?: unknown) => {
+        if (isShuttingDown) {
+          return;
+        }
+
+        const closeEvent = event as { code?: unknown; reason?: unknown; wasClean?: unknown } | undefined;
+        console.warn("WebSocket disconnected unexpectedly", {
+          code: closeEvent?.code,
+          reason: closeEvent?.reason,
+          wasClean: closeEvent?.wasClean,
+        });
+
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          connect();
+        }, WS_RECONNECT_DELAY_MS);
+      });
+    };
+
+    connect();
 
     return () => {
       isShuttingDown = true;
-      ws.close();
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+      ws?.close();
     };
   }, []);
 }

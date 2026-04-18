@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, type SkillRepositoryAnalysis } from "@/lib/api";
 import type { Project } from "@/lib/types";
 import { m } from "@/paraglide/messages";
@@ -176,30 +177,12 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
             <h2 className="text-lg font-semibold text-foreground">{m.skills()}</h2>
             <p className="text-sm text-muted-foreground">{m.skill_install_intro()}</p>
           </div>
-          <div className="rounded-lg bg-muted p-1">
-            <button
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm transition-colors",
-                mode === "manual"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground",
-              )}
-              onClick={() => setMode("manual")}
-            >
-              {m.skill_mode_manual()}
-            </button>
-            <button
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm transition-colors",
-                mode === "repository"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground",
-              )}
-              onClick={() => setMode("repository")}
-            >
-              {m.skill_mode_repository()}
-            </button>
-          </div>
+          <Tabs value={mode} onValueChange={(v) => setMode(v as DialogMode)}>
+            <TabsList>
+              <TabsTrigger value="manual">{m.skill_mode_manual()}</TabsTrigger>
+              <TabsTrigger value="repository">{m.skill_mode_repository()}</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         {mode === "manual" ? (

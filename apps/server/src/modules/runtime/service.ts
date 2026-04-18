@@ -102,6 +102,31 @@ export abstract class RuntimeService {
     return RuntimeService.get(id);
   }
 
+  static updateConfig(
+    id: string,
+    data: {
+      protocol?: RuntimeProfile["protocol"];
+      transport?: RuntimeProfile["transport"];
+      acpCommand?: string;
+      acpArgs?: string[];
+      acpEnv?: Record<string, string>;
+      communicationMode?: RuntimeProfile["communicationMode"];
+    },
+  ): RuntimeProfile | undefined {
+    db.update(runtimes)
+      .set({
+        ...(data.protocol !== undefined ? { protocol: data.protocol } : {}),
+        ...(data.transport !== undefined ? { transport: data.transport } : {}),
+        ...(data.acpCommand !== undefined ? { acpCommand: data.acpCommand || null } : {}),
+        ...(data.acpArgs !== undefined ? { acpArgs: JSON.stringify(data.acpArgs) } : {}),
+        ...(data.acpEnv !== undefined ? { acpEnv: JSON.stringify(data.acpEnv) } : {}),
+        ...(data.communicationMode !== undefined ? { communicationMode: data.communicationMode } : {}),
+      })
+      .where(eq(runtimes.id, id))
+      .run();
+    return RuntimeService.get(id);
+  }
+
   static async detect(): Promise<{
     available: {
       id: string;

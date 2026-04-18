@@ -6,7 +6,6 @@ type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_re
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
 type ScopeFilter = "all" | "global" | "project";
 type CreationArchiveFilter = "all" | "active" | "archived" | "deleted";
-type EnvironmentSection = "projects" | "runtimes" | "env-vars";
 type ThemeMode = "light" | "dark" | "auto";
 
 interface UIState {
@@ -21,7 +20,6 @@ interface UIState {
   goalStatusFilter: GoalStatusFilter;
   scopeFilter: ScopeFilter;
   creationArchiveFilter: CreationArchiveFilter;
-  environmentSection: EnvironmentSection;
 
   // Panel states
   activityPanelOpen: boolean;
@@ -42,7 +40,6 @@ interface UIActions {
   setGoalStatusFilter: (filter: GoalStatusFilter) => void;
   setScopeFilter: (filter: ScopeFilter) => void;
   setCreationArchiveFilter: (filter: CreationArchiveFilter) => void;
-  setEnvironmentSection: (section: EnvironmentSection) => void;
   setActivityPanelOpen: (open: boolean) => void;
   toggleActivityPanel: () => void;
   setTheme: (mode: ThemeMode) => void;
@@ -72,7 +69,6 @@ export const useUIStore = create<UIState & UIActions>()(
       goalStatusFilter: "all" as GoalStatusFilter,
       scopeFilter: "all" as ScopeFilter,
       creationArchiveFilter: "all" as CreationArchiveFilter,
-      environmentSection: "projects" as EnvironmentSection,
 
       // Panel states
       activityPanelOpen: false,
@@ -91,7 +87,6 @@ export const useUIStore = create<UIState & UIActions>()(
       setGoalStatusFilter: (filter) => set({ goalStatusFilter: filter }),
       setScopeFilter: (filter) => set({ scopeFilter: filter }),
       setCreationArchiveFilter: (filter) => set({ creationArchiveFilter: filter }),
-      setEnvironmentSection: (section) => set({ environmentSection: section }),
       setActivityPanelOpen: (open) => set({ activityPanelOpen: open }),
       toggleActivityPanel: () => set((s) => ({ activityPanelOpen: !s.activityPanelOpen })),
       setTheme: (mode) => set({ theme: mode }),

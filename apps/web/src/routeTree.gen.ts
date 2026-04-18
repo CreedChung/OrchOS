@@ -17,11 +17,11 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardSkillsRouteImport } from './routes/dashboard/skills'
+import { Route as DashboardProjectsRouteImport } from './routes/dashboard/projects'
 import { Route as DashboardObservabilityRouteImport } from './routes/dashboard/observability'
 import { Route as DashboardMcpServersRouteImport } from './routes/dashboard/mcp-servers'
 import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
 import { Route as DashboardGoalsRouteImport } from './routes/dashboard/goals'
-import { Route as DashboardEnvironmentsRouteImport } from './routes/dashboard/environments'
 import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
 import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
@@ -66,6 +66,11 @@ const DashboardSkillsRoute = DashboardSkillsRouteImport.update({
   path: '/skills',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardProjectsRoute = DashboardProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardObservabilityRoute = DashboardObservabilityRouteImport.update({
   id: '/observability',
   path: '/observability',
@@ -84,11 +89,6 @@ const DashboardInboxRoute = DashboardInboxRouteImport.update({
 const DashboardGoalsRoute = DashboardGoalsRouteImport.update({
   id: '/goals',
   path: '/goals',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardEnvironmentsRoute = DashboardEnvironmentsRouteImport.update({
-  id: '/environments',
-  path: '/environments',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardCreationRoute = DashboardCreationRouteImport.update({
@@ -117,11 +117,11 @@ export interface FileRoutesByFullPath {
   '/api/$': typeof ApiSplatRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
-  '/dashboard/environments': typeof DashboardEnvironmentsRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
   '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
+  '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/skills': typeof DashboardSkillsRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
@@ -134,11 +134,11 @@ export interface FileRoutesByTo {
   '/api/$': typeof ApiSplatRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
-  '/dashboard/environments': typeof DashboardEnvironmentsRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
   '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
+  '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/skills': typeof DashboardSkillsRoute
   '/dashboard': typeof DashboardIndexRoute
 }
@@ -153,11 +153,11 @@ export interface FileRoutesById {
   '/api/$': typeof ApiSplatRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
-  '/dashboard/environments': typeof DashboardEnvironmentsRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
   '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
+  '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/skills': typeof DashboardSkillsRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
@@ -173,11 +173,11 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/dashboard/agents'
     | '/dashboard/creation'
-    | '/dashboard/environments'
     | '/dashboard/goals'
     | '/dashboard/inbox'
     | '/dashboard/mcp-servers'
     | '/dashboard/observability'
+    | '/dashboard/projects'
     | '/dashboard/skills'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
@@ -190,11 +190,11 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/dashboard/agents'
     | '/dashboard/creation'
-    | '/dashboard/environments'
     | '/dashboard/goals'
     | '/dashboard/inbox'
     | '/dashboard/mcp-servers'
     | '/dashboard/observability'
+    | '/dashboard/projects'
     | '/dashboard/skills'
     | '/dashboard'
   id:
@@ -208,11 +208,11 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/dashboard/agents'
     | '/dashboard/creation'
-    | '/dashboard/environments'
     | '/dashboard/goals'
     | '/dashboard/inbox'
     | '/dashboard/mcp-servers'
     | '/dashboard/observability'
+    | '/dashboard/projects'
     | '/dashboard/skills'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
@@ -285,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSkillsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/projects': {
+      id: '/dashboard/projects'
+      path: '/projects'
+      fullPath: '/dashboard/projects'
+      preLoaderRoute: typeof DashboardProjectsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/observability': {
       id: '/dashboard/observability'
       path: '/observability'
@@ -311,13 +318,6 @@ declare module '@tanstack/react-router' {
       path: '/goals'
       fullPath: '/dashboard/goals'
       preLoaderRoute: typeof DashboardGoalsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/environments': {
-      id: '/dashboard/environments'
-      path: '/environments'
-      fullPath: '/dashboard/environments'
-      preLoaderRoute: typeof DashboardEnvironmentsRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/creation': {
@@ -347,11 +347,11 @@ declare module '@tanstack/react-router' {
 interface DashboardRouteChildren {
   DashboardAgentsRoute: typeof DashboardAgentsRoute
   DashboardCreationRoute: typeof DashboardCreationRoute
-  DashboardEnvironmentsRoute: typeof DashboardEnvironmentsRoute
   DashboardGoalsRoute: typeof DashboardGoalsRoute
   DashboardInboxRoute: typeof DashboardInboxRoute
   DashboardMcpServersRoute: typeof DashboardMcpServersRoute
   DashboardObservabilityRoute: typeof DashboardObservabilityRoute
+  DashboardProjectsRoute: typeof DashboardProjectsRoute
   DashboardSkillsRoute: typeof DashboardSkillsRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
@@ -359,11 +359,11 @@ interface DashboardRouteChildren {
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAgentsRoute: DashboardAgentsRoute,
   DashboardCreationRoute: DashboardCreationRoute,
-  DashboardEnvironmentsRoute: DashboardEnvironmentsRoute,
   DashboardGoalsRoute: DashboardGoalsRoute,
   DashboardInboxRoute: DashboardInboxRoute,
   DashboardMcpServersRoute: DashboardMcpServersRoute,
   DashboardObservabilityRoute: DashboardObservabilityRoute,
+  DashboardProjectsRoute: DashboardProjectsRoute,
   DashboardSkillsRoute: DashboardSkillsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
