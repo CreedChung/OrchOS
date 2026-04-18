@@ -1,35 +1,56 @@
-import { useState } from "react"
-import { cn } from "#/lib/utils"
-import { m } from "#/paraglide/messages"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Play, Pause, Delete02Icon, MoreVertical, CheckmarkCircleIcon } from "@hugeicons/core-free-icons"
+import { useState } from "react";
+import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Play,
+  Pause,
+  Delete02Icon,
+  MoreVertical,
+  CheckmarkCircleIcon,
+} from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
-import { ConfirmDialog } from "#/components/ui/confirm-dialog"
-import type { Goal } from "#/lib/types"
+} from "#/components/ui/dropdown-menu";
+import { ConfirmDialog } from "#/components/ui/confirm-dialog";
+import type { Goal } from "#/lib/types";
 
 interface GoalActionsProps {
-  goal: Goal
-  onPause: () => void
-  onResume: () => void
-  onDelete: () => void
+  goal: Goal;
+  onPause: () => void;
+  onResume: () => void;
+  onDelete: () => void;
 }
 
 const statusConfig = {
-  active: { icon: Play, color: "text-emerald-500", bg: "bg-emerald-500/10", label: () => m.goal_active() },
-  paused: { icon: Pause, color: "text-amber-500", bg: "bg-amber-500/10", label: () => m.goal_paused() },
-  completed: { icon: CheckmarkCircleIcon, color: "text-blue-500", bg: "bg-blue-500/10", label: () => m.goal_completed() },
-}
+  active: {
+    icon: Play,
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+    label: () => m.goal_active(),
+  },
+  paused: {
+    icon: Pause,
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+    label: () => m.goal_paused(),
+  },
+  completed: {
+    icon: CheckmarkCircleIcon,
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
+    label: () => m.goal_completed(),
+  },
+};
 
 export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsProps) {
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const config = statusConfig[goal.status]
-  const StatusIcon = config.icon
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const config = statusConfig[goal.status];
+  const StatusIcon = config.icon;
 
   return (
     <div className="flex items-center gap-2">
@@ -37,7 +58,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
         className={cn(
           "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
           config.bg,
-          config.color
+          config.color,
         )}
       >
         <HugeiconsIcon icon={StatusIcon} className="size-3" />
@@ -63,10 +84,7 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => setDeleteConfirmOpen(true)}
-            >
+            <DropdownMenuItem variant="destructive" onClick={() => setDeleteConfirmOpen(true)}>
               <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
               {m.delete()}
             </DropdownMenuItem>
@@ -84,5 +102,5 @@ export function GoalActions({ goal, onPause, onResume, onDelete }: GoalActionsPr
         variant="destructive"
       />
     </div>
-  )
+  );
 }

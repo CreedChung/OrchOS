@@ -1,35 +1,42 @@
-import { useState, useEffect, useRef } from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Cancel01Icon } from "@hugeicons/core-free-icons"
-import { cn } from "#/lib/utils"
-import { m } from "#/paraglide/messages"
+import { useState, useEffect, useRef } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
+import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages";
 
 interface RenameDialogProps {
-  open: boolean
-  title: string
-  initialValue: string
-  placeholder?: string
-  onClose: () => void
-  onSubmit: (name: string) => void
+  open: boolean;
+  title: string;
+  initialValue: string;
+  placeholder?: string;
+  onClose: () => void;
+  onSubmit: (name: string) => void;
 }
 
-export function RenameDialog({ open, title, initialValue, placeholder, onClose, onSubmit }: RenameDialogProps) {
-  const [name, setName] = useState(initialValue)
-  const inputRef = useRef<HTMLInputElement>(null)
+export function RenameDialog({
+  open,
+  title,
+  initialValue,
+  placeholder,
+  onClose,
+  onSubmit,
+}: RenameDialogProps) {
+  const [name, setName] = useState(initialValue);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
-      setName(initialValue)
-      setTimeout(() => inputRef.current?.focus(), 50)
+      setName(initialValue);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [open, initialValue])
+  }, [open, initialValue]);
 
-  if (!open) return null
+  if (!open) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (name.trim()) onSubmit(name.trim())
-  }
+    e.preventDefault();
+    if (name.trim()) onSubmit(name.trim());
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -70,7 +77,7 @@ export function RenameDialog({ open, title, initialValue, placeholder, onClose, 
                 "rounded-md px-4 py-2 text-sm font-medium text-primary-foreground transition-colors",
                 name.trim()
                   ? "bg-primary hover:bg-primary/90"
-                  : "bg-muted text-muted-foreground cursor-not-allowed"
+                  : "bg-muted text-muted-foreground cursor-not-allowed",
               )}
             >
               {m.save()}
@@ -79,5 +86,5 @@ export function RenameDialog({ open, title, initialValue, placeholder, onClose, 
         </form>
       </div>
     </div>
-  )
+  );
 }

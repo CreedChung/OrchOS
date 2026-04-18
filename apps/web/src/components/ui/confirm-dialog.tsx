@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
+import * as React from "react";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 
-import { cn } from "#/lib/utils"
+import { cn } from "#/lib/utils";
 
 interface ConfirmDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description: string
-  onConfirm: () => void
-  confirmLabel?: string
-  cancelLabel?: string
-  variant?: "default" | "destructive"
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  onConfirm: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: "default" | "destructive";
 }
 
 export function ConfirmDialog({
@@ -27,9 +27,9 @@ export function ConfirmDialog({
   variant = "default",
 }: ConfirmDialogProps) {
   const handleConfirm = () => {
-    onConfirm()
-    onOpenChange(false)
-  }
+    onConfirm();
+    onOpenChange(false);
+  };
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -67,5 +67,5 @@ export function ConfirmDialog({
         </div>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
-  )
+  );
 }

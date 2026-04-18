@@ -1,4 +1,4 @@
-import { ComponentFileViewerWrapper, type ApiComponent } from "#/components/ui/file-viewer-wrapper"
+import { ComponentFileViewerWrapper, type ApiComponent } from "#/components/ui/file-viewer-wrapper";
 
 const changelogMarkdown = `# OrchOS v0.1.0
 
@@ -20,7 +20,7 @@ const changelogMarkdown = `# OrchOS v0.1.0
 
 - 代码高亮由 Shiki 提供
 - 文件树支持折叠、选择、复制与外链查看
-`
+`;
 
 const sampleComponent: ApiComponent = {
   author: "OrchOS",
@@ -32,12 +32,12 @@ const sampleComponent: ApiComponent = {
       content: changelogMarkdown,
     },
   ],
-}
+};
 
 export default function ComponentFileViewerDemo() {
   return (
     <div className="w-full">
       <ComponentFileViewerWrapper component={sampleComponent} />
     </div>
-  )
+  );
 }

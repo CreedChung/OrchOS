@@ -1,26 +1,21 @@
-import { useState, useEffect, useCallback } from "react"
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
-import { HugeiconsIcon } from "@hugeicons/react"
-import {
-  FolderIcon,
-  ArrowLeft01Icon,
-  Home01Icon,
-  Loading01Icon,
-} from "@hugeicons/core-free-icons"
-import { Button } from "#/components/ui/button"
-import { api } from "#/lib/api"
-import { cn } from "#/lib/utils"
+import { useState, useEffect, useCallback } from "react";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { FolderIcon, ArrowLeft01Icon, Home01Icon, Loading01Icon } from "@hugeicons/core-free-icons";
+import { Button } from "#/components/ui/button";
+import { api } from "#/lib/api";
+import { cn } from "#/lib/utils";
 
 interface DirectoryPickerDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSelect: (path: string) => void
-  currentPath?: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelect: (path: string) => void;
+  currentPath?: string;
 }
 
 interface DirEntry {
-  name: string
-  path: string
+  name: string;
+  path: string;
 }
 
 export function DirectoryPickerDialog({
@@ -29,72 +24,70 @@ export function DirectoryPickerDialog({
   onSelect,
   currentPath: initialPath,
 }: DirectoryPickerDialogProps) {
-  const [path, setPath] = useState(initialPath || "~")
-  const [directories, setDirectories] = useState<DirEntry[]>([])
-  const [parentPath, setParentPath] = useState<string | undefined>()
-  const [loading, setLoading] = useState(false)
-  const [selectedPath, setSelectedPath] = useState<string | null>(null)
+  const [path, setPath] = useState(initialPath || "~");
+  const [directories, setDirectories] = useState<DirEntry[]>([]);
+  const [parentPath, setParentPath] = useState<string | undefined>();
+  const [loading, setLoading] = useState(false);
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   const loadDirectory = useCallback(async (dirPath: string) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const result = await api.browseDirectory(dirPath)
-      setPath(result.currentPath)
-      setParentPath(result.parentPath)
-      setDirectories(result.directories)
-      setSelectedPath(null)
+      const result = await api.browseDirectory(dirPath);
+      setPath(result.currentPath);
+      setParentPath(result.parentPath);
+      setDirectories(result.directories);
+      setSelectedPath(null);
     } catch (err) {
-      console.error("Failed to browse directory:", err)
-      setDirectories([])
+      console.error("Failed to browse directory:", err);
+      setDirectories([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (open) {
-      loadDirectory(initialPath || "~")
+      loadDirectory(initialPath || "~");
     }
-  }, [open, initialPath, loadDirectory])
+  }, [open, initialPath, loadDirectory]);
 
   const handleNavigate = (dirPath: string) => {
-    loadDirectory(dirPath)
-  }
+    loadDirectory(dirPath);
+  };
 
   const handleGoUp = () => {
     if (parentPath) {
-      loadDirectory(parentPath)
+      loadDirectory(parentPath);
     }
-  }
+  };
 
   const handleGoHome = () => {
-    loadDirectory("~")
-  }
+    loadDirectory("~");
+  };
 
   const handleSelect = () => {
     if (selectedPath) {
-      onSelect(selectedPath)
-      onOpenChange(false)
+      onSelect(selectedPath);
+      onOpenChange(false);
     } else {
       // If nothing is selected, use the current path
-      onSelect(path)
-      onOpenChange(false)
+      onSelect(path);
+      onOpenChange(false);
     }
-  }
+  };
 
   const handleSelectCurrent = () => {
-    onSelect(path)
-    onOpenChange(false)
-  }
+    onSelect(path);
+    onOpenChange(false);
+  };
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <DialogPrimitive.Popup
-            className="relative z-50 w-full max-w-md rounded-lg border border-border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
-          >
+          <DialogPrimitive.Popup className="relative z-50 w-full max-w-md rounded-lg border border-border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <DialogPrimitive.Title className="text-sm font-semibold text-foreground">
@@ -119,7 +112,10 @@ export function DirectoryPickerDialog({
             <div className="h-72 overflow-y-auto p-1">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
-                  <HugeiconsIcon icon={Loading01Icon} className="size-5 text-muted-foreground animate-spin" />
+                  <HugeiconsIcon
+                    icon={Loading01Icon}
+                    className="size-5 text-muted-foreground animate-spin"
+                  />
                 </div>
               ) : directories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -135,12 +131,15 @@ export function DirectoryPickerDialog({
                         "flex items-center gap-2 w-full rounded-md px-2.5 py-1.5 text-sm text-left transition-colors",
                         selectedPath === dir.path
                           ? "bg-primary/10 text-primary"
-                          : "text-foreground hover:bg-muted"
+                          : "text-foreground hover:bg-muted",
                       )}
                       onClick={() => setSelectedPath(dir.path)}
                       onDoubleClick={() => handleNavigate(dir.path)}
                     >
-                      <HugeiconsIcon icon={FolderIcon} className="size-3.5 shrink-0 text-primary/70" />
+                      <HugeiconsIcon
+                        icon={FolderIcon}
+                        className="size-3.5 shrink-0 text-primary/70"
+                      />
                       <span className="truncate">{dir.name}</span>
                     </button>
                   ))}
@@ -166,5 +165,5 @@ export function DirectoryPickerDialog({
         </div>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
-  )
+  );
 }

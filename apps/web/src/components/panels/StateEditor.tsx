@@ -1,17 +1,24 @@
-import { useState } from "react"
-import { cn } from "#/lib/utils"
-import { m } from "#/paraglide/messages"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Edit02Icon, Tick02Icon, Cancel01Icon } from "@hugeicons/core-free-icons"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import type { Status, StateItem } from "#/lib/types"
+import { useState } from "react";
+import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Edit02Icon, Tick02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
+import type { Status, StateItem } from "#/lib/types";
 
 interface StateEditorProps {
-  state: StateItem
-  onStatusChange: (newStatus: Status) => void
+  state: StateItem;
+  onStatusChange: (newStatus: Status) => void;
 }
 
-const statusOptions: Status[] = ["pending", "running", "success", "failed", "error", "warning"]
+const statusOptions: Status[] = ["pending", "running", "success", "failed", "error", "warning"];
 
 const statusLabelMap: Record<Status, () => string> = {
   success: () => m.status_success(),
@@ -20,7 +27,7 @@ const statusLabelMap: Record<Status, () => string> = {
   pending: () => m.status_pending(),
   running: () => m.status_running(),
   warning: () => m.status_warning(),
-}
+};
 
 const statusPillClass: Record<Status, string> = {
   success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -29,21 +36,21 @@ const statusPillClass: Record<Status, string> = {
   pending: "bg-muted text-muted-foreground",
   running: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   warning: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
-}
+};
 
 export function StateEditor({ state, onStatusChange }: StateEditorProps) {
-  const [editing, setEditing] = useState(false)
-  const [selectedStatus, setSelectedStatus] = useState<Status>(state.status)
+  const [editing, setEditing] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<Status>(state.status);
 
   const handleSave = () => {
-    onStatusChange(selectedStatus)
-    setEditing(false)
-  }
+    onStatusChange(selectedStatus);
+    setEditing(false);
+  };
 
   const handleCancel = () => {
-    setSelectedStatus(state.status)
-    setEditing(false)
-  }
+    setSelectedStatus(state.status);
+    setEditing(false);
+  };
 
   if (editing) {
     return (
@@ -78,7 +85,7 @@ export function StateEditor({ state, onStatusChange }: StateEditorProps) {
           <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -88,7 +95,7 @@ export function StateEditor({ state, onStatusChange }: StateEditorProps) {
       <span
         className={cn(
           "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold",
-          statusPillClass[state.status]
+          statusPillClass[state.status],
         )}
       >
         {statusLabelMap[state.status]()}
@@ -104,5 +111,5 @@ export function StateEditor({ state, onStatusChange }: StateEditorProps) {
         </button>
       </div>
     </div>
-  )
+  );
 }

@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import ComponentFileViewer, { type ApiComponent } from "#/components/ui/file-viewer"
+import { useState, useEffect } from "react";
+import ComponentFileViewer, { type ApiComponent } from "#/components/ui/file-viewer";
 
 export function ComponentFileViewerWrapper({ component }: { component: ApiComponent }) {
-  const [isMounted, setIsMounted] = useState(false)
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
   if (!isMounted) {
     return (
@@ -17,12 +17,12 @@ export function ComponentFileViewerWrapper({ component }: { component: ApiCompon
           <div className="text-muted-foreground text-sm">Loading...</div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <ComponentFileViewer component={component} />
     </div>
-  )
+  );
 }

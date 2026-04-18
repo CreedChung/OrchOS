@@ -49,9 +49,7 @@ function EnvelopeLetter({ children }: EnvelopeLetterProps) {
                 opacity: 1,
               }}
               transition={
-                phase === "reading"
-                  ? { duration: 0.9, ease: [0.16, 1, 0.3, 1] }
-                  : { duration: 0 }
+                phase === "reading" ? { duration: 0.9, ease: [0.16, 1, 0.3, 1] } : { duration: 0 }
               }
               onAnimationComplete={handlePullingComplete}
               className="absolute left-1/2 z-0"
@@ -97,7 +95,8 @@ function EnvelopeLetter({ children }: EnvelopeLetterProps) {
               <div
                 className="absolute inset-0"
                 style={{
-                  background: "linear-gradient(145deg, #c9a96e 0%, #b8955a 30%, #a8824a 70%, #9a7340 100%)",
+                  background:
+                    "linear-gradient(145deg, #c9a96e 0%, #b8955a 30%, #a8824a 70%, #9a7340 100%)",
                   borderRadius: "6px",
                   boxShadow:
                     "0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.15)",
@@ -135,7 +134,8 @@ function EnvelopeLetter({ children }: EnvelopeLetterProps) {
                   width: "64px",
                   height: "64px",
                   borderRadius: "50%",
-                  background: "radial-gradient(circle at 35% 35%, #c0392b, #8b1a1a 70%, #6b1414 100%)",
+                  background:
+                    "radial-gradient(circle at 35% 35%, #c0392b, #8b1a1a 70%, #6b1414 100%)",
                   boxShadow:
                     "0 2px 8px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.2), inset 0 -1px 3px rgba(0,0,0,0.3)",
                   opacity: phase === "closed" ? 1 : 0,

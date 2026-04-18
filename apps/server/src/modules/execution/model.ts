@@ -1,4 +1,4 @@
-import { t, type UnwrapSchema } from "elysia"
+import { t, type UnwrapSchema } from "elysia";
 
 export const ExecutionModel = {
   actionBody: t.Object({
@@ -19,18 +19,26 @@ export const ExecutionModel = {
   settingsResponse: t.Object({
     autoCommit: t.Boolean(),
     autoFix: t.Boolean(),
-    modelStrategy: t.Union([t.Literal("local-first"), t.Literal("cloud-first"), t.Literal("adaptive")]),
+    modelStrategy: t.Union([
+      t.Literal("local-first"),
+      t.Literal("cloud-first"),
+      t.Literal("adaptive"),
+    ]),
   }),
   settingsUpdateBody: t.Partial(
     t.Object({
       autoCommit: t.Boolean(),
       autoFix: t.Boolean(),
-      modelStrategy: t.Union([t.Literal("local-first"), t.Literal("cloud-first"), t.Literal("adaptive")]),
-    })
+      modelStrategy: t.Union([
+        t.Literal("local-first"),
+        t.Literal("cloud-first"),
+        t.Literal("adaptive"),
+      ]),
+    }),
   ),
   loopResponse: t.Object({ success: t.Literal(true) }),
-} as const
+} as const;
 
 export type ExecutionModel = {
-  [k in keyof typeof ExecutionModel]: UnwrapSchema<typeof ExecutionModel[k]>
-}
+  [k in keyof typeof ExecutionModel]: UnwrapSchema<(typeof ExecutionModel)[k]>;
+};

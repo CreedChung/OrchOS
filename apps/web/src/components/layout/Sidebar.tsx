@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { UserButton, useUser, useClerk } from "@clerk/clerk-react";
 import { cn } from "#/lib/utils";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import {
@@ -79,9 +80,7 @@ export function Sidebar({
 }: SidebarProps) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const openInboxCount = problems.filter(
-    (p) => p.status === "open" && isInboxItem(p),
-  ).length;
+  const openInboxCount = problems.filter((p) => p.status === "open" && isInboxItem(p)).length;
   const criticalCount = problems.filter(
     (p) => p.status === "open" && isInboxItem(p) && p.priority === "critical",
   ).length;
@@ -106,20 +105,35 @@ export function Sidebar({
       label: m.capabilities(),
       items: [
         { id: "agents", to: "/dashboard/agents", icon: Robot02Icon, label: m.agents() },
-        { id: "mcp-servers", to: "/dashboard/mcp-servers", icon: FolderGitIcon, label: m.mcp_servers() },
+        {
+          id: "mcp-servers",
+          to: "/dashboard/mcp-servers",
+          icon: FolderGitIcon,
+          label: m.mcp_servers(),
+        },
         { id: "skills", to: "/dashboard/skills", icon: Wrench01Icon, label: m.skills() },
       ],
     },
     {
       label: m.environments(),
       items: [
-        { id: "environments", to: "/dashboard/environments", icon: Archive01Icon, label: m.environments() },
+        {
+          id: "environments",
+          to: "/dashboard/environments",
+          icon: Archive01Icon,
+          label: m.environments(),
+        },
       ],
     },
     {
       label: m.observability(),
       items: [
-        { id: "observability", to: "/dashboard/observability", icon: AiBrain01Icon, label: m.observability() },
+        {
+          id: "observability",
+          to: "/dashboard/observability",
+          icon: AiBrain01Icon,
+          label: m.observability(),
+        },
       ],
     },
   ];
@@ -137,24 +151,15 @@ export function Sidebar({
               {organizations.find((o) => o.id === activeOrganizationId)?.name ||
                 m.select_organization()}
             </span>
-            <HugeiconsIcon
-              icon={ChevronDown}
-              className="ml-auto size-3 shrink-0 opacity-50"
-            />
+            <HugeiconsIcon icon={ChevronDown} className="ml-auto size-3 shrink-0 opacity-50" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-48">
             {organizations.length > 0 ? (
               organizations.map((org) => (
-                <DropdownMenuItem
-                  key={org.id}
-                  onClick={() => onOrganizationChange(org.id)}
-                >
+                <DropdownMenuItem key={org.id} onClick={() => onOrganizationChange(org.id)}>
                   <span className="flex-1">{org.name}</span>
                   {org.id === activeOrganizationId && (
-                    <HugeiconsIcon
-                      icon={Tick02Icon}
-                      className="size-4 text-primary"
-                    />
+                    <HugeiconsIcon icon={Tick02Icon} className="size-4 text-primary" />
                   )}
                 </DropdownMenuItem>
               ))
@@ -171,17 +176,12 @@ export function Sidebar({
               <HugeiconsIcon icon={MoreHorizontal} className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-36">
-              <DropdownMenuItem
-                onClick={() => setRenameOpen(true)}
-              >
+              <DropdownMenuItem onClick={() => setRenameOpen(true)}>
                 <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
                 {m.rename()}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => setDeleteConfirmOpen(true)}
-              >
+              <DropdownMenuItem variant="destructive" onClick={() => setDeleteConfirmOpen(true)}>
                 <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                 {m.delete()}
               </DropdownMenuItem>
@@ -198,38 +198,36 @@ export function Sidebar({
               <span className="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {section.label}
               </span>
-              {section.items.map(
-                ({ id, to, icon: Icon, label, badge, badgeCritical }) => {
-                  const isActive = activeView === id;
-                  return (
-                    <Link
-                      key={id}
-                      to={to}
-                      className={cn(
-                        "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                      )}
-                    >
-                      <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
-                      <span className="flex-1 text-left">{label}</span>
-                      {badge != null && badge > 0 && (
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-                            badgeCritical
-                              ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                              : "bg-muted text-muted-foreground",
-                          )}
-                        >
-                          {badge}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                },
-              )}
+              {section.items.map(({ id, to, icon: Icon, label, badge, badgeCritical }) => {
+                const isActive = activeView === id;
+                return (
+                  <Link
+                    key={id}
+                    to={to}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                    )}
+                  >
+                    <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
+                    <span className="flex-1 text-left">{label}</span>
+                    {badge != null && badge > 0 && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                          badgeCritical
+                            ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           ))}
         </div>
@@ -260,47 +258,7 @@ export function Sidebar({
 
       {/* Bottom: User Profile */}
       <div className="border-t border-border p-2">
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
-            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
-            </div>
-            <span className="flex-1 truncate text-left">{m.user()}</span>
-            <HugeiconsIcon
-              icon={ChevronUp}
-              className="size-3 shrink-0 opacity-50"
-            />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            side="top"
-            className="min-w-48 mb-1"
-          >
-            <div className="flex items-center gap-2.5 px-2 py-2">
-              <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                U
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {m.user()}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  user@orchos.dev
-                </p>
-              </div>
-            </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onOpenSettings}>
-              <HugeiconsIcon icon={Settings02Icon} className="size-3.5" />
-              {m.settings()}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">
-              <HugeiconsIcon icon={Logout03Icon} className="size-3.5" />
-              {m.log_out()}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ClerkUserProfile onOpenSettings={onOpenSettings} />
       </div>
 
       <RenameDialog
@@ -327,5 +285,73 @@ export function Sidebar({
         variant="destructive"
       />
     </aside>
+  );
+}
+
+function ClerkUserProfile({ onOpenSettings }: { onOpenSettings: () => void }) {
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
+  const isClerkConfigured = !!(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim());
+
+  if (!isClerkConfigured || !isLoaded) {
+    return (
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
+          </div>
+          <span className="flex-1 truncate text-left">{m.user()}</span>
+          <HugeiconsIcon icon={ChevronUp} className="size-3 shrink-0 opacity-50" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="top" className="min-w-48 mb-1">
+          <div className="flex items-center gap-2.5 px-2 py-2">
+            <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">U</div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground truncate">{m.user()}</p>
+              <p className="text-xs text-muted-foreground truncate">user@orchos.dev</p>
+            </div>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onOpenSettings}>
+            <HugeiconsIcon icon={Settings02Icon} className="size-3.5" />
+            {m.settings()}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  if (!user) return null;
+
+  return (
+    <div className="flex items-center gap-2.5 rounded-md px-2.5 py-2">
+      <UserButton
+        afterSignOutUrl="/sign-in"
+        appearance={{
+          elements: {
+            avatarBox: "size-6",
+          },
+        }}
+      />
+      <span className="flex-1 truncate text-sm text-sidebar-foreground/70">
+        {user.fullName || user.username || m.user()}
+      </span>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger className="shrink-0">
+          <HugeiconsIcon icon={ChevronUp} className="size-3 opacity-50 text-sidebar-foreground/70" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="top" className="min-w-48 mb-1">
+          <DropdownMenuItem onClick={onOpenSettings}>
+            <HugeiconsIcon icon={Settings02Icon} className="size-3.5" />
+            {m.settings()}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onClick={() => signOut({ redirectUrl: "/sign-in" })}>
+            <HugeiconsIcon icon={Logout03Icon} className="size-3.5" />
+            {m.log_out()}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

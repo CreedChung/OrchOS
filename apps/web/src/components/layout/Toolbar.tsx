@@ -1,56 +1,88 @@
-import { cn } from "#/lib/utils"
-import { Button } from "#/components/ui/button"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Search01Icon, Cancel01Icon, PanelRight, PanelLeft, GitPullRequestIcon, SquareIcon, InformationCircleIcon, Robot02Icon, Clock01Icon, CheckmarkCircleIcon, CancelCircleIcon, Globe02Icon, Folder01Icon, CodeIcon, CloudIcon } from "@hugeicons/core-free-icons"
-import { m } from "#/paraglide/messages"
-import type { SidebarView, InboxSource } from "#/lib/types"
+import { cn } from "#/lib/utils";
+import { Button } from "#/components/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Search01Icon,
+  Cancel01Icon,
+  PanelRight,
+  PanelLeft,
+  GitPullRequestIcon,
+  SquareIcon,
+  InformationCircleIcon,
+  Robot02Icon,
+  Clock01Icon,
+  CheckmarkCircleIcon,
+  CancelCircleIcon,
+  Globe02Icon,
+  Folder01Icon,
+  CodeIcon,
+  CloudIcon,
+} from "@hugeicons/core-free-icons";
+import { m } from "#/paraglide/messages";
+import type { SidebarView, InboxSource } from "#/lib/types";
 
-type SourceFilter = "all" | InboxSource
-type GoalStatusFilter = "all" | "active" | "completed" | "paused"
-export type ScopeFilter = "all" | "global" | "project"
-export type AgentModelFilter = "all" | "local" | "cloud"
+type SourceFilter = "all" | InboxSource;
+type GoalStatusFilter = "all" | "active" | "completed" | "paused";
+export type ScopeFilter = "all" | "global" | "project";
+export type AgentModelFilter = "all" | "local" | "cloud";
 
-const scopeFilterConfig: Record<Exclude<ScopeFilter, "all">, { icon: typeof Globe02Icon; label: string }> = {
+const scopeFilterConfig: Record<
+  Exclude<ScopeFilter, "all">,
+  { icon: typeof Globe02Icon; label: string }
+> = {
   global: { icon: Globe02Icon, label: m.global() },
   project: { icon: Folder01Icon, label: m.project() },
-}
+};
 
-const sourceFilterConfig: Record<InboxSource, { icon: typeof GitPullRequestIcon; label: string }> = {
-  github_pr: { icon: GitPullRequestIcon, label: m.prs() },
-  github_issue: { icon: SquareIcon, label: m.issues() },
-  mention: { icon: InformationCircleIcon, label: m.mentions() },
-  agent_request: { icon: Robot02Icon, label: m.agents() },
-}
+const sourceFilterConfig: Record<InboxSource, { icon: typeof GitPullRequestIcon; label: string }> =
+  {
+    github_pr: { icon: GitPullRequestIcon, label: m.prs() },
+    github_issue: { icon: SquareIcon, label: m.issues() },
+    mention: { icon: InformationCircleIcon, label: m.mentions() },
+    agent_request: { icon: Robot02Icon, label: m.agents() },
+  };
 
-const goalStatusFilterConfig: Record<Exclude<GoalStatusFilter, "all">, { icon: typeof Clock01Icon; label: string }> = {
+const goalStatusFilterConfig: Record<
+  Exclude<GoalStatusFilter, "all">,
+  { icon: typeof Clock01Icon; label: string }
+> = {
   active: { icon: Clock01Icon, label: m.active() },
   completed: { icon: CheckmarkCircleIcon, label: m.completed() },
   paused: { icon: CancelCircleIcon, label: m.paused() },
-}
+};
 
-const agentModelFilterConfig: Record<Exclude<AgentModelFilter, "all">, { icon: typeof CodeIcon; label: string }> = {
+const agentModelFilterConfig: Record<
+  Exclude<AgentModelFilter, "all">,
+  { icon: typeof CodeIcon; label: string }
+> = {
   local: { icon: CodeIcon, label: m.model_local() },
   cloud: { icon: CloudIcon, label: m.model_cloud() },
-}
+};
 
 interface ToolbarProps {
-  activeView: SidebarView
-  searchQuery: string
-  onSearchChange: (query: string) => void
-  activityPanelOpen: boolean
-  onToggleActivityPanel: () => void
-  sourceFilter: SourceFilter
-  onSourceFilterChange: (filter: SourceFilter) => void
-  inboxCounts: { all: number; github_pr: number; github_issue: number; mention: number; agent_request: number }
-  goalStatusFilter: GoalStatusFilter
-  onGoalStatusFilterChange: (filter: GoalStatusFilter) => void
-  goalCounts: { all: number; active: number; completed: number; paused: number }
-  agentModelFilter: AgentModelFilter
-  onAgentModelFilterChange: (filter: AgentModelFilter) => void
-  agentModelCounts: { all: number; local: number; cloud: number }
-  scopeFilter: ScopeFilter
-  onScopeFilterChange: (filter: ScopeFilter) => void
-  scopeCounts: { all: number; global: number; project: number }
+  activeView: SidebarView;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  activityPanelOpen: boolean;
+  onToggleActivityPanel: () => void;
+  sourceFilter: SourceFilter;
+  onSourceFilterChange: (filter: SourceFilter) => void;
+  inboxCounts: {
+    all: number;
+    github_pr: number;
+    github_issue: number;
+    mention: number;
+    agent_request: number;
+  };
+  goalStatusFilter: GoalStatusFilter;
+  onGoalStatusFilterChange: (filter: GoalStatusFilter) => void;
+  goalCounts: { all: number; active: number; completed: number; paused: number };
+  agentModelFilter: AgentModelFilter;
+  onAgentModelFilterChange: (filter: AgentModelFilter) => void;
+  agentModelCounts: { all: number; local: number; cloud: number };
+  scopeFilter: ScopeFilter;
+  onScopeFilterChange: (filter: ScopeFilter) => void;
+  scopeCounts: { all: number; global: number; project: number };
 }
 
 export function Toolbar({
@@ -72,31 +104,36 @@ export function Toolbar({
   onScopeFilterChange,
   scopeCounts,
 }: ToolbarProps) {
-
   return (
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
       {/* Inbox: source-based filter tabs */}
       {activeView === "inbox" && (
         <div className="flex items-center gap-1.5">
-          {(["all", "github_pr", "github_issue", "mention", "agent_request"] as SourceFilter[]).map((filter) => {
-            const config = filter === "all" ? null : sourceFilterConfig[filter]
-            return (
-              <button
-                key={filter}
-                onClick={() => onSourceFilterChange(filter)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                  sourceFilter === filter
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                )}
-              >
-                {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
-                <span className="capitalize">{filter === "all" ? m.all() : config?.label || filter}</span>
-                <span className="tabular-nums text-[10px] opacity-60">{inboxCounts[filter as keyof typeof inboxCounts]}</span>
-              </button>
-            )
-          })}
+          {(["all", "github_pr", "github_issue", "mention", "agent_request"] as SourceFilter[]).map(
+            (filter) => {
+              const config = filter === "all" ? null : sourceFilterConfig[filter];
+              return (
+                <button
+                  key={filter}
+                  onClick={() => onSourceFilterChange(filter)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                    sourceFilter === filter
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                  )}
+                >
+                  {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
+                  <span className="capitalize">
+                    {filter === "all" ? m.all() : config?.label || filter}
+                  </span>
+                  <span className="tabular-nums text-[10px] opacity-60">
+                    {inboxCounts[filter as keyof typeof inboxCounts]}
+                  </span>
+                </button>
+              );
+            },
+          )}
         </div>
       )}
 
@@ -104,7 +141,7 @@ export function Toolbar({
       {activeView === "goals" && (
         <div className="flex items-center gap-1.5">
           {(["all", "active", "completed", "paused"] as GoalStatusFilter[]).map((filter) => {
-            const config = filter === "all" ? null : goalStatusFilterConfig[filter]
+            const config = filter === "all" ? null : goalStatusFilterConfig[filter];
             return (
               <button
                 key={filter}
@@ -113,14 +150,16 @@ export function Toolbar({
                   "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                   goalStatusFilter === filter
                     ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
                 {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
-                <span className="capitalize">{filter === "all" ? m.all() : config?.label || filter}</span>
+                <span className="capitalize">
+                  {filter === "all" ? m.all() : config?.label || filter}
+                </span>
                 <span className="tabular-nums text-[10px] opacity-60">{goalCounts[filter]}</span>
               </button>
-            )
+            );
           })}
         </div>
       )}
@@ -129,7 +168,7 @@ export function Toolbar({
       {(activeView === "agents" || activeView === "agent-detail") && (
         <div className="flex items-center gap-1.5">
           {(["all", "local", "cloud"] as AgentModelFilter[]).map((filter) => {
-            const config = filter === "all" ? null : agentModelFilterConfig[filter]
+            const config = filter === "all" ? null : agentModelFilterConfig[filter];
             return (
               <button
                 key={filter}
@@ -138,14 +177,16 @@ export function Toolbar({
                   "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                   agentModelFilter === filter
                     ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
                 {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
                 <span>{filter === "all" ? m.all() : config?.label || filter}</span>
-                <span className="tabular-nums text-[10px] opacity-60">{agentModelCounts[filter]}</span>
+                <span className="tabular-nums text-[10px] opacity-60">
+                  {agentModelCounts[filter]}
+                </span>
               </button>
-            )
+            );
           })}
         </div>
       )}
@@ -154,7 +195,7 @@ export function Toolbar({
       {(activeView === "mcp-servers" || activeView === "skills") && (
         <div className="flex items-center gap-1.5">
           {(["all", "global", "project"] as ScopeFilter[]).map((filter) => {
-            const config = filter === "all" ? null : scopeFilterConfig[filter]
+            const config = filter === "all" ? null : scopeFilterConfig[filter];
             return (
               <button
                 key={filter}
@@ -163,14 +204,16 @@ export function Toolbar({
                   "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                   scopeFilter === filter
                     ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
                 {config && <HugeiconsIcon icon={config.icon} className="size-3" />}
-                <span className="capitalize">{filter === "all" ? m.all() : config?.label || filter}</span>
+                <span className="capitalize">
+                  {filter === "all" ? m.all() : config?.label || filter}
+                </span>
                 <span className="tabular-nums text-[10px] opacity-60">{scopeCounts[filter]}</span>
               </button>
-            )
+            );
           })}
         </div>
       )}
@@ -213,5 +256,5 @@ export function Toolbar({
         </Button>
       </div>
     </div>
-  )
+  );
 }

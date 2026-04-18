@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react"
-import { cn } from "#/lib/utils"
-import { HugeiconsIcon } from "@hugeicons/react"
+import { useState, useCallback } from "react";
+import { cn } from "#/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   GitPullRequestIcon,
   SquareIcon,
@@ -10,19 +10,28 @@ import {
   ViewOffIcon,
   MoreHorizontal,
   CheckmarkBadge01Icon,
-} from "@hugeicons/core-free-icons"
-import { Badge } from "#/components/ui/badge"
-import { Button } from "#/components/ui/button"
+} from "@hugeicons/core-free-icons";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
-import { m } from "#/paraglide/messages"
-import type { Problem, InboxSource } from "#/lib/types"
+} from "#/components/ui/dropdown-menu";
+import { m } from "#/paraglide/messages";
+import type { Problem, InboxSource } from "#/lib/types";
 
-const sourceConfig: Record<InboxSource, { icon: typeof GitPullRequestIcon; label: string; colorClass: string; bgClass: string; borderClass: string }> = {
+const sourceConfig: Record<
+  InboxSource,
+  {
+    icon: typeof GitPullRequestIcon;
+    label: string;
+    colorClass: string;
+    bgClass: string;
+    borderClass: string;
+  }
+> = {
   github_pr: {
     icon: GitPullRequestIcon,
     label: m.pull_request(),
@@ -51,25 +60,25 @@ const sourceConfig: Record<InboxSource, { icon: typeof GitPullRequestIcon; label
     bgClass: "bg-amber-500/5",
     borderClass: "border-amber-500/20",
   },
-}
+};
 
 interface InboxDetailProps {
-  item: Problem
-  onConvertToGoal: (problemId: string, suggestedGoal?: string) => void
-  onDismiss: (problemId: string) => void
+  item: Problem;
+  onConvertToGoal: (problemId: string, suggestedGoal?: string) => void;
+  onDismiss: (problemId: string) => void;
 }
 
 export function InboxDetail({ item, onConvertToGoal, onDismiss }: InboxDetailProps) {
-  const [converting, setConverting] = useState(false)
+  const [converting, setConverting] = useState(false);
 
-  const source = item.source as InboxSource
-  const config = sourceConfig[source]
-  const SourceIcon = config.icon
+  const source = item.source as InboxSource;
+  const config = sourceConfig[source];
+  const SourceIcon = config.icon;
 
   const handleConvert = useCallback(() => {
-    setConverting(true)
-    onConvertToGoal(item.id, item.suggestedGoal)
-  }, [item.id, item.suggestedGoal, onConvertToGoal])
+    setConverting(true);
+    onConvertToGoal(item.id, item.suggestedGoal);
+  }, [item.id, item.suggestedGoal, onConvertToGoal]);
 
   return (
     <main className="flex-1 overflow-y-auto">
@@ -77,17 +86,25 @@ export function InboxDetail({ item, onConvertToGoal, onDismiss }: InboxDetailPro
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-4">
-            <div className={cn("flex size-12 items-center justify-center rounded-lg", config.bgClass)}>
+            <div
+              className={cn("flex size-12 items-center justify-center rounded-lg", config.bgClass)}
+            >
               <HugeiconsIcon icon={SourceIcon} className={cn("size-5", config.colorClass)} />
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-bold text-foreground">{item.title}</h1>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="text-[9px] uppercase tracking-wider px-1.5 py-0">
+                <Badge
+                  variant="outline"
+                  className="text-[9px] uppercase tracking-wider px-1.5 py-0"
+                >
                   {config.label}
                 </Badge>
                 {item.priority === "critical" && (
-                  <Badge variant="destructive" className="text-[9px] uppercase tracking-wider px-1.5 py-0">
+                  <Badge
+                    variant="destructive"
+                    className="text-[9px] uppercase tracking-wider px-1.5 py-0"
+                  >
                     {m.critical()}
                   </Badge>
                 )}
@@ -157,7 +174,7 @@ export function InboxDetail({ item, onConvertToGoal, onDismiss }: InboxDetailPro
         </section>
       </div>
     </main>
-  )
+  );
 }
 
 export function InboxEmptyState() {
@@ -171,7 +188,7 @@ export function InboxEmptyState() {
         <p className="text-xs text-muted-foreground/60 mt-1">{m.no_new_items()}</p>
       </div>
     </div>
-  )
+  );
 }
 
 export function InboxNoSelection() {
@@ -182,5 +199,5 @@ export function InboxNoSelection() {
         <p className="text-xs text-muted-foreground/60 mt-1">{m.no_inbox_selected_desc()}</p>
       </div>
     </div>
-  )
+  );
 }

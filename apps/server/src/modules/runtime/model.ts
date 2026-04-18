@@ -1,4 +1,4 @@
-import { t, type UnwrapSchema } from "elysia"
+import { t, type UnwrapSchema } from "elysia";
 
 export const RuntimeModel = {
   response: t.Object({
@@ -16,24 +16,28 @@ export const RuntimeModel = {
     registryId: t.Optional(t.String()),
   }),
   detectResponse: t.Object({
-    available: t.Array(t.Object({
-      id: t.String(),
-      name: t.String(),
-      command: t.String(),
-      version: t.Optional(t.String()),
-      path: t.Optional(t.String()),
-      role: t.String(),
-      capabilities: t.Array(t.String()),
-      model: t.String(),
-    })),
-    unavailable: t.Array(t.Object({
-      id: t.String(),
-      name: t.String(),
-      command: t.String(),
-      role: t.String(),
-      capabilities: t.Array(t.String()),
-      model: t.String(),
-    })),
+    available: t.Array(
+      t.Object({
+        id: t.String(),
+        name: t.String(),
+        command: t.String(),
+        version: t.Optional(t.String()),
+        path: t.Optional(t.String()),
+        role: t.String(),
+        capabilities: t.Array(t.String()),
+        model: t.String(),
+      }),
+    ),
+    unavailable: t.Array(
+      t.Object({
+        id: t.String(),
+        name: t.String(),
+        command: t.String(),
+        role: t.String(),
+        capabilities: t.Array(t.String()),
+        model: t.String(),
+      }),
+    ),
   }),
   healthResponse: t.Object({
     healthy: t.Boolean(),
@@ -60,8 +64,8 @@ export const RuntimeModel = {
     agentName: t.String(),
     responseTime: t.Number(),
   }),
-} as const
+} as const;
 
 export type RuntimeModel = {
-  [k in keyof typeof RuntimeModel]: UnwrapSchema<typeof RuntimeModel[k]>
-}
+  [k in keyof typeof RuntimeModel]: UnwrapSchema<(typeof RuntimeModel)[k]>;
+};

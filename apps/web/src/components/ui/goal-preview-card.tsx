@@ -1,9 +1,9 @@
-import { useState } from "react"
-import { Link } from "@tanstack/react-router"
-import { cn } from "#/lib/utils"
-import { ScrollArea } from "#/components/ui/scroll-area"
-import { Badge } from "#/components/ui/badge"
-import { HugeiconsIcon } from "@hugeicons/react"
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { cn } from "#/lib/utils";
+import { ScrollArea } from "#/components/ui/scroll-area";
+import { Badge } from "#/components/ui/badge";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Target01Icon,
   CheckmarkCircleIcon,
@@ -11,28 +11,29 @@ import {
   Clock01Icon,
   FolderGitIcon,
   Add01Icon,
-} from "@hugeicons/core-free-icons"
-import { m } from "#/paraglide/messages"
+} from "@hugeicons/core-free-icons";
+import { m } from "#/paraglide/messages";
 
 // --- Mock Data ---
-type GoalStatus = "active" | "completed" | "paused"
+type GoalStatus = "active" | "completed" | "paused";
 
 interface MockGoal {
-  id: string
-  title: string
-  description: string
-  status: GoalStatus
-  project: string
-  successCriteria: string[]
-  constraints: string[]
-  progress: number
+  id: string;
+  title: string;
+  description: string;
+  status: GoalStatus;
+  project: string;
+  successCriteria: string[];
+  constraints: string[];
+  progress: number;
 }
 
 const mockGoals: MockGoal[] = [
   {
     id: "g-1",
     title: "Implement authentication system",
-    description: "Build a complete auth system with JWT tokens, session management, and OAuth2 integration.",
+    description:
+      "Build a complete auth system with JWT tokens, session management, and OAuth2 integration.",
     status: "active",
     project: "OrchOS Core",
     successCriteria: ["JWT refresh token rotation", "Session persistence", "OAuth2 login flow"],
@@ -42,7 +43,8 @@ const mockGoals: MockGoal[] = [
   {
     id: "g-2",
     title: "Add real-time collaboration",
-    description: "Enable multiple users to collaborate on goals and states simultaneously via WebSocket.",
+    description:
+      "Enable multiple users to collaborate on goals and states simultaneously via WebSocket.",
     status: "active",
     project: "OrchOS Core",
     successCriteria: ["WebSocket connections stable", "Conflict resolution", "Live cursors"],
@@ -52,56 +54,62 @@ const mockGoals: MockGoal[] = [
   {
     id: "g-3",
     title: "Migrate to Bun runtime",
-    description: "Migrate the server from Node.js to Bun for better performance and native TypeScript support.",
+    description:
+      "Migrate the server from Node.js to Bun for better performance and native TypeScript support.",
     status: "completed",
     project: "Infrastructure",
-    successCriteria: ["All tests passing on Bun", "Memory usage reduced by 30%", "Startup time < 200ms"],
+    successCriteria: [
+      "All tests passing on Bun",
+      "Memory usage reduced by 30%",
+      "Startup time < 200ms",
+    ],
     constraints: ["Zero downtime migration"],
     progress: 100,
   },
   {
     id: "g-4",
     title: "Build agent marketplace UI",
-    description: "Create a marketplace where users can browse and install pre-built agent configurations.",
+    description:
+      "Create a marketplace where users can browse and install pre-built agent configurations.",
     status: "paused",
     project: "OrchOS Web",
     successCriteria: ["Agent cards with ratings", "One-click install", "Search & filter"],
     constraints: ["Mobile responsive"],
     progress: 15,
   },
-]
+];
 
 const goalStatusColor: Record<GoalStatus, string> = {
   active: "bg-blue-500",
   completed: "bg-emerald-500",
   paused: "bg-amber-500",
-}
+};
 
 const goalStatusLabel: Record<GoalStatus, string> = {
   active: m.goal_active(),
   completed: m.goal_completed(),
   paused: m.goal_paused(),
-}
+};
 
-type GoalStatusFilter = "all" | GoalStatus
+type GoalStatusFilter = "all" | GoalStatus;
 
 export function GoalPreviewCard() {
-  const [activeId, setActiveId] = useState<string | null>("g-1")
-  const [statusFilter, setStatusFilter] = useState<GoalStatusFilter>("all")
+  const [activeId, setActiveId] = useState<string | null>("g-1");
+  const [statusFilter, setStatusFilter] = useState<GoalStatusFilter>("all");
 
   const filteredGoals = mockGoals.filter((g) => {
-    if (statusFilter !== "all" && g.status !== statusFilter) return false
-    return true
-  })
+    if (statusFilter !== "all" && g.status !== statusFilter) return false;
+    return true;
+  });
 
-  const activeGoal = mockGoals.find((g) => g.id === activeId)
+  const activeGoal = mockGoals.find((g) => g.id === activeId);
 
   const goalCounts = {
     all: mockGoals.length,
     active: mockGoals.filter((g) => g.status === "active").length,
     completed: mockGoals.filter((g) => g.status === "completed").length,
     paused: mockGoals.filter((g) => g.status === "paused").length,
-  }
+  };
 
   return (
     <div className="w-full h-full flex flex-col rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
@@ -141,7 +149,7 @@ export function GoalPreviewCard() {
           <ScrollArea className="h-full">
             <div className="p-1.5 space-y-0.5">
               {filteredGoals.map((goal) => {
-                const isActive = goal.id === activeId
+                const isActive = goal.id === activeId;
                 return (
                   <button
                     key={goal.id}
@@ -157,7 +165,12 @@ export function GoalPreviewCard() {
                       <div className={cn("size-1.5 rounded-full", goalStatusColor[goal.status])} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={cn("text-[11px] font-medium truncate", isActive && "text-accent-foreground")}>
+                      <p
+                        className={cn(
+                          "text-[11px] font-medium truncate",
+                          isActive && "text-accent-foreground",
+                        )}
+                      >
                         {goal.title}
                       </p>
                       <div className="flex items-center gap-1 mt-0.5">
@@ -171,7 +184,7 @@ export function GoalPreviewCard() {
                       </div>
                     </div>
                   </button>
-                )
+                );
               })}
             </div>
           </ScrollArea>
@@ -183,24 +196,41 @@ export function GoalPreviewCard() {
             <div className="p-4">
               {/* Header */}
               <div className="flex items-center gap-3 mb-4">
-                <div className={cn(
-                  "flex size-9 items-center justify-center rounded-lg",
-                  activeGoal.status === "active" ? "bg-blue-500/10" :
-                  activeGoal.status === "completed" ? "bg-emerald-500/10" : "bg-amber-500/10",
-                )}>
+                <div
+                  className={cn(
+                    "flex size-9 items-center justify-center rounded-lg",
+                    activeGoal.status === "active"
+                      ? "bg-blue-500/10"
+                      : activeGoal.status === "completed"
+                        ? "bg-emerald-500/10"
+                        : "bg-amber-500/10",
+                  )}
+                >
                   <HugeiconsIcon
-                    icon={activeGoal.status === "completed" ? CheckmarkCircleIcon : activeGoal.status === "paused" ? CancelCircleIcon : Clock01Icon}
+                    icon={
+                      activeGoal.status === "completed"
+                        ? CheckmarkCircleIcon
+                        : activeGoal.status === "paused"
+                          ? CancelCircleIcon
+                          : Clock01Icon
+                    }
                     className={cn(
                       "size-4",
-                      activeGoal.status === "active" ? "text-blue-500" :
-                      activeGoal.status === "completed" ? "text-emerald-500" : "text-amber-500",
+                      activeGoal.status === "active"
+                        ? "text-blue-500"
+                        : activeGoal.status === "completed"
+                          ? "text-emerald-500"
+                          : "text-amber-500",
                     )}
                   />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-bold text-foreground">{activeGoal.title}</h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <Badge variant="outline" className="text-[8px] uppercase tracking-wider px-1 py-0">
+                    <Badge
+                      variant="outline"
+                      className="text-[8px] uppercase tracking-wider px-1 py-0"
+                    >
                       {goalStatusLabel[activeGoal.status]}
                     </Badge>
                     <span className="text-[10px] text-muted-foreground">{activeGoal.project}</span>
@@ -214,15 +244,22 @@ export function GoalPreviewCard() {
               {/* Progress Bar */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Progress</span>
-                  <span className="text-[10px] tabular-nums text-muted-foreground">{activeGoal.progress}%</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Progress
+                  </span>
+                  <span className="text-[10px] tabular-nums text-muted-foreground">
+                    {activeGoal.progress}%
+                  </span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-muted">
                   <div
                     className={cn(
                       "h-1.5 rounded-full transition-all",
-                      activeGoal.status === "completed" ? "bg-emerald-500" :
-                      activeGoal.status === "paused" ? "bg-amber-500" : "bg-blue-500",
+                      activeGoal.status === "completed"
+                        ? "bg-emerald-500"
+                        : activeGoal.status === "paused"
+                          ? "bg-amber-500"
+                          : "bg-blue-500",
                     )}
                     style={{ width: `${activeGoal.progress}%` }}
                   />
@@ -237,12 +274,14 @@ export function GoalPreviewCard() {
                 <div className="space-y-1">
                   {activeGoal.successCriteria.map((c, i) => (
                     <div key={i} className="flex items-center gap-1.5 text-xs text-foreground">
-                      <div className={cn(
-                        "size-3.5 shrink-0 rounded flex items-center justify-center",
-                        activeGoal.progress > (i / activeGoal.successCriteria.length) * 100
-                          ? "bg-emerald-500/10 text-emerald-500"
-                          : "bg-muted text-muted-foreground",
-                      )}>
+                      <div
+                        className={cn(
+                          "size-3.5 shrink-0 rounded flex items-center justify-center",
+                          activeGoal.progress > (i / activeGoal.successCriteria.length) * 100
+                            ? "bg-emerald-500/10 text-emerald-500"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
                         <HugeiconsIcon icon={CheckmarkCircleIcon} className="size-2.5" />
                       </div>
                       <span>{c}</span>
@@ -288,7 +327,6 @@ export function GoalPreviewCard() {
           )}
         </div>
       </div>
-
     </div>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { t, type UnwrapSchema } from "elysia"
+import { t, type UnwrapSchema } from "elysia";
 
 export const StateModel = {
   createBody: t.Object({
@@ -27,7 +27,7 @@ export const StateModel = {
     t.Object({
       status: t.String(),
       detail: t.String(),
-    })
+    }),
   ),
   artifactResponse: t.Object({
     id: t.String(),
@@ -40,8 +40,8 @@ export const StateModel = {
   }),
   errorNotFound: t.Object({ error: t.Literal("not found") }),
   successDeleted: t.Object({ success: t.Literal(true) }),
-} as const
+} as const;
 
 export type StateModel = {
-  [k in keyof typeof StateModel]: UnwrapSchema<typeof StateModel[k]>
-}
+  [k in keyof typeof StateModel]: UnwrapSchema<(typeof StateModel)[k]>;
+};

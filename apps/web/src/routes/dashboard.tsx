@@ -1,67 +1,31 @@
-import { createFileRoute, Outlet, useLocation } from '@tanstack/react-router'
-import { Sidebar } from '#/components/layout/Sidebar'
-import { ActivityPanel } from '#/components/panels/ActivityPanel'
-import { CommandBar } from '#/components/panels/CommandBar'
-import { CreateGoalDialog } from '#/components/dialogs/CreateGoalDialog'
-import { CreateRuleDialog } from '#/components/dialogs/CreateRuleDialog'
-import { SettingsDialog } from '#/components/dialogs/SettingsDialog'
-import { CreateAgentDialog } from '#/components/dialogs/CreateAgentDialog'
-import { MorphPanel } from '#/components/ui/ai-input'
-import { Toolbar } from '#/components/layout/Toolbar'
-import { I18nProvider } from '#/lib/useI18n'
-import { m } from '#/paraglide/messages'
-import { useUIStore } from '#/lib/store'
-import { DashboardProvider, useDashboard } from '#/lib/dashboard-context'
-import type { SidebarView } from '#/lib/types'
+import { createFileRoute, Outlet, useLocation, Navigate } from "@tanstack/react-router";
+import { useAuth } from "@clerk/clerk-react";
+import { isClerkConfigured } from "#/lib/auth";
+import { Sidebar } from "#/components/layout/Sidebar";
+import { ActivityPanel } from "#/components/panels/ActivityPanel";
+import { CommandBar } from "#/components/panels/CommandBar";
+import { CreateGoalDialog } from "#/components/dialogs/CreateGoalDialog";
+import { CreateRuleDialog } from "#/components/dialogs/CreateRuleDialog";
+import { SettingsDialog } from "#/components/dialogs/SettingsDialog";
+import { CreateAgentDialog } from "#/components/dialogs/CreateAgentDialog";
+import { MorphPanel } from "#/components/ui/ai-input";
+import { Toolbar } from "#/components/layout/Toolbar";
+import { I18nProvider } from "#/lib/useI18n";
+import { m } from "#/paraglide/messages";
+import { useUIStore } from "#/lib/store";
+import { DashboardProvider, useDashboard } from "#/lib/dashboard-context";
+import type { SidebarView } from "#/lib/types";
 
-export const Route = createFileRoute('/dashboard')({
+export const Route = createFileRoute("/dashboard")({
   component: DashboardWrapper,
-})
+});
 
-function getViewFromPath(pathname: string): SidebarView {
-  const segment = pathname.replace('/dashboard/', '').replace('/dashboard', '')
-  const validViews: SidebarView[] = ["inbox", "goals", "creation", "agents", "mcp-servers", "skills", "environments", "observability"]
-  return validViews.includes(segment as SidebarView) ? (segment as SidebarView) : "inbox"
-}
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
 
-function DashboardWrapper() {
-  return (
-    <DashboardProvider>
-      <DashboardLayout />
-    </DashboardProvider>
-  )
-}
+  if (!isClerkConfigured) return <>{children}</>;
 
-function DashboardLayout() {
-  const location = useLocation()
-  const activeView = getViewFromPath(location.pathname)
-
-  const {
-    runtimes, projects, organizations, problems, activities,
-    settings, refreshAll,
-    handleCreateGoal, handleCommand, handleCreateRule, handleCreateAgent,
-    handleOrganizationRename, handleOrganizationDelete,
-    showCreateDialog, setShowCreateDialog,
-    showCommandBar, setShowCommandBar,
-    showSettingsDialog, setShowSettingsDialog,
-    showCreateRuleDialog, setShowCreateRuleDialog,
-    showCreateAgentDialog, setShowCreateAgentDialog,
-    ruleFromProblem,
-    searchQuery, setSearchQuery,
-    agentModelFilter, setAgentModelFilter,
-    inboxCounts, goalCounts, agentModelCounts, mcpScopeCounts, skillsScopeCounts,
-    loading,
-  } = useDashboard()
-
-  const {
-    activeOrganizationId, setActiveOrganizationId,
-    sourceFilter, setSourceFilter,
-    goalStatusFilter, setGoalStatusFilter,
-    scopeFilter, setScopeFilter,
-    activityPanelOpen, toggleActivityPanel,
-  } = useUIStore()
-
-  if (loading) {
+  if (!isLoaded) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex items-center gap-3 text-muted-foreground">
@@ -69,10 +33,109 @@ function DashboardLayout() {
           <span className="text-sm" suppressHydrationWarning>{m.loading()}</span>
         </div>
       </div>
-    )
+    );
   }
 
-  const scopeCounts = activeView === "skills" ? skillsScopeCounts : mcpScopeCounts
+  if (!isSignedIn) {
+    return <Navigate to="/sign-in" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function getViewFromPath(pathname: string): SidebarView {
+  const segment = pathname.replace("/dashboard/", "").replace("/dashboard", "");
+  const validViews: SidebarView[] = [
+    "inbox",
+    "goals",
+    "creation",
+    "agents",
+    "mcp-servers",
+    "skills",
+    "environments",
+    "observability",
+  ];
+  return validViews.includes(segment as SidebarView) ? (segment as SidebarView) : "inbox";
+}
+
+function DashboardWrapper() {
+  return (
+    <RequireAuth>
+      <DashboardProvider>
+        <DashboardLayout />
+      </DashboardProvider>
+    </RequireAuth>
+  )
+}
+
+function DashboardLayout() {
+  const location = useLocation();
+  const activeView = getViewFromPath(location.pathname);
+
+  const {
+    runtimes,
+    projects,
+    organizations,
+    problems,
+    activities,
+    settings,
+    refreshAll,
+    handleCreateGoal,
+    handleCommand,
+    handleCreateRule,
+    handleCreateAgent,
+    handleOrganizationRename,
+    handleOrganizationDelete,
+    showCreateDialog,
+    setShowCreateDialog,
+    showCommandBar,
+    setShowCommandBar,
+    showSettingsDialog,
+    setShowSettingsDialog,
+    showCreateRuleDialog,
+    setShowCreateRuleDialog,
+    showCreateAgentDialog,
+    setShowCreateAgentDialog,
+    ruleFromProblem,
+    searchQuery,
+    setSearchQuery,
+    agentModelFilter,
+    setAgentModelFilter,
+    inboxCounts,
+    goalCounts,
+    agentModelCounts,
+    mcpScopeCounts,
+    skillsScopeCounts,
+    loading,
+  } = useDashboard();
+
+  const {
+    activeOrganizationId,
+    setActiveOrganizationId,
+    sourceFilter,
+    setSourceFilter,
+    goalStatusFilter,
+    setGoalStatusFilter,
+    scopeFilter,
+    setScopeFilter,
+    activityPanelOpen,
+    toggleActivityPanel,
+  } = useUIStore();
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span className="text-sm" suppressHydrationWarning>
+            {m.loading()}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  const scopeCounts = activeView === "skills" ? skillsScopeCounts : mcpScopeCounts;
 
   return (
     <I18nProvider>
@@ -152,5 +215,5 @@ function DashboardLayout() {
         <MorphPanel runtimes={runtimes} />
       </div>
     </I18nProvider>
-  )
+  );
 }

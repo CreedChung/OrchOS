@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
+import { useState, useEffect, useCallback } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   FolderIcon,
   Add01Icon,
@@ -16,149 +16,183 @@ import {
   Edit02Icon,
   Download01Icon,
   Loading01Icon,
-} from "@hugeicons/core-free-icons"
-import { Button } from "#/components/ui/button"
-import { Badge } from "#/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "#/components/ui/card"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "#/components/ui/tabs"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import { DirectoryPickerDialog } from "#/components/ui/directory-picker-dialog"
-import { api, type DetectedRuntime } from "#/lib/api"
-import { cn } from "#/lib/utils"
-import { m } from "#/paraglide/messages"
-import type { RuntimeProfile, Project } from "#/lib/types"
+} from "@hugeicons/core-free-icons";
+import { Button } from "#/components/ui/button";
+import { Badge } from "#/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "#/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "#/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
+import { DirectoryPickerDialog } from "#/components/ui/directory-picker-dialog";
+import { api, type DetectedRuntime } from "#/lib/api";
+import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages";
+import type { RuntimeProfile, Project } from "#/lib/types";
 
 interface EnvironmentsViewProps {
-  runtimes: RuntimeProfile[]
-  projects: Project[]
-  onRefresh: () => void
+  runtimes: RuntimeProfile[];
+  projects: Project[];
+  onRefresh: () => void;
 }
 
 // ── Projects Tab ──────────────────────────────────────────
 
-function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Project[]; onRefresh: () => void }) {
-  const [projects, setProjects] = useState<Project[]>(initialProjects)
-  const [showForm, setShowForm] = useState(false)
-  const [formMode, setFormMode] = useState<"clone" | "local">("clone")
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [formData, setFormData] = useState({ name: "", path: "", repositoryUrl: "" })
-  const [loading, setLoading] = useState(false)
-  const [cloningId, setCloningId] = useState<string | null>(null)
-  const [cloneResults, setCloneResults] = useState<Record<string, { success: boolean; output: string; error?: string; path: string }>>({})
-  const [showDirectoryPicker, setShowDirectoryPicker] = useState(false)
+function ProjectsTab({
+  projects: initialProjects,
+  onRefresh,
+}: {
+  projects: Project[];
+  onRefresh: () => void;
+}) {
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [showForm, setShowForm] = useState(false);
+  const [formMode, setFormMode] = useState<"clone" | "local">("clone");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: "", path: "", repositoryUrl: "" });
+  const [loading, setLoading] = useState(false);
+  const [cloningId, setCloningId] = useState<string | null>(null);
+  const [cloneResults, setCloneResults] = useState<
+    Record<string, { success: boolean; output: string; error?: string; path: string }>
+  >({});
+  const [showDirectoryPicker, setShowDirectoryPicker] = useState(false);
 
-  useEffect(() => { setProjects(initialProjects) }, [initialProjects])
+  useEffect(() => {
+    setProjects(initialProjects);
+  }, [initialProjects]);
 
   // Auto-fill name and path from repo URL
   useEffect(() => {
     if (formData.repositoryUrl && formMode === "clone") {
-      const repoName = formData.repositoryUrl.split("/").pop()?.replace(/\.git$/, "") || ""
+      const repoName =
+        formData.repositoryUrl
+          .split("/")
+          .pop()
+          ?.replace(/\.git$/, "") || "";
       if (repoName && !formData.name) {
         setFormData((prev) => ({
           ...prev,
           name: repoName.charAt(0).toUpperCase() + repoName.slice(1),
           path: `~/Projects/${repoName}`,
-        }))
+        }));
       }
     }
-  }, [formData.repositoryUrl, formMode])
+  }, [formData.repositoryUrl, formMode]);
 
   const handleCreate = async () => {
-    if (!formData.name || !formData.path) return
-    setLoading(true)
+    if (!formData.name || !formData.path) return;
+    setLoading(true);
     try {
       await api.createProject({
         name: formData.name,
         path: formData.path,
-        repositoryUrl: formMode === "clone" ? formData.repositoryUrl.trim() || undefined : undefined,
-      })
-      setFormData({ name: "", path: "", repositoryUrl: "" })
-      setShowForm(false)
-      onRefresh()
+        repositoryUrl:
+          formMode === "clone" ? formData.repositoryUrl.trim() || undefined : undefined,
+      });
+      setFormData({ name: "", path: "", repositoryUrl: "" });
+      setShowForm(false);
+      onRefresh();
 
       // Auto-clone if repository URL provided
       if (formMode === "clone" && formData.repositoryUrl) {
         // We'll clone after the project is created (need to get the new project ID)
         setTimeout(async () => {
-          const newProjects = await api.listProjects()
+          const newProjects = await api.listProjects();
           const newProject = newProjects.find(
-            (p) => p.name === formData.name && p.repositoryUrl === formData.repositoryUrl
-          )
+            (p) => p.name === formData.name && p.repositoryUrl === formData.repositoryUrl,
+          );
           if (newProject) {
-            handleClone(newProject.id)
+            handleClone(newProject.id);
           }
-        }, 500)
+        }, 500);
       }
     } catch (err) {
-      console.error("Failed to create project:", err)
+      console.error("Failed to create project:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleEdit = (project: Project) => {
-    setEditingId(project.id)
-    setFormData({ name: project.name, path: project.path, repositoryUrl: project.repositoryUrl || "" })
-    setFormMode(project.repositoryUrl ? "clone" : "local")
-    setShowForm(true)
-  }
+    setEditingId(project.id);
+    setFormData({
+      name: project.name,
+      path: project.path,
+      repositoryUrl: project.repositoryUrl || "",
+    });
+    setFormMode(project.repositoryUrl ? "clone" : "local");
+    setShowForm(true);
+  };
 
   const handleUpdate = async () => {
-    if (!editingId || !formData.name || !formData.path) return
-    setLoading(true)
+    if (!editingId || !formData.name || !formData.path) return;
+    setLoading(true);
     try {
       await api.updateProject(editingId, {
         name: formData.name,
         path: formData.path,
         repositoryUrl: formData.repositoryUrl.trim() || undefined,
-      })
-      setFormData({ name: "", path: "", repositoryUrl: "" })
-      setEditingId(null)
-      setShowForm(false)
-      onRefresh()
+      });
+      setFormData({ name: "", path: "", repositoryUrl: "" });
+      setEditingId(null);
+      setShowForm(false);
+      onRefresh();
     } catch (err) {
-      console.error("Failed to update project:", err)
+      console.error("Failed to update project:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(m.env_delete_project_confirm())) return
+    if (!confirm(m.env_delete_project_confirm())) return;
     try {
-      await api.deleteProject(id)
-      onRefresh()
+      await api.deleteProject(id);
+      onRefresh();
     } catch (err) {
-      console.error("Failed to delete project:", err)
+      console.error("Failed to delete project:", err);
     }
-  }
+  };
 
   const handleClone = async (id: string, force: boolean = false) => {
-    setCloningId(id)
+    setCloningId(id);
     try {
-      const result = await api.cloneProject(id, { force })
-      setCloneResults((prev) => ({ ...prev, [id]: result }))
+      const result = await api.cloneProject(id, { force });
+      setCloneResults((prev) => ({ ...prev, [id]: result }));
     } catch (err) {
-      console.error("Failed to clone:", err)
+      console.error("Failed to clone:", err);
       setCloneResults((prev) => ({
         ...prev,
-        [id]: { success: false, output: "", error: err instanceof Error ? err.message : "Clone failed", path: "" },
-      }))
+        [id]: {
+          success: false,
+          output: "",
+          error: err instanceof Error ? err.message : "Clone failed",
+          path: "",
+        },
+      }));
     } finally {
-      setCloningId(null)
+      setCloningId(null);
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{m.env_projects_desc()}</p>
-        <Button size="sm" onClick={() => {
-          setEditingId(null)
-          setFormData({ name: "", path: "", repositoryUrl: "" })
-          setFormMode("clone")
-          setShowForm(!showForm)
-        }}>
+        <Button
+          size="sm"
+          onClick={() => {
+            setEditingId(null);
+            setFormData({ name: "", path: "", repositoryUrl: "" });
+            setFormMode("clone");
+            setShowForm(!showForm);
+          }}
+        >
           <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
           {m.add()}
         </Button>
@@ -273,10 +307,27 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
           )}
 
           <div className="flex gap-2">
-            <Button size="sm" onClick={editingId ? handleUpdate : handleCreate} disabled={loading || !formData.name || !formData.path}>
-              {loading ? m.creating() : editingId ? m.save() : formMode === "clone" ? "Clone & Create" : "Import Project"}
+            <Button
+              size="sm"
+              onClick={editingId ? handleUpdate : handleCreate}
+              disabled={loading || !formData.name || !formData.path}
+            >
+              {loading
+                ? m.creating()
+                : editingId
+                  ? m.save()
+                  : formMode === "clone"
+                    ? "Clone & Create"
+                    : "Import Project"}
             </Button>
-            <Button size="sm" variant="outline" onClick={() => { setShowForm(false); setEditingId(null) }}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setShowForm(false);
+                setEditingId(null);
+              }}
+            >
               {m.cancel()}
             </Button>
           </div>
@@ -285,9 +336,9 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
 
       <div className="space-y-2">
         {projects.map((project) => {
-          const isCloning = cloningId === project.id
-          const cloneResult = cloneResults[project.id]
-          const hasRepo = cloneResult?.success
+          const isCloning = cloningId === project.id;
+          const cloneResult = cloneResults[project.id];
+          const hasRepo = cloneResult?.success;
 
           return (
             <div
@@ -314,14 +365,19 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
                       </a>
                     )}
                     {hasRepo && (
-                      <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/30">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] text-emerald-500 border-emerald-500/30"
+                      >
                         Cloned
                       </Badge>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{project.path}</p>
                   {project.repositoryUrl && (
-                    <p className="text-xs text-muted-foreground/60 truncate font-mono mt-0.5">{project.repositoryUrl}</p>
+                    <p className="text-xs text-muted-foreground/60 truncate font-mono mt-0.5">
+                      {project.repositoryUrl}
+                    </p>
                   )}
                 </div>
                 {project.repositoryUrl && (
@@ -332,7 +388,7 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
                       "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                       isCloning
                         ? "bg-muted text-muted-foreground cursor-wait"
-                        : "bg-primary/10 text-primary hover:bg-primary/20"
+                        : "bg-primary/10 text-primary hover:bg-primary/20",
                     )}
                     title={isCloning ? "Cloning..." : "Clone repository"}
                   >
@@ -371,13 +427,16 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
                 </div>
               )}
             </div>
-          )
+          );
         })}
       </div>
 
       {projects.length === 0 && !showForm && (
         <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
-          <HugeiconsIcon icon={FolderIcon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+          <HugeiconsIcon
+            icon={FolderIcon}
+            className="mx-auto size-6 text-muted-foreground/30 mb-2"
+          />
           <p className="text-sm text-muted-foreground">{m.env_no_projects()}</p>
           <p className="text-xs text-muted-foreground/60 mt-1">{m.env_no_projects_desc()}</p>
         </div>
@@ -390,72 +449,80 @@ function ProjectsTab({ projects: initialProjects, onRefresh }: { projects: Proje
         onSelect={(selectedPath) => {
           setFormData((prev) => {
             // Auto-fill name from directory if empty
-            const dirName = selectedPath.split("/").pop() || selectedPath
-            const displayName = dirName.charAt(0).toUpperCase() + dirName.slice(1)
+            const dirName = selectedPath.split("/").pop() || selectedPath;
+            const displayName = dirName.charAt(0).toUpperCase() + dirName.slice(1);
             return {
               ...prev,
               path: selectedPath,
               name: prev.name || displayName,
-            }
-          })
+            };
+          });
         }}
       />
     </div>
-  )
+  );
 }
 
 // ── Runtimes Tab ──────────────────────────────────────────
 
-function RuntimesTab({ runtimes, onRefresh }: { runtimes: RuntimeProfile[]; onRefresh: () => void }) {
-  const [detecting, setDetecting] = useState(false)
-  const [available, setAvailable] = useState<DetectedRuntime[]>([])
-  const [unavailable, setUnavailable] = useState<DetectedRuntime[]>([])
-  const [registering, setRegistering] = useState<string | null>(null)
-  const [registerResults, setRegisterResults] = useState<Record<string, "ok" | "skip" | "fail">>({})
+function RuntimesTab({
+  runtimes,
+  onRefresh,
+}: {
+  runtimes: RuntimeProfile[];
+  onRefresh: () => void;
+}) {
+  const [detecting, setDetecting] = useState(false);
+  const [available, setAvailable] = useState<DetectedRuntime[]>([]);
+  const [unavailable, setUnavailable] = useState<DetectedRuntime[]>([]);
+  const [registering, setRegistering] = useState<string | null>(null);
+  const [registerResults, setRegisterResults] = useState<Record<string, "ok" | "skip" | "fail">>(
+    {},
+  );
 
   const handleDetect = useCallback(async () => {
-    setDetecting(true)
-    setRegisterResults({})
+    setDetecting(true);
+    setRegisterResults({});
     try {
-      const res = await api.detectRuntimes()
-      setAvailable(res.available)
-      setUnavailable(res.unavailable)
+      const res = await api.detectRuntimes();
+      setAvailable(res.available);
+      setUnavailable(res.unavailable);
     } catch (err) {
-      console.error("Failed to detect runtimes:", err)
+      console.error("Failed to detect runtimes:", err);
     } finally {
-      setDetecting(false)
+      setDetecting(false);
     }
-  }, [])
+  }, []);
 
   // Auto-detect on mount
   useEffect(() => {
-    handleDetect()
-  }, [handleDetect])
+    handleDetect();
+  }, [handleDetect]);
 
   const handleRegister = async (runtimeId: string) => {
-    setRegistering(runtimeId)
+    setRegistering(runtimeId);
     try {
-      await api.registerDetectedRuntimes({ runtimeIds: [runtimeId] })
-      setRegisterResults((prev) => ({ ...prev, [runtimeId]: "ok" }))
-      onRefresh()
+      await api.registerDetectedRuntimes({ runtimeIds: [runtimeId] });
+      setRegisterResults((prev) => ({ ...prev, [runtimeId]: "ok" }));
+      onRefresh();
     } catch {
-      setRegisterResults((prev) => ({ ...prev, [runtimeId]: "fail" }))
+      setRegisterResults((prev) => ({ ...prev, [runtimeId]: "fail" }));
     } finally {
-      setRegistering(null)
+      setRegistering(null);
     }
-  }
+  };
 
   const handleRegisterAll = async () => {
-    setRegistering("__all__")
+    setRegistering("__all__");
     try {
-      await api.registerDetectedRuntimes({ registerAll: true })
-      onRefresh()
+      await api.registerDetectedRuntimes({ registerAll: true });
+      onRefresh();
     } catch (err) {
-      console.error("Failed to register all:", err)
+      console.error("Failed to register all:", err);
     } finally {
-      setRegistering(null)
+      setRegistering(null);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -471,11 +538,19 @@ function RuntimesTab({ runtimes, onRefresh }: { runtimes: RuntimeProfile[]; onRe
         <CardContent className="space-y-3">
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={handleDetect} disabled={detecting}>
-              <HugeiconsIcon icon={detecting ? RefreshIcon : Rocket01Icon} className={cn("size-3.5 mr-1.5", detecting && "animate-spin")} />
+              <HugeiconsIcon
+                icon={detecting ? RefreshIcon : Rocket01Icon}
+                className={cn("size-3.5 mr-1.5", detecting && "animate-spin")}
+              />
               {detecting ? m.scanning() : m.detect_btn()}
             </Button>
             {available.length > 0 && (
-              <Button size="sm" variant="outline" onClick={handleRegisterAll} disabled={registering === "__all__"}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRegisterAll}
+                disabled={registering === "__all__"}
+              >
                 {registering === "__all__" ? m.registering() : m.register_all()}
               </Button>
             )}
@@ -486,28 +561,48 @@ function RuntimesTab({ runtimes, onRefresh }: { runtimes: RuntimeProfile[]; onRe
             <div className="space-y-1.5">
               <span className="text-xs font-medium text-muted-foreground">{m.available()}</span>
               {available.map((runtime) => {
-                const result = registerResults[runtime.id]
-                const alreadyRegistered = runtimes.some((r) => r.registryId === runtime.id || r.command === runtime.command)
+                const result = registerResults[runtime.id];
+                const alreadyRegistered = runtimes.some(
+                  (r) => r.registryId === runtime.id || r.command === runtime.command,
+                );
                 return (
-                  <div key={runtime.id} className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2">
+                  <div
+                    key={runtime.id}
+                    className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2"
+                  >
                     <div className="flex size-7 items-center justify-center rounded-md bg-emerald-500/10">
-                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-3.5 text-emerald-500" />
+                      <HugeiconsIcon
+                        icon={CheckmarkCircle01Icon}
+                        className="size-3.5 text-emerald-500"
+                      />
                     </div>
                     <div className="min-w-0 flex-1">
                       <span className="text-sm font-medium text-foreground">{runtime.name}</span>
                       <span className="ml-2 text-xs text-muted-foreground">{runtime.command}</span>
                     </div>
                     {result === "ok" ? (
-                      <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/30">{m.agent_registered({ name: "" }).trim()}</Badge>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] text-emerald-500 border-emerald-500/30"
+                      >
+                        {m.agent_registered({ name: "" }).trim()}
+                      </Badge>
                     ) : alreadyRegistered ? (
-                      <Badge variant="outline" className="text-[10px]">{m.agent_already_registered({ name: "" }).trim()}</Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        {m.agent_already_registered({ name: "" }).trim()}
+                      </Badge>
                     ) : (
-                      <Button size="sm" variant="outline" onClick={() => handleRegister(runtime.id)} disabled={registering === runtime.id}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRegister(runtime.id)}
+                        disabled={registering === runtime.id}
+                      >
                         {registering === runtime.id ? m.registering() : m.register()}
                       </Button>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -517,7 +612,10 @@ function RuntimesTab({ runtimes, onRefresh }: { runtimes: RuntimeProfile[]; onRe
             <div className="space-y-1.5">
               <span className="text-xs font-medium text-muted-foreground">{m.not_installed()}</span>
               {unavailable.map((runtime) => (
-                <div key={runtime.id} className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2 opacity-60">
+                <div
+                  key={runtime.id}
+                  className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2 opacity-60"
+                >
                   <div className="flex size-7 items-center justify-center rounded-md bg-muted">
                     <HugeiconsIcon icon={Cancel01Icon} className="size-3.5 text-muted-foreground" />
                   </div>
@@ -525,7 +623,9 @@ function RuntimesTab({ runtimes, onRefresh }: { runtimes: RuntimeProfile[]; onRe
                     <span className="text-sm font-medium text-foreground">{runtime.name}</span>
                     <span className="ml-2 text-xs text-muted-foreground">{runtime.command}</span>
                   </div>
-                  <Badge variant="outline" className="text-[10px]">{m.not_found()}</Badge>
+                  <Badge variant="outline" className="text-[10px]">
+                    {m.not_found()}
+                  </Badge>
                 </div>
               ))}
             </div>
@@ -545,7 +645,10 @@ function RuntimesTab({ runtimes, onRefresh }: { runtimes: RuntimeProfile[]; onRe
           {runtimes.length > 0 ? (
             <div className="space-y-2">
               {runtimes.map((runtime) => (
-                <div key={runtime.id} className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2">
+                <div
+                  key={runtime.id}
+                  className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2"
+                >
                   <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
                     <HugeiconsIcon icon={CodeIcon} className="size-3.5 text-primary" />
                   </div>
@@ -553,9 +656,13 @@ function RuntimesTab({ runtimes, onRefresh }: { runtimes: RuntimeProfile[]; onRe
                     <span className="text-sm font-medium text-foreground">{runtime.name}</span>
                     <span className="ml-2 text-xs text-muted-foreground">{runtime.command}</span>
                   </div>
-                  <Badge variant="outline" className="text-[10px]">{runtime.model}</Badge>
+                  <Badge variant="outline" className="text-[10px]">
+                    {runtime.model}
+                  </Badge>
                   <button
-                    onClick={() => api.updateRuntime(runtime.id, { enabled: !runtime.enabled }).then(onRefresh)}
+                    onClick={() =>
+                      api.updateRuntime(runtime.id, { enabled: !runtime.enabled }).then(onRefresh)
+                    }
                     className="text-muted-foreground hover:text-foreground"
                     title={runtime.enabled ? m.disable() : m.enable()}
                   >
@@ -571,70 +678,80 @@ function RuntimesTab({ runtimes, onRefresh }: { runtimes: RuntimeProfile[]; onRe
           ) : (
             <div className="py-6 text-center">
               <p className="text-sm text-muted-foreground">{m.no_runtimes_registered()}</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">{m.no_runtimes_registered_desc()}</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                {m.no_runtimes_registered_desc()}
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 // ── Env Vars Tab ──────────────────────────────────────────
 
 interface EnvVar {
-  id: string
-  key: string
-  value: string
-  scope: "global" | "project"
-  projectId?: string
+  id: string;
+  key: string;
+  value: string;
+  scope: "global" | "project";
+  projectId?: string;
 }
 
 function EnvVarsTab() {
-  const [envVars, setEnvVars] = useState<EnvVar[]>([])
-  const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState({ key: "", value: "", scope: "global" as "global" | "project" })
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editValue, setEditValue] = useState("")
+  const [envVars, setEnvVars] = useState<EnvVar[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    key: "",
+    value: "",
+    scope: "global" as "global" | "project",
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   // Load from localStorage for persistence
   useEffect(() => {
-    const stored = localStorage.getItem("orchos-env-vars")
+    const stored = localStorage.getItem("orchos-env-vars");
     if (stored) {
-      try { setEnvVars(JSON.parse(stored)) } catch { /* ignore */ }
+      try {
+        setEnvVars(JSON.parse(stored));
+      } catch {
+        /* ignore */
+      }
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem("orchos-env-vars", JSON.stringify(envVars))
-  }, [envVars])
+    localStorage.setItem("orchos-env-vars", JSON.stringify(envVars));
+  }, [envVars]);
 
   const handleAdd = () => {
-    if (!formData.key || !formData.value) return
+    if (!formData.key || !formData.value) return;
     const newVar: EnvVar = {
       id: `env_${Date.now()}`,
       key: formData.key,
       value: formData.value,
       scope: formData.scope,
-    }
-    setEnvVars((prev) => [...prev, newVar])
-    setFormData({ key: "", value: "", scope: "global" })
-    setShowForm(false)
-  }
+    };
+    setEnvVars((prev) => [...prev, newVar]);
+    setFormData({ key: "", value: "", scope: "global" });
+    setShowForm(false);
+  };
 
   const handleDelete = (id: string) => {
-    setEnvVars((prev) => prev.filter((v) => v.id !== id))
-  }
+    setEnvVars((prev) => prev.filter((v) => v.id !== id));
+  };
 
   const handleUpdate = (id: string) => {
-    setEnvVars((prev) => prev.map((v) => v.id === id ? { ...v, value: editValue } : v))
-    setEditingId(null)
-  }
+    setEnvVars((prev) => prev.map((v) => (v.id === id ? { ...v, value: editValue } : v)));
+    setEditingId(null);
+  };
 
   const maskValue = (val: string) => {
-    if (val.length <= 4) return "****"
-    return val.slice(0, 2) + "*".repeat(Math.min(val.length - 4, 8)) + val.slice(-2)
-  }
+    if (val.length <= 4) return "****";
+    return val.slice(0, 2) + "*".repeat(Math.min(val.length - 4, 8)) + val.slice(-2);
+  };
 
   return (
     <div className="space-y-4">
@@ -708,7 +825,9 @@ function EnvVarsTab() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium font-mono text-foreground">{envVar.key}</span>
-                <Badge variant="outline" className="text-[10px]">{envVar.scope === "global" ? m.scope_global() : m.scope_project()}</Badge>
+                <Badge variant="outline" className="text-[10px]">
+                  {envVar.scope === "global" ? m.scope_global() : m.scope_project()}
+                </Badge>
               </div>
               {editingId === envVar.id ? (
                 <div className="flex items-center gap-2 mt-1">
@@ -718,8 +837,12 @@ function EnvVarsTab() {
                     onChange={(e) => setEditValue(e.target.value)}
                     className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-mono"
                   />
-                  <Button size="sm" onClick={() => handleUpdate(envVar.id)}>{m.save()}</Button>
-                  <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>{m.cancel()}</Button>
+                  <Button size="sm" onClick={() => handleUpdate(envVar.id)}>
+                    {m.save()}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
+                    {m.cancel()}
+                  </Button>
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground font-mono">{maskValue(envVar.value)}</p>
@@ -727,7 +850,10 @@ function EnvVarsTab() {
             </div>
             {editingId !== envVar.id && (
               <button
-                onClick={() => { setEditingId(envVar.id); setEditValue(envVar.value) }}
+                onClick={() => {
+                  setEditingId(envVar.id);
+                  setEditValue(envVar.value);
+                }}
                 className="text-xs text-muted-foreground hover:text-foreground"
               >
                 {m.edit_status()}
@@ -746,13 +872,16 @@ function EnvVarsTab() {
 
       {envVars.length === 0 && !showForm && (
         <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
-          <HugeiconsIcon icon={VariableIcon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+          <HugeiconsIcon
+            icon={VariableIcon}
+            className="mx-auto size-6 text-muted-foreground/30 mb-2"
+          />
           <p className="text-sm text-muted-foreground">{m.env_no_vars()}</p>
           <p className="text-xs text-muted-foreground/60 mt-1">{m.env_no_vars_desc()}</p>
         </div>
       )}
     </div>
-  )
+  );
 }
 
 // ── Main Component ────────────────────────────────────────
@@ -798,5 +927,5 @@ export function EnvironmentsView({ runtimes, projects, onRefresh }: Environments
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

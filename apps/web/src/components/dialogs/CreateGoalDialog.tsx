@@ -1,44 +1,57 @@
-import { useState } from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Cancel01Icon, Add01Icon, Delete02Icon, FolderGitIcon } from "@hugeicons/core-free-icons"
-import { cn } from "#/lib/utils"
-import { m } from "#/paraglide/messages"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import type { Project } from "#/lib/types"
+import { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon, Add01Icon, Delete02Icon, FolderGitIcon } from "@hugeicons/core-free-icons";
+import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
+import type { Project } from "#/lib/types";
 
 interface CreateGoalDialogProps {
-  open: boolean
-  onClose: () => void
-  projects: Project[]
-  onSubmit: (data: { title: string; description?: string; successCriteria: string[]; constraints?: string[]; projectId?: string }) => void
+  open: boolean;
+  onClose: () => void;
+  projects: Project[];
+  onSubmit: (data: {
+    title: string;
+    description?: string;
+    successCriteria: string[];
+    constraints?: string[];
+    projectId?: string;
+  }) => void;
 }
 
 export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGoalDialogProps) {
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [criteria, setCriteria] = useState<string[]>([""])
-  const [constraints, setConstraints] = useState<string[]>([])
-  const [projectId, setProjectId] = useState<string>("")
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [criteria, setCriteria] = useState<string[]>([""]);
+  const [constraints, setConstraints] = useState<string[]>([]);
+  const [projectId, setProjectId] = useState<string>("");
 
-  if (!open) return null
+  if (!open) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const validCriteria = criteria.filter((c) => c.trim())
-    if (!title.trim() || validCriteria.length === 0) return
+    e.preventDefault();
+    const validCriteria = criteria.filter((c) => c.trim());
+    if (!title.trim() || validCriteria.length === 0) return;
     onSubmit({
       title: title.trim(),
       description: description.trim() || undefined,
       successCriteria: validCriteria,
       constraints: constraints.filter((c) => c.trim()),
       projectId: projectId || undefined,
-    })
-    setTitle("")
-    setDescription("")
-    setCriteria([""])
-    setConstraints([])
-    setProjectId("")
-  }
+    });
+    setTitle("");
+    setDescription("");
+    setCriteria([""]);
+    setConstraints([]);
+    setProjectId("");
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -90,10 +103,7 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
                 <HugeiconsIcon icon={FolderGitIcon} className="size-3 inline mr-1" />
                 {m.project()}
               </label>
-              <Select
-                value={projectId}
-                onValueChange={setProjectId}
-              >
+              <Select value={projectId} onValueChange={setProjectId}>
                 <SelectTrigger>
                   <SelectValue placeholder={m.no_project()} />
                 </SelectTrigger>
@@ -101,7 +111,9 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
                   <SelectGroup>
                     <SelectItem value="">{m.no_project()}</SelectItem>
                     {projects.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
                     ))}
                   </SelectGroup>
                 </SelectContent>
@@ -121,9 +133,9 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
                     type="text"
                     value={c}
                     onChange={(e) => {
-                      const next = [...criteria]
-                      next[i] = e.target.value
-                      setCriteria(next)
+                      const next = [...criteria];
+                      next[i] = e.target.value;
+                      setCriteria(next);
                     }}
                     placeholder={m.criteria_placeholder()}
                     className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -161,9 +173,9 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
                     type="text"
                     value={c}
                     onChange={(e) => {
-                      const next = [...constraints]
-                      next[i] = e.target.value
-                      setConstraints(next)
+                      const next = [...constraints];
+                      next[i] = e.target.value;
+                      setConstraints(next);
                     }}
                     placeholder={m.constraints_placeholder()}
                     className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -203,7 +215,7 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
                 "rounded-md px-4 py-2 text-sm font-medium text-primary-foreground transition-colors",
                 title.trim() && criteria.filter((c) => c.trim()).length > 0
                   ? "bg-primary hover:bg-primary/90"
-                  : "bg-muted text-muted-foreground cursor-not-allowed"
+                  : "bg-muted text-muted-foreground cursor-not-allowed",
               )}
             >
               {m.create_goal()}
@@ -212,5 +224,5 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
         </form>
       </div>
     </div>
-  )
+  );
 }

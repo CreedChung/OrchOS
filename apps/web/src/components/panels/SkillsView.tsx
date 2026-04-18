@@ -1,62 +1,74 @@
-import { useState, useEffect } from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Wrench01Icon, Add01Icon, Delete02Icon, ToggleLeft, ToggleRight } from "@hugeicons/core-free-icons"
-import { Button } from "#/components/ui/button"
-import { ConfirmDialog } from "#/components/ui/confirm-dialog"
-import { CreateSkillDialog } from "#/components/dialogs/CreateSkillDialog"
-import { api, type SkillProfile } from "#/lib/api"
-import type { Project } from "#/lib/types"
-import { cn } from "#/lib/utils"
-import { m } from "#/paraglide/messages"
+import { useState, useEffect } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Wrench01Icon,
+  Add01Icon,
+  Delete02Icon,
+  ToggleLeft,
+  ToggleRight,
+} from "@hugeicons/core-free-icons";
+import { Button } from "#/components/ui/button";
+import { ConfirmDialog } from "#/components/ui/confirm-dialog";
+import { CreateSkillDialog } from "#/components/dialogs/CreateSkillDialog";
+import { api, type SkillProfile } from "#/lib/api";
+import type { Project } from "#/lib/types";
+import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages";
 
 interface SkillsViewProps {
-  skills: SkillProfile[]
-  projects: Project[]
-  onRefresh: () => void
-  scopeFilter?: "all" | "global" | "project"
+  skills: SkillProfile[];
+  projects: Project[];
+  onRefresh: () => void;
+  scopeFilter?: "all" | "global" | "project";
 }
 
-export function SkillsView({ skills: initialSkills, projects, onRefresh, scopeFilter = "all" }: SkillsViewProps) {
-  const [skills, setSkills] = useState<SkillProfile[]>(initialSkills)
-  const [createOpen, setCreateOpen] = useState(false)
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [skillToDelete, setSkillToDelete] = useState<string | null>(null)
+export function SkillsView({
+  skills: initialSkills,
+  projects,
+  onRefresh,
+  scopeFilter = "all",
+}: SkillsViewProps) {
+  const [skills, setSkills] = useState<SkillProfile[]>(initialSkills);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    setSkills(initialSkills)
-  }, [initialSkills])
+    setSkills(initialSkills);
+  }, [initialSkills]);
 
   const handleCreated = async () => {
-    onRefresh()
-  }
+    onRefresh();
+  };
 
   const handleToggle = async (id: string, enabled: boolean) => {
     try {
-      await api.toggleSkill(id, !enabled)
-      onRefresh()
+      await api.toggleSkill(id, !enabled);
+      onRefresh();
     } catch (err) {
-      console.error("Failed to toggle skill:", err)
+      console.error("Failed to toggle skill:", err);
     }
-  }
+  };
 
   const handleDelete = async (id: string) => {
-    setSkillToDelete(id)
-    setDeleteConfirmOpen(true)
-  }
+    setSkillToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
 
   const handleDeleteConfirm = async () => {
-    if (!skillToDelete) return
+    if (!skillToDelete) return;
     try {
-      await api.deleteSkill(skillToDelete)
-      onRefresh()
+      await api.deleteSkill(skillToDelete);
+      onRefresh();
     } catch (err) {
-      console.error("Failed to delete skill:", err)
+      console.error("Failed to delete skill:", err);
     } finally {
-      setSkillToDelete(null)
+      setSkillToDelete(null);
     }
-  }
+  };
 
-  const filteredSkills = scopeFilter === "all" ? skills : skills.filter((s) => s.scope === scopeFilter)
+  const filteredSkills =
+    scopeFilter === "all" ? skills : skills.filter((s) => s.scope === scopeFilter);
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -74,7 +86,7 @@ export function SkillsView({ skills: initialSkills, projects, onRefresh, scopeFi
             key={skill.id}
             className={cn(
               "flex items-center gap-3 rounded-lg border border-border/50 px-4 py-3",
-              !skill.enabled && "opacity-60"
+              !skill.enabled && "opacity-60",
             )}
           >
             <div className="flex size-8 items-center justify-center rounded-md bg-primary/10">
@@ -117,17 +129,20 @@ export function SkillsView({ skills: initialSkills, projects, onRefresh, scopeFi
           </div>
         ))}
         {filteredSkills.length === 0 && skills.length > 0 && (
-          <p className="text-sm text-muted-foreground">{scopeFilter === "global" ? m.no_global_skills() : m.no_project_skills()}</p>
+          <p className="text-sm text-muted-foreground">
+            {scopeFilter === "global" ? m.no_global_skills() : m.no_project_skills()}
+          </p>
         )}
       </div>
 
       {skills.length === 0 && (
         <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
-          <HugeiconsIcon icon={Wrench01Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+          <HugeiconsIcon
+            icon={Wrench01Icon}
+            className="mx-auto size-6 text-muted-foreground/30 mb-2"
+          />
           <p className="text-sm text-muted-foreground">{m.no_skills()}</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">
-            {m.no_skills_desc()}
-          </p>
+          <p className="text-xs text-muted-foreground/60 mt-1">{m.no_skills_desc()}</p>
         </div>
       )}
 
@@ -148,5 +163,5 @@ export function SkillsView({ skills: initialSkills, projects, onRefresh, scopeFi
         onCreated={handleCreated}
       />
     </div>
-  )
+  );
 }

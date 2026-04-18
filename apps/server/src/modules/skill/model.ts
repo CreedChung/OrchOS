@@ -1,4 +1,4 @@
-import { t } from "elysia"
+import { t } from "elysia";
 
 export const SkillModel = {
   response: t.Object({
@@ -68,7 +68,7 @@ export const SkillModel = {
         name: t.String(),
         description: t.Optional(t.String()),
         relativePath: t.String(),
-      })
+      }),
     ),
   }),
 
@@ -94,10 +94,10 @@ export const SkillModel = {
         manifestPath: t.Optional(t.String()),
         createdAt: t.String(),
         updatedAt: t.String(),
-      })
+      }),
     ),
     installTarget: t.String(),
     warnings: t.Array(t.String()),
     riskLevel: t.Union([t.Literal("low"), t.Literal("medium"), t.Literal("high")]),
   }),
-}
+};

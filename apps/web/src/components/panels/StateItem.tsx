@@ -1,12 +1,12 @@
-import { cn } from "#/lib/utils"
-import { m } from "#/paraglide/messages"
-import type { Status } from "#/lib/types"
+import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages";
+import type { Status } from "#/lib/types";
 
 interface StateItemProps {
-  label: string
-  status: Status
-  actions?: string[]
-  onAction?: (action: string) => void
+  label: string;
+  status: Status;
+  actions?: string[];
+  onAction?: (action: string) => void;
 }
 
 const statusLabelMap: Record<Status, () => string> = {
@@ -16,7 +16,7 @@ const statusLabelMap: Record<Status, () => string> = {
   pending: () => m.status_pending(),
   running: () => m.status_running(),
   warning: () => m.status_warning(),
-}
+};
 
 const statusPillClass: Record<Status, string> = {
   success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -25,7 +25,7 @@ const statusPillClass: Record<Status, string> = {
   pending: "bg-muted text-muted-foreground",
   running: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   warning: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
-}
+};
 
 export function StateItem({ label, status, actions, onAction }: StateItemProps) {
   return (
@@ -35,7 +35,7 @@ export function StateItem({ label, status, actions, onAction }: StateItemProps) 
       <span
         className={cn(
           "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold",
-          statusPillClass[status]
+          statusPillClass[status],
         )}
       >
         {statusLabelMap[status]()}
@@ -55,5 +55,5 @@ export function StateItem({ label, status, actions, onAction }: StateItemProps) 
         </div>
       )}
     </div>
-  )
+  );
 }

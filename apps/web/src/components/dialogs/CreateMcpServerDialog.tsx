@@ -1,13 +1,20 @@
-import { useState, useEffect } from "react"
-import { m } from "#/paraglide/messages"
-import { Button } from "#/components/ui/button"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import { api } from "#/lib/api"
+import { useState, useEffect } from "react";
+import { m } from "#/paraglide/messages";
+import { Button } from "#/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
+import { api } from "#/lib/api";
 
 interface CreateMcpServerDialogProps {
-  open: boolean
-  onClose: () => void
-  onCreated: () => void
+  open: boolean;
+  onClose: () => void;
+  onCreated: () => void;
 }
 
 export function CreateMcpServerDialog({ open, onClose, onCreated }: CreateMcpServerDialogProps) {
@@ -16,36 +23,36 @@ export function CreateMcpServerDialog({ open, onClose, onCreated }: CreateMcpSer
     command: "",
     args: "",
     scope: "global" as "global" | "project",
-  })
-  const [loading, setLoading] = useState(false)
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setFormData({ name: "", command: "", args: "", scope: "global" })
+      setFormData({ name: "", command: "", args: "", scope: "global" });
     }
-  }, [open])
+  }, [open]);
 
   const handleCreate = async () => {
-    if (!formData.name || !formData.command) return
-    setLoading(true)
+    if (!formData.name || !formData.command) return;
+    setLoading(true);
     try {
-      const args = formData.args ? formData.args.split(" ").filter(Boolean) : []
+      const args = formData.args ? formData.args.split(" ").filter(Boolean) : [];
       await api.createMcpServer({
         name: formData.name,
         command: formData.command,
         args,
         scope: formData.scope,
-      })
-      onCreated()
-      onClose()
+      });
+      onCreated();
+      onClose();
     } catch (err) {
-      console.error("Failed to create MCP server:", err)
+      console.error("Failed to create MCP server:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -103,12 +110,16 @@ export function CreateMcpServerDialog({ open, onClose, onCreated }: CreateMcpSer
             <Button size="sm" variant="outline" onClick={onClose}>
               {m.cancel()}
             </Button>
-            <Button size="sm" onClick={handleCreate} disabled={loading || !formData.name || !formData.command}>
+            <Button
+              size="sm"
+              onClick={handleCreate}
+              disabled={loading || !formData.name || !formData.command}
+            >
               {loading ? m.creating() : m.create()}
             </Button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

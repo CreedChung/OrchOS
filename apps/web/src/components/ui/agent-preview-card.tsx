@@ -1,30 +1,25 @@
-import { useState } from "react"
-import { Link } from "@tanstack/react-router"
-import { cn } from "#/lib/utils"
-import { ScrollArea } from "#/components/ui/scroll-area"
-import { Badge } from "#/components/ui/badge"
-import { HugeiconsIcon } from "@hugeicons/react"
-import {
-  Robot02Icon,
-  CodeIcon,
-  CloudIcon,
-  Clock01Icon,
-} from "@hugeicons/core-free-icons"
-import { m } from "#/paraglide/messages"
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { cn } from "#/lib/utils";
+import { ScrollArea } from "#/components/ui/scroll-area";
+import { Badge } from "#/components/ui/badge";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Robot02Icon, CodeIcon, CloudIcon, Clock01Icon } from "@hugeicons/core-free-icons";
+import { m } from "#/paraglide/messages";
 
 // --- Mock Data ---
-type AgentStatus = "idle" | "active" | "error"
+type AgentStatus = "idle" | "active" | "error";
 
 interface MockAgent {
-  id: string
-  name: string
-  role: string
-  status: AgentStatus
-  model: string
-  modelType: "local" | "cloud"
-  capabilities: string[]
-  enabled: boolean
-  currentTask?: string
+  id: string;
+  name: string;
+  role: string;
+  status: AgentStatus;
+  model: string;
+  modelType: "local" | "cloud";
+  capabilities: string[];
+  enabled: boolean;
+  currentTask?: string;
 }
 
 const mockAgents: MockAgent[] = [
@@ -70,19 +65,19 @@ const mockAgents: MockAgent[] = [
     capabilities: ["write_code", "commit", "review"],
     enabled: true,
   },
-]
+];
 
 const agentStatusColor: Record<AgentStatus, string> = {
   idle: "bg-muted-foreground",
   active: "bg-emerald-500",
   error: "bg-red-500",
-}
+};
 
 const agentStatusLabel: Record<AgentStatus, string> = {
   idle: m.idle_status(),
   active: m.active(),
   error: m.status_error(),
-}
+};
 
 const capLabelMap: Record<string, string> = {
   write_code: m.cap_write_code(),
@@ -90,26 +85,26 @@ const capLabelMap: Record<string, string> = {
   run_tests: m.cap_run_tests(),
   commit: m.cap_commit(),
   review: m.cap_review(),
-}
+};
 
-type ModelFilter = "all" | "local" | "cloud"
+type ModelFilter = "all" | "local" | "cloud";
 
 export function AgentPreviewCard() {
-  const [activeId, setActiveId] = useState<string | null>("a-1")
-  const [modelFilter, setModelFilter] = useState<ModelFilter>("all")
+  const [activeId, setActiveId] = useState<string | null>("a-1");
+  const [modelFilter, setModelFilter] = useState<ModelFilter>("all");
 
   const filteredAgents = mockAgents.filter((a) => {
-    if (modelFilter !== "all" && a.modelType !== modelFilter) return false
-    return true
-  })
+    if (modelFilter !== "all" && a.modelType !== modelFilter) return false;
+    return true;
+  });
 
-  const activeAgent = mockAgents.find((a) => a.id === activeId)
+  const activeAgent = mockAgents.find((a) => a.id === activeId);
 
   const agentCounts = {
     all: mockAgents.length,
     local: mockAgents.filter((a) => a.modelType === "local").length,
     cloud: mockAgents.filter((a) => a.modelType === "cloud").length,
-  }
+  };
 
   return (
     <div className="w-full h-full flex flex-col rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
@@ -125,7 +120,7 @@ export function AgentPreviewCard() {
         {/* Model Filter Tabs */}
         <div className="flex items-center gap-1">
           {(["all", "local", "cloud"] as ModelFilter[]).map((filter) => {
-            const Icon = filter === "local" ? CodeIcon : filter === "cloud" ? CloudIcon : null
+            const Icon = filter === "local" ? CodeIcon : filter === "cloud" ? CloudIcon : null;
             return (
               <button
                 key={filter}
@@ -138,10 +133,16 @@ export function AgentPreviewCard() {
                 )}
               >
                 {Icon && <HugeiconsIcon icon={Icon} className="size-2.5" />}
-                <span>{filter === "all" ? m.all() : filter === "local" ? m.model_local() : m.model_cloud()}</span>
+                <span>
+                  {filter === "all"
+                    ? m.all()
+                    : filter === "local"
+                      ? m.model_local()
+                      : m.model_cloud()}
+                </span>
                 <span className="tabular-nums opacity-50">{agentCounts[filter]}</span>
               </button>
-            )
+            );
           })}
         </div>
       </div>
@@ -153,7 +154,7 @@ export function AgentPreviewCard() {
           <ScrollArea className="h-full">
             <div className="p-1.5 space-y-0.5">
               {filteredAgents.map((agent) => {
-                const isActive = agent.id === activeId
+                const isActive = agent.id === activeId;
                 return (
                   <button
                     key={agent.id}
@@ -165,23 +166,34 @@ export function AgentPreviewCard() {
                         : "text-foreground/80 hover:bg-accent/50",
                     )}
                   >
-                    <div className={cn(
-                      "flex size-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold",
-                      isActive ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary",
-                    )}>
+                    <div
+                      className={cn(
+                        "flex size-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold",
+                        isActive ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary",
+                      )}
+                    >
                       {agent.name.charAt(0)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={cn("text-[11px] font-medium truncate", isActive && "text-accent-foreground")}>
+                      <p
+                        className={cn(
+                          "text-[11px] font-medium truncate",
+                          isActive && "text-accent-foreground",
+                        )}
+                      >
                         {agent.name}
                       </p>
                       <div className="flex items-center gap-1 mt-0.5">
-                        <div className={cn("size-1.5 rounded-full", agentStatusColor[agent.status])} />
-                        <span className="text-[8px] text-muted-foreground">{agentStatusLabel[agent.status]}</span>
+                        <div
+                          className={cn("size-1.5 rounded-full", agentStatusColor[agent.status])}
+                        />
+                        <span className="text-[8px] text-muted-foreground">
+                          {agentStatusLabel[agent.status]}
+                        </span>
                       </div>
                     </div>
                   </button>
-                )
+                );
               })}
             </div>
           </ScrollArea>
@@ -193,18 +205,27 @@ export function AgentPreviewCard() {
             <div className="p-4">
               {/* Header */}
               <div className="flex items-center gap-3 mb-4">
-                <div className={cn(
-                  "flex size-9 items-center justify-center rounded-lg text-sm font-bold",
-                  activeAgent.status === "active" ? "bg-emerald-500/10 text-emerald-500" :
-                  activeAgent.status === "error" ? "bg-red-500/10 text-red-500" : "bg-primary/10 text-primary",
-                )}>
+                <div
+                  className={cn(
+                    "flex size-9 items-center justify-center rounded-lg text-sm font-bold",
+                    activeAgent.status === "active"
+                      ? "bg-emerald-500/10 text-emerald-500"
+                      : activeAgent.status === "error"
+                        ? "bg-red-500/10 text-red-500"
+                        : "bg-primary/10 text-primary",
+                  )}
+                >
                   {activeAgent.name.charAt(0)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-bold text-foreground">{activeAgent.name}</h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className={cn("size-1.5 rounded-full", agentStatusColor[activeAgent.status])} />
-                    <span className="text-[10px] text-muted-foreground">{agentStatusLabel[activeAgent.status]}</span>
+                    <div
+                      className={cn("size-1.5 rounded-full", agentStatusColor[activeAgent.status])}
+                    />
+                    <span className="text-[10px] text-muted-foreground">
+                      {agentStatusLabel[activeAgent.status]}
+                    </span>
                     <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5">
                       {activeAgent.modelType === "local" ? m.model_local() : m.model_cloud()}
                     </Badge>
@@ -214,17 +235,24 @@ export function AgentPreviewCard() {
 
               {/* Role */}
               <div className="mb-3">
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{m.agent_role()}</p>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {m.agent_role()}
+                </p>
                 <p className="text-xs text-foreground">{activeAgent.role}</p>
               </div>
 
               {/* Model */}
               <div className="mb-3">
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{m.agent_model()}</p>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {m.agent_model()}
+                </p>
                 <div className="inline-flex items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2.5 py-1">
                   <HugeiconsIcon
                     icon={activeAgent.modelType === "local" ? CodeIcon : CloudIcon}
-                    className={cn("size-3", activeAgent.modelType === "local" ? "text-blue-500" : "text-purple-500")}
+                    className={cn(
+                      "size-3",
+                      activeAgent.modelType === "local" ? "text-blue-500" : "text-purple-500",
+                    )}
                   />
                   <span className="text-[11px] font-mono text-foreground">{activeAgent.model}</span>
                 </div>
@@ -252,7 +280,9 @@ export function AgentPreviewCard() {
                   </p>
                   <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-2.5 py-1.5">
                     <HugeiconsIcon icon={Clock01Icon} className="size-3 shrink-0 text-primary/60" />
-                    <span className="text-xs font-medium text-primary">{activeAgent.currentTask}</span>
+                    <span className="text-xs font-medium text-primary">
+                      {activeAgent.currentTask}
+                    </span>
                   </div>
                 </div>
               )}
@@ -278,7 +308,6 @@ export function AgentPreviewCard() {
           )}
         </div>
       </div>
-
     </div>
-  )
+  );
 }

@@ -1,95 +1,102 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react";
 
-import { Button } from "#/components/ui/button"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import { api, type SkillRepositoryAnalysis } from "#/lib/api"
-import type { Project } from "#/lib/types"
-import { m } from "#/paraglide/messages"
-import { cn } from "#/lib/utils"
+import { Button } from "#/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
+import { api, type SkillRepositoryAnalysis } from "#/lib/api";
+import type { Project } from "#/lib/types";
+import { m } from "#/paraglide/messages";
+import { cn } from "#/lib/utils";
 
 interface CreateSkillDialogProps {
-  open: boolean
-  projects: Project[]
-  onClose: () => void
-  onCreated: () => void
+  open: boolean;
+  projects: Project[];
+  onClose: () => void;
+  onCreated: () => void;
 }
 
-type DialogMode = "manual" | "repository"
-type SkillScope = "global" | "project"
+type DialogMode = "manual" | "repository";
+type SkillScope = "global" | "project";
 
 const riskTone: Record<SkillRepositoryAnalysis["riskLevel"], string> = {
   low: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600",
   medium: "border-amber-500/30 bg-amber-500/10 text-amber-600",
   high: "border-red-500/30 bg-red-500/10 text-red-600",
-}
+};
 
 export function CreateSkillDialog({ open, projects, onClose, onCreated }: CreateSkillDialogProps) {
-  const [mode, setMode] = useState<DialogMode>("manual")
+  const [mode, setMode] = useState<DialogMode>("manual");
   const [manualForm, setManualForm] = useState({
     name: "",
     description: "",
     scope: "global" as SkillScope,
     projectId: "",
-  })
+  });
   const [repoForm, setRepoForm] = useState({
     source: "",
     scope: "global" as SkillScope,
     projectId: "",
-  })
-  const [analysis, setAnalysis] = useState<SkillRepositoryAnalysis | null>(null)
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
-  const [allowHighRisk, setAllowHighRisk] = useState(false)
-  const [manualLoading, setManualLoading] = useState(false)
-  const [analysisLoading, setAnalysisLoading] = useState(false)
-  const [installLoading, setInstallLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  });
+  const [analysis, setAnalysis] = useState<SkillRepositoryAnalysis | null>(null);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [allowHighRisk, setAllowHighRisk] = useState(false);
+  const [manualLoading, setManualLoading] = useState(false);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [installLoading, setInstallLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const hasProjects = projects.length > 0
-  const selectedCount = selectedSkills.length
+  const hasProjects = projects.length > 0;
+  const selectedCount = selectedSkills.length;
 
   useEffect(() => {
     if (!open) {
-      setMode("manual")
-      setManualForm({ name: "", description: "", scope: "global", projectId: "" })
-      setRepoForm({ source: "", scope: "global", projectId: "" })
-      setAnalysis(null)
-      setSelectedSkills([])
-      setAllowHighRisk(false)
-      setError(null)
+      setMode("manual");
+      setManualForm({ name: "", description: "", scope: "global", projectId: "" });
+      setRepoForm({ source: "", scope: "global", projectId: "" });
+      setAnalysis(null);
+      setSelectedSkills([]);
+      setAllowHighRisk(false);
+      setError(null);
     }
-  }, [open])
+  }, [open]);
 
   useEffect(() => {
     if (manualForm.scope === "project" && !manualForm.projectId && hasProjects) {
-      setManualForm((current) => ({ ...current, projectId: projects[0].id }))
+      setManualForm((current) => ({ ...current, projectId: projects[0].id }));
     }
-  }, [manualForm.scope, manualForm.projectId, hasProjects, projects])
+  }, [manualForm.scope, manualForm.projectId, hasProjects, projects]);
 
   useEffect(() => {
     if (repoForm.scope === "project" && !repoForm.projectId && hasProjects) {
-      setRepoForm((current) => ({ ...current, projectId: projects[0].id }))
+      setRepoForm((current) => ({ ...current, projectId: projects[0].id }));
     }
-  }, [repoForm.scope, repoForm.projectId, hasProjects, projects])
+  }, [repoForm.scope, repoForm.projectId, hasProjects, projects]);
 
-  const canCreateManual = manualForm.name.trim().length > 0 && (
-    manualForm.scope === "global" || Boolean(manualForm.projectId)
-  )
-  const canAnalyzeRepository = repoForm.source.trim().length > 0 && (
-    repoForm.scope === "global" || Boolean(repoForm.projectId)
-  )
+  const canCreateManual =
+    manualForm.name.trim().length > 0 &&
+    (manualForm.scope === "global" || Boolean(manualForm.projectId));
+  const canAnalyzeRepository =
+    repoForm.source.trim().length > 0 &&
+    (repoForm.scope === "global" || Boolean(repoForm.projectId));
 
   const analyzeHint = useMemo(() => {
     if (repoForm.scope === "project" && !hasProjects) {
-      return m.skill_install_requires_project()
+      return m.skill_install_requires_project();
     }
-    return null
-  }, [repoForm.scope, hasProjects])
+    return null;
+  }, [repoForm.scope, hasProjects]);
 
   const handleCreate = async () => {
-    if (!canCreateManual) return
+    if (!canCreateManual) return;
 
-    setManualLoading(true)
-    setError(null)
+    setManualLoading(true);
+    setError(null);
     try {
       await api.createSkill({
         name: manualForm.name.trim(),
@@ -97,69 +104,69 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
         scope: manualForm.scope,
         projectId: manualForm.scope === "project" ? manualForm.projectId : undefined,
         sourceType: "manual",
-      })
-      onCreated()
-      onClose()
+      });
+      onCreated();
+      onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setManualLoading(false)
+      setManualLoading(false);
     }
-  }
+  };
 
   const handleAnalyze = async () => {
-    if (!canAnalyzeRepository) return
+    if (!canAnalyzeRepository) return;
 
-    setAnalysisLoading(true)
-    setError(null)
-    setAnalysis(null)
-    setSelectedSkills([])
-    setAllowHighRisk(false)
+    setAnalysisLoading(true);
+    setError(null);
+    setAnalysis(null);
+    setSelectedSkills([]);
+    setAllowHighRisk(false);
 
     try {
       const result = await api.analyzeSkillRepository({
         source: repoForm.source.trim(),
         scope: repoForm.scope,
         projectId: repoForm.scope === "project" ? repoForm.projectId : undefined,
-      })
-      setAnalysis(result)
-      setSelectedSkills(result.installableSkills.map((candidate) => candidate.relativePath))
+      });
+      setAnalysis(result);
+      setSelectedSkills(result.installableSkills.map((candidate) => candidate.relativePath));
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setAnalysisLoading(false)
+      setAnalysisLoading(false);
     }
-  }
+  };
 
   const handleInstall = async () => {
-    if (!analysis || selectedCount === 0) return
+    if (!analysis || selectedCount === 0) return;
 
-    setInstallLoading(true)
-    setError(null)
+    setInstallLoading(true);
+    setError(null);
     try {
       await api.installSkillRepository({
         analysisId: analysis.analysisId,
         selectedSkills,
         allowHighRisk,
-      })
-      onCreated()
-      onClose()
+      });
+      onCreated();
+      onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setInstallLoading(false)
+      setInstallLoading(false);
     }
-  }
+  };
 
   const toggleSkillSelection = (relativePath: string) => {
     setSelectedSkills((current) =>
       current.includes(relativePath)
         ? current.filter((item) => item !== relativePath)
-        : [...current, relativePath]
-    )
-  }
+        : [...current, relativePath],
+    );
+  };
 
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -173,7 +180,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
             <button
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm transition-colors",
-                mode === "manual" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                mode === "manual"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground",
               )}
               onClick={() => setMode("manual")}
             >
@@ -182,7 +191,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
             <button
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm transition-colors",
-                mode === "repository" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                mode === "repository"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground",
               )}
               onClick={() => setMode("repository")}
             >
@@ -218,11 +229,14 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                 <label className="text-xs text-muted-foreground">{m.scope()}</label>
                 <Select
                   value={manualForm.scope}
-                  onValueChange={(value) => setManualForm((current) => ({
-                    ...current,
-                    scope: value as SkillScope,
-                    projectId: value === "project" ? (current.projectId || projects[0]?.id || "") : "",
-                  }))}
+                  onValueChange={(value) =>
+                    setManualForm((current) => ({
+                      ...current,
+                      scope: value as SkillScope,
+                      projectId:
+                        value === "project" ? current.projectId || projects[0]?.id || "" : "",
+                    }))
+                  }
                 >
                   <SelectTrigger className="mt-1 w-full">
                     <SelectValue />
@@ -240,7 +254,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                   <label className="text-xs text-muted-foreground">{m.selected_project()}</label>
                   <Select
                     value={manualForm.projectId}
-                    onValueChange={(value) => setManualForm((current) => ({ ...current, projectId: value ?? "" }))}
+                    onValueChange={(value) =>
+                      setManualForm((current) => ({ ...current, projectId: value ?? "" }))
+                    }
                   >
                     <SelectTrigger className="mt-1 w-full" disabled={!hasProjects}>
                       <SelectValue placeholder={m.select_project()} />
@@ -276,11 +292,14 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                 <label className="text-xs text-muted-foreground">{m.scope()}</label>
                 <Select
                   value={repoForm.scope}
-                  onValueChange={(value) => setRepoForm((current) => ({
-                    ...current,
-                    scope: value as SkillScope,
-                    projectId: value === "project" ? (current.projectId || projects[0]?.id || "") : "",
-                  }))}
+                  onValueChange={(value) =>
+                    setRepoForm((current) => ({
+                      ...current,
+                      scope: value as SkillScope,
+                      projectId:
+                        value === "project" ? current.projectId || projects[0]?.id || "" : "",
+                    }))
+                  }
                 >
                   <SelectTrigger className="mt-1 w-full">
                     <SelectValue />
@@ -298,7 +317,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                   <label className="text-xs text-muted-foreground">{m.selected_project()}</label>
                   <Select
                     value={repoForm.projectId}
-                    onValueChange={(value) => setRepoForm((current) => ({ ...current, projectId: value ?? "" }))}
+                    onValueChange={(value) =>
+                      setRepoForm((current) => ({ ...current, projectId: value ?? "" }))
+                    }
                   >
                     <SelectTrigger className="mt-1 w-full" disabled={!hasProjects}>
                       <SelectValue placeholder={m.select_project()} />
@@ -330,20 +351,26 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                     <p className="text-sm font-medium text-foreground">{m.safety_review()}</p>
                     <p className="text-xs text-muted-foreground">{analysis.summary}</p>
                   </div>
-                  <span className={cn("rounded-full border px-2.5 py-1 text-xs font-medium capitalize", riskTone[analysis.riskLevel])}>
+                  <span
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-xs font-medium capitalize",
+                      riskTone[analysis.riskLevel],
+                    )}
+                  >
                     {analysis.riskLevel}
                   </span>
                 </div>
 
                 <div className="mb-3 rounded-lg border border-border/60 bg-card px-3 py-2 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{m.install_target()}</span>
-                  {" "}
+                  <span className="font-medium text-foreground">{m.install_target()}</span>{" "}
                   {analysis.installTarget}
                 </div>
 
                 {analysis.warnings.length > 0 ? (
                   <div className="mb-3 rounded-lg border border-border/60 bg-card px-3 py-2">
-                    <p className="mb-2 text-xs font-medium text-foreground">{m.skill_analysis_warnings()}</p>
+                    <p className="mb-2 text-xs font-medium text-foreground">
+                      {m.skill_analysis_warnings()}
+                    </p>
                     <ul className="space-y-1 text-xs text-muted-foreground">
                       {analysis.warnings.map((warning) => (
                         <li key={warning} className="flex gap-2">
@@ -358,7 +385,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-medium text-foreground">{m.discovered_skills()}</p>
-                    <p className="text-xs text-muted-foreground">{selectedCount}/{analysis.installableSkills.length}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedCount}/{analysis.installableSkills.length}
+                    </p>
                   </div>
 
                   {analysis.installableSkills.length === 0 ? (
@@ -382,7 +411,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                           {candidate.description ? (
                             <p className="text-xs text-muted-foreground">{candidate.description}</p>
                           ) : null}
-                          <p className="text-[11px] text-muted-foreground/80">{candidate.relativePath}</p>
+                          <p className="text-[11px] text-muted-foreground/80">
+                            {candidate.relativePath}
+                          </p>
                         </div>
                       </label>
                     ))
@@ -433,12 +464,16 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
               {installLoading ? m.installing_skills() : m.install_skills()}
             </Button>
           ) : (
-            <Button size="sm" onClick={handleAnalyze} disabled={analysisLoading || !canAnalyzeRepository}>
+            <Button
+              size="sm"
+              onClick={handleAnalyze}
+              disabled={analysisLoading || !canAnalyzeRepository}
+            >
               {analysisLoading ? m.analyzing_repository() : m.analyze_repository()}
             </Button>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

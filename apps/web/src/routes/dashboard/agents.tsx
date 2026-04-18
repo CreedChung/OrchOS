@@ -1,25 +1,28 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { AgentList } from '#/components/panels/AgentList'
-import { AgentDetailView } from '#/components/panels/AgentDetail'
-import { useDashboard } from '#/lib/dashboard-context'
-import { useUIStore } from '#/lib/store'
-import { m } from '#/paraglide/messages'
+import { createFileRoute } from "@tanstack/react-router";
+import { AgentList } from "#/components/panels/AgentList";
+import { AgentDetailView } from "#/components/panels/AgentDetail";
+import { useDashboard } from "#/lib/dashboard-context";
+import { useUIStore } from "#/lib/store";
+import { m } from "#/paraglide/messages";
 
-export const Route = createFileRoute('/dashboard/agents')({ component: AgentsPage })
+export const Route = createFileRoute("/dashboard/agents")({ component: AgentsPage });
 
 function AgentsPage() {
   const {
-    agents, rules,
-    handleRuleToggle, handleRuleDelete, handleUpdateAgent,
-    showCreateAgentDialog, setShowCreateAgentDialog,
+    agents,
+    rules,
+    handleRuleToggle,
+    handleRuleDelete,
+    handleUpdateAgent,
+    setShowCreateAgentDialog,
     refreshAll,
-  } = useDashboard()
+  } = useDashboard();
 
-  const { activeAgentId, setActiveAgentId } = useUIStore()
+  const { activeAgentId, setActiveAgentId } = useUIStore();
 
   // Show all agents (user-created). Runtimes are managed separately in Environments.
-  const agentInstances = agents
-  const activeAgent = agentInstances.find((a) => a.id === activeAgentId)
+  const agentInstances = agents;
+  const activeAgent = agentInstances.find((a) => a.id === activeAgentId);
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -50,5 +53,5 @@ function AgentsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

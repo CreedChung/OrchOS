@@ -1,51 +1,51 @@
-import { useState } from "react"
-import { cn } from "#/lib/utils"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { SentIcon, Robot02Icon, FolderGitIcon, Cancel01Icon } from "@hugeicons/core-free-icons"
-import { m } from "#/paraglide/messages"
-import type { RuntimeProfile, Project } from "#/lib/types"
+import { useState } from "react";
+import { cn } from "#/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { SentIcon, Robot02Icon, FolderGitIcon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import { m } from "#/paraglide/messages";
+import type { RuntimeProfile, Project } from "#/lib/types";
 
 interface CommandBarProps {
-  open: boolean
-  runtimes: RuntimeProfile[]
-  projects: Project[]
-  onSubmit: (data: { instruction: string; agentNames: string[]; projectIds: string[] }) => void
-  onClose: () => void
+  open: boolean;
+  runtimes: RuntimeProfile[];
+  projects: Project[];
+  onSubmit: (data: { instruction: string; agentNames: string[]; projectIds: string[] }) => void;
+  onClose: () => void;
 }
 
 export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: CommandBarProps) {
-  const [instruction, setInstruction] = useState("")
-  const [selectedRuntimes, setSelectedRuntimes] = useState<string[]>([])
-  const [selectedProjects, setSelectedProjects] = useState<string[]>([])
+  const [instruction, setInstruction] = useState("");
+  const [selectedRuntimes, setSelectedRuntimes] = useState<string[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
-  const enabledRuntimes = runtimes.filter((r) => r.enabled)
+  const enabledRuntimes = runtimes.filter((r) => r.enabled);
 
   const toggleRuntime = (name: string) => {
     setSelectedRuntimes((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
-    )
-  }
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    );
+  };
 
   const toggleProject = (id: string) => {
     setSelectedProjects((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-    )
-  }
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!instruction.trim()) return
+    e.preventDefault();
+    if (!instruction.trim()) return;
     onSubmit({
       instruction: instruction.trim(),
       agentNames: selectedRuntimes,
       projectIds: selectedProjects,
-    })
-    setInstruction("")
-    setSelectedRuntimes([])
-    setSelectedProjects([])
-  }
+    });
+    setInstruction("");
+    setSelectedRuntimes([]);
+    setSelectedProjects([]);
+  };
 
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-sm">
@@ -87,7 +87,7 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
             </label>
             <div className="flex flex-wrap gap-1.5">
               {enabledRuntimes.map((runtime) => {
-                const isSelected = selectedRuntimes.includes(runtime.name)
+                const isSelected = selectedRuntimes.includes(runtime.name);
                 return (
                   <button
                     key={runtime.id}
@@ -97,7 +97,7 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
                       "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                       isSelected
                         ? "border-primary/50 bg-primary/10 text-primary"
-                        : "border-border/50 bg-card text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                        : "border-border/50 bg-card text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                     )}
                   >
                     <HugeiconsIcon icon={Robot02Icon} className="size-3" />
@@ -106,7 +106,7 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
                       <span className="size-1.5 rounded-full bg-emerald-500" />
                     )}
                   </button>
-                )
+                );
               })}
               {enabledRuntimes.length === 0 && (
                 <span className="text-xs text-muted-foreground">{m.no_agents_available()}</span>
@@ -121,7 +121,7 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
             </label>
             <div className="flex flex-wrap gap-1.5">
               {projects.map((project) => {
-                const isSelected = selectedProjects.includes(project.id)
+                const isSelected = selectedProjects.includes(project.id);
                 return (
                   <button
                     key={project.id}
@@ -131,13 +131,13 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
                       "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                       isSelected
                         ? "border-primary/50 bg-primary/10 text-primary"
-                        : "border-border/50 bg-card text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                        : "border-border/50 bg-card text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                     )}
                   >
                     <HugeiconsIcon icon={FolderGitIcon} className="size-3" />
                     {project.name}
                   </button>
-                )
+                );
               })}
               {projects.length === 0 && (
                 <span className="text-xs text-muted-foreground">{m.no_projects_configured()}</span>
@@ -147,9 +147,7 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
 
           {/* Actions */}
           <div className="flex items-center justify-between pt-2">
-            <span className="text-[10px] text-muted-foreground">
-              {m.command_to_goal()}
-            </span>
+            <span className="text-[10px] text-muted-foreground">{m.command_to_goal()}</span>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -165,7 +163,7 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
                   "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
                   instruction.trim()
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                    : "bg-muted text-muted-foreground cursor-not-allowed",
                 )}
               >
                 <HugeiconsIcon icon={SentIcon} className="size-3.5" />
@@ -176,5 +174,5 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
         </form>
       </div>
     </div>
-  )
+  );
 }

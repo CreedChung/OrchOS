@@ -37,16 +37,16 @@ OrchOS/
 
 ### Tech Stack
 
-| Layer       | Technology                                    |
-| ----------- | --------------------------------------------- |
-| Frontend    | React 19, Vite, TanStack Router               |
-| Styling     | Tailwind CSS v4, shadcn/ui, Motion            |
-| State       | Zustand (persisted to localStorage)           |
-| i18n        | Paraglide JS (compile-time)                   |
-| Charts      | Recharts                                      |
-| Backend     | Elysia on Bun, Drizzle ORM, SQLite (WAL mode) |
-| Real-time   | WebSocket event broadcasting                  |
-| Monorepo    | Turborepo, Bun workspaces                     |
+| Layer     | Technology                                    |
+| --------- | --------------------------------------------- |
+| Frontend  | React 19, Vite, TanStack Router               |
+| Styling   | Tailwind CSS v4, shadcn/ui, Motion            |
+| State     | Zustand (persisted to localStorage)           |
+| i18n      | Paraglide JS (compile-time)                   |
+| Charts    | Recharts                                      |
+| Backend   | Elysia on Bun, Drizzle ORM, SQLite (WAL mode) |
+| Real-time | WebSocket event broadcasting                  |
+| Monorepo  | Turborepo, Bun workspaces                     |
 
 ---
 
@@ -67,10 +67,10 @@ bun install
 bun run dev
 ```
 
-| App      | URL                    | Description               |
-| -------- | ---------------------- | ------------------------- |
-| Frontend | http://localhost:3000  | React dashboard           |
-| Backend  | http://localhost:5173  | API server + WebSocket    |
+| App      | URL                   | Description            |
+| -------- | --------------------- | ---------------------- |
+| Frontend | http://localhost:3000 | React dashboard        |
+| Backend  | http://localhost:5173 | API server + WebSocket |
 
 ### Run Individually
 
@@ -92,13 +92,13 @@ bun run build
 
 ## Available Scripts
 
-| Command             | Description                    |
-| ------------------- | ------------------------------ |
-| `bun run dev`       | Start all apps in dev mode     |
-| `bun run build`     | Build all apps for production  |
-| `bun run lint`      | Lint all packages              |
-| `bun run check-types` | Type check all packages      |
-| `bun run format`    | Format code with Prettier      |
+| Command               | Description                   |
+| --------------------- | ----------------------------- |
+| `bun run dev`         | Start all apps in dev mode    |
+| `bun run build`       | Build all apps for production |
+| `bun run lint`        | Lint all packages             |
+| `bun run check-types` | Type check all packages       |
+| `bun run format`      | Format code with Prettier     |
 
 You can also target specific apps with filters:
 
@@ -114,29 +114,29 @@ bun --filter=web build
 
 ### Agents
 
-| Method | Path                        | Description               |
-| ------ | --------------------------- | ------------------------- |
-| GET    | `/api/agents`               | List all agents           |
-| POST   | `/api/agents`               | Create an agent           |
-| GET    | `/api/agents/detect`        | Auto-detect installed CLIs|
-| POST   | `/api/agents/detect/register`| Register detected agents  |
-| PATCH  | `/api/agents/:id`           | Update agent status       |
-| GET    | `/api/agents/:id/health`    | Agent health check        |
+| Method | Path                          | Description                |
+| ------ | ----------------------------- | -------------------------- |
+| GET    | `/api/agents`                 | List all agents            |
+| POST   | `/api/agents`                 | Create an agent            |
+| GET    | `/api/agents/detect`          | Auto-detect installed CLIs |
+| POST   | `/api/agents/detect/register` | Register detected agents   |
+| PATCH  | `/api/agents/:id`             | Update agent status        |
+| GET    | `/api/agents/:id/health`      | Agent health check         |
 
 ### Goals
 
-| Method | Path                        | Description               |
-| ------ | --------------------------- | ------------------------- |
-| GET    | `/api/goals`                | List all goals            |
-| POST   | `/api/goals`                | Create a goal             |
-| GET    | `/api/goals/:id`            | Get goal details          |
-| PATCH  | `/api/goals/:id`            | Update a goal             |
-| DELETE | `/api/goals/:id`            | Delete a goal             |
-| GET    | `/api/goals/:id/states`     | Get goal states           |
-| GET    | `/api/goals/:id/artifacts`  | Get goal artifacts        |
-| GET    | `/api/goals/:id/activities` | Get goal activity log     |
-| POST   | `/api/goals/:id/actions`    | Trigger state action      |
-| POST   | `/api/goals/:id/loop`       | Run goal execution loop   |
+| Method | Path                        | Description             |
+| ------ | --------------------------- | ----------------------- |
+| GET    | `/api/goals`                | List all goals          |
+| POST   | `/api/goals`                | Create a goal           |
+| GET    | `/api/goals/:id`            | Get goal details        |
+| PATCH  | `/api/goals/:id`            | Update a goal           |
+| DELETE | `/api/goals/:id`            | Delete a goal           |
+| GET    | `/api/goals/:id/states`     | Get goal states         |
+| GET    | `/api/goals/:id/artifacts`  | Get goal artifacts      |
+| GET    | `/api/goals/:id/activities` | Get goal activity log   |
+| POST   | `/api/goals/:id/actions`    | Trigger state action    |
+| POST   | `/api/goals/:id/loop`       | Run goal execution loop |
 
 ### More
 
@@ -170,8 +170,8 @@ bun --filter=server drizzle-kit migrate
 
 ## Keyboard Shortcuts
 
-| Shortcut         | Action            |
-| ---------------- | ----------------- |
+| Shortcut           | Action           |
+| ------------------ | ---------------- |
 | `Cmd+K` / `Ctrl+K` | Open command bar |
 
 ---

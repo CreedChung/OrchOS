@@ -1,4 +1,4 @@
-import { t } from "elysia"
+import { t } from "elysia";
 
 export const McpServerModel = {
   response: t.Object({
@@ -39,4 +39,4 @@ export const McpServerModel = {
     organizationId: t.Optional(t.String()),
     scope: t.Optional(t.Union([t.Literal("global"), t.Literal("project")])),
   }),
-}
+};

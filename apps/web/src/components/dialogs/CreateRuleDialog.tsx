@@ -1,15 +1,22 @@
-import { useState } from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Cancel01Icon, ArrowRight01Icon, Shield01Icon } from "@hugeicons/core-free-icons"
-import { m } from "#/paraglide/messages"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import type { Problem } from "#/lib/types"
+import { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon, ArrowRight01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
+import { m } from "#/paraglide/messages";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
+import type { Problem } from "#/lib/types";
 
 interface CreateRuleDialogProps {
-  open: boolean
-  onClose: () => void
-  problem: Problem | null
-  onSubmit: (data: { name: string; condition: string; action: string }) => void
+  open: boolean;
+  onClose: () => void;
+  problem: Problem | null;
+  onSubmit: (data: { name: string; condition: string; action: string }) => void;
 }
 
 const conditionLabels: Record<string, string> = {
@@ -19,7 +26,7 @@ const conditionLabels: Record<string, string> = {
   review_rejected: m.review_rejected(),
   build_failed: m.build_failed(),
   build_success: m.build_success(),
-}
+};
 
 const actionLabels: Record<string, string> = {
   auto_fix: m.auto_fix_rule(),
@@ -27,47 +34,49 @@ const actionLabels: Record<string, string> = {
   assign_reviewer: m.assign_reviewer(),
   archive: m.archive(),
   notify: m.notify(),
-}
+};
 
 function inferCondition(problem: Problem): string {
-  const title = problem.title.toLowerCase()
-  if (title.includes("test")) return "test_failed"
-  if (title.includes("lint")) return "lint_error"
-  if (title.includes("review") || title.includes("pr") || title.includes("reject")) return "review_rejected"
-  if (title.includes("build")) return "build_failed"
-  return "test_failed"
+  const title = problem.title.toLowerCase();
+  if (title.includes("test")) return "test_failed";
+  if (title.includes("lint")) return "lint_error";
+  if (title.includes("review") || title.includes("pr") || title.includes("reject"))
+    return "review_rejected";
+  if (title.includes("build")) return "build_failed";
+  return "test_failed";
 }
 
 function inferAction(problem: Problem): string {
-  const title = problem.title.toLowerCase()
-  if (title.includes("lint") || title.includes("info") || title.includes("success")) return "ignore"
-  if (title.includes("review")) return "assign_reviewer"
-  return "auto_fix"
+  const title = problem.title.toLowerCase();
+  if (title.includes("lint") || title.includes("info") || title.includes("success"))
+    return "ignore";
+  if (title.includes("review")) return "assign_reviewer";
+  return "auto_fix";
 }
 
 export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRuleDialogProps) {
-  const [name, setName] = useState("")
-  const [condition, setCondition] = useState("test_failed")
-  const [action, setAction] = useState("auto_fix")
+  const [name, setName] = useState("");
+  const [condition, setCondition] = useState("test_failed");
+  const [action, setAction] = useState("auto_fix");
 
-  if (!open || !problem) return null
+  if (!open || !problem) return null;
 
   // Auto-fill based on problem
-  const defaultName = `Auto-handle: ${problem.title}`
-  const defaultCondition = inferCondition(problem)
-  const defaultAction = inferAction(problem)
+  const defaultName = `Auto-handle: ${problem.title}`;
+  const defaultCondition = inferCondition(problem);
+  const defaultAction = inferAction(problem);
 
-  const currentName = name || defaultName
-  const currentCondition = condition || defaultCondition
-  const currentAction = action || defaultAction
+  const currentName = name || defaultName;
+  const currentCondition = condition || defaultCondition;
+  const currentAction = action || defaultAction;
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit({ name: currentName, condition: currentCondition, action: currentAction })
-    setName("")
-    setCondition("test_failed")
-    setAction("auto_fix")
-  }
+    e.preventDefault();
+    onSubmit({ name: currentName, condition: currentCondition, action: currentAction });
+    setName("");
+    setCondition("test_failed");
+    setAction("auto_fix");
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -123,12 +132,17 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
                 <SelectContent>
                   <SelectGroup>
                     {Object.entries(conditionLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
                     ))}
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <HugeiconsIcon icon={ArrowRight01Icon} className="size-4 text-muted-foreground shrink-0" />
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                className="size-4 text-muted-foreground shrink-0"
+              />
               <Select value={action} onValueChange={setAction}>
                 <SelectTrigger>
                   <SelectValue />
@@ -136,7 +150,9 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
                 <SelectContent>
                   <SelectGroup>
                     {Object.entries(actionLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
                     ))}
                   </SelectGroup>
                 </SelectContent>
@@ -163,5 +179,5 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
         </form>
       </div>
     </div>
-  )
+  );
 }

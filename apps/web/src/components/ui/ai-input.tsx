@@ -1,6 +1,14 @@
-import { useState, useEffect, useCallback, useMemo, useRef, createContext, useContext } from "react"
-import { AnimatePresence, motion } from "motion/react"
-import { HugeiconsIcon } from "@hugeicons/react"
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  createContext,
+  useContext,
+} from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
   Server,
@@ -8,73 +16,80 @@ import {
   Robot02Icon,
   Loading01Icon,
   ArrowRight01Icon,
-} from "@hugeicons/core-free-icons"
-import { Button } from "#/components/ui/button"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import { cn } from "#/lib/utils"
-import { api } from "#/lib/api"
-import { m } from "#/paraglide/messages"
-import type { RuntimeProfile } from "#/lib/types"
+} from "@hugeicons/core-free-icons";
+import { Button } from "#/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
+import { cn } from "#/lib/utils";
+import { api } from "#/lib/api";
+import { m } from "#/paraglide/messages";
+import type { RuntimeProfile } from "#/lib/types";
 
-const SPEED_FACTOR = 1
-const FORM_WIDTH = 420
-const FORM_HEIGHT = 480
-const COLLAPSED_WIDTH = 200
-const COLLAPSED_HEIGHT = 44
+const SPEED_FACTOR = 1;
+const FORM_WIDTH = 420;
+const FORM_HEIGHT = 480;
+const COLLAPSED_WIDTH = 200;
+const COLLAPSED_HEIGHT = 44;
 
 interface ContextShape {
-  showForm: boolean
-  triggerOpen: () => void
-  triggerClose: () => void
+  showForm: boolean;
+  triggerOpen: () => void;
+  triggerClose: () => void;
 }
 
-const FormContext = createContext({} as ContextShape)
+const FormContext = createContext({} as ContextShape);
 
 function useFormContext() {
-  return useContext(FormContext)
+  return useContext(FormContext);
 }
 
 interface ChatMessage {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp: number
-  error?: string
-  responseTime?: number
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+  error?: string;
+  responseTime?: number;
 }
 
 interface MorphPanelProps {
-  runtimes: RuntimeProfile[]
+  runtimes: RuntimeProfile[];
 }
 
 export function MorphPanel({ runtimes }: MorphPanelProps) {
-  const wrapperRef = useRef<HTMLDivElement>(null)
-  const [showForm, setShowForm] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [showForm, setShowForm] = useState(false);
 
   const triggerClose = useCallback(() => {
-    setShowForm(false)
-  }, [])
+    setShowForm(false);
+  }, []);
 
   const triggerOpen = useCallback(() => {
-    setShowForm(true)
-  }, [])
+    setShowForm(true);
+  }, []);
 
   useEffect(() => {
     function clickOutsideHandler(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node) && showForm) {
-        triggerClose()
+        triggerClose();
       }
     }
-    document.addEventListener("mousedown", clickOutsideHandler)
-    return () => document.removeEventListener("mousedown", clickOutsideHandler)
-  }, [showForm, triggerClose])
+    document.addEventListener("mousedown", clickOutsideHandler);
+    return () => document.removeEventListener("mousedown", clickOutsideHandler);
+  }, [showForm, triggerClose]);
 
   const ctx = useMemo(
     () => ({ showForm, triggerOpen, triggerClose }),
-    [showForm, triggerOpen, triggerClose]
-  )
+    [showForm, triggerOpen, triggerClose],
+  );
 
-  const enabledRuntimes = useMemo(() => runtimes.filter((r) => r.enabled), [runtimes])
+  const enabledRuntimes = useMemo(() => runtimes.filter((r) => r.enabled), [runtimes]);
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
@@ -101,11 +116,11 @@ export function MorphPanel({ runtimes }: MorphPanelProps) {
         </FormContext.Provider>
       </motion.div>
     </div>
-  )
+  );
 }
 
 function DockBar() {
-  const { triggerOpen } = useFormContext()
+  const { triggerOpen } = useFormContext();
   return (
     <footer className="mt-auto flex h-[44px] items-center justify-center whitespace-nowrap select-none">
       <div className="flex w-full items-center justify-center gap-2 px-3">
@@ -120,51 +135,51 @@ function DockBar() {
         </Button>
       </div>
     </footer>
-  )
+  );
 }
 
 function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
-  const { triggerClose, showForm } = useFormContext()
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { triggerClose, showForm } = useFormContext();
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [selectedRuntimeId, setSelectedRuntimeId] = useState<string>("")
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [input, setInput] = useState("")
-  const [sending, setSending] = useState(false)
+  const [selectedRuntimeId, setSelectedRuntimeId] = useState<string>("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
 
   // Auto-select first runtime
   useEffect(() => {
     if (runtimes.length > 0 && !selectedRuntimeId) {
-      setSelectedRuntimeId(runtimes[0].id)
+      setSelectedRuntimeId(runtimes[0].id);
     }
-  }, [runtimes, selectedRuntimeId])
+  }, [runtimes, selectedRuntimeId]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const selectedRuntime = useMemo(
     () => runtimes.find((r) => r.id === selectedRuntimeId),
-    [runtimes, selectedRuntimeId]
-  )
+    [runtimes, selectedRuntimeId],
+  );
 
   const handleSend = useCallback(async () => {
-    if (!input.trim() || !selectedRuntimeId || sending) return
+    if (!input.trim() || !selectedRuntimeId || sending) return;
 
     const userMessage: ChatMessage = {
       id: `msg_${Date.now()}`,
       role: "user",
       content: input.trim(),
       timestamp: Date.now(),
-    }
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
-    setSending(true)
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setSending(true);
 
     try {
-      const result = await api.chatWithRuntime(selectedRuntimeId, userMessage.content)
+      const result = await api.chatWithRuntime(selectedRuntimeId, userMessage.content);
       const assistantMessage: ChatMessage = {
         id: `msg_${Date.now()}_resp`,
         role: "assistant",
@@ -172,8 +187,8 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
         timestamp: Date.now(),
         error: result.success ? undefined : result.error,
         responseTime: result.responseTime,
-      }
-      setMessages((prev) => [...prev, assistantMessage])
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
       const errorMessage: ChatMessage = {
         id: `msg_${Date.now()}_err`,
@@ -181,27 +196,30 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
         content: err instanceof Error ? err.message : "Failed to send message",
         timestamp: Date.now(),
         error: "Request failed",
-      }
-      setMessages((prev) => [...prev, errorMessage])
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setSending(false)
+      setSending(false);
     }
-  }, [input, selectedRuntimeId, sending])
+  }, [input, selectedRuntimeId, sending]);
 
   function handleKeys(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Escape") triggerClose()
+    if (e.key === "Escape") triggerClose();
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault()
-      handleSend()
+      e.preventDefault();
+      handleSend();
     }
   }
 
-  const modelDisplay = selectedRuntime?.model.replace(/^(cloud|local)\//, "") || ""
-  const isCloudModel = selectedRuntime?.model.startsWith("cloud/")
+  const modelDisplay = selectedRuntime?.model.replace(/^(cloud|local)\//, "") || "";
+  const isCloudModel = selectedRuntime?.model.startsWith("cloud/");
 
   return (
     <form
-      onSubmit={(e) => { e.preventDefault(); handleSend() }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSend();
+      }}
       className="absolute bottom-0"
       style={{ width: FORM_WIDTH, height: FORM_HEIGHT, pointerEvents: showForm ? "all" : "none" }}
     >
@@ -219,7 +237,10 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <HugeiconsIcon icon={Robot02Icon} className="size-4 text-primary shrink-0" />
                 {runtimes.length > 0 ? (
-                  <Select value={selectedRuntimeId} onValueChange={(v: string | null) => v && setSelectedRuntimeId(v)}>
+                  <Select
+                    value={selectedRuntimeId}
+                    onValueChange={(v: string | null) => v && setSelectedRuntimeId(v)}
+                  >
                     <SelectTrigger className="h-7 flex-1 min-w-0 text-xs">
                       <SelectValue placeholder="Select Runtime" />
                     </SelectTrigger>
@@ -244,16 +265,15 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 {selectedRuntime && (
-                  <span className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                    isCloudModel
-                      ? "bg-violet-500/10 text-violet-600 dark:text-violet-400"
-                      : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                  )}>
-                    <HugeiconsIcon
-                      icon={isCloudModel ? CloudIcon : Server}
-                      className="size-2.5"
-                    />
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                      isCloudModel
+                        ? "bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                        : "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                    )}
+                  >
+                    <HugeiconsIcon icon={isCloudModel ? CloudIcon : Server} className="size-2.5" />
                     {modelDisplay}
                   </span>
                 )}
@@ -274,9 +294,7 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                   <HugeiconsIcon icon={Robot02Icon} className="size-6 opacity-20" />
                   <p className="text-xs">{m.ai_placeholder()}</p>
                   {selectedRuntime && (
-                    <p className="text-[10px] text-muted-foreground/60">
-                      {selectedRuntime.role}
-                    </p>
+                    <p className="text-[10px] text-muted-foreground/60">{selectedRuntime.role}</p>
                   )}
                 </div>
               )}
@@ -289,7 +307,7 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                       ? "bg-primary/10 text-foreground ml-4"
                       : msg.error
                         ? "bg-destructive/10 text-destructive mr-4"
-                        : "bg-muted text-foreground mr-4"
+                        : "bg-muted text-foreground mr-4",
                   )}
                 >
                   <p className="whitespace-pre-wrap break-words">{msg.content}</p>
@@ -317,7 +335,11 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={selectedRuntime ? `Message ${selectedRuntime.name}...` : "Select a runtime first"}
+                  placeholder={
+                    selectedRuntime
+                      ? `Message ${selectedRuntime.name}...`
+                      : "Select a runtime first"
+                  }
                   className="flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-0 focus:border-primary/50"
                   rows={2}
                   onKeyDown={handleKeys}
@@ -346,7 +368,7 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
         )}
       </AnimatePresence>
     </form>
-  )
+  );
 }
 
-export default MorphPanel
+export default MorphPanel;

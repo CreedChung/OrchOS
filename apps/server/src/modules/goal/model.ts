@@ -1,4 +1,4 @@
-import { t, type UnwrapSchema } from "elysia"
+import { t, type UnwrapSchema } from "elysia";
 
 export const GoalModel = {
   createBody: t.Object({
@@ -20,7 +20,7 @@ export const GoalModel = {
       projectId: t.String(),
       commandId: t.String(),
       watchers: t.Array(t.String()),
-    })
+    }),
   ),
   response: t.Object({
     id: t.String(),
@@ -37,8 +37,8 @@ export const GoalModel = {
   }),
   errorNotFound: t.Object({ error: t.Literal("Goal not found") }),
   successDeleted: t.Object({ success: t.Literal(true) }),
-} as const
+} as const;
 
 export type GoalModel = {
-  [k in keyof typeof GoalModel]: UnwrapSchema<typeof GoalModel[k]>
-}
+  [k in keyof typeof GoalModel]: UnwrapSchema<(typeof GoalModel)[k]>;
+};

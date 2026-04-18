@@ -1,4 +1,4 @@
-import { t, type UnwrapSchema } from "elysia"
+import { t, type UnwrapSchema } from "elysia";
 
 export const AgentModel = {
   createBody: t.Object({
@@ -34,8 +34,8 @@ export const AgentModel = {
     avatarUrl: t.Optional(t.String()),
   }),
   errorNotFound: t.Object({ error: t.Literal("Agent not found") }),
-} as const
+} as const;
 
 export type AgentModel = {
-  [k in keyof typeof AgentModel]: UnwrapSchema<typeof AgentModel[k]>
-}
+  [k in keyof typeof AgentModel]: UnwrapSchema<(typeof AgentModel)[k]>;
+};

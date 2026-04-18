@@ -1,34 +1,31 @@
-import { cn } from "#/lib/utils"
-import { HugeiconsIcon } from "@hugeicons/react"
-import {
-  Robot02Icon,
-  Add01Icon,
-} from "@hugeicons/core-free-icons"
-import { Button } from "#/components/ui/button"
-import { ScrollArea } from "#/components/ui/scroll-area"
-import { AvatarUpload } from "#/components/ui/avatar-upload"
-import { m } from "#/paraglide/messages"
-import type { AgentProfile } from "#/lib/types"
+import { cn } from "#/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Robot02Icon, Add01Icon } from "@hugeicons/core-free-icons";
+import { Button } from "#/components/ui/button";
+import { ScrollArea } from "#/components/ui/scroll-area";
+import { AvatarUpload } from "#/components/ui/avatar-upload";
+import { m } from "#/paraglide/messages";
+import type { AgentProfile } from "#/lib/types";
 
 interface AgentListProps {
-  agents: AgentProfile[]
-  activeAgentId: string | null
-  onSelectAgent: (id: string) => void
-  onCreateAgent: () => void
-  onAgentUpdated?: () => void
+  agents: AgentProfile[];
+  activeAgentId: string | null;
+  onSelectAgent: (id: string) => void;
+  onCreateAgent: () => void;
+  onAgentUpdated?: () => void;
 }
 
 const agentStatusColor: Record<AgentProfile["status"], string> = {
   idle: "bg-muted-foreground",
   active: "bg-emerald-500",
   error: "bg-red-500",
-}
+};
 
 const agentStatusLabel: Record<AgentProfile["status"], string> = {
   idle: m.idle_status(),
   active: m.active(),
   error: m.status_error(),
-}
+};
 
 export function AgentList({
   agents,
@@ -37,8 +34,8 @@ export function AgentList({
   onCreateAgent,
   onAgentUpdated,
 }: AgentListProps) {
-  const enabledAgents = agents.filter((a) => a.enabled)
-  const disabledAgents = agents.filter((a) => !a.enabled)
+  const enabledAgents = agents.filter((a) => a.enabled);
+  const disabledAgents = agents.filter((a) => !a.enabled);
 
   return (
     <div className="flex h-full w-72 flex-col border-r border-border bg-background">
@@ -88,9 +85,14 @@ export function AgentList({
 
           {agents.length === 0 && (
             <div className="py-8 text-center">
-              <HugeiconsIcon icon={Robot02Icon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+              <HugeiconsIcon
+                icon={Robot02Icon}
+                className="mx-auto size-6 text-muted-foreground/30 mb-2"
+              />
               <p className="text-sm text-muted-foreground">{m.no_agents_available()}</p>
-              <p className="text-xs text-muted-foreground/60 mt-1 px-4">{m.no_agent_instances_desc()}</p>
+              <p className="text-xs text-muted-foreground/60 mt-1 px-4">
+                {m.no_agent_instances_desc()}
+              </p>
               <Button size="sm" className="mt-3" onClick={onCreateAgent}>
                 <HugeiconsIcon icon={Add01Icon} className="size-3 mr-1" />
                 {m.create_agent()}
@@ -100,7 +102,7 @@ export function AgentList({
         </div>
       </ScrollArea>
     </div>
-  )
+  );
 }
 
 function AgentItem({
@@ -109,19 +111,17 @@ function AgentItem({
   onClick,
   onAvatarUploaded,
 }: {
-  agent: AgentProfile
-  isActive: boolean
-  onClick: () => void
-  onAvatarUploaded?: () => void
+  agent: AgentProfile;
+  isActive: boolean;
+  onClick: () => void;
+  onAvatarUploaded?: () => void;
 }) {
   return (
     <div
       className={cn(
         "flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
-        isActive
-          ? "bg-accent text-accent-foreground"
-          : "text-foreground/80 hover:bg-accent/50",
-        !agent.enabled && "opacity-50"
+        isActive ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-accent/50",
+        !agent.enabled && "opacity-50",
       )}
     >
       <AvatarUpload
@@ -137,10 +137,12 @@ function AgentItem({
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">
           <div className={cn("size-1.5 rounded-full", agentStatusColor[agent.status])} />
-          <span className="text-[10px] text-muted-foreground">{agentStatusLabel[agent.status]}</span>
+          <span className="text-[10px] text-muted-foreground">
+            {agentStatusLabel[agent.status]}
+          </span>
         </div>
         <p className="text-[10px] text-muted-foreground/60 truncate mt-0.5">{agent.model}</p>
       </button>
     </div>
-  )
+  );
 }

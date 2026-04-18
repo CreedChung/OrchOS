@@ -1,30 +1,67 @@
-import { useState, useEffect, useCallback } from "react"
-import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
-import { Cancel01Icon, Settings02Icon, SlidersHorizontalIcon, Robot02Icon, InformationCircleIcon, LinkCircleIcon, NotificationIcon, Search01Icon, CloudIcon, Server, AddCircleHalfDotIcon, GitBranchIcon, BubbleChatIcon, FolderOpenIcon, AlertIcon } from "@hugeicons/core-free-icons"
-import { cn } from "#/lib/utils"
-import ThemeToggle from "#/components/layout/ThemeToggle"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "#/components/ui/tabs"
-import { useLocale } from "#/lib/useI18n"
-import { AVAILABLE_LOCALES } from "#/lib/i18n"
-import { m } from "#/paraglide/messages"
-import type { ControlSettings, NotificationEvent } from "#/lib/types"
-import { NOTIFICATION_EVENTS } from "#/lib/types"
-import { api, type DetectRuntimesResponse, type RuntimeProfile } from "#/lib/api"
+import { useState, useEffect, useCallback } from "react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import {
+  Cancel01Icon,
+  Settings02Icon,
+  SlidersHorizontalIcon,
+  Robot02Icon,
+  InformationCircleIcon,
+  LinkCircleIcon,
+  NotificationIcon,
+  Search01Icon,
+  CloudIcon,
+  Server,
+  AddCircleHalfDotIcon,
+  GitBranchIcon,
+  BubbleChatIcon,
+  FolderOpenIcon,
+  AlertIcon,
+} from "@hugeicons/core-free-icons";
+import { cn } from "#/lib/utils";
+import ThemeToggle from "#/components/layout/ThemeToggle";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { useLocale } from "#/lib/useI18n";
+import { AVAILABLE_LOCALES } from "#/lib/i18n";
+import { m } from "#/paraglide/messages";
+import type { ControlSettings, NotificationEvent } from "#/lib/types";
+import { NOTIFICATION_EVENTS } from "#/lib/types";
+import { api, type DetectRuntimesResponse, type RuntimeProfile } from "#/lib/api";
 
-type SettingsTab = "general" | "notifications" | "integrations" | "runtimes" | "about"
+type SettingsTab = "general" | "notifications" | "integrations" | "runtimes" | "about";
 
-type IntegrationCategory = "code" | "comm" | "project" | "monitor"
+type IntegrationCategory = "code" | "comm" | "project" | "monitor";
 
-const integrationCategoryDefs: { id: IntegrationCategory; icon: IconSvgElement; labelKey: () => string }[] = [
+const integrationCategoryDefs: {
+  id: IntegrationCategory;
+  icon: IconSvgElement;
+  labelKey: () => string;
+}[] = [
   { id: "code", icon: GitBranchIcon, labelKey: m.integration_cat_code },
   { id: "comm", icon: BubbleChatIcon, labelKey: m.integration_cat_comm },
   { id: "project", icon: FolderOpenIcon, labelKey: m.integration_cat_project },
   { id: "monitor", icon: AlertIcon, labelKey: m.integration_cat_monitor },
-]
+];
 
-const integrationItems: { category: IntegrationCategory; nameKey: () => string; descKey: () => string; connected?: boolean }[] = [
-  { category: "code", nameKey: m.integration_github, descKey: m.integration_github_desc, connected: true },
+const integrationItems: {
+  category: IntegrationCategory;
+  nameKey: () => string;
+  descKey: () => string;
+  connected?: boolean;
+}[] = [
+  {
+    category: "code",
+    nameKey: m.integration_github,
+    descKey: m.integration_github_desc,
+    connected: true,
+  },
   { category: "code", nameKey: m.integration_gitlab, descKey: m.integration_gitlab_desc },
   { category: "comm", nameKey: m.integration_slack, descKey: m.integration_slack_desc },
   { category: "comm", nameKey: m.integration_discord, descKey: m.integration_discord_desc },
@@ -33,7 +70,7 @@ const integrationItems: { category: IntegrationCategory; nameKey: () => string; 
   { category: "project", nameKey: m.integration_notion, descKey: m.integration_notion_desc },
   { category: "monitor", nameKey: m.integration_sentry, descKey: m.integration_sentry_desc },
   { category: "monitor", nameKey: m.integration_pagerduty, descKey: m.integration_pagerduty_desc },
-]
+];
 
 const tabDefs: { id: SettingsTab; icon: IconSvgElement; labelKey: () => string }[] = [
   { id: "general", icon: SlidersHorizontalIcon, labelKey: m.general },
@@ -41,82 +78,105 @@ const tabDefs: { id: SettingsTab; icon: IconSvgElement; labelKey: () => string }
   { id: "integrations", icon: LinkCircleIcon, labelKey: m.integrations },
   { id: "runtimes", icon: Robot02Icon, labelKey: m.runtimes },
   { id: "about", icon: InformationCircleIcon, labelKey: m.about },
-]
+];
 
 interface SettingsDialogProps {
-  open: boolean
-  onClose: () => void
-  settings: ControlSettings | null
-  onSettingsChange: (settings: ControlSettings) => void
-  onRuntimesRefresh: () => void
-  registeredRuntimes: RuntimeProfile[]
+  open: boolean;
+  onClose: () => void;
+  settings: ControlSettings | null;
+  onSettingsChange: (settings: ControlSettings) => void;
+  onRuntimesRefresh: () => void;
+  registeredRuntimes: RuntimeProfile[];
 }
 
 function ModelBadge({ model, isLocalRuntime }: { model: string; isLocalRuntime?: boolean }) {
   // Determine model provider type from the model string prefix
-  const modelProvider = model.startsWith("cloud/") ? "cloud" : model.startsWith("local/") ? "local" : model.startsWith("http") ? "remote" : "local"
+  const modelProvider = model.startsWith("cloud/")
+    ? "cloud"
+    : model.startsWith("local/")
+      ? "local"
+      : model.startsWith("http")
+        ? "remote"
+        : "local";
   // A locally installed CLI runtime that uses a cloud model is still a "local runtime"
-  const showAsLocal = isLocalRuntime || modelProvider === "local"
-  const modelName = model.replace(/^(cloud|local)\//, "")
-  const label = showAsLocal ? m.model_local() : m.model_cloud()
+  const showAsLocal = isLocalRuntime || modelProvider === "local";
+  const modelName = model.replace(/^(cloud|local)\//, "");
+  const label = showAsLocal ? m.model_local() : m.model_cloud();
   return (
-    <span className={cn(
-      "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-      showAsLocal ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" :
-      "bg-violet-500/10 text-violet-600 dark:text-violet-400"
-    )}>
-      {showAsLocal ? <HugeiconsIcon icon={Server} className="size-2.5" /> :
-       <HugeiconsIcon icon={CloudIcon} className="size-2.5" />}
-      {label}
-      {modelName && modelName !== model && (
-        <span className="opacity-60 ml-0.5">{modelName}</span>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+        showAsLocal
+          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+          : "bg-violet-500/10 text-violet-600 dark:text-violet-400",
       )}
+    >
+      {showAsLocal ? (
+        <HugeiconsIcon icon={Server} className="size-2.5" />
+      ) : (
+        <HugeiconsIcon icon={CloudIcon} className="size-2.5" />
+      )}
+      {label}
+      {modelName && modelName !== model && <span className="opacity-60 ml-0.5">{modelName}</span>}
     </span>
-  )
+  );
 }
 
-export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRuntimesRefresh, registeredRuntimes }: SettingsDialogProps) {
-  const [localSettings, setLocalSettings] = useState<ControlSettings | null>(settings)
-  const [activeTab, setActiveTab] = useState<SettingsTab>("general")
-  const [activeIntegrationCat, setActiveIntegrationCat] = useState<IntegrationCategory>("code")
-  const [detectResult, setDetectResult] = useState<DetectRuntimesResponse | null>(null)
-  const [detecting, setDetecting] = useState(false)
-  const [registering, setRegistering] = useState<string | null>(null)
-  const [registerMessage, setRegisterMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
-  const { locale: currentLocale, setLocaleWithSync } = useLocale()
+export function SettingsDialog({
+  open,
+  onClose,
+  settings,
+  onSettingsChange,
+  onRuntimesRefresh,
+  registeredRuntimes,
+}: SettingsDialogProps) {
+  const [localSettings, setLocalSettings] = useState<ControlSettings | null>(settings);
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const [activeIntegrationCat, setActiveIntegrationCat] = useState<IntegrationCategory>("code");
+  const [detectResult, setDetectResult] = useState<DetectRuntimesResponse | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  const [registering, setRegistering] = useState<string | null>(null);
+  const [registerMessage, setRegisterMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const { locale: currentLocale, setLocaleWithSync } = useLocale();
 
   useEffect(() => {
-    setLocalSettings(settings)
-  }, [settings])
+    setLocalSettings(settings);
+  }, [settings]);
 
-  const currentSettings = localSettings ?? settings
+  const currentSettings = localSettings ?? settings;
 
   const handleToggle = async (key: keyof Pick<ControlSettings, "autoCommit" | "autoFix">) => {
-    if (!currentSettings) return
-    const updated = await api.updateSettings({ [key]: !currentSettings[key] })
-    setLocalSettings(updated)
-    onSettingsChange(updated)
-  }
+    if (!currentSettings) return;
+    const updated = await api.updateSettings({ [key]: !currentSettings[key] });
+    setLocalSettings(updated);
+    onSettingsChange(updated);
+  };
 
   const handleLocaleChange = async (value: string) => {
-    if (!currentSettings) return
-    setLocaleWithSync(value)
-    const updated = await api.updateSettings({ locale: value })
-    setLocalSettings(updated)
-    onSettingsChange(updated)
-  }
+    if (!currentSettings) return;
+    setLocaleWithSync(value);
+    const updated = await api.updateSettings({ locale: value });
+    setLocalSettings(updated);
+    onSettingsChange(updated);
+  };
 
   const handleNotificationToggle = async (key: "system" | "sound") => {
-    if (!currentSettings) return
+    if (!currentSettings) return;
     const updated = await api.updateSettings({
-      notifications: { ...currentSettings.notifications, [key]: !currentSettings.notifications[key] },
-    })
-    setLocalSettings(updated)
-    onSettingsChange(updated)
-  }
+      notifications: {
+        ...currentSettings.notifications,
+        [key]: !currentSettings.notifications[key],
+      },
+    });
+    setLocalSettings(updated);
+    onSettingsChange(updated);
+  };
 
   const handleEventSoundToggle = async (event: NotificationEvent) => {
-    if (!currentSettings) return
+    if (!currentSettings) return;
     const updated = await api.updateSettings({
       notifications: {
         ...currentSettings.notifications,
@@ -125,83 +185,95 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
           [event]: !currentSettings.notifications.eventSounds[event],
         },
       },
-    })
-    setLocalSettings(updated)
-    onSettingsChange(updated)
-  }
+    });
+    setLocalSettings(updated);
+    onSettingsChange(updated);
+  };
 
   const handleDetect = useCallback(async () => {
-    setDetecting(true)
+    setDetecting(true);
     try {
-      const result = await api.detectRuntimes()
-      setDetectResult(result)
+      const result = await api.detectRuntimes();
+      setDetectResult(result);
     } catch (err) {
-      console.error("Detect failed:", err)
+      console.error("Detect failed:", err);
     } finally {
-      setDetecting(false)
+      setDetecting(false);
     }
-  }, [])
+  }, []);
 
   // Auto-detect runtimes whenever the runtimes tab is activated
   useEffect(() => {
     if (open && activeTab === "runtimes" && !detecting) {
-      handleDetect()
+      handleDetect();
     }
-  }, [open, activeTab, handleDetect])
+  }, [open, activeTab, handleDetect]);
 
-  const handleRegisterAgent = useCallback(async (runtimeId: string) => {
-    setRegistering(runtimeId)
-    setRegisterMessage(null)
-    try {
-      const result = await api.registerDetectedRuntimes({ runtimeIds: [runtimeId] })
-      onRuntimesRefresh()
-      const detectResult = await api.detectRuntimes()
-      setDetectResult(detectResult)
-      
-      if (result.registered.length > 0) {
-        setRegisterMessage({ type: "success", text: m.agent_registered({ name: result.registered[0].name }) })
-      } else if (result.skipped.length > 0) {
-        setRegisterMessage({ type: "error", text: m.agent_already_registered({ name: result.skipped[0].name }) })
+  const handleRegisterAgent = useCallback(
+    async (runtimeId: string) => {
+      setRegistering(runtimeId);
+      setRegisterMessage(null);
+      try {
+        const result = await api.registerDetectedRuntimes({ runtimeIds: [runtimeId] });
+        onRuntimesRefresh();
+        const detectResult = await api.detectRuntimes();
+        setDetectResult(detectResult);
+
+        if (result.registered.length > 0) {
+          setRegisterMessage({
+            type: "success",
+            text: m.agent_registered({ name: result.registered[0].name }),
+          });
+        } else if (result.skipped.length > 0) {
+          setRegisterMessage({
+            type: "error",
+            text: m.agent_already_registered({ name: result.skipped[0].name }),
+          });
+        }
+
+        // Auto-clear message after 3s
+        setTimeout(() => setRegisterMessage(null), 3000);
+      } catch (err) {
+        console.error("Register failed:", err);
+        setRegisterMessage({ type: "error", text: m.agent_register_failed() });
+        setTimeout(() => setRegisterMessage(null), 3000);
+      } finally {
+        setRegistering(null);
       }
-      
-      // Auto-clear message after 3s
-      setTimeout(() => setRegisterMessage(null), 3000)
-    } catch (err) {
-      console.error("Register failed:", err)
-      setRegisterMessage({ type: "error", text: m.agent_register_failed() })
-      setTimeout(() => setRegisterMessage(null), 3000)
-    } finally {
-      setRegistering(null)
-    }
-  }, [onRuntimesRefresh])
+    },
+    [onRuntimesRefresh],
+  );
 
   const handleRegisterAll = useCallback(async () => {
-    setRegistering("__all__")
-    setRegisterMessage(null)
+    setRegistering("__all__");
+    setRegisterMessage(null);
     try {
-      const result = await api.registerDetectedRuntimes({ registerAll: true })
-      onRuntimesRefresh()
-      const detectResult = await api.detectRuntimes()
-      setDetectResult(detectResult)
-      
-      if (result.registered.length > 0) {
-        setRegisterMessage({ type: "success", text: m.agents_registered({ count: result.registered.length }) })
-      } else {
-        setRegisterMessage({ type: "error", text: m.agents_already_registered() })
-      }
-      
-      // Auto-clear message after 3s
-      setTimeout(() => setRegisterMessage(null), 3000)
-    } catch (err) {
-      console.error("Register all failed:", err)
-      setRegisterMessage({ type: "error", text: m.agent_register_failed() })
-      setTimeout(() => setRegisterMessage(null), 3000)
-    } finally {
-      setRegistering(null)
-    }
-  }, [onRuntimesRefresh])
+      const result = await api.registerDetectedRuntimes({ registerAll: true });
+      onRuntimesRefresh();
+      const detectResult = await api.detectRuntimes();
+      setDetectResult(detectResult);
 
-  if (!open) return null
+      if (result.registered.length > 0) {
+        setRegisterMessage({
+          type: "success",
+          text: m.agents_registered({ count: result.registered.length }),
+        });
+      } else {
+        setRegisterMessage({ type: "error", text: m.agents_already_registered() });
+      }
+
+      // Auto-clear message after 3s
+      setTimeout(() => setRegisterMessage(null), 3000);
+    } catch (err) {
+      console.error("Register all failed:", err);
+      setRegisterMessage({ type: "error", text: m.agent_register_failed() });
+      setTimeout(() => setRegisterMessage(null), 3000);
+    } finally {
+      setRegistering(null);
+    }
+  }, [onRuntimesRefresh]);
+
+  if (!open) return null;
 
   if (!currentSettings) {
     return (
@@ -212,7 +284,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -226,7 +298,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
           </div>
           <nav className="flex-1 space-y-0.5 px-2 py-1">
             {tabDefs.map((tab) => {
-              const Icon = tab.icon
+              const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
@@ -235,13 +307,13 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                     "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     activeTab === tab.id
                       ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                   )}
                 >
                   <HugeiconsIcon icon={Icon} className="size-4" />
                   {tab.labelKey()}
                 </button>
-              )
+              );
             })}
           </nav>
           <div className="flex justify-center border-t border-border p-2">
@@ -278,13 +350,13 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                     onClick={() => handleToggle("autoCommit")}
                     className={cn(
                       "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
-                      currentSettings.autoCommit ? "bg-emerald-500" : "bg-muted"
+                      currentSettings.autoCommit ? "bg-emerald-500" : "bg-muted",
                     )}
                   >
                     <span
                       className={cn(
                         "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                        currentSettings.autoCommit ? "translate-x-6" : "translate-x-1"
+                        currentSettings.autoCommit ? "translate-x-6" : "translate-x-1",
                       )}
                     />
                   </button>
@@ -300,13 +372,13 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                     onClick={() => handleToggle("autoFix")}
                     className={cn(
                       "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
-                      currentSettings.autoFix ? "bg-emerald-500" : "bg-muted"
+                      currentSettings.autoFix ? "bg-emerald-500" : "bg-muted",
                     )}
                   >
                     <span
                       className={cn(
                         "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                        currentSettings.autoFix ? "translate-x-6" : "translate-x-1"
+                        currentSettings.autoFix ? "translate-x-6" : "translate-x-1",
                       )}
                     />
                   </button>
@@ -318,13 +390,11 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                     <span className="text-sm font-medium text-foreground">{m.language()}</span>
                     <p className="text-xs text-muted-foreground">{m.language_desc()}</p>
                   </div>
-                  <Select
-                    value={currentLocale}
-                    onValueChange={handleLocaleChange}
-                  >
+                  <Select value={currentLocale} onValueChange={handleLocaleChange}>
                     <SelectTrigger className="w-[160px]">
                       <SelectValue>
-                        {AVAILABLE_LOCALES.find((l) => l.value === currentLocale)?.label || AVAILABLE_LOCALES[0].label}
+                        {AVAILABLE_LOCALES.find((l) => l.value === currentLocale)?.label ||
+                          AVAILABLE_LOCALES[0].label}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
@@ -338,7 +408,6 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                     </SelectContent>
                   </Select>
                 </div>
-
               </div>
             )}
 
@@ -347,20 +416,22 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                 {/* System Notifications */}
                 <div className="flex items-center justify-between">
                   <div className="max-w-[280px]">
-                    <span className="text-sm font-medium text-foreground">{m.system_notifications()}</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {m.system_notifications()}
+                    </span>
                     <p className="text-xs text-muted-foreground">{m.system_notifications_desc()}</p>
                   </div>
                   <button
                     onClick={() => handleNotificationToggle("system")}
                     className={cn(
                       "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
-                      currentSettings.notifications?.system ? "bg-emerald-500" : "bg-muted"
+                      currentSettings.notifications?.system ? "bg-emerald-500" : "bg-muted",
                     )}
                   >
                     <span
                       className={cn(
                         "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                        currentSettings.notifications?.system ? "translate-x-6" : "translate-x-1"
+                        currentSettings.notifications?.system ? "translate-x-6" : "translate-x-1",
                       )}
                     />
                   </button>
@@ -369,20 +440,22 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                 {/* Notification Sound */}
                 <div className="flex items-center justify-between">
                   <div className="max-w-[280px]">
-                    <span className="text-sm font-medium text-foreground">{m.notification_sound()}</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {m.notification_sound()}
+                    </span>
                     <p className="text-xs text-muted-foreground">{m.notification_sound_desc()}</p>
                   </div>
                   <button
                     onClick={() => handleNotificationToggle("sound")}
                     className={cn(
                       "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
-                      currentSettings.notifications?.sound ? "bg-emerald-500" : "bg-muted"
+                      currentSettings.notifications?.sound ? "bg-emerald-500" : "bg-muted",
                     )}
                   >
                     <span
                       className={cn(
                         "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                        currentSettings.notifications?.sound ? "translate-x-6" : "translate-x-1"
+                        currentSettings.notifications?.sound ? "translate-x-6" : "translate-x-1",
                       )}
                     />
                   </button>
@@ -405,7 +478,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                             "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
                             currentSettings.notifications?.eventSounds?.[event.id] !== false
                               ? "bg-emerald-500"
-                              : "bg-muted"
+                              : "bg-muted",
                           )}
                         >
                           <span
@@ -413,7 +486,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                               "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
                               currentSettings.notifications?.eventSounds?.[event.id] !== false
                                 ? "translate-x-5"
-                                : "translate-x-0.5"
+                                : "translate-x-0.5",
                             )}
                           />
                         </button>
@@ -426,19 +499,20 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
 
             {activeTab === "integrations" && (
               <div className="space-y-4">
-                <p className="text-xs text-muted-foreground">
-                  {m.connect_services_desc()}
-                </p>
-                <Tabs value={activeIntegrationCat} onValueChange={(v) => setActiveIntegrationCat(v as IntegrationCategory)}>
+                <p className="text-xs text-muted-foreground">{m.connect_services_desc()}</p>
+                <Tabs
+                  value={activeIntegrationCat}
+                  onValueChange={(v) => setActiveIntegrationCat(v as IntegrationCategory)}
+                >
                   <TabsList>
                     {integrationCategoryDefs.map((cat) => {
-                      const Icon = cat.icon
+                      const Icon = cat.icon;
                       return (
                         <TabsTrigger key={cat.id} value={cat.id}>
                           <HugeiconsIcon icon={Icon} className="size-3.5" />
                           {cat.labelKey()}
                         </TabsTrigger>
-                      )
+                      );
                     })}
                   </TabsList>
                 </Tabs>
@@ -447,29 +521,31 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                   {integrationItems
                     .filter((item) => item.category === activeIntegrationCat)
                     .map((integration) => (
-                    <div
-                      key={integration.nameKey()}
-                      className="flex items-center gap-3 rounded-lg border border-border/50 px-4 py-3"
-                    >
-                      <div className="flex size-8 items-center justify-center rounded-md bg-muted text-sm font-bold text-muted-foreground">
-                        {integration.nameKey().charAt(0)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-sm font-medium text-foreground">{integration.nameKey()}</span>
-                        <p className="text-xs text-muted-foreground">{integration.descKey()}</p>
-                      </div>
-                      <button
-                        className={cn(
-                          "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                          integration.connected
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                            : "border border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
-                        )}
+                      <div
+                        key={integration.nameKey()}
+                        className="flex items-center gap-3 rounded-lg border border-border/50 px-4 py-3"
                       >
-                        {integration.connected ? m.connected() : m.connect()}
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex size-8 items-center justify-center rounded-md bg-muted text-sm font-bold text-muted-foreground">
+                          {integration.nameKey().charAt(0)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-sm font-medium text-foreground">
+                            {integration.nameKey()}
+                          </span>
+                          <p className="text-xs text-muted-foreground">{integration.descKey()}</p>
+                        </div>
+                        <button
+                          className={cn(
+                            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                            integration.connected
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              : "border border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                          )}
+                        >
+                          {integration.connected ? m.connected() : m.connect()}
+                        </button>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -478,20 +554,20 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
               <div className="space-y-4">
                 {/* Registration feedback */}
                 {registerMessage && (
-                  <div className={cn(
-                    "rounded-lg border px-3 py-2 text-xs",
-                    registerMessage.type === "success"
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                      : "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400"
-                  )}>
+                  <div
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-xs",
+                      registerMessage.type === "success"
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                        : "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400",
+                    )}
+                  >
                     {registerMessage.text}
                   </div>
                 )}
 
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground max-w-[240px]">
-                    {m.runtimes_desc()}
-                  </p>
+                  <p className="text-xs text-muted-foreground max-w-[240px]">{m.runtimes_desc()}</p>
                   <div className="flex items-center gap-1.5">
                     {detectResult && detectResult.available.length > 0 && (
                       <button
@@ -504,7 +580,9 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                             <span className="size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                             {m.registering()}
                           </span>
-                        ) : m.register_all()}
+                        ) : (
+                          m.register_all()
+                        )}
                       </button>
                     )}
                     <button
@@ -536,8 +614,8 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                     </div>
                     {detectResult.available.map((agent) => {
                       const isRegistered = registeredRuntimes.some(
-                        (r) => r.name === agent.name || r.registryId === agent.id
-                      )
+                        (r) => r.name === agent.name || r.registryId === agent.id,
+                      );
                       return (
                         <div
                           key={agent.id}
@@ -545,23 +623,29 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                             "flex items-center gap-3 rounded-lg border px-4 py-2.5",
                             isRegistered
                               ? "border-border/50 bg-muted/30"
-                              : "border-emerald-500/20 bg-emerald-500/5"
+                              : "border-emerald-500/20 bg-emerald-500/5",
                           )}
                         >
-                          <div className={cn(
-                            "flex size-8 items-center justify-center rounded-md text-sm font-bold",
-                            isRegistered
-                              ? "bg-muted text-muted-foreground"
-                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                          )}>
+                          <div
+                            className={cn(
+                              "flex size-8 items-center justify-center rounded-md text-sm font-bold",
+                              isRegistered
+                                ? "bg-muted text-muted-foreground"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                            )}
+                          >
                             {agent.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-foreground">{agent.name}</span>
+                              <span className="text-sm font-medium text-foreground">
+                                {agent.name}
+                              </span>
                               <ModelBadge model={agent.model} isLocalRuntime />
                               {agent.version && (
-                                <span className="text-[10px] text-muted-foreground">v{agent.version}</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  v{agent.version}
+                                </span>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground">{agent.role}</p>
@@ -587,7 +671,7 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                             </button>
                           )}
                         </div>
-                      )
+                      );
                     })}
                   </div>
                 )}
@@ -609,7 +693,9 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground">{agent.name}</span>
+                            <span className="text-sm font-medium text-foreground">
+                              {agent.name}
+                            </span>
                             <ModelBadge model={agent.model} isLocalRuntime />
                           </div>
                           <p className="text-xs text-muted-foreground">{agent.role}</p>
@@ -625,7 +711,10 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                 {/* No scan yet hint */}
                 {!detectResult && !detecting && (
                   <div className="rounded-lg border border-dashed border-border/50 py-6 text-center">
-                    <HugeiconsIcon icon={Search01Icon} className="mx-auto size-5 text-muted-foreground/30 mb-2" />
+                    <HugeiconsIcon
+                      icon={Search01Icon}
+                      className="mx-auto size-5 text-muted-foreground/30 mb-2"
+                    />
                     <p className="text-sm text-muted-foreground">{m.detect_runtimes_hint()}</p>
                     <p className="text-xs text-muted-foreground/60 mt-1">
                       {m.detect_runtimes_hint_desc()}
@@ -662,14 +751,12 @@ export function SettingsDialog({ open, onClose, settings, onSettingsChange, onRu
                     <span className="font-medium text-foreground">SQLite (Drizzle)</span>
                   </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  {m.orchos_desc()}
-                </p>
+                <p className="text-[11px] text-muted-foreground">{m.orchos_desc()}</p>
               </div>
             )}
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

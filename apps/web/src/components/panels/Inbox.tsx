@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
-import { cn } from "#/lib/utils"
-import { ScrollArea } from "#/components/ui/scroll-area"
-import { Badge } from "#/components/ui/badge"
-import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { cn } from "#/lib/utils";
+import { ScrollArea } from "#/components/ui/scroll-area";
+import { Badge } from "#/components/ui/badge";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   GitPullRequestIcon,
   SquareIcon,
@@ -12,27 +12,30 @@ import {
   CheckmarkBadge01Icon,
   MoreHorizontal,
   ViewOffIcon,
-} from "@hugeicons/core-free-icons"
+} from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
-import { m } from "#/paraglide/messages"
-import type { Problem, InboxSource } from "#/lib/types"
-import { isInboxItem, inboxSourceLabels } from "#/lib/types"
+} from "#/components/ui/dropdown-menu";
+import { m } from "#/paraglide/messages";
+import type { Problem, InboxSource } from "#/lib/types";
+import { isInboxItem } from "#/lib/types";
 
-type SourceFilter = "all" | InboxSource
+type SourceFilter = "all" | InboxSource;
 
 interface InboxProps {
-  problems: Problem[]
-  onConvertToGoal: (problemId: string, suggestedGoal?: string) => void
-  onDismiss: (problemId: string) => void
-  sourceFilter: SourceFilter
+  problems: Problem[];
+  onConvertToGoal: (problemId: string, suggestedGoal?: string) => void;
+  onDismiss: (problemId: string) => void;
+  sourceFilter: SourceFilter;
 }
 
-const sourceConfig: Record<InboxSource, { icon: IconSvgElement; label: string; colorClass: string; bgClass: string; borderClass: string }> = {
+const sourceConfig: Record<
+  InboxSource,
+  { icon: IconSvgElement; label: string; colorClass: string; bgClass: string; borderClass: string }
+> = {
   github_pr: {
     icon: GitPullRequestIcon,
     label: m.pull_request(),
@@ -61,48 +64,54 @@ const sourceConfig: Record<InboxSource, { icon: IconSvgElement; label: string; c
     bgClass: "bg-amber-500/5",
     borderClass: "border-amber-500/20",
   },
-}
+};
 
 export function Inbox({ problems, onConvertToGoal, onDismiss, sourceFilter }: InboxProps) {
-  const [focusedIndex, setFocusedIndex] = useState(-1)
-  const [convertingId, setConvertingId] = useState<string | null>(null)
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [convertingId, setConvertingId] = useState<string | null>(null);
 
   const inboxItems = useMemo(() => {
-    let filtered = problems.filter((p) => p.status === "open" && isInboxItem(p))
+    let filtered = problems.filter((p) => p.status === "open" && isInboxItem(p));
     if (sourceFilter !== "all") {
-      filtered = filtered.filter((p) => p.source === sourceFilter)
+      filtered = filtered.filter((p) => p.source === sourceFilter);
     }
-    return filtered
-  }, [problems, sourceFilter])
+    return filtered;
+  }, [problems, sourceFilter]);
 
-  const handleConvert = useCallback((problemId: string, suggestedGoal?: string) => {
-    setConvertingId(problemId)
-    onConvertToGoal(problemId, suggestedGoal)
-  }, [onConvertToGoal])
+  const handleConvert = useCallback(
+    (problemId: string, suggestedGoal?: string) => {
+      setConvertingId(problemId);
+      onConvertToGoal(problemId, suggestedGoal);
+    },
+    [onConvertToGoal],
+  );
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-    if (e.key === "j" || e.key === "ArrowDown") {
-      e.preventDefault()
-      setFocusedIndex((prev) => Math.min(prev + 1, inboxItems.length - 1))
-    } else if (e.key === "k" || e.key === "ArrowUp") {
-      e.preventDefault()
-      setFocusedIndex((prev) => Math.max(prev - 1, 0))
-    } else if (e.key === "Enter" && focusedIndex >= 0 && focusedIndex < inboxItems.length) {
-      e.preventDefault()
-      const item = inboxItems[focusedIndex]
-      handleConvert(item.id, item.suggestedGoal)
-    } else if (e.key === "d" && focusedIndex >= 0 && focusedIndex < inboxItems.length) {
-      e.preventDefault()
-      onDismiss(inboxItems[focusedIndex].id)
-    }
-  }, [focusedIndex, inboxItems, handleConvert, onDismiss])
+      if (e.key === "j" || e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex((prev) => Math.min(prev + 1, inboxItems.length - 1));
+      } else if (e.key === "k" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "Enter" && focusedIndex >= 0 && focusedIndex < inboxItems.length) {
+        e.preventDefault();
+        const item = inboxItems[focusedIndex];
+        handleConvert(item.id, item.suggestedGoal);
+      } else if (e.key === "d" && focusedIndex >= 0 && focusedIndex < inboxItems.length) {
+        e.preventDefault();
+        onDismiss(inboxItems[focusedIndex].id);
+      }
+    },
+    [focusedIndex, inboxItems, handleConvert, onDismiss],
+  );
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [handleKeyDown])
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
     <main className="flex flex-1 flex-col overflow-hidden">
@@ -117,11 +126,11 @@ export function Inbox({ problems, onConvertToGoal, onDismiss, sourceFilter }: In
       <ScrollArea className="flex-1">
         <div className="divide-y divide-border/50">
           {inboxItems.map((item, idx) => {
-            const source = item.source as InboxSource
-            const config = sourceConfig[source]
-            const SourceIcon = config.icon
-            const isFocused = idx === focusedIndex
-            const isConverting = convertingId === item.id
+            const source = item.source as InboxSource;
+            const config = sourceConfig[source];
+            const SourceIcon = config.icon;
+            const isFocused = idx === focusedIndex;
+            const isConverting = convertingId === item.id;
 
             return (
               <div
@@ -133,17 +142,26 @@ export function Inbox({ problems, onConvertToGoal, onDismiss, sourceFilter }: In
               >
                 <div className={cn("group flex gap-3 px-4 py-3", config.bgClass)}>
                   {/* Source Icon */}
-                  <HugeiconsIcon icon={SourceIcon} className={cn("mt-0.5 size-4 shrink-0", config.colorClass)} />
+                  <HugeiconsIcon
+                    icon={SourceIcon}
+                    className={cn("mt-0.5 size-4 shrink-0", config.colorClass)}
+                  />
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-foreground">{item.title}</span>
-                      <Badge variant="outline" className="text-[9px] uppercase tracking-wider px-1.5 py-0">
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] uppercase tracking-wider px-1.5 py-0"
+                      >
                         {config.label}
                       </Badge>
                       {item.priority === "critical" && (
-                        <Badge variant="destructive" className="text-[9px] uppercase tracking-wider px-1.5 py-0">
+                        <Badge
+                          variant="destructive"
+                          className="text-[9px] uppercase tracking-wider px-1.5 py-0"
+                        >
                           {m.critical()}
                         </Badge>
                       )}
@@ -157,9 +175,13 @@ export function Inbox({ problems, onConvertToGoal, onDismiss, sourceFilter }: In
                     {/* Suggested Goal */}
                     {item.suggestedGoal && (
                       <div className="mt-2 flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5">
-                        <HugeiconsIcon icon={Target01Icon} className="size-3.5 shrink-0 text-primary/60" />
+                        <HugeiconsIcon
+                          icon={Target01Icon}
+                          className="size-3.5 shrink-0 text-primary/60"
+                        />
                         <span className="text-xs text-primary/80">
-                          {m.suggested()}<span className="font-medium text-primary">{item.suggestedGoal}</span>
+                          {m.suggested()}
+                          <span className="font-medium text-primary">{item.suggestedGoal}</span>
                         </span>
                       </div>
                     )}
@@ -173,7 +195,7 @@ export function Inbox({ problems, onConvertToGoal, onDismiss, sourceFilter }: In
                           "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
                           isConverting
                             ? "bg-muted text-muted-foreground cursor-wait"
-                            : "bg-primary text-primary-foreground hover:bg-primary/90"
+                            : "bg-primary text-primary-foreground hover:bg-primary/90",
                         )}
                       >
                         <HugeiconsIcon icon={Target01Icon} className="size-3.5" />
@@ -201,7 +223,7 @@ export function Inbox({ problems, onConvertToGoal, onDismiss, sourceFilter }: In
                   </div>
                 </div>
               </div>
-            )
+            );
           })}
 
           {inboxItems.length === 0 && (
@@ -216,5 +238,5 @@ export function Inbox({ problems, onConvertToGoal, onDismiss, sourceFilter }: In
         </div>
       </ScrollArea>
     </main>
-  )
+  );
 }

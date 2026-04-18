@@ -3,31 +3,31 @@ import {
   getLocale as getParaglideLocale,
   overwriteGetLocale,
   setLocale as setParaglideLocale,
-} from "#/paraglide/runtime"
+} from "#/paraglide/runtime";
 
-let activeLocale = baseLocale
-let clientLocaleInitialized = false
+let activeLocale = baseLocale;
+let clientLocaleInitialized = false;
 
 export function initializeClientLocale() {
   if (typeof document === "undefined" || clientLocaleInitialized) {
-    return
+    return;
   }
 
-  activeLocale = document.documentElement.lang || baseLocale
-  overwriteGetLocale(() => activeLocale)
-  clientLocaleInitialized = true
+  activeLocale = document.documentElement.lang || baseLocale;
+  overwriteGetLocale(() => activeLocale);
+  clientLocaleInitialized = true;
 }
 
 export function getInitialLocale() {
   if (typeof window === "undefined") {
-    return getParaglideLocale()
+    return getParaglideLocale();
   }
 
-  initializeClientLocale()
-  return activeLocale
+  initializeClientLocale();
+  return activeLocale;
 }
 
 export function syncRuntimeLocale(locale: string) {
-  activeLocale = locale
-  setParaglideLocale(locale, { reload: false })
+  activeLocale = locale;
+  setParaglideLocale(locale, { reload: false });
 }

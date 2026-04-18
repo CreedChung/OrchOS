@@ -1,26 +1,15 @@
-"use client"
+"use client";
 
-import { createHighlighter } from "shiki"
-import ReactMarkdown from "react-markdown"
+import { createHighlighter } from "shiki";
+import ReactMarkdown from "react-markdown";
 
-import { Badge } from "#/components/ui/badge"
-import { Button } from "#/components/ui/button"
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "#/components/ui/resizable"
-import { ScrollArea } from "#/components/ui/scroll-area"
-import { cn } from "#/lib/utils"
-import * as AccordionPrimitive from "@radix-ui/react-accordion"
-import {
-  Check,
-  Copy,
-  FileCode,
-  FileIcon,
-  FolderIcon,
-  FolderOpenIcon,
-} from "lucide-react"
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "#/components/ui/resizable";
+import { ScrollArea } from "#/components/ui/scroll-area";
+import { cn } from "#/lib/utils";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
+import { Check, Copy, FileCode, FileIcon, FolderIcon, FolderOpenIcon } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -30,38 +19,38 @@ import {
   useState,
   type HTMLAttributes,
   type ReactNode,
-} from "react"
-import { toast } from "sonner"
+} from "react";
+import { toast } from "sonner";
 
 export interface ApiComponent {
-  author?: string
-  name: string
-  version: string
+  author?: string;
+  name: string;
+  version: string;
   files: Array<{
-    path: string
-    content?: string
-  }>
+    path: string;
+    content?: string;
+  }>;
 }
 
 interface TreeViewElement {
-  id: string
-  name: string
-  isSelectable?: boolean
-  children?: TreeViewElement[]
+  id: string;
+  name: string;
+  isSelectable?: boolean;
+  children?: TreeViewElement[];
 }
 
 interface TreeContextProps {
-  selectedId: string | undefined
-  expandedItems: string[] | undefined
-  handleExpand: (id: string) => void
-  selectItem: (id: string) => void
-  indicator: boolean
-  openIcon?: ReactNode
-  closeIcon?: ReactNode
-  direction: "rtl" | "ltr"
+  selectedId: string | undefined;
+  expandedItems: string[] | undefined;
+  handleExpand: (id: string) => void;
+  selectItem: (id: string) => void;
+  indicator: boolean;
+  openIcon?: ReactNode;
+  closeIcon?: ReactNode;
+  direction: "rtl" | "ltr";
 }
 
-const TreeContext = createContext<TreeContextProps | null>(null)
+const TreeContext = createContext<TreeContextProps | null>(null);
 
 const SHIKI_LANGS = [
   "tsx",
@@ -74,19 +63,19 @@ const SHIKI_LANGS = [
   "html",
   "markdown",
   "md",
-] as const
+] as const;
 
-let highlighterPromise: ReturnType<typeof createHighlighter> | null = null
+let highlighterPromise: ReturnType<typeof createHighlighter> | null = null;
 
 function getHighlighter() {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({
       langs: SHIKI_LANGS,
       themes: ["github-dark", "github-light"],
-    })
+    });
   }
 
-  return highlighterPromise
+  return highlighterPromise;
 }
 
 function escapeHtml(value: string) {
@@ -95,74 +84,74 @@ function escapeHtml(value: string) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;")
+    .replaceAll("'", "&#39;");
 }
 
 function normalizeLanguage(lang: string) {
-  if (lang === "tsx") return "typescript"
-  if (lang === "ts") return "typescript"
-  if (lang === "js") return "javascript"
-  if (lang === "md") return "markdown"
-  return lang
+  if (lang === "tsx") return "typescript";
+  if (lang === "ts") return "typescript";
+  if (lang === "js") return "javascript";
+  if (lang === "md") return "markdown";
+  return lang;
 }
 
 function isMarkdownFile(filePath: string) {
-  return /\.mdx?$/i.test(filePath)
+  return /\.mdx?$/i.test(filePath);
 }
 
 function useResolvedTheme() {
-  const [theme, setTheme] = useState<"light" | "dark">("light")
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     const updateTheme = () => {
-      const isDark = document.documentElement.classList.contains("dark")
-      setTheme(isDark ? "dark" : "light")
-    }
+      const isDark = document.documentElement.classList.contains("dark");
+      setTheme(isDark ? "dark" : "light");
+    };
 
-    updateTheme()
+    updateTheme();
 
-    const observer = new MutationObserver(updateTheme)
+    const observer = new MutationObserver(updateTheme);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class", "data-theme"],
-    })
+    });
 
-    const media = window.matchMedia("(prefers-color-scheme: dark)")
-    media.addEventListener("change", updateTheme)
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    media.addEventListener("change", updateTheme);
 
     return () => {
-      observer.disconnect()
-      media.removeEventListener("change", updateTheme)
-    }
-  }, [])
+      observer.disconnect();
+      media.removeEventListener("change", updateTheme);
+    };
+  }, []);
 
-  return theme
+  return theme;
 }
 
 function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    const media = window.matchMedia("(min-width: 1024px)")
-    const update = () => setIsDesktop(media.matches)
-    update()
-    media.addEventListener("change", update)
+    const media = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(media.matches);
+    update();
+    media.addEventListener("change", update);
 
-    return () => media.removeEventListener("change", update)
-  }, [])
+    return () => media.removeEventListener("change", update);
+  }, []);
 
-  return isDesktop
+  return isDesktop;
 }
 
 const useTree = () => {
-  const context = useContext(TreeContext)
+  const context = useContext(TreeContext);
 
   if (!context) {
-    throw new Error("useTree must be used within a TreeProvider")
+    throw new Error("useTree must be used within a TreeProvider");
   }
 
-  return context
-}
+  return context;
+};
 
 function ShikiViewer({
   code,
@@ -170,62 +159,62 @@ function ShikiViewer({
   showLineNumbers = true,
   className,
 }: {
-  code: string
-  lang?: string
-  showLineNumbers?: boolean
-  className?: string
+  code: string;
+  lang?: string;
+  showLineNumbers?: boolean;
+  className?: string;
 }) {
-  const [html, setHtml] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
-  const resolvedTheme = useResolvedTheme()
+  const [html, setHtml] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const resolvedTheme = useResolvedTheme();
 
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
 
     async function highlight() {
       try {
-        setIsLoading(true)
+        setIsLoading(true);
 
-        const highlighter = await getHighlighter()
+        const highlighter = await getHighlighter();
         const highlightedHtml = highlighter.codeToHtml(code, {
           lang: normalizeLanguage(lang),
           theme: resolvedTheme === "dark" ? "github-dark" : "github-light",
-        })
+        });
 
         if (mounted) {
-          setHtml(highlightedHtml)
-          setIsLoading(false)
+          setHtml(highlightedHtml);
+          setIsLoading(false);
         }
       } catch {
         if (mounted) {
-          setHtml(`<pre><code>${escapeHtml(code)}</code></pre>`)
-          setIsLoading(false)
+          setHtml(`<pre><code>${escapeHtml(code)}</code></pre>`);
+          setIsLoading(false);
         }
       }
     }
 
-    void highlight()
+    void highlight();
 
     return () => {
-      mounted = false
-    }
-  }, [code, lang, resolvedTheme])
+      mounted = false;
+    };
+  }, [code, lang, resolvedTheme]);
 
   const content = useMemo(() => {
     if (!showLineNumbers) {
-      return html
+      return html;
     }
 
     const lineNumbers = code
       .split("\n")
       .map((_, index) => `<span>${index + 1}</span>`)
-      .join("")
+      .join("");
 
     return html.replace(
       /<pre[^>]*>([\s\S]*)<\/pre>/,
-      `<pre class="line-numbers"><span class="line-numbers-rows">${lineNumbers}</span>$1</pre>`
-    )
-  }, [code, html, showLineNumbers])
+      `<pre class="line-numbers"><span class="line-numbers-rows">${lineNumbers}</span>$1</pre>`,
+    );
+  }, [code, html, showLineNumbers]);
 
   return (
     <>
@@ -282,23 +271,12 @@ function ShikiViewer({
         )}
       </div>
     </>
-  )
+  );
 }
 
-function MarkdownPreview({
-  content,
-  className,
-}: {
-  content: string
-  className?: string
-}) {
+function MarkdownPreview({ content, className }: { content: string; className?: string }) {
   return (
-    <div
-      className={cn(
-        "overflow-hidden rounded-2xl border border-border bg-card",
-        className
-      )}
-    >
+    <div className={cn("overflow-hidden rounded-2xl border border-border bg-card", className)}>
       <div className="prose prose-sm max-w-none px-5 py-4 text-foreground dark:prose-invert prose-headings:text-foreground prose-headings:font-semibold prose-p:text-foreground/85 prose-li:text-foreground/85 prose-strong:text-foreground prose-code:rounded prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-[0.8125rem] prose-code:text-foreground prose-code:before:content-none prose-code:after:content-none prose-pre:overflow-x-auto prose-pre:rounded-xl prose-pre:border prose-pre:border-border prose-pre:bg-muted/60 prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
         <ReactMarkdown
           components={{
@@ -316,7 +294,7 @@ function MarkdownPreview({
         </ReactMarkdown>
       </div>
     </div>
-  )
+  );
 }
 
 function FileHeader({
@@ -327,23 +305,23 @@ function FileHeader({
   isPreview,
   onTogglePreview,
 }: {
-  file: { path: string; content?: string }
-  onCopy: () => void
-  copied: boolean
-  canPreview: boolean
-  isPreview: boolean
-  onTogglePreview: () => void
+  file: { path: string; content?: string };
+  onCopy: () => void;
+  copied: boolean;
+  canPreview: boolean;
+  isPreview: boolean;
+  onTogglePreview: () => void;
 }) {
   const getFileType = (filePath: string) => {
-    if (filePath.endsWith(".tsx")) return "TSX"
-    if (filePath.endsWith(".ts")) return "TS"
-    if (filePath.endsWith(".js")) return "JS"
-    if (filePath.endsWith(".jsx")) return "JSX"
-    if (filePath.endsWith(".md")) return "MD"
-    if (filePath.endsWith(".css")) return "CSS"
-    if (filePath.endsWith(".json")) return "JSON"
-    return "TXT"
-  }
+    if (filePath.endsWith(".tsx")) return "TSX";
+    if (filePath.endsWith(".ts")) return "TS";
+    if (filePath.endsWith(".js")) return "JS";
+    if (filePath.endsWith(".jsx")) return "JSX";
+    if (filePath.endsWith(".md")) return "MD";
+    if (filePath.endsWith(".css")) return "CSS";
+    if (filePath.endsWith(".json")) return "JSON";
+    return "TXT";
+  };
 
   return (
     <div className="flex min-h-14 items-center justify-between border-b border-border px-4 py-3">
@@ -375,25 +353,22 @@ function FileHeader({
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
-function TreeIndicator({
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
-  const { direction } = useTree()
+function TreeIndicator({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+  const { direction } = useTree();
 
   return (
     <div
       className={cn(
         "absolute top-0 h-full w-px rounded-full bg-border/80",
         direction === "rtl" ? "right-1.5" : "left-1.5",
-        className
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
 function Folder({
@@ -404,27 +379,17 @@ function Folder({
   children,
   className,
 }: {
-  element: string
-  value: string
-  isSelectable?: boolean
-  isSelect?: boolean
-  children: ReactNode
-  className?: string
+  element: string;
+  value: string;
+  isSelectable?: boolean;
+  isSelect?: boolean;
+  children: ReactNode;
+  className?: string;
 }) {
-  const {
-    direction,
-    handleExpand,
-    expandedItems,
-    indicator,
-    openIcon,
-    closeIcon,
-  } = useTree()
+  const { direction, handleExpand, expandedItems, indicator, openIcon, closeIcon } = useTree();
 
   return (
-    <AccordionPrimitive.Item
-      value={value}
-      className="relative overflow-hidden"
-    >
+    <AccordionPrimitive.Item value={value} className="relative overflow-hidden">
       <AccordionPrimitive.Trigger
         className={cn(
           "flex w-full items-center gap-1 rounded-md px-2 py-1 text-left text-sm transition-colors",
@@ -432,31 +397,28 @@ function Folder({
           !isSelectable
             ? "cursor-not-allowed opacity-50"
             : "cursor-pointer hover:bg-accent hover:text-accent-foreground",
-          className
+          className,
         )}
         disabled={!isSelectable}
         onClick={() => handleExpand(value)}
       >
         {expandedItems?.includes(value)
-          ? openIcon ?? <FolderOpenIcon className="size-4" />
-          : closeIcon ?? <FolderIcon className="size-4" />}
+          ? (openIcon ?? <FolderOpenIcon className="size-4" />)
+          : (closeIcon ?? <FolderIcon className="size-4" />)}
         <span className="truncate">{element}</span>
       </AccordionPrimitive.Trigger>
       <AccordionPrimitive.Content className="relative overflow-hidden text-sm">
         {indicator ? <TreeIndicator /> : null}
         <AccordionPrimitive.Root
           type="multiple"
-          className={cn(
-            "flex flex-col gap-1 py-1",
-            direction === "rtl" ? "mr-5" : "ml-5"
-          )}
+          className={cn("flex flex-col gap-1 py-1", direction === "rtl" ? "mr-5" : "ml-5")}
           value={expandedItems}
         >
           {children}
         </AccordionPrimitive.Root>
       </AccordionPrimitive.Content>
     </AccordionPrimitive.Item>
-  )
+  );
 }
 
 function File({
@@ -468,16 +430,16 @@ function File({
   className,
   onClick,
 }: {
-  value: string
-  isSelectable?: boolean
-  isSelect?: boolean
-  fileIcon?: ReactNode
-  children: ReactNode
-  className?: string
-  onClick?: () => void
+  value: string;
+  isSelectable?: boolean;
+  isSelect?: boolean;
+  fileIcon?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  onClick?: () => void;
 }) {
-  const { selectedId, selectItem } = useTree()
-  const isSelected = isSelect ?? selectedId === value
+  const { selectedId, selectItem } = useTree();
+  const isSelected = isSelect ?? selectedId === value;
 
   return (
     <button
@@ -488,18 +450,18 @@ function File({
         !isSelectable
           ? "cursor-not-allowed opacity-50"
           : "cursor-pointer hover:bg-accent hover:text-accent-foreground",
-        className
+        className,
       )}
       onClick={() => {
-        selectItem(value)
-        onClick?.()
+        selectItem(value);
+        onClick?.();
       }}
       type="button"
     >
       {fileIcon ?? <FileIcon className="size-4" />}
       <span className="truncate">{children}</span>
     </button>
-  )
+  );
 }
 
 function Tree({
@@ -512,40 +474,36 @@ function Tree({
   closeIcon,
   dir = "ltr",
 }: {
-  initialSelectedId?: string
-  initialExpandedItems?: string[]
-  children: ReactNode
-  className?: string
-  indicator?: boolean
-  openIcon?: ReactNode
-  closeIcon?: ReactNode
-  dir?: "rtl" | "ltr"
+  initialSelectedId?: string;
+  initialExpandedItems?: string[];
+  children: ReactNode;
+  className?: string;
+  indicator?: boolean;
+  openIcon?: ReactNode;
+  closeIcon?: ReactNode;
+  dir?: "rtl" | "ltr";
 }) {
-  const [selectedId, setSelectedId] = useState<string | undefined>(
-    initialSelectedId
-  )
-  const [expandedItems, setExpandedItems] = useState<string[] | undefined>(
-    initialExpandedItems
-  )
+  const [selectedId, setSelectedId] = useState<string | undefined>(initialSelectedId);
+  const [expandedItems, setExpandedItems] = useState<string[] | undefined>(initialExpandedItems);
 
   useEffect(() => {
-    setSelectedId(initialSelectedId)
-  }, [initialSelectedId])
+    setSelectedId(initialSelectedId);
+  }, [initialSelectedId]);
 
   useEffect(() => {
-    setExpandedItems(initialExpandedItems)
-  }, [initialExpandedItems])
+    setExpandedItems(initialExpandedItems);
+  }, [initialExpandedItems]);
 
-  const selectItem = useCallback((id: string) => setSelectedId(id), [])
+  const selectItem = useCallback((id: string) => setSelectedId(id), []);
   const handleExpand = useCallback((id: string) => {
     setExpandedItems((prev) => {
       if (prev?.includes(id)) {
-        return prev.filter((item) => item !== id)
+        return prev.filter((item) => item !== id);
       }
 
-      return [...(prev ?? []), id]
-    })
-  }, [])
+      return [...(prev ?? []), id];
+    });
+  }, []);
 
   return (
     <TreeContext.Provider
@@ -572,7 +530,7 @@ function Tree({
         </div>
       </div>
     </TreeContext.Provider>
-  )
+  );
 }
 
 function TreeItem({
@@ -580,9 +538,9 @@ function TreeItem({
   selectedFile,
   onFileSelect,
 }: {
-  item: TreeViewElement
-  selectedFile?: string
-  onFileSelect: (file: string) => void
+  item: TreeViewElement;
+  selectedFile?: string;
+  onFileSelect: (file: string) => void;
 }) {
   if (item.children?.length) {
     return (
@@ -596,7 +554,7 @@ function TreeItem({
           />
         ))}
       </Folder>
-    )
+    );
   }
 
   return (
@@ -610,7 +568,7 @@ function TreeItem({
     >
       {item.name}
     </File>
-  )
+  );
 }
 
 function FileTree({
@@ -620,33 +578,33 @@ function FileTree({
   component,
   isDesktop,
 }: {
-  tree: TreeViewElement[]
-  selectedFile?: string
-  onFileSelect: (file: string) => void
-  component: ApiComponent
-  isDesktop: boolean
+  tree: TreeViewElement[];
+  selectedFile?: string;
+  onFileSelect: (file: string) => void;
+  component: ApiComponent;
+  isDesktop: boolean;
 }) {
   const allExpandableItems = useMemo(() => {
-    const expandableItems: string[] = []
+    const expandableItems: string[] = [];
 
     const traverse = (elements: TreeViewElement[]) => {
       elements.forEach((element) => {
         if (element.children?.length) {
-          expandableItems.push(element.id)
-          traverse(element.children)
+          expandableItems.push(element.id);
+          traverse(element.children);
         }
-      })
-    }
+      });
+    };
 
-    traverse(tree)
-    return expandableItems
-  }, [tree])
+    traverse(tree);
+    return expandableItems;
+  }, [tree]);
 
   return (
     <div
       className={cn(
         "flex h-full w-full flex-col",
-        isDesktop ? "border-r border-border" : "border-b border-border"
+        isDesktop ? "border-r border-border" : "border-b border-border",
       )}
     >
       <div className="flex min-h-14 items-center justify-between gap-2 border-b border-border px-4 py-3">
@@ -654,9 +612,7 @@ function FileTree({
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <FileCode className="size-4" />
           </div>
-          <p className="truncate text-sm font-medium text-foreground">
-            {component.name}
-          </p>
+          <p className="truncate text-sm font-medium text-foreground">{component.name}</p>
         </div>
         {component.author ? (
           <Badge variant="secondary" className="shrink-0">
@@ -684,35 +640,28 @@ function FileTree({
         </div>
       </ScrollArea>
     </div>
-  )
+  );
 }
 
-export default function ComponentFileViewer({
-  component,
-}: {
-  component: ApiComponent
-}) {
-  const [selectedFile, setSelectedFile] = useState<string | undefined>()
-  const [copied, setCopied] = useState(false)
-  const [isPreview, setIsPreview] = useState(false)
-  const isDesktop = useIsDesktop()
+export default function ComponentFileViewer({ component }: { component: ApiComponent }) {
+  const [selectedFile, setSelectedFile] = useState<string | undefined>();
+  const [copied, setCopied] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
+  const isDesktop = useIsDesktop();
 
-  const files = useMemo(
-    () => component.files.filter((file) => file.content),
-    [component.files]
-  )
+  const files = useMemo(() => component.files.filter((file) => file.content), [component.files]);
 
   const tree = useMemo(() => {
     const root: Record<string, TreeViewElement & { children?: Record<string, TreeViewElement> }> =
-      {}
+      {};
 
     for (const file of files) {
-      const parts = file.path.split("/")
-      let current = root
+      const parts = file.path.split("/");
+      let current = root;
 
       for (let index = 0; index < parts.length; index += 1) {
-        const part = parts[index]
-        const id = parts.slice(0, index + 1).join("/")
+        const part = parts[index];
+        const id = parts.slice(0, index + 1).join("/");
 
         if (!current[part]) {
           current[part] =
@@ -727,15 +676,15 @@ export default function ComponentFileViewer({
                   name: part,
                   isSelectable: false,
                   children: {},
-                }
+                };
         }
 
-        current = (current[part].children as Record<string, TreeViewElement>) ?? {}
+        current = (current[part].children as Record<string, TreeViewElement>) ?? {};
       }
     }
 
     const toArray = (
-      value: Record<string, TreeViewElement & { children?: Record<string, TreeViewElement> }>
+      value: Record<string, TreeViewElement & { children?: Record<string, TreeViewElement> }>,
     ): TreeViewElement[] =>
       Object.values(value).map((item) =>
         item.children
@@ -744,50 +693,49 @@ export default function ComponentFileViewer({
               name: item.name,
               isSelectable: item.isSelectable,
               children: toArray(
-                item.children as Record<string, TreeViewElement & { children?: Record<string, TreeViewElement> }>
+                item.children as Record<
+                  string,
+                  TreeViewElement & { children?: Record<string, TreeViewElement> }
+                >,
               ),
             }
-          : item
-      )
+          : item,
+      );
 
-    return toArray(root)
-  }, [files])
+    return toArray(root);
+  }, [files]);
 
-  const selected = files.find((file) => file.path === selectedFile) ?? files[0]
-  const canPreview = selected ? isMarkdownFile(selected.path) : false
+  const selected = files.find((file) => file.path === selectedFile) ?? files[0];
+  const canPreview = selected ? isMarkdownFile(selected.path) : false;
 
   useEffect(() => {
     if (!selectedFile && files.length > 0) {
-      setSelectedFile(files[0].path)
+      setSelectedFile(files[0].path);
     }
-  }, [files, selectedFile])
+  }, [files, selectedFile]);
 
   useEffect(() => {
-    setIsPreview(false)
-  }, [selectedFile])
+    setIsPreview(false);
+  }, [selectedFile]);
 
   const handleCopy = useCallback(() => {
     if (!selected?.content) {
-      return
+      return;
     }
 
-    void navigator.clipboard.writeText(selected.content)
-    setCopied(true)
-    toast.success("File content copied")
+    void navigator.clipboard.writeText(selected.content);
+    setCopied(true);
+    toast.success("File content copied");
 
-    window.setTimeout(() => setCopied(false), 2000)
-  }, [selected])
+    window.setTimeout(() => setCopied(false), 2000);
+  }, [selected]);
 
   return (
     <ResizablePanelGroup
       direction={isDesktop ? "horizontal" : "vertical"}
       className="min-h-[640px] overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
     >
-      <ResizablePanel
-        defaultSize={isDesktop ? "28%" : "36%"}
-        minSize="20%"
-        maxSize="40%"
-      >
+      <ResizablePanel defaultSize={isDesktop ? "28%" : "36%"} minSize="20%" maxSize="40%">
         <FileTree
           tree={tree}
           selectedFile={selectedFile}
@@ -811,10 +759,7 @@ export default function ComponentFileViewer({
             <div className="flex-1 overflow-hidden bg-background/30 p-3">
               <ScrollArea className="h-full w-full">
                 {canPreview && isPreview ? (
-                  <MarkdownPreview
-                    content={selected.content ?? ""}
-                    className="min-h-full"
-                  />
+                  <MarkdownPreview content={selected.content ?? ""} className="min-h-full" />
                 ) : (
                   <ShikiViewer
                     code={selected.content ?? ""}
@@ -832,5 +777,5 @@ export default function ComponentFileViewer({
         )}
       </ResizablePanel>
     </ResizablePanelGroup>
-  )
+  );
 }

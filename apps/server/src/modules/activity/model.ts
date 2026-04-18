@@ -1,4 +1,4 @@
-import { t, type UnwrapSchema } from "elysia"
+import { t, type UnwrapSchema } from "elysia";
 
 export const ActivityModel = {
   response: t.Object({
@@ -10,8 +10,8 @@ export const ActivityModel = {
     detail: t.Optional(t.String()),
     reasoning: t.Optional(t.String()),
   }),
-} as const
+} as const;
 
 export type ActivityModel = {
-  [k in keyof typeof ActivityModel]: UnwrapSchema<typeof ActivityModel[k]>
-}
+  [k in keyof typeof ActivityModel]: UnwrapSchema<(typeof ActivityModel)[k]>;
+};

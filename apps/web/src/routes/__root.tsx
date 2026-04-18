@@ -1,32 +1,34 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-import { useEffect } from 'react'
-import { TooltipProvider } from '#/components/ui/tooltip'
-import { getLocale } from '#/paraglide/runtime'
-import { initializeClientLocale } from '#/lib/i18n-runtime'
+import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { ClerkProvider } from "@clerk/clerk-react";
+import { TooltipProvider } from "#/components/ui/tooltip";
+import { getLocale } from "#/paraglide/runtime";
+import { initializeClientLocale } from "#/lib/i18n-runtime";
+import { clerkPublishableKey, isClerkConfigured } from "#/lib/auth";
 
-import appCss from '../styles.css?url'
+import appCss from "../styles.css?url";
 
-const THEME_INIT_SCRIPT = `(function(){try{var raw=window.localStorage.getItem('orchos-ui');var mode='auto';if(raw){var parsed=JSON.parse(raw);if(parsed&&parsed.state&&parsed.state.theme){mode=parsed.state.theme}}var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`
+const THEME_INIT_SCRIPT = `(function(){try{var raw=window.localStorage.getItem('orchos-ui');var mode='auto';if(raw){var parsed=JSON.parse(raw);if(parsed&&parsed.state&&parsed.state.theme){mode=parsed.state.theme}}var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`;
 
-initializeClientLocale()
+initializeClientLocale();
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       {
-        charSet: 'utf-8',
+        charSet: "utf-8",
       },
       {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        name: "viewport",
+        content: "width=device-width, initial-scale=1",
       },
       {
-        title: 'OrchOS',
+        title: "OrchOS",
       },
     ],
     links: [
       {
-        rel: 'stylesheet',
+        rel: "stylesheet",
         href: appCss,
       },
     ],
@@ -40,14 +42,14 @@ export const Route = createRootRoute({
       </div>
     </div>
   ),
-})
+});
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (import.meta.env.DEV) {
-      void import('react-grab')
+      void import("react-grab");
     }
-  }, [])
+  }, []);
 
   return (
     <html lang={getLocale()} suppressHydrationWarning>
@@ -56,11 +58,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
-        <TooltipProvider>
-          {children}
-        </TooltipProvider>
+        {isClerkConfigured ? (
+          <ClerkProvider publishableKey={clerkPublishableKey}>
+            <TooltipProvider>{children}</TooltipProvider>
+          </ClerkProvider>
+        ) : (
+          <TooltipProvider>{children}</TooltipProvider>
+        )}
         <Scripts />
       </body>
     </html>
-  )
+  );
 }

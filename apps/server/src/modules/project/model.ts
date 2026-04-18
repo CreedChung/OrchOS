@@ -1,4 +1,4 @@
-import { t, type UnwrapSchema } from "elysia"
+import { t, type UnwrapSchema } from "elysia";
 
 export const ProjectModel = {
   createBody: t.Object({
@@ -11,7 +11,7 @@ export const ProjectModel = {
       name: t.String(),
       path: t.String(),
       repositoryUrl: t.Optional(t.String()),
-    })
+    }),
   ),
   response: t.Object({
     id: t.String(),
@@ -31,8 +31,8 @@ export const ProjectModel = {
   cloneBody: t.Object({
     force: t.Optional(t.Boolean()),
   }),
-} as const
+} as const;
 
 export type ProjectModel = {
-  [k in keyof typeof ProjectModel]: UnwrapSchema<typeof ProjectModel[k]>
-}
+  [k in keyof typeof ProjectModel]: UnwrapSchema<(typeof ProjectModel)[k]>;
+};

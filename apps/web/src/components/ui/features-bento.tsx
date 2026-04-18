@@ -1,11 +1,9 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader } from '#/components/ui/card';
-import { m } from '#/paraglide/messages';
-import { HugeiconsIcon } from '@hugeicons/react';
-import {
-  Robot02Icon,
-} from '@hugeicons/core-free-icons';
+import { Card, CardContent, CardHeader } from "#/components/ui/card";
+import { m } from "#/paraglide/messages";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Robot02Icon } from "@hugeicons/core-free-icons";
 
 export function FeaturesBento() {
   return (

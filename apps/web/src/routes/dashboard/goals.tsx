@@ -1,25 +1,35 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { StateBoard } from '#/components/panels/StateBoard'
-import { GoalActions } from '#/components/panels/GoalActions'
-import { GoalList } from '#/components/panels/GoalList'
-import { useDashboard } from '#/lib/dashboard-context'
-import { useUIStore } from '#/lib/store'
-import { m } from '#/paraglide/messages'
-import { isSystemProblem } from '#/lib/types'
+import { createFileRoute } from "@tanstack/react-router";
+import { StateBoard } from "#/components/panels/StateBoard";
+import { GoalActions } from "#/components/panels/GoalActions";
+import { GoalList } from "#/components/panels/GoalList";
+import { useDashboard } from "#/lib/dashboard-context";
+import { useUIStore } from "#/lib/store";
+import { m } from "#/paraglide/messages";
+import { isSystemProblem } from "#/lib/types";
 
-export const Route = createFileRoute('/dashboard/goals')({ component: GoalsPage })
+export const Route = createFileRoute("/dashboard/goals")({ component: GoalsPage });
 
 function GoalsPage() {
   const {
-    goals, projects, states, artifacts, activities, problems,
-    activeGoal, activeCommand,
-    handleStateAction, handleProblemAction, handlePauseGoal, handleResumeGoal, handleDeleteGoal,
-    showCommandBar, setShowCommandBar,
-    showCreateDialog, setShowCreateDialog,
+    goals,
+    projects,
+    states,
+    artifacts,
+    activities,
+    problems,
+    activeGoal,
+    activeCommand,
+    handleStateAction,
+    handleProblemAction,
+    handlePauseGoal,
+    handleResumeGoal,
+    handleDeleteGoal,
+    setShowCommandBar,
+    setShowCreateDialog,
     searchQuery,
-  } = useDashboard()
+  } = useDashboard();
 
-  const { activeGoalId, setActiveGoalId, goalStatusFilter } = useUIStore()
+  const { activeGoalId, setActiveGoalId, goalStatusFilter } = useUIStore();
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -43,11 +53,31 @@ function GoalsPage() {
             projects={projects}
             command={activeCommand}
             problems={{
-              critical: problems.filter((p) => p.status === "open" && p.priority === "critical" && isSystemProblem(p) && p.goalId === activeGoalId).length,
-              warning: problems.filter((p) => p.status === "open" && p.priority === "warning" && isSystemProblem(p) && p.goalId === activeGoalId).length,
-              info: problems.filter((p) => p.status === "open" && p.priority === "info" && isSystemProblem(p) && p.goalId === activeGoalId).length,
+              critical: problems.filter(
+                (p) =>
+                  p.status === "open" &&
+                  p.priority === "critical" &&
+                  isSystemProblem(p) &&
+                  p.goalId === activeGoalId,
+              ).length,
+              warning: problems.filter(
+                (p) =>
+                  p.status === "open" &&
+                  p.priority === "warning" &&
+                  isSystemProblem(p) &&
+                  p.goalId === activeGoalId,
+              ).length,
+              info: problems.filter(
+                (p) =>
+                  p.status === "open" &&
+                  p.priority === "info" &&
+                  isSystemProblem(p) &&
+                  p.goalId === activeGoalId,
+              ).length,
             }}
-            systemProblems={problems.filter((p) => p.status === "open" && isSystemProblem(p) && p.goalId === activeGoalId)}
+            systemProblems={problems.filter(
+              (p) => p.status === "open" && isSystemProblem(p) && p.goalId === activeGoalId,
+            )}
             onStateAction={handleStateAction}
             onProblemAction={handleProblemAction}
             onAutoModeToggle={activeGoal.status === "active" ? handlePauseGoal : handleResumeGoal}
@@ -70,5 +100,5 @@ function GoalsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

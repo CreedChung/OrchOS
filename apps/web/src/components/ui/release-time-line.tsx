@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Package, Calendar, Sparkles, Zap } from "lucide-react";
+import { ArrowUpRight, Package } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { m } from "#/paraglide/messages";
 
@@ -105,12 +105,8 @@ export default function TimeLine_01({
     <section className={`py-32 ${className ?? ""}`}>
       <div className="container">
         <div className="mx-auto max-w-3xl">
-          <h1 className="mb-4 text-3xl font-bold tracking-tight md:text-5xl">
-            {title}
-          </h1>
-          <p className="mb-6 text-base text-muted-foreground md:text-lg">
-            {description}
-          </p>
+          <h1 className="mb-4 text-3xl font-bold tracking-tight md:text-5xl">{title}</h1>
+          <p className="mb-6 text-base text-muted-foreground md:text-lg">{description}</p>
         </div>
 
         <div className="mx-auto mt-16 max-w-3xl space-y-16 md:mt-24 md:space-y-24">
@@ -138,18 +134,18 @@ export default function TimeLine_01({
                   }
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                    }`}>
+                    <div
+                      className={`p-2 rounded-lg ${
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
                       <entry.icon className="h-4 w-4" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium">
-                        {entry.title}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {entry.subtitle}
-                      </span>
+                      <span className="text-sm font-medium">{entry.title}</span>
+                      <span className="text-xs text-muted-foreground">{entry.subtitle}</span>
                     </div>
                   </div>
                 </div>
@@ -192,13 +188,13 @@ export default function TimeLine_01({
                       >
                         {entry.title}
                       </h2>
-                      
+
                       {/* Improved description with better spacing */}
                       <p
                         className={
                           "text-xs leading-relaxed md:text-sm transition-all duration-300 " +
-                          (isActive 
-                            ? "text-muted-foreground line-clamp-none" 
+                          (isActive
+                            ? "text-muted-foreground line-clamp-none"
                             : "text-muted-foreground/80 line-clamp-2")
                         }
                       >
@@ -211,9 +207,7 @@ export default function TimeLine_01({
                       aria-hidden={!isActive}
                       className={
                         "grid transition-all duration-500 ease-out " +
-                        (isActive 
-                          ? "grid-rows-[1fr] opacity-100" 
-                          : "grid-rows-[0fr] opacity-0")
+                        (isActive ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")
                       }
                     >
                       <div className="overflow-hidden">
@@ -222,8 +216,8 @@ export default function TimeLine_01({
                             <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-black p-4">
                               <ul className="space-y-2">
                                 {entry.items.map((item, itemIndex) => (
-                                  <li 
-                                    key={itemIndex} 
+                                  <li
+                                    key={itemIndex}
                                     className="flex items-start gap-2 text-sm text-muted-foreground"
                                   >
                                     <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/60 flex-shrink-0" />
@@ -236,14 +230,14 @@ export default function TimeLine_01({
 
                           {entry.button && (
                             <div className="flex justify-end">
-                              <Button 
-                                variant="default" 
+                              <Button
+                                variant="default"
                                 size="sm"
                                 className="group hover:bg-primary hover:text-primary-foreground font-normal transition-all duration-200"
                                 asChild
                               >
                                 <a href={entry.button.url} target="_blank" rel="noreferrer">
-                                  {entry.button.text} 
+                                  {entry.button.text}
                                   <ArrowUpRight className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                                 </a>
                               </Button>

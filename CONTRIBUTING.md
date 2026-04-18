@@ -88,13 +88,13 @@ bun --filter=web dev
 
 ### Useful Commands
 
-| Command               | Description                  |
-| --------------------- | ---------------------------- |
-| `bun run dev`         | Start all apps in dev mode   |
-| `bun run build`       | Build all apps               |
-| `bun run lint`        | Lint all packages            |
-| `bun run check-types` | Type check all packages      |
-| `bun run format`      | Format code with Prettier    |
+| Command               | Description                |
+| --------------------- | -------------------------- |
+| `bun run dev`         | Start all apps in dev mode |
+| `bun run build`       | Build all apps             |
+| `bun run lint`        | Lint all packages          |
+| `bun run check-types` | Type check all packages    |
+| `bun run format`      | Format code with Prettier  |
 
 ---
 
@@ -113,15 +113,15 @@ OrchOS/
 
 ### Tech Stack
 
-| Layer       | Technology                                    |
-| ----------- | --------------------------------------------- |
-| Frontend    | React 19, Vite, TanStack Router               |
-| Styling     | Tailwind CSS v4, shadcn/ui, Motion            |
-| State       | Zustand (persisted to localStorage)           |
-| i18n        | Paraglide JS (compile-time)                   |
-| Backend     | Elysia on Bun, Drizzle ORM, SQLite (WAL mode) |
-| Real-time   | WebSocket event broadcasting                  |
-| Monorepo    | Turborepo, Bun workspaces                     |
+| Layer     | Technology                                    |
+| --------- | --------------------------------------------- |
+| Frontend  | React 19, Vite, TanStack Router               |
+| Styling   | Tailwind CSS v4, shadcn/ui, Motion            |
+| State     | Zustand (persisted to localStorage)           |
+| i18n      | Paraglide JS (compile-time)                   |
+| Backend   | Elysia on Bun, Drizzle ORM, SQLite (WAL mode) |
+| Real-time | WebSocket event broadcasting                  |
+| Monorepo  | Turborepo, Bun workspaces                     |
 
 ### Key Directories
 

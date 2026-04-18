@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react"
-import { Link } from "@tanstack/react-router"
-import { cn } from "#/lib/utils"
-import { ScrollArea } from "#/components/ui/scroll-area"
-import { Badge } from "#/components/ui/badge"
-import { Button } from "#/components/ui/button"
-import { HugeiconsIcon } from "@hugeicons/react"
+import { useState, useMemo } from "react";
+import { Link } from "@tanstack/react-router";
+import { cn } from "#/lib/utils";
+import { ScrollArea } from "#/components/ui/scroll-area";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   GitPullRequestIcon,
   SquareIcon,
@@ -14,10 +14,10 @@ import {
   ViewOffIcon,
   CheckmarkBadge01Icon,
   InboxIcon,
-} from "@hugeicons/core-free-icons"
-import { m } from "#/paraglide/messages"
-import type { Problem, InboxSource } from "#/lib/types"
-import { isInboxItem } from "#/lib/types"
+} from "@hugeicons/core-free-icons";
+import { m } from "#/paraglide/messages";
+import type { Problem, InboxSource } from "#/lib/types";
+import { isInboxItem } from "#/lib/types";
 
 // --- Mock Data ---
 const mockProblems: Problem[] = [
@@ -84,7 +84,7 @@ const mockProblems: Problem[] = [
     createdAt: "2025-04-13T06:10:00Z",
     updatedAt: "2025-04-13T06:10:00Z",
   },
-]
+];
 
 // --- Source Config ---
 const sourceConfig: Record<
@@ -115,44 +115,44 @@ const sourceConfig: Record<
     bgClass: "bg-amber-500/10",
     label: m.agent_request(),
   },
-}
+};
 
-type SourceFilter = "all" | InboxSource
+type SourceFilter = "all" | InboxSource;
 
 export function InboxPreviewCard() {
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all")
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   const activeItem = mockProblems.find(
     (p) => p.id === activeId && !dismissed.has(p.id) && isInboxItem(p),
-  )
+  );
 
   const inboxItems = useMemo(() => {
     return mockProblems.filter((p) => {
-      if (dismissed.has(p.id) || p.status !== "open" || !isInboxItem(p)) return false
-      if (sourceFilter !== "all" && p.source !== sourceFilter) return false
-      return true
-    })
-  }, [sourceFilter, dismissed])
+      if (dismissed.has(p.id) || p.status !== "open" || !isInboxItem(p)) return false;
+      if (sourceFilter !== "all" && p.source !== sourceFilter) return false;
+      return true;
+    });
+  }, [sourceFilter, dismissed]);
 
   const inboxCounts = useMemo(() => {
     const items = mockProblems.filter(
       (p) => !dismissed.has(p.id) && p.status === "open" && isInboxItem(p),
-    )
+    );
     return {
       all: items.length,
       github_pr: items.filter((p) => p.source === "github_pr").length,
       github_issue: items.filter((p) => p.source === "github_issue").length,
       mention: items.filter((p) => p.source === "mention").length,
       agent_request: items.filter((p) => p.source === "agent_request").length,
-    }
-  }, [dismissed])
+    };
+  }, [dismissed]);
 
   const handleDismiss = (id: string) => {
-    setDismissed((prev) => new Set(prev).add(id))
-    if (activeId === id) setActiveId(null)
-  }
+    setDismissed((prev) => new Set(prev).add(id));
+    if (activeId === id) setActiveId(null);
+  };
 
   return (
     <div className="w-full h-full flex flex-col rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
@@ -174,7 +174,7 @@ export function InboxPreviewCard() {
         <div className="flex items-center gap-1">
           {(["all", "github_pr", "github_issue", "mention", "agent_request"] as SourceFilter[]).map(
             (filter) => {
-              const config = filter === "all" ? null : sourceConfig[filter]
+              const config = filter === "all" ? null : sourceConfig[filter];
               return (
                 <button
                   key={filter}
@@ -192,7 +192,7 @@ export function InboxPreviewCard() {
                     {inboxCounts[filter as keyof typeof inboxCounts]}
                   </span>
                 </button>
-              )
+              );
             },
           )}
         </div>
@@ -205,9 +205,9 @@ export function InboxPreviewCard() {
           <ScrollArea className="h-full">
             <div className="p-1.5 space-y-0.5">
               {inboxItems.map((item) => {
-                const source = item.source as InboxSource
-                const config = sourceConfig[source]
-                const isActive = item.id === activeId
+                const source = item.source as InboxSource;
+                const config = sourceConfig[source];
+                const isActive = item.id === activeId;
                 return (
                   <button
                     key={item.id}
@@ -225,10 +225,18 @@ export function InboxPreviewCard() {
                         config.bgClass,
                       )}
                     >
-                      <HugeiconsIcon icon={config.icon} className={cn("size-3", config.colorClass)} />
+                      <HugeiconsIcon
+                        icon={config.icon}
+                        className={cn("size-3", config.colorClass)}
+                      />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={cn("text-[11px] font-medium truncate", isActive && "text-accent-foreground")}>
+                      <p
+                        className={cn(
+                          "text-[11px] font-medium truncate",
+                          isActive && "text-accent-foreground",
+                        )}
+                      >
                         {item.title}
                       </p>
                       <div className="flex items-center gap-1 mt-0.5">
@@ -243,13 +251,16 @@ export function InboxPreviewCard() {
                       </div>
                     </div>
                   </button>
-                )
+                );
               })}
 
               {inboxItems.length === 0 && (
                 <div className="py-8 text-center">
                   <div className="mx-auto size-10 rounded-full bg-emerald-500/10 flex items-center justify-center mb-2">
-                    <HugeiconsIcon icon={CheckmarkBadge01Icon} className="size-4 text-emerald-500" />
+                    <HugeiconsIcon
+                      icon={CheckmarkBadge01Icon}
+                      className="size-4 text-emerald-500"
+                    />
                   </div>
                   <p className="text-xs text-muted-foreground">{m.inbox_is_empty()}</p>
                 </div>
@@ -272,17 +283,26 @@ export function InboxPreviewCard() {
                 >
                   <HugeiconsIcon
                     icon={sourceConfig[activeItem.source as InboxSource].icon}
-                    className={cn("size-4", sourceConfig[activeItem.source as InboxSource].colorClass)}
+                    className={cn(
+                      "size-4",
+                      sourceConfig[activeItem.source as InboxSource].colorClass,
+                    )}
                   />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-bold text-foreground truncate">{activeItem.title}</h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <Badge variant="outline" className="text-[8px] uppercase tracking-wider px-1 py-0">
+                    <Badge
+                      variant="outline"
+                      className="text-[8px] uppercase tracking-wider px-1 py-0"
+                    >
                       {sourceConfig[activeItem.source as InboxSource].label}
                     </Badge>
                     {activeItem.priority === "critical" && (
-                      <Badge variant="destructive" className="text-[8px] uppercase tracking-wider px-1 py-0">
+                      <Badge
+                        variant="destructive"
+                        className="text-[8px] uppercase tracking-wider px-1 py-0"
+                      >
                         {m.critical()}
                       </Badge>
                     )}
@@ -300,7 +320,9 @@ export function InboxPreviewCard() {
                     {m.context()}
                   </p>
                   <div className="rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
-                    <p className="text-xs text-foreground whitespace-pre-wrap">{activeItem.context}</p>
+                    <p className="text-xs text-foreground whitespace-pre-wrap">
+                      {activeItem.context}
+                    </p>
                   </div>
                 </div>
               )}
@@ -312,15 +334,23 @@ export function InboxPreviewCard() {
                     {m.suggested()}
                   </p>
                   <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
-                    <HugeiconsIcon icon={Target01Icon} className="size-3 shrink-0 text-primary/60" />
-                    <span className="text-xs font-medium text-primary">{activeItem.suggestedGoal}</span>
+                    <HugeiconsIcon
+                      icon={Target01Icon}
+                      className="size-3 shrink-0 text-primary/60"
+                    />
+                    <span className="text-xs font-medium text-primary">
+                      {activeItem.suggestedGoal}
+                    </span>
                   </div>
                 </div>
               )}
 
               {/* Actions */}
               <div className="flex items-center gap-2">
-                <Link to="/dashboard" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                >
                   <HugeiconsIcon icon={Target01Icon} className="size-3" />
                   {m.convert_to_goal()}
                 </Link>
@@ -342,13 +372,14 @@ export function InboxPreviewCard() {
                   <HugeiconsIcon icon={InboxIcon} className="size-4 text-muted-foreground/50" />
                 </div>
                 <p className="text-xs text-muted-foreground">{m.no_inbox_selected()}</p>
-                <p className="text-[10px] text-muted-foreground/60 mt-0.5">{m.no_inbox_selected_desc()}</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                  {m.no_inbox_selected_desc()}
+                </p>
               </div>
             </div>
           )}
         </div>
       </div>
-
     </div>
-  )
+  );
 }

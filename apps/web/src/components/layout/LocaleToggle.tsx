@@ -1,22 +1,22 @@
-import { AVAILABLE_LOCALES } from "#/lib/i18n"
-import { useLocale } from "#/lib/useI18n"
+import { AVAILABLE_LOCALES } from "#/lib/i18n";
+import { useLocale } from "#/lib/useI18n";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
-import { Button } from "#/components/ui/button"
-import { Languages } from "lucide-react"
+} from "#/components/ui/dropdown-menu";
+import { Button } from "#/components/ui/button";
+import { Languages } from "lucide-react";
 
 const LOCALE_LABELS: Record<string, string> = {
-  "en": "English",
+  en: "English",
   "zh-CN": "简体中文",
   "zh-TW": "繁體中文",
-}
+};
 
 export default function LocaleToggle() {
-  const { locale: currentLocale, setLocaleWithSync } = useLocale()
+  const { locale: currentLocale, setLocaleWithSync } = useLocale();
 
   return (
     <DropdownMenu>
@@ -29,10 +29,7 @@ export default function LocaleToggle() {
       />
       <DropdownMenuContent align="end">
         {AVAILABLE_LOCALES.map((locale) => (
-          <DropdownMenuItem
-            key={locale.value}
-            onClick={() => setLocaleWithSync(locale.value)}
-          >
+          <DropdownMenuItem key={locale.value} onClick={() => setLocaleWithSync(locale.value)}>
             {LOCALE_LABELS[locale.value]}
             {currentLocale === locale.value && (
               <span className="ms-auto text-xs text-muted-foreground">✓</span>
@@ -41,5 +38,5 @@ export default function LocaleToggle() {
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

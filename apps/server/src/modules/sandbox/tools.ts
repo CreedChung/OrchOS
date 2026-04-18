@@ -1,21 +1,28 @@
-import { toolKit, hostTool } from "@rivet-dev/agent-os-core"
-import { z } from "zod"
-import { ProjectService } from "../project/service"
-import { executor } from "../execution/executor"
+import { toolKit, hostTool } from "@rivet-dev/agent-os-core";
+import { z } from "zod";
+import { ProjectService } from "../project/service";
+import { executor } from "../execution/executor";
 
 export const orchosToolkit = toolKit({
   name: "orchos",
-  description: "OrchOS project management tools — clone repos, get project info, run tests and builds",
+  description:
+    "OrchOS project management tools — clone repos, get project info, run tests and builds",
   tools: {
     gitClone: hostTool({
-      description: "Clone a git repository by project ID. Returns the clone output and target path.",
+      description:
+        "Clone a git repository by project ID. Returns the clone output and target path.",
       inputSchema: z.object({
         projectId: z.string().describe("The OrchOS project ID to clone"),
         force: z.boolean().optional().describe("Overwrite existing directory if true"),
       }),
       execute: async (input) => {
-        const result = await ProjectService.clone(input.projectId, { force: input.force })
-        return { success: result.success, output: result.output, error: result.error, path: result.path }
+        const result = await ProjectService.clone(input.projectId, { force: input.force });
+        return {
+          success: result.success,
+          output: result.output,
+          error: result.error,
+          path: result.path,
+        };
       },
       examples: [
         { description: "Clone a project repo", input: { projectId: "proj_abc123" } },
@@ -29,8 +36,8 @@ export const orchosToolkit = toolKit({
         projectId: z.string().describe("The OrchOS project ID"),
       }),
       execute: async (input) => {
-        const project = ProjectService.get(input.projectId)
-        if (!project) return { success: false, error: "Project not found" }
+        const project = ProjectService.get(input.projectId);
+        if (!project) return { success: false, error: "Project not found" };
         return {
           success: true,
           project: {
@@ -39,11 +46,9 @@ export const orchosToolkit = toolKit({
             path: project.path,
             repositoryUrl: project.repositoryUrl,
           },
-        }
+        };
       },
-      examples: [
-        { description: "Get project details", input: { projectId: "proj_abc123" } },
-      ],
+      examples: [{ description: "Get project details", input: { projectId: "proj_abc123" } }],
     }),
 
     runTests: hostTool({
@@ -52,8 +57,13 @@ export const orchosToolkit = toolKit({
         projectPath: z.string().describe("Absolute path to the project on the host"),
       }),
       execute: async (input) => {
-        const result = await executor.runTests(input.projectPath)
-        return { success: result.success, output: result.output, error: result.error, exitCode: result.exitCode }
+        const result = await executor.runTests(input.projectPath);
+        return {
+          success: result.success,
+          output: result.output,
+          error: result.error,
+          exitCode: result.exitCode,
+        };
       },
       examples: [
         { description: "Run tests for a project", input: { projectPath: "/home/user/my-project" } },
@@ -66,8 +76,13 @@ export const orchosToolkit = toolKit({
         projectPath: z.string().describe("Absolute path to the project on the host"),
       }),
       execute: async (input) => {
-        const result = await executor.runBuild(input.projectPath)
-        return { success: result.success, output: result.output, error: result.error, exitCode: result.exitCode }
+        const result = await executor.runBuild(input.projectPath);
+        return {
+          success: result.success,
+          output: result.output,
+          error: result.error,
+          exitCode: result.exitCode,
+        };
       },
       examples: [
         { description: "Build a project", input: { projectPath: "/home/user/my-project" } },
@@ -80,12 +95,12 @@ export const orchosToolkit = toolKit({
         projectPath: z.string().describe("Absolute path to the project on the host"),
       }),
       execute: async (input) => {
-        const result = await executor.gitStatus(input.projectPath)
-        return { success: true, ...result }
+        const result = await executor.gitStatus(input.projectPath);
+        return { success: true, ...result };
       },
       examples: [
         { description: "Check git status", input: { projectPath: "/home/user/my-project" } },
       ],
     }),
   },
-})
+});

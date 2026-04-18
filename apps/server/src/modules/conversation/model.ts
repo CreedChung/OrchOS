@@ -1,4 +1,4 @@
-import { t, type UnwrapSchema } from "elysia"
+import { t, type UnwrapSchema } from "elysia";
 
 export const ConversationModel = {
   createBody: t.Object({
@@ -35,8 +35,8 @@ export const ConversationModel = {
     createdAt: t.String(),
   }),
   errorNotFound: t.Object({ error: t.Literal("Conversation not found") }),
-} as const
+} as const;
 
 export type ConversationModel = {
-  [k in keyof typeof ConversationModel]: UnwrapSchema<typeof ConversationModel[k]>
-}
+  [k in keyof typeof ConversationModel]: UnwrapSchema<(typeof ConversationModel)[k]>;
+};

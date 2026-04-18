@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
-import { cn } from "#/lib/utils"
-import { ScrollArea } from "#/components/ui/scroll-area"
-import { Badge } from "#/components/ui/badge"
-import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { cn } from "#/lib/utils";
+import { ScrollArea } from "#/components/ui/scroll-area";
+import { Badge } from "#/components/ui/badge";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   Fire02Icon,
   Alert01Icon,
@@ -18,29 +18,32 @@ import {
   Robot02Icon,
   ChevronDown,
   ChevronRight,
-} from "@hugeicons/core-free-icons"
+} from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
-import { m } from "#/paraglide/messages"
-import type { Problem, ProblemPriority, ProblemStatus, Goal, ActivityEntry } from "#/lib/types"
+} from "#/components/ui/dropdown-menu";
+import { m } from "#/paraglide/messages";
+import type { Problem, ProblemPriority, ProblemStatus, Goal, ActivityEntry } from "#/lib/types";
 
-type PriorityFilter = "all" | "critical" | "warning" | "info"
+type PriorityFilter = "all" | "critical" | "warning" | "info";
 
 interface ProblemInboxProps {
-  problems: Problem[]
-  goals: Goal[]
-  activities: ActivityEntry[]
-  onProblemAction: (problemId: string, action: string) => void
-  onBulkAction: (ids: string[], status: ProblemStatus) => void
-  onCreateRule: (problem: Problem) => void
-  priorityFilter: PriorityFilter
+  problems: Problem[];
+  goals: Goal[];
+  activities: ActivityEntry[];
+  onProblemAction: (problemId: string, action: string) => void;
+  onBulkAction: (ids: string[], status: ProblemStatus) => void;
+  onCreateRule: (problem: Problem) => void;
+  priorityFilter: PriorityFilter;
 }
 
-const priorityConfig: Record<ProblemPriority, { icon: IconSvgElement; label: string; colorClass: string; bgClass: string; borderClass: string }> = {
+const priorityConfig: Record<
+  ProblemPriority,
+  { icon: IconSvgElement; label: string; colorClass: string; bgClass: string; borderClass: string }
+> = {
   critical: {
     icon: Fire02Icon,
     label: m.critical(),
@@ -62,7 +65,7 @@ const priorityConfig: Record<ProblemPriority, { icon: IconSvgElement; label: str
     bgClass: "bg-blue-500/5",
     borderClass: "border-blue-500/10",
   },
-}
+};
 
 const actionIconMap: Record<string, IconSvgElement> = {
   Fix: Wrench01Icon,
@@ -73,70 +76,81 @@ const actionIconMap: Record<string, IconSvgElement> = {
   Override: Shield01Icon,
   Dismiss: ViewOffIcon,
   "Apply suggestion": Wrench01Icon,
-}
+};
 
-export function ProblemInbox({ problems, goals, activities, onProblemAction, onBulkAction, onCreateRule, priorityFilter }: ProblemInboxProps) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [focusedIndex, setFocusedIndex] = useState(-1)
-  const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set())
+export function ProblemInbox({
+  problems,
+  goals,
+  activities,
+  onProblemAction,
+  onBulkAction,
+  onCreateRule,
+  priorityFilter,
+}: ProblemInboxProps) {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [expandedHistory, setExpandedHistory] = useState<Set<string>>(new Set());
 
   const openProblems = useMemo(() => {
-    let filtered = problems.filter((p) => p.status === "open")
+    let filtered = problems.filter((p) => p.status === "open");
     if (priorityFilter !== "all") {
-      filtered = filtered.filter((p) => p.priority === priorityFilter)
+      filtered = filtered.filter((p) => p.priority === priorityFilter);
     }
-    return filtered
-  }, [problems, priorityFilter])
+    return filtered;
+  }, [problems, priorityFilter]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const toggleSelectAll = () => {
     if (selectedIds.size === openProblems.length) {
-      setSelectedIds(new Set())
+      setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(openProblems.map((p) => p.id)))
+      setSelectedIds(new Set(openProblems.map((p) => p.id)));
     }
-  }
+  };
 
   // Keyboard shortcuts
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-    if (e.key === "j" || e.key === "ArrowDown") {
-      e.preventDefault()
-      setFocusedIndex((prev) => Math.min(prev + 1, openProblems.length - 1))
-    } else if (e.key === "k" || e.key === "ArrowUp") {
-      e.preventDefault()
-      setFocusedIndex((prev) => Math.max(prev - 1, 0))
-    } else if (e.key === "x" && focusedIndex >= 0 && focusedIndex < openProblems.length) {
-      e.preventDefault()
-      toggleSelect(openProblems[focusedIndex].id)
-    } else if (e.key === "a" && focusedIndex >= 0 && focusedIndex < openProblems.length) {
-      e.preventDefault()
-      const problem = openProblems[focusedIndex]
-      onProblemAction(problem.id, "Assign")
-    } else if (e.key === "f" && focusedIndex >= 0 && focusedIndex < openProblems.length) {
-      e.preventDefault()
-      const problem = openProblems[focusedIndex]
-      onProblemAction(problem.id, "Fix")
-    } else if (e.key === "i" && focusedIndex >= 0 && focusedIndex < openProblems.length) {
-      e.preventDefault()
-      const problem = openProblems[focusedIndex]
-      onProblemAction(problem.id, "Ignore")
-    }
-  }, [focusedIndex, openProblems, onProblemAction])
+      if (e.key === "j" || e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex((prev) => Math.min(prev + 1, openProblems.length - 1));
+      } else if (e.key === "k" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "x" && focusedIndex >= 0 && focusedIndex < openProblems.length) {
+        e.preventDefault();
+        toggleSelect(openProblems[focusedIndex].id);
+      } else if (e.key === "a" && focusedIndex >= 0 && focusedIndex < openProblems.length) {
+        e.preventDefault();
+        const problem = openProblems[focusedIndex];
+        onProblemAction(problem.id, "Assign");
+      } else if (e.key === "f" && focusedIndex >= 0 && focusedIndex < openProblems.length) {
+        e.preventDefault();
+        const problem = openProblems[focusedIndex];
+        onProblemAction(problem.id, "Fix");
+      } else if (e.key === "i" && focusedIndex >= 0 && focusedIndex < openProblems.length) {
+        e.preventDefault();
+        const problem = openProblems[focusedIndex];
+        onProblemAction(problem.id, "Ignore");
+      }
+    },
+    [focusedIndex, openProblems, onProblemAction],
+  );
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [handleKeyDown])
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
     <main className="flex flex-1 flex-col overflow-hidden">
@@ -189,11 +203,11 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
       <ScrollArea className="flex-1">
         <div className="divide-y divide-border/50">
           {openProblems.map((problem, idx) => {
-            const config = priorityConfig[problem.priority]
-            const PriorityIcon = config.icon
-            const isSelected = selectedIds.has(problem.id)
-            const isFocused = idx === focusedIndex
-            const goal = problem.goalId ? goals.find((g) => g.id === problem.goalId) : null
+            const config = priorityConfig[problem.priority];
+            const PriorityIcon = config.icon;
+            const isSelected = selectedIds.has(problem.id);
+            const isFocused = idx === focusedIndex;
+            const goal = problem.goalId ? goals.find((g) => g.id === problem.goalId) : null;
 
             return (
               <div key={problem.id} className="transition-colors hover:bg-accent/30">
@@ -206,152 +220,175 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
                   )}
                   onClick={() => setFocusedIndex(idx)}
                 >
-                {/* Checkbox */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    toggleSelect(problem.id)
-                  }}
-                  className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
-                >
-                  {isSelected ? (
-                    <HugeiconsIcon icon={CheckmarkBadge01Icon} className="size-4 text-primary" />
-                  ) : (
-                    <HugeiconsIcon icon={Square01Icon} className="size-4" />
-                  )}
-                </button>
-
-                {/* Priority Icon */}
-                <HugeiconsIcon icon={PriorityIcon} className={cn("mt-0.5 size-4 shrink-0", config.colorClass)} />
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">{problem.title}</span>
-                    <Badge variant="outline" className="text-[9px] uppercase tracking-wider px-1.5 py-0">
-                      {config.label}
-                    </Badge>
-                  </div>
-
-                  {/* Metadata */}
-                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                    {problem.source && (
-                      <span className="flex items-center gap-1">
-                        <span className="font-medium text-foreground/70">agent:</span>
-                        {problem.source}
-                      </span>
+                  {/* Checkbox */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(problem.id);
+                    }}
+                    className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
+                  >
+                    {isSelected ? (
+                      <HugeiconsIcon icon={CheckmarkBadge01Icon} className="size-4 text-primary" />
+                    ) : (
+                      <HugeiconsIcon icon={Square01Icon} className="size-4" />
                     )}
-                    {problem.context && (
-                      <>
-                        <span className="text-muted-foreground/30">|</span>
-                        <span className="truncate">{problem.context}</span>
-                      </>
-                    )}
-                    {goal && (
-                      <>
-                        <span className="text-muted-foreground/30">|</span>
-                        <span className="font-medium text-primary/70">{goal.title}</span>
-                      </>
-                    )}
-                  </div>
+                  </button>
 
-                  {/* Action Buttons */}
-                  {problem.actions && problem.actions.length > 0 && (
-                    <div className="mt-2 flex items-center gap-1.5">
-                      {problem.actions.map((action) => {
-                        const ActionIcon = actionIconMap[action] || Wrench01Icon
-                        return (
-                          <button
-                            key={action}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onProblemAction(problem.id, action)
-                            }}
-                            className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                          >
-                            <HugeiconsIcon icon={ActionIcon} className="size-3" />
-                            {action}
-                          </button>
-                        )
-                      })}
+                  {/* Priority Icon */}
+                  <HugeiconsIcon
+                    icon={PriorityIcon}
+                    className={cn("mt-0.5 size-4 shrink-0", config.colorClass)}
+                  />
 
-                      {/* View History */}
-                      {problem.goalId && activities.some((a) => a.goalId === problem.goalId) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setExpandedHistory((prev) => {
-                              const next = new Set(prev)
-                              if (next.has(problem.id)) next.delete(problem.id)
-                              else next.add(problem.id)
-                              return next
-                            })
-                          }}
-                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        >
-                          {expandedHistory.has(problem.id) ? (
-                            <HugeiconsIcon icon={ChevronDown} className="size-3" />
-                          ) : (
-                            <HugeiconsIcon icon={ChevronRight} className="size-3" />
-                          )}
-                          <HugeiconsIcon icon={Robot02Icon} className="size-3" />
-                          {m.view_history()}
-                        </button>
-                      )}
-
-                      {/* Create Rule from this problem */}
-                      <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger className="ml-1 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent hover:text-foreground">
-                          <HugeiconsIcon icon={MoreHorizontal} className="size-3.5" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-40">
-                          <DropdownMenuItem onClick={() => onCreateRule(problem)}>
-                            <HugeiconsIcon icon={Shield01Icon} className="size-3.5" />
-                            {m.create_rule_from_this()}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-foreground">{problem.title}</span>
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] uppercase tracking-wider px-1.5 py-0"
+                      >
+                        {config.label}
+                      </Badge>
                     </div>
-                  )}
+
+                    {/* Metadata */}
+                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                      {problem.source && (
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium text-foreground/70">agent:</span>
+                          {problem.source}
+                        </span>
+                      )}
+                      {problem.context && (
+                        <>
+                          <span className="text-muted-foreground/30">|</span>
+                          <span className="truncate">{problem.context}</span>
+                        </>
+                      )}
+                      {goal && (
+                        <>
+                          <span className="text-muted-foreground/30">|</span>
+                          <span className="font-medium text-primary/70">{goal.title}</span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    {problem.actions && problem.actions.length > 0 && (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        {problem.actions.map((action) => {
+                          const ActionIcon = actionIconMap[action] || Wrench01Icon;
+                          return (
+                            <button
+                              key={action}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onProblemAction(problem.id, action);
+                              }}
+                              className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                            >
+                              <HugeiconsIcon icon={ActionIcon} className="size-3" />
+                              {action}
+                            </button>
+                          );
+                        })}
+
+                        {/* View History */}
+                        {problem.goalId && activities.some((a) => a.goalId === problem.goalId) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedHistory((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(problem.id)) next.delete(problem.id);
+                                else next.add(problem.id);
+                                return next;
+                              });
+                            }}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          >
+                            {expandedHistory.has(problem.id) ? (
+                              <HugeiconsIcon icon={ChevronDown} className="size-3" />
+                            ) : (
+                              <HugeiconsIcon icon={ChevronRight} className="size-3" />
+                            )}
+                            <HugeiconsIcon icon={Robot02Icon} className="size-3" />
+                            {m.view_history()}
+                          </button>
+                        )}
+
+                        {/* Create Rule from this problem */}
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger className="ml-1 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent hover:text-foreground">
+                            <HugeiconsIcon icon={MoreHorizontal} className="size-3.5" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="min-w-40">
+                            <DropdownMenuItem onClick={() => onCreateRule(problem)}>
+                              <HugeiconsIcon icon={Shield01Icon} className="size-3.5" />
+                              {m.create_rule_from_this()}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Timestamp */}
+                  <div className="shrink-0 text-[10px] text-muted-foreground tabular-nums self-start mt-0.5">
+                    {problem.createdAt.split("T")[1]?.slice(0, 5) || ""}
+                  </div>
                 </div>
 
-                {/* Timestamp */}
-                <div className="shrink-0 text-[10px] text-muted-foreground tabular-nums self-start mt-0.5">
-                  {problem.createdAt.split("T")[1]?.slice(0, 5) || ""}
-                </div>
-              </div>
-
-              {/* Expanded History */}
-              {expandedHistory.has(problem.id) && problem.goalId && (
-                <div className="ml-9 mr-4 mb-2 rounded-md border border-border/50 bg-card/50 px-3 py-2 space-y-1.5">
-                  {activities
-                    .filter((a) => a.goalId === problem.goalId)
-                    .slice(0, 6)
-                    .map((activity) => {
-                      const isSuccess = activity.detail?.includes("pass") || activity.detail?.includes("success")
-                      const isFailed = activity.detail?.includes("fail") || activity.detail?.includes("error")
-                      return (
-                        <div key={activity.id} className="flex items-start gap-2">
-                          <HugeiconsIcon icon={Robot02Icon} className={cn(
-                            "size-3 mt-0.5 shrink-0",
-                            isSuccess ? "text-emerald-500" : isFailed ? "text-red-500" : "text-muted-foreground"
-                          )} />
-                          <div className="min-w-0 flex-1">
-                            <span className="text-[11px] font-medium text-foreground/80">{activity.agent}</span>
-                            <span className="mx-1 text-[10px] text-muted-foreground/50">→</span>
-                            <span className="text-[11px] text-foreground/60">{activity.action}</span>
+                {/* Expanded History */}
+                {expandedHistory.has(problem.id) && problem.goalId && (
+                  <div className="ml-9 mr-4 mb-2 rounded-md border border-border/50 bg-card/50 px-3 py-2 space-y-1.5">
+                    {activities
+                      .filter((a) => a.goalId === problem.goalId)
+                      .slice(0, 6)
+                      .map((activity) => {
+                        const isSuccess =
+                          activity.detail?.includes("pass") || activity.detail?.includes("success");
+                        const isFailed =
+                          activity.detail?.includes("fail") || activity.detail?.includes("error");
+                        return (
+                          <div key={activity.id} className="flex items-start gap-2">
+                            <HugeiconsIcon
+                              icon={Robot02Icon}
+                              className={cn(
+                                "size-3 mt-0.5 shrink-0",
+                                isSuccess
+                                  ? "text-emerald-500"
+                                  : isFailed
+                                    ? "text-red-500"
+                                    : "text-muted-foreground",
+                              )}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[11px] font-medium text-foreground/80">
+                                {activity.agent}
+                              </span>
+                              <span className="mx-1 text-[10px] text-muted-foreground/50">→</span>
+                              <span className="text-[11px] text-foreground/60">
+                                {activity.action}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                              {activity.timestamp}
+                            </span>
                           </div>
-                          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">{activity.timestamp}</span>
-                        </div>
-                      )
-                    })}
-                  {activities.filter((a) => a.goalId === problem.goalId).length === 0 && (
-                    <p className="text-[11px] text-muted-foreground">{m.no_activity_recorded()}</p>
-                  )}
-                </div>
-              )}
+                        );
+                      })}
+                    {activities.filter((a) => a.goalId === problem.goalId).length === 0 && (
+                      <p className="text-[11px] text-muted-foreground">
+                        {m.no_activity_recorded()}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-            )
+            );
           })}
 
           {openProblems.length === 0 && (
@@ -366,5 +403,5 @@ export function ProblemInbox({ problems, goals, activities, onProblemAction, onB
         </div>
       </ScrollArea>
     </main>
-  )
+  );
 }

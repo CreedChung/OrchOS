@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Add01Icon,
-  Cancel01Icon,
   Chat01Icon,
   CloudIcon,
   Delete02Icon,
@@ -12,99 +11,111 @@ import {
   Server,
   ArrowRight01Icon,
   Folder01Icon,
-} from "@hugeicons/core-free-icons"
-import { Button } from "#/components/ui/button"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import { ConfirmDialog } from "#/components/ui/confirm-dialog"
-import { ScrollArea } from "#/components/ui/scroll-area"
-import { cn } from "#/lib/utils"
-import { api, type Conversation, type ConversationMessage } from "#/lib/api"
-import type { AgentProfile, Project, RuntimeProfile } from "#/lib/types"
-import { m } from "#/paraglide/messages"
+} from "@hugeicons/core-free-icons";
+import { Button } from "#/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
+import { ConfirmDialog } from "#/components/ui/confirm-dialog";
+import { ScrollArea } from "#/components/ui/scroll-area";
+import { cn } from "#/lib/utils";
+import { api, type Conversation, type ConversationMessage } from "#/lib/api";
+import type { AgentProfile, Project, RuntimeProfile } from "#/lib/types";
+import { m } from "#/paraglide/messages";
 
 interface CreationViewProps {
-  agents: AgentProfile[]
-  runtimes: RuntimeProfile[]
-  projects: Project[]
+  agents: AgentProfile[];
+  runtimes: RuntimeProfile[];
+  projects: Project[];
 }
 
 export function CreationView({ agents, runtimes, projects }: CreationViewProps) {
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
-  const [messages, setMessages] = useState<ConversationMessage[]>([])
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [convToDelete, setConvToDelete] = useState<string | null>(null)
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [convToDelete, setConvToDelete] = useState<string | null>(null);
 
-  const enabledRuntimes = useMemo(() => runtimes.filter((r) => r.enabled), [runtimes])
+  const enabledRuntimes = useMemo(() => runtimes.filter((r) => r.enabled), [runtimes]);
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
-    [conversations, activeConversationId]
-  )
+    [conversations, activeConversationId],
+  );
 
   const loadConversations = useCallback(async () => {
     try {
-      const list = await api.listConversations()
-      setConversations(list)
+      const list = await api.listConversations();
+      setConversations(list);
     } catch (err) {
-      console.error("Failed to load conversations:", err)
+      console.error("Failed to load conversations:", err);
     }
-  }, [])
+  }, []);
 
   const loadMessages = useCallback(async (convId: string) => {
     try {
-      const msgs = await api.getConversationMessages(convId)
-      setMessages(msgs)
+      const msgs = await api.getConversationMessages(convId);
+      setMessages(msgs);
     } catch (err) {
-      console.error("Failed to load messages:", err)
+      console.error("Failed to load messages:", err);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    loadConversations()
-  }, [loadConversations])
+    loadConversations();
+  }, [loadConversations]);
 
   useEffect(() => {
     if (activeConversationId) {
-      loadMessages(activeConversationId)
+      loadMessages(activeConversationId);
     } else {
-      setMessages([])
+      setMessages([]);
     }
-  }, [activeConversationId, loadMessages])
+  }, [activeConversationId, loadMessages]);
 
   const handleNewConversation = useCallback(async () => {
     try {
-      const conv = await api.createConversation({})
-      await loadConversations()
-      setActiveConversationId(conv.id)
+      const conv = await api.createConversation({});
+      await loadConversations();
+      setActiveConversationId(conv.id);
     } catch (err) {
-      console.error("Failed to create conversation:", err)
+      console.error("Failed to create conversation:", err);
     }
-  }, [loadConversations])
+  }, [loadConversations]);
 
   const handleDeleteConversation = useCallback(async () => {
-    if (!convToDelete) return
+    if (!convToDelete) return;
     try {
-      await api.deleteConversation(convToDelete)
+      await api.deleteConversation(convToDelete);
       if (activeConversationId === convToDelete) {
-        setActiveConversationId(null)
-        setMessages([])
+        setActiveConversationId(null);
+        setMessages([]);
       }
-      setConvToDelete(null)
-      await loadConversations()
+      setConvToDelete(null);
+      await loadConversations();
     } catch (err) {
-      console.error("Failed to delete conversation:", err)
+      console.error("Failed to delete conversation:", err);
     }
-  }, [convToDelete, activeConversationId, loadConversations])
+  }, [convToDelete, activeConversationId, loadConversations]);
 
-  const handleUpdateConversation = useCallback(async (id: string, data: { title?: string; projectId?: string; agentId?: string; runtimeId?: string }) => {
-    try {
-      await api.updateConversation(id, data)
-      await loadConversations()
-    } catch (err) {
-      console.error("Failed to update conversation:", err)
-    }
-  }, [loadConversations])
+  const handleUpdateConversation = useCallback(
+    async (
+      id: string,
+      data: { title?: string; projectId?: string; agentId?: string; runtimeId?: string },
+    ) => {
+      try {
+        await api.updateConversation(id, data);
+        await loadConversations();
+      } catch (err) {
+        console.error("Failed to update conversation:", err);
+      }
+    },
+    [loadConversations],
+  );
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -125,7 +136,7 @@ export function CreationView({ agents, runtimes, projects }: CreationViewProps) 
                   "group flex items-center gap-2 rounded-md px-2.5 py-2 text-sm cursor-pointer transition-colors",
                   activeConversationId === conv.id
                     ? "bg-accent text-accent-foreground font-medium"
-                    : "text-foreground/70 hover:bg-accent/50 hover:text-foreground"
+                    : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
                 )}
                 onClick={() => setActiveConversationId(conv.id)}
               >
@@ -134,7 +145,11 @@ export function CreationView({ agents, runtimes, projects }: CreationViewProps) 
                   {conv.title || m.untitled_conversation()}
                 </span>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setConvToDelete(conv.id); setDeleteConfirmOpen(true) }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConvToDelete(conv.id);
+                    setDeleteConfirmOpen(true);
+                  }}
                   className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
                 >
                   <HugeiconsIcon icon={Delete02Icon} className="size-3" />
@@ -143,7 +158,10 @@ export function CreationView({ agents, runtimes, projects }: CreationViewProps) 
             ))}
             {conversations.length === 0 && (
               <div className="py-6 text-center">
-                <HugeiconsIcon icon={Chat01Icon} className="mx-auto size-5 text-muted-foreground/30 mb-1.5" />
+                <HugeiconsIcon
+                  icon={Chat01Icon}
+                  className="mx-auto size-5 text-muted-foreground/30 mb-1.5"
+                />
                 <p className="text-xs text-muted-foreground">{m.no_conversations()}</p>
               </div>
             )}
@@ -162,13 +180,15 @@ export function CreationView({ agents, runtimes, projects }: CreationViewProps) 
             projects={projects}
             onUpdateConversation={handleUpdateConversation}
             onSendMessage={async (content) => {
-              const result = await api.sendConversationMessage(activeConversation.id, content)
-              await loadMessages(activeConversation.id)
+              const result = await api.sendConversationMessage(activeConversation.id, content);
+              await loadMessages(activeConversation.id);
               // Update conversation title if first message
               if (!activeConversation.title && messages.length === 0) {
-                await handleUpdateConversation(activeConversation.id, { title: content.slice(0, 60) })
+                await handleUpdateConversation(activeConversation.id, {
+                  title: content.slice(0, 60),
+                });
               }
-              return result
+              return result;
             }}
             onReloadMessages={() => loadMessages(activeConversation.id)}
           />
@@ -199,84 +219,95 @@ export function CreationView({ agents, runtimes, projects }: CreationViewProps) 
         variant="destructive"
       />
     </div>
-  )
+  );
 }
 
 interface ChatAreaProps {
-  conversation: Conversation
-  messages: ConversationMessage[]
-  agents: AgentProfile[]
-  runtimes: RuntimeProfile[]
-  projects: Project[]
-  onUpdateConversation: (id: string, data: { title?: string; projectId?: string; agentId?: string; runtimeId?: string }) => Promise<void>
-  onSendMessage: (content: string) => Promise<ConversationMessage>
-  onReloadMessages: () => Promise<void>
+  conversation: Conversation;
+  messages: ConversationMessage[];
+  agents: AgentProfile[];
+  runtimes: RuntimeProfile[];
+  projects: Project[];
+  onUpdateConversation: (
+    id: string,
+    data: { title?: string; projectId?: string; agentId?: string; runtimeId?: string },
+  ) => Promise<void>;
+  onSendMessage: (content: string) => Promise<ConversationMessage>;
+  onReloadMessages?: () => Promise<void>;
 }
 
-function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdateConversation, onSendMessage, onReloadMessages }: ChatAreaProps) {
-  const [input, setInput] = useState("")
-  const [sending, setSending] = useState(false)
-  const [editingTitle, setEditingTitle] = useState(false)
-  const [titleValue, setTitleValue] = useState("")
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+function ChatArea({
+  conversation,
+  messages,
+  agents,
+  runtimes,
+  projects,
+  onUpdateConversation,
+  onSendMessage,
+}: ChatAreaProps) {
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const selectedRuntime = useMemo(
     () => runtimes.find((r) => r.id === conversation.runtimeId),
-    [runtimes, conversation.runtimeId]
-  )
+    [runtimes, conversation.runtimeId],
+  );
 
-  const selectedProject = useMemo(
+  const _selectedProject = useMemo(
     () => projects.find((p) => p.id === conversation.projectId),
-    [projects, conversation.projectId]
-  )
+    [projects, conversation.projectId],
+  );
 
-  const modelDisplay = selectedRuntime?.model.replace(/^(cloud|local)\//, "") || ""
-  const isCloudModel = selectedRuntime?.model.startsWith("cloud/")
+  const modelDisplay = selectedRuntime?.model.replace(/^(cloud|local)\//, "") || "";
+  const isCloudModel = selectedRuntime?.model.startsWith("cloud/");
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // Focus textarea on mount
   useEffect(() => {
-    textareaRef.current?.focus()
-  }, [conversation.id])
+    textareaRef.current?.focus();
+  }, [conversation.id]);
 
   const handleSend = useCallback(async () => {
-    if (!input.trim() || sending) return
-    const content = input.trim()
-    setInput("")
-    setSending(true)
+    if (!input.trim() || sending) return;
+    const content = input.trim();
+    setInput("");
+    setSending(true);
 
     try {
-      await onSendMessage(content)
+      await onSendMessage(content);
     } catch (err) {
-      console.error("Failed to send message:", err)
+      console.error("Failed to send message:", err);
     } finally {
-      setSending(false)
+      setSending(false);
     }
-  }, [input, sending, onSendMessage])
+  }, [input, sending, onSendMessage]);
 
   function handleKeys(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault()
-      handleSend()
+      e.preventDefault();
+      handleSend();
     }
     // Allow Enter to send (without shift)
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
+      e.preventDefault();
+      handleSend();
     }
   }
 
   const handleTitleSubmit = useCallback(async () => {
     if (titleValue.trim()) {
-      await onUpdateConversation(conversation.id, { title: titleValue.trim() })
+      await onUpdateConversation(conversation.id, { title: titleValue.trim() });
     }
-    setEditingTitle(false)
-  }, [titleValue, conversation.id, onUpdateConversation])
+    setEditingTitle(false);
+  }, [titleValue, conversation.id, onUpdateConversation]);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -289,12 +320,18 @@ function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdate
             value={titleValue}
             onChange={(e) => setTitleValue(e.target.value)}
             onBlur={handleTitleSubmit}
-            onKeyDown={(e) => { if (e.key === "Enter") handleTitleSubmit(); if (e.key === "Escape") setEditingTitle(false) }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleTitleSubmit();
+              if (e.key === "Escape") setEditingTitle(false);
+            }}
             className="flex-1 bg-transparent text-sm font-medium outline-none border-b border-primary"
           />
         ) : (
           <button
-            onClick={() => { setTitleValue(conversation.title || ""); setEditingTitle(true) }}
+            onClick={() => {
+              setTitleValue(conversation.title || "");
+              setEditingTitle(true);
+            }}
             className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors min-w-0 flex-1 text-left"
           >
             <span className="truncate">{conversation.title || m.untitled_conversation()}</span>
@@ -306,7 +343,9 @@ function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdate
           {/* Project selector */}
           <Select
             value={conversation.projectId || "__none__"}
-            onValueChange={(v) => onUpdateConversation(conversation.id, { projectId: v === "__none__" ? undefined : v })}
+            onValueChange={(v) =>
+              onUpdateConversation(conversation.id, { projectId: v === "__none__" ? undefined : v })
+            }
           >
             <SelectTrigger className="h-7 w-32 text-xs">
               <HugeiconsIcon icon={Folder01Icon} className="size-3 mr-1 shrink-0" />
@@ -315,7 +354,9 @@ function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdate
             <SelectContent>
               <SelectItem value="__none__">{m.no_project()}</SelectItem>
               {projects.map((project) => (
-                <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -323,7 +364,9 @@ function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdate
           {/* Agent/Runtime selector */}
           <Select
             value={conversation.runtimeId || "__none__"}
-            onValueChange={(v) => onUpdateConversation(conversation.id, { runtimeId: v === "__none__" ? undefined : v })}
+            onValueChange={(v) =>
+              onUpdateConversation(conversation.id, { runtimeId: v === "__none__" ? undefined : v })
+            }
           >
             <SelectTrigger className="h-7 w-40 text-xs">
               <HugeiconsIcon icon={Robot02Icon} className="size-3 mr-1 shrink-0" />
@@ -335,29 +378,37 @@ function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdate
                 <SelectItem key={runtime.id} value={runtime.id}>
                   <span className="flex items-center gap-1.5">
                     {runtime.name}
-                    <span className="text-muted-foreground">{runtime.model.replace(/^(cloud|local)\//, "")}</span>
+                    <span className="text-muted-foreground">
+                      {runtime.model.replace(/^(cloud|local)\//, "")}
+                    </span>
                   </span>
                 </SelectItem>
               ))}
-              {agents.filter((a) => a.enabled).map((agent) => (
-                <SelectItem key={agent.id} value={agent.runtimeId || agent.id}>
-                  <span className="flex items-center gap-1.5">
-                    {agent.name}
-                    <span className="text-muted-foreground">{agent.model.replace(/^(cloud|local)\//, "")}</span>
-                  </span>
-                </SelectItem>
-              ))}
+              {agents
+                .filter((a) => a.enabled)
+                .map((agent) => (
+                  <SelectItem key={agent.id} value={agent.runtimeId || agent.id}>
+                    <span className="flex items-center gap-1.5">
+                      {agent.name}
+                      <span className="text-muted-foreground">
+                        {agent.model.replace(/^(cloud|local)\//, "")}
+                      </span>
+                    </span>
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
 
           {/* Model badge */}
           {selectedRuntime && (
-            <span className={cn(
-              "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium shrink-0",
-              isCloudModel
-                ? "bg-violet-500/10 text-violet-600 dark:text-violet-400"
-                : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-            )}>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium shrink-0",
+                isCloudModel
+                  ? "bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                  : "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+              )}
+            >
               <HugeiconsIcon icon={isCloudModel ? CloudIcon : Server} className="size-2.5" />
               {modelDisplay}
             </span>
@@ -378,7 +429,9 @@ function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdate
                 <p className="text-xs text-muted-foreground/60 mt-1">{m.creation_welcome_desc()}</p>
               </div>
               {!conversation.runtimeId && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{m.creation_no_runtime()}</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  {m.creation_no_runtime()}
+                </p>
               )}
             </div>
           )}
@@ -391,7 +444,7 @@ function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdate
                   ? "bg-primary/10 text-foreground ml-12"
                   : msg.error
                     ? "bg-destructive/10 text-destructive mr-12"
-                    : "bg-muted text-foreground mr-12"
+                    : "bg-muted text-foreground mr-12",
               )}
             >
               <div className="flex items-center gap-2 mb-1.5">
@@ -425,7 +478,9 @@ function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdate
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()}
+              placeholder={
+                selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()
+              }
               className="flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground"
               rows={1}
               onKeyDown={handleKeys}
@@ -433,9 +488,9 @@ function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdate
               disabled={sending}
               style={{ minHeight: "36px", maxHeight: "120px" }}
               onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement
-                target.style.height = "auto"
-                target.style.height = `${Math.min(target.scrollHeight, 120)}px`
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = "auto";
+                target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
               }}
             />
             <Button
@@ -453,10 +508,11 @@ function ChatArea({ conversation, messages, agents, runtimes, projects, onUpdate
             </Button>
           </div>
           <p className="text-[10px] text-muted-foreground/50 mt-1.5 text-center">
-            Enter to send · Shift+Enter for new line · {selectedRuntime ? `${selectedRuntime.name}` : m.select_agent()}
+            Enter to send · Shift+Enter for new line ·{" "}
+            {selectedRuntime ? `${selectedRuntime.name}` : m.select_agent()}
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

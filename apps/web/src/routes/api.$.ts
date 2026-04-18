@@ -13,7 +13,10 @@ function getBackendBaseUrl() {
 
 async function handle({ request }: { request: Request }) {
   const requestUrl = new URL(request.url);
-  const targetUrl = new URL(`${requestUrl.pathname}${requestUrl.search}`, `${getBackendBaseUrl()}/`);
+  const targetUrl = new URL(
+    `${requestUrl.pathname}${requestUrl.search}`,
+    `${getBackendBaseUrl()}/`,
+  );
   const headers = new Headers(request.headers);
 
   headers.delete("host");
@@ -21,7 +24,10 @@ async function handle({ request }: { request: Request }) {
   const upstream = await fetch(targetUrl, {
     method: request.method,
     headers,
-    body: request.method === "GET" || request.method === "HEAD" ? undefined : await request.arrayBuffer(),
+    body:
+      request.method === "GET" || request.method === "HEAD"
+        ? undefined
+        : await request.arrayBuffer(),
     redirect: "manual",
   });
 

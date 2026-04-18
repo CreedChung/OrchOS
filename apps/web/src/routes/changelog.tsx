@@ -1,12 +1,12 @@
-import { createFileRoute } from '@tanstack/react-router'
-import Header from '#/components/layout/Header'
-import Footer from '#/components/layout/Footer'
-import ChangelogFileViewer from '#/components/ui/file-viewer-demo'
-import { I18nProvider } from '#/lib/useI18n'
+import { createFileRoute } from "@tanstack/react-router";
+import Header from "#/components/layout/Header";
+import Footer from "#/components/layout/Footer";
+import ChangelogFileViewer from "#/components/ui/file-viewer-demo";
+import { I18nProvider } from "#/lib/useI18n";
 
-export const Route = createFileRoute('/changelog')({
+export const Route = createFileRoute("/changelog")({
   component: Changelog,
-})
+});
 
 function Changelog() {
   return (
@@ -19,5 +19,5 @@ function Changelog() {
         <Footer />
       </div>
     </I18nProvider>
-  )
+  );
 }

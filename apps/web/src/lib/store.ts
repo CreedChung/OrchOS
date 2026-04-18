@@ -1,46 +1,46 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
-import type { ControlSettings } from "#/lib/types"
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { ControlSettings } from "#/lib/types";
 
-type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_request"
-type GoalStatusFilter = "all" | "active" | "completed" | "paused"
-type ScopeFilter = "all" | "global" | "project"
-type ThemeMode = "light" | "dark" | "auto"
+type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_request";
+type GoalStatusFilter = "all" | "active" | "completed" | "paused";
+type ScopeFilter = "all" | "global" | "project";
+type ThemeMode = "light" | "dark" | "auto";
 
 interface UIState {
   // Navigation & selection
-  activeGoalId: string | null
-  activeAgentId: string | null
-  activeInboxId: string | null
-  activeOrganizationId: string | null
+  activeGoalId: string | null;
+  activeAgentId: string | null;
+  activeInboxId: string | null;
+  activeOrganizationId: string | null;
 
   // Filters
-  sourceFilter: SourceFilter
-  goalStatusFilter: GoalStatusFilter
-  scopeFilter: ScopeFilter
+  sourceFilter: SourceFilter;
+  goalStatusFilter: GoalStatusFilter;
+  scopeFilter: ScopeFilter;
 
   // Panel states
-  activityPanelOpen: boolean
+  activityPanelOpen: boolean;
 
   // Theme
-  theme: ThemeMode
+  theme: ThemeMode;
 
   // Settings (persisted locally, also synced with server)
-  settings: ControlSettings | null
+  settings: ControlSettings | null;
 }
 
 interface UIActions {
-  setActiveGoalId: (id: string | null) => void
-  setActiveAgentId: (id: string | null) => void
-  setActiveInboxId: (id: string | null) => void
-  setActiveOrganizationId: (id: string | null) => void
-  setSourceFilter: (filter: SourceFilter) => void
-  setGoalStatusFilter: (filter: GoalStatusFilter) => void
-  setScopeFilter: (filter: ScopeFilter) => void
-  setActivityPanelOpen: (open: boolean) => void
-  toggleActivityPanel: () => void
-  setTheme: (mode: ThemeMode) => void
-  setSettings: (settings: ControlSettings) => void
+  setActiveGoalId: (id: string | null) => void;
+  setActiveAgentId: (id: string | null) => void;
+  setActiveInboxId: (id: string | null) => void;
+  setActiveOrganizationId: (id: string | null) => void;
+  setSourceFilter: (filter: SourceFilter) => void;
+  setGoalStatusFilter: (filter: GoalStatusFilter) => void;
+  setScopeFilter: (filter: ScopeFilter) => void;
+  setActivityPanelOpen: (open: boolean) => void;
+  toggleActivityPanel: () => void;
+  setTheme: (mode: ThemeMode) => void;
+  setSettings: (settings: ControlSettings) => void;
 }
 
 const defaultSettings: ControlSettings = {
@@ -50,7 +50,7 @@ const defaultSettings: ControlSettings = {
   locale: "en",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   notifications: { system: true, sound: true, eventSounds: {} },
-}
+};
 
 export const useUIStore = create<UIState & UIActions>()(
   persist(
@@ -90,6 +90,6 @@ export const useUIStore = create<UIState & UIActions>()(
     {
       name: "orchos-ui",
       version: 1,
-    }
-  )
-)
+    },
+  ),
+);

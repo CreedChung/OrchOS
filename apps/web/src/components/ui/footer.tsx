@@ -1,7 +1,7 @@
-"use client"
-import { motion } from "motion/react"
-import { Link } from "@tanstack/react-router"
-import { m } from "#/paraglide/messages"
+"use client";
+import { motion } from "motion/react";
+import { Link } from "@tanstack/react-router";
+import { m } from "#/paraglide/messages";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -14,7 +14,7 @@ const containerVariants = {
       staggerChildren: 0.1,
     },
   },
-}
+};
 
 const itemVariants = {
   hidden: { opacity: 0, x: -20 },
@@ -23,7 +23,7 @@ const itemVariants = {
     x: 0,
     transition: { duration: 0.6, ease: "easeOut" },
   },
-}
+};
 
 const linkVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -32,7 +32,7 @@ const linkVariants = {
     y: 0,
     transition: { duration: 0.4, ease: "easeOut" },
   },
-}
+};
 
 const backgroundVariants = {
   hidden: { opacity: 0, scale: 0.8 },
@@ -44,20 +44,48 @@ const backgroundVariants = {
       ease: "easeOut",
     },
   },
-}
+};
 
 const footerData = {
   sections: [
-    { title: m.footer_product(), links: [{ label: m.nav_home(), to: "/" }, { label: m.open_dashboard(), to: "/dashboard" }, { label: m.nav_changelog(), to: "/changelog" }] },
-    { title: m.footer_company(), links: [{ label: m.nav_about(), to: "/about" }, { label: m.integration_github(), to: "https://github.com/CreedChung/OrchOS" }] },
-    { title: m.footer_resources(), links: [{ label: m.footer_documentation(), to: "#" }, { label: m.footer_community(), to: "#" }, { label: m.footer_help_center(), to: "#" }] },
+    {
+      title: m.footer_product(),
+      links: [
+        { label: m.nav_home(), to: "/" },
+        { label: m.open_dashboard(), to: "/dashboard" },
+        { label: m.nav_changelog(), to: "/changelog" },
+      ],
+    },
+    {
+      title: m.footer_company(),
+      links: [
+        { label: m.nav_about(), to: "/about" },
+        { label: m.integration_github(), to: "https://github.com/CreedChung/OrchOS" },
+      ],
+    },
+    {
+      title: m.footer_resources(),
+      links: [
+        { label: m.footer_documentation(), to: "#" },
+        { label: m.footer_community(), to: "#" },
+        { label: m.footer_help_center(), to: "#" },
+      ],
+    },
   ],
   title: m.about_orchos(),
   subtitle: m.built_with_orchos(),
   copyright: `©${new Date().getFullYear()} ${m.about_orchos()}. ${m.footer_rights()}`,
-}
+};
 
-const NavSection = ({ title, links, index }: { title: string; links: { label: string; to: string }[]; index: number }) => (
+const NavSection = ({
+  title,
+  links,
+  index,
+}: {
+  title: string;
+  links: { label: string; to: string }[];
+  index: number;
+}) => (
   <motion.div variants={itemVariants} custom={index} className="flex flex-col gap-2">
     <motion.h3
       initial={{ opacity: 0, y: -10 }}
@@ -71,7 +99,7 @@ const NavSection = ({ title, links, index }: { title: string; links: { label: st
       <Link
         key={linkIndex}
         to={link.to}
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       >
         <motion.span
           variants={linkVariants}
@@ -93,11 +121,14 @@ const NavSection = ({ title, links, index }: { title: string; links: { label: st
       </Link>
     ))}
   </motion.div>
-)
+);
 
 export default function StickyFooter() {
   return (
-    <div className="relative h-[45vh]" style={{ clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}>
+    <div
+      className="relative h-[45vh]"
+      style={{ clipPath: "polygon(0% 0, 100% 0%, 100% 100%, 0 100%)" }}
+    >
       <div className="relative h-[calc(100vh+45vh)] -top-[100vh]">
         <div className="h-[45vh] sticky top-[calc(100vh-45vh)]">
           <motion.div
@@ -140,7 +171,12 @@ export default function StickyFooter() {
             <motion.div variants={containerVariants} className="relative z-10">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-12 lg:gap-20">
                 {footerData.sections.map((section, index) => (
-                  <NavSection key={section.title} title={section.title} links={section.links} index={index} />
+                  <NavSection
+                    key={section.title}
+                    title={section.title}
+                    links={section.links}
+                    index={index}
+                  />
                 ))}
               </div>
             </motion.div>
@@ -213,5 +249,5 @@ export default function StickyFooter() {
         </div>
       </div>
     </div>
-  )
+  );
 }

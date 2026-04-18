@@ -1,24 +1,23 @@
-import * as React from 'react'
-import { motion, useMotionValue, useSpring } from 'motion/react'
+import * as React from "react";
+import { motion, useMotionValue, useSpring } from "motion/react";
 
-import { Button } from '#/components/ui/button'
-import { cn } from '#/lib/utils'
+import { Button } from "#/components/ui/button";
+import { cn } from "#/lib/utils";
 
 interface IconProps {
-  id: number
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-  className: string
+  id: number;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  className: string;
 }
 
-export interface FloatingIconsHeroProps
-  extends React.HTMLAttributes<HTMLElement> {
-  eyebrow?: string
-  title: string
-  subtitle: string
-  ctaText: string
-  ctaHref: string
-  icons: IconProps[]
-  children?: React.ReactNode
+export interface FloatingIconsHeroProps extends React.HTMLAttributes<HTMLElement> {
+  eyebrow?: string;
+  title: string;
+  subtitle: string;
+  ctaText: string;
+  ctaHref: string;
+  icons: IconProps[];
+  children?: React.ReactNode;
 }
 
 function FloatingIcon({
@@ -27,46 +26,46 @@ function FloatingIcon({
   iconData,
   index,
 }: {
-  mouseX: React.MutableRefObject<number>
-  mouseY: React.MutableRefObject<number>
-  iconData: IconProps
-  index: number
+  mouseX: React.MutableRefObject<number>;
+  mouseY: React.MutableRefObject<number>;
+  iconData: IconProps;
+  index: number;
 }) {
-  const ref = React.useRef<HTMLDivElement>(null)
-  const x = useMotionValue(0)
-  const y = useMotionValue(0)
-  const springX = useSpring(x, { stiffness: 280, damping: 22 })
-  const springY = useSpring(y, { stiffness: 280, damping: 22 })
+  const ref = React.useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springX = useSpring(x, { stiffness: 280, damping: 22 });
+  const springY = useSpring(y, { stiffness: 280, damping: 22 });
 
   React.useEffect(() => {
     const handleMouseMove = () => {
       if (!ref.current) {
-        return
+        return;
       }
 
-      const rect = ref.current.getBoundingClientRect()
-      const centerX = rect.left + rect.width / 2
-      const centerY = rect.top + rect.height / 2
-      const distance = Math.hypot(mouseX.current - centerX, mouseY.current - centerY)
+      const rect = ref.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const distance = Math.hypot(mouseX.current - centerX, mouseY.current - centerY);
 
       if (distance < 160) {
-        const angle = Math.atan2(mouseY.current - centerY, mouseX.current - centerX)
-        const force = (1 - distance / 160) * 48
-        x.set(-Math.cos(angle) * force)
-        y.set(-Math.sin(angle) * force)
-        return
+        const angle = Math.atan2(mouseY.current - centerY, mouseX.current - centerX);
+        const force = (1 - distance / 160) * 48;
+        x.set(-Math.cos(angle) * force);
+        y.set(-Math.sin(angle) * force);
+        return;
       }
 
-      x.set(0)
-      y.set(0)
-    }
+      x.set(0);
+      y.set(0);
+    };
 
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [mouseX, mouseY, x, y])
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [mouseX, mouseY, x, y]);
 
-  const Icon = iconData.icon
-  const duration = 5 + (index % 5) * 0.8
+  const Icon = iconData.icon;
+  const duration = 5 + (index % 5) * 0.8;
 
   return (
     <motion.div
@@ -79,7 +78,7 @@ function FloatingIcon({
         duration: 0.6,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className={cn('pointer-events-none absolute', iconData.className)}
+      className={cn("pointer-events-none absolute", iconData.className)}
     >
       <motion.div
         className="flex size-16 items-center justify-center rounded-[1.75rem] border border-border/60 bg-card/75 p-3 text-foreground shadow-[0_20px_60px_-28px_rgba(0,0,0,0.55)] backdrop-blur-xl md:size-20"
@@ -91,36 +90,33 @@ function FloatingIcon({
         transition={{
           duration,
           repeat: Infinity,
-          repeatType: 'mirror',
-          ease: 'easeInOut',
+          repeatType: "mirror",
+          ease: "easeInOut",
         }}
       >
         <Icon className="size-8 md:size-10" />
       </motion.div>
     </motion.div>
-  )
+  );
 }
 
 const FloatingIconsHero = React.forwardRef<HTMLElement, FloatingIconsHeroProps>(
-  (
-    { className, eyebrow, title, subtitle, ctaText, ctaHref, icons, children, ...props },
-    ref
-  ) => {
-    const mouseX = React.useRef(0)
-    const mouseY = React.useRef(0)
+  ({ className, eyebrow, title, subtitle, ctaText, ctaHref, icons, children, ...props }, ref) => {
+    const mouseX = React.useRef(0);
+    const mouseY = React.useRef(0);
 
     const handleMouseMove = (event: React.MouseEvent<HTMLElement>) => {
-      mouseX.current = event.clientX
-      mouseY.current = event.clientY
-    }
+      mouseX.current = event.clientX;
+      mouseY.current = event.clientY;
+    };
 
     return (
       <section
         ref={ref}
         onMouseMove={handleMouseMove}
         className={cn(
-          'relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background px-6 py-20 md:px-8',
-          className
+          "relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background px-6 py-20 md:px-8",
+          className,
         )}
         {...props}
       >
@@ -151,9 +147,7 @@ const FloatingIconsHero = React.forwardRef<HTMLElement, FloatingIconsHeroProps>(
             {subtitle}
           </p>
           {children ? (
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-              {children}
-            </div>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2">{children}</div>
           ) : null}
           <div className="mt-10">
             <Button asChild size="lg" className="h-12 rounded-xl px-8 text-base font-semibold">
@@ -162,11 +156,11 @@ const FloatingIconsHero = React.forwardRef<HTMLElement, FloatingIconsHeroProps>(
           </div>
         </div>
       </section>
-    )
-  }
-)
+    );
+  },
+);
 
-FloatingIconsHero.displayName = 'FloatingIconsHero'
+FloatingIconsHero.displayName = "FloatingIconsHero";
 
-export { FloatingIconsHero }
-export type { IconProps as FloatingIconsHeroIcon }
+export { FloatingIconsHero };
+export type { IconProps as FloatingIconsHeroIcon };

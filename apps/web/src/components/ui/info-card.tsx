@@ -17,33 +17,27 @@ interface InfoCardTitleProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
-interface InfoCardDescriptionProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+interface InfoCardDescriptionProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
-const InfoCardTitle = React.memo(
-  ({ children, className, ...props }: InfoCardTitleProps) => {
-    return (
-      <div className={cn("font-medium mb-1", className)} {...props}>
-        {children}
-      </div>
-    );
-  }
-);
+const InfoCardTitle = React.memo(({ children, className, ...props }: InfoCardTitleProps) => {
+  return (
+    <div className={cn("font-medium mb-1", className)} {...props}>
+      {children}
+    </div>
+  );
+});
 InfoCardTitle.displayName = "InfoCardTitle";
 
 const InfoCardDescription = React.memo(
   ({ children, className, ...props }: InfoCardDescriptionProps) => {
     return (
-      <div
-        className={cn("text-muted-foreground leading-4", className)}
-        {...props}
-      >
+      <div className={cn("text-muted-foreground leading-4", className)} {...props}>
         {children}
       </div>
     );
-  }
+  },
 );
 InfoCardDescription.displayName = "InfoCardDescription";
 
@@ -65,15 +59,13 @@ type InfoCardDismissProps = React.HTMLAttributes<HTMLDivElement> & {
 };
 type InfoCardActionProps = CommonCardProps;
 
-const InfoCardContent = React.memo(
-  ({ children, className, ...props }: InfoCardContentProps) => {
-    return (
-      <div className={cn("flex flex-col gap-1 text-xs", className)} {...props}>
-        {children}
-      </div>
-    );
-  }
-);
+const InfoCardContent = React.memo(({ children, className, ...props }: InfoCardContentProps) => {
+  return (
+    <div className={cn("flex flex-col gap-1 text-xs", className)} {...props}>
+      {children}
+    </div>
+  );
+});
 InfoCardContent.displayName = "InfoCardContent";
 
 interface MediaItem {
@@ -107,25 +99,16 @@ const InfoCardContext = createContext<{
   onDismiss: () => {},
 });
 
-function InfoCard({
-  children,
-  className,
-  storageKey,
-  dismissType = "once",
-}: InfoCardProps) {
+function InfoCard({ children, className, storageKey, dismissType = "once" }: InfoCardProps) {
   if (dismissType === "forever" && !storageKey) {
-    throw new Error(
-      'A storageKey must be provided when using dismissType="forever"'
-    );
+    throw new Error('A storageKey must be provided when using dismissType="forever"');
   }
 
   const [isHovered, setIsHovered] = useState(false);
   const [allImagesLoaded, setAllImagesLoaded] = useState(true);
   const [isDismissed, setIsDismissed] = useState(() => {
     if (typeof window === "undefined" || dismissType === "once") return false;
-    return dismissType === "forever"
-      ? localStorage.getItem(storageKey!) === "dismissed"
-      : false;
+    return dismissType === "forever" ? localStorage.getItem(storageKey!) === "dismissed" : false;
   });
 
   const handleDismiss = useCallback(() => {
@@ -140,7 +123,7 @@ function InfoCard({
       handleMediaLoad: () => {},
       setAllImagesLoaded,
     }),
-    [setAllImagesLoaded]
+    [setAllImagesLoaded],
   );
 
   const cardContextValue = useMemo(
@@ -148,7 +131,7 @@ function InfoCard({
       isHovered,
       onDismiss: handleDismiss,
     }),
-    [isHovered, handleDismiss]
+    [isHovered, handleDismiss],
   );
 
   return (
@@ -176,8 +159,19 @@ function InfoCard({
                 onClick={handleDismiss}
                 className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-muted hover:text-muted-foreground"
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 4L10 10M10 4L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M4 4L10 10M10 4L4 10"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </button>
               {children}
@@ -194,10 +188,7 @@ const InfoCardFooter = ({ children, className }: InfoCardFooterProps) => {
 
   return (
     <motion.div
-      className={cn(
-        "flex justify-between text-xs text-muted-foreground",
-        className
-      )}
+      className={cn("flex justify-between text-xs text-muted-foreground", className)}
       initial={{ opacity: 0, height: "0px" }}
       animate={{
         opacity: isHovered ? 1 : 0,
@@ -226,27 +217,21 @@ const InfoCardDismiss = React.memo(
     };
 
     return (
-      <div
-        className={cn("cursor-pointer", className)}
-        onClick={handleClick}
-        {...props}
-      >
+      <div className={cn("cursor-pointer", className)} onClick={handleClick} {...props}>
         {children}
       </div>
     );
-  }
+  },
 );
 InfoCardDismiss.displayName = "InfoCardDismiss";
 
-const InfoCardAction = React.memo(
-  ({ children, className, ...props }: InfoCardActionProps) => {
-    return (
-      <div className={cn("", className)} {...props}>
-        {children}
-      </div>
-    );
-  }
-);
+const InfoCardAction = React.memo(({ children, className, ...props }: InfoCardActionProps) => {
+  return (
+    <div className={cn("", className)} {...props}>
+      {children}
+    </div>
+  );
+});
 InfoCardAction.displayName = "InfoCardAction";
 
 const InfoCardMedia = ({
@@ -274,13 +259,10 @@ const InfoCardMedia = ({
         ...item,
         type: item.type || "image",
       })),
-    [media]
+    [media],
   );
 
-  const displayMedia = useMemo(
-    () => processedMedia.slice(0, 3),
-    [processedMedia]
-  );
+  const displayMedia = useMemo(() => processedMedia.slice(0, 3), [processedMedia]);
 
   useEffect(() => {
     if (media.length > 0) {
@@ -336,12 +318,7 @@ const InfoCardMedia = ({
       <motion.div
         className={cn("relative mt-2 rounded-md", className)}
         animate={{
-          height:
-            media.length > 0
-              ? isHovered
-                ? expandHeight
-                : shrinkHeight
-              : "auto",
+          height: media.length > 0 ? (isHovered ? expandHeight : shrinkHeight) : "auto",
         }}
         style={{
           overflow: isOverflowVisible ? "visible" : "hidden",
@@ -353,20 +330,9 @@ const InfoCardMedia = ({
           duration: 0.3,
         }}
       >
-        <div
-          className={cn(
-            "relative",
-            media.length > 0 ? { height: shrinkHeight } : "h-auto"
-          )}
-        >
+        <div className={cn("relative", media.length > 0 ? { height: shrinkHeight } : "h-auto")}>
           {displayMedia.map((item, index) => {
-            const {
-              type,
-              src,
-              alt,
-              className: itemClassName,
-              ...mediaProps
-            } = item;
+            const { type, src, alt, className: itemClassName, ...mediaProps } = item;
 
             return (
               <motion.div
@@ -389,7 +355,7 @@ const InfoCardMedia = ({
                     src={src}
                     className={cn(
                       "w-full rounded-md border border-gray-200 object-cover shadow-lg",
-                      itemClassName
+                      itemClassName,
                     )}
                     onLoadedData={() => handleMediaLoad(src)}
                     preload="metadata"
@@ -403,7 +369,7 @@ const InfoCardMedia = ({
                     alt={alt}
                     className={cn(
                       "w-full rounded-md border border-gray-200 object-cover shadow-lg",
-                      itemClassName
+                      itemClassName,
                     )}
                     onLoad={() => handleMediaLoad(src)}
                     loading={loading}

@@ -1,61 +1,72 @@
-import { useState, useEffect } from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { FolderGitIcon, Add01Icon, Delete02Icon, ToggleLeft, ToggleRight } from "@hugeicons/core-free-icons"
-import { Button } from "#/components/ui/button"
-import { ConfirmDialog } from "#/components/ui/confirm-dialog"
-import { CreateMcpServerDialog } from "#/components/dialogs/CreateMcpServerDialog"
-import { api, type McpServerProfile } from "#/lib/api"
-import { m } from "#/paraglide/messages"
+import { useState, useEffect } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  FolderGitIcon,
+  Add01Icon,
+  Delete02Icon,
+  ToggleLeft,
+  ToggleRight,
+} from "@hugeicons/core-free-icons";
+import { Button } from "#/components/ui/button";
+import { ConfirmDialog } from "#/components/ui/confirm-dialog";
+import { CreateMcpServerDialog } from "#/components/dialogs/CreateMcpServerDialog";
+import { api, type McpServerProfile } from "#/lib/api";
+import { m } from "#/paraglide/messages";
 
 interface McpServersViewProps {
-  servers: McpServerProfile[]
-  onRefresh: () => void
-  scopeFilter?: "all" | "global" | "project"
+  servers: McpServerProfile[];
+  onRefresh: () => void;
+  scopeFilter?: "all" | "global" | "project";
 }
 
-export function McpServersView({ servers: initialServers, onRefresh, scopeFilter = "all" }: McpServersViewProps) {
-  const [servers, setServers] = useState<McpServerProfile[]>(initialServers)
-  const [createOpen, setCreateOpen] = useState(false)
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [serverToDelete, setServerToDelete] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+export function McpServersView({
+  servers: initialServers,
+  onRefresh,
+  scopeFilter = "all",
+}: McpServersViewProps) {
+  const [servers, setServers] = useState<McpServerProfile[]>(initialServers);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [serverToDelete, setServerToDelete] = useState<string | null>(null);
+  const [, setLoading] = useState(false);
 
   useEffect(() => {
-    setServers(initialServers)
-  }, [initialServers])
+    setServers(initialServers);
+  }, [initialServers]);
 
   const handleCreated = async () => {
-    setLoading(false)
-    onRefresh()
-  }
+    setLoading(false);
+    onRefresh();
+  };
 
   const handleToggle = async (id: string, enabled: boolean) => {
     try {
-      await api.toggleMcpServer(id, !enabled)
-      onRefresh()
+      await api.toggleMcpServer(id, !enabled);
+      onRefresh();
     } catch (err) {
-      console.error("Failed to toggle MCP server:", err)
+      console.error("Failed to toggle MCP server:", err);
     }
-  }
+  };
 
   const handleDelete = async (id: string) => {
-    setServerToDelete(id)
-    setDeleteConfirmOpen(true)
-  }
+    setServerToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
 
   const handleDeleteConfirm = async () => {
-    if (!serverToDelete) return
+    if (!serverToDelete) return;
     try {
-      await api.deleteMcpServer(serverToDelete)
-      onRefresh()
+      await api.deleteMcpServer(serverToDelete);
+      onRefresh();
     } catch (err) {
-      console.error("Failed to delete MCP server:", err)
+      console.error("Failed to delete MCP server:", err);
     } finally {
-      setServerToDelete(null)
+      setServerToDelete(null);
     }
-  }
+  };
 
-  const filteredServers = scopeFilter === "all" ? servers : servers.filter((s) => s.scope === scopeFilter)
+  const filteredServers =
+    scopeFilter === "all" ? servers : servers.filter((s) => s.scope === scopeFilter);
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -105,17 +116,20 @@ export function McpServersView({ servers: initialServers, onRefresh, scopeFilter
           </div>
         ))}
         {filteredServers.length === 0 && servers.length > 0 && (
-          <p className="text-sm text-muted-foreground">{scopeFilter === "global" ? m.no_global_mcp_servers() : m.no_project_mcp_servers()}</p>
+          <p className="text-sm text-muted-foreground">
+            {scopeFilter === "global" ? m.no_global_mcp_servers() : m.no_project_mcp_servers()}
+          </p>
         )}
       </div>
 
       {servers.length === 0 && (
         <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
-          <HugeiconsIcon icon={FolderGitIcon} className="mx-auto size-6 text-muted-foreground/30 mb-2" />
+          <HugeiconsIcon
+            icon={FolderGitIcon}
+            className="mx-auto size-6 text-muted-foreground/30 mb-2"
+          />
           <p className="text-sm text-muted-foreground">{m.no_mcp_servers()}</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">
-            {m.no_mcp_servers_desc()}
-          </p>
+          <p className="text-xs text-muted-foreground/60 mt-1">{m.no_mcp_servers_desc()}</p>
         </div>
       )}
 
@@ -129,7 +143,11 @@ export function McpServersView({ servers: initialServers, onRefresh, scopeFilter
         variant="destructive"
       />
 
-      <CreateMcpServerDialog open={createOpen} onClose={() => setCreateOpen(false)} onCreated={handleCreated} />
+      <CreateMcpServerDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={handleCreated}
+      />
     </div>
-  )
+  );
 }

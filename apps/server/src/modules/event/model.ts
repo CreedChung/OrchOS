@@ -1,4 +1,4 @@
-import { t, type UnwrapSchema } from "elysia"
+import { t, type UnwrapSchema } from "elysia";
 
 export const EventModel = {
   response: t.Object({
@@ -15,8 +15,8 @@ export const EventModel = {
     detail: t.Record(t.String(), t.Any()),
     timestamp: t.String(),
   }),
-} as const
+} as const;
 
 export type EventModel = {
-  [k in keyof typeof EventModel]: UnwrapSchema<typeof EventModel[k]>
-}
+  [k in keyof typeof EventModel]: UnwrapSchema<(typeof EventModel)[k]>;
+};

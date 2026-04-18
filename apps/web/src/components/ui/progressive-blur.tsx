@@ -7,7 +7,9 @@ type ProgressiveBlurProps = {
 
 const ProgressiveBlur = ({ className = "", children }: ProgressiveBlurProps) => {
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-border shadow-sm ${className}`}>
+    <div
+      className={`relative overflow-hidden rounded-2xl border border-border shadow-sm ${className}`}
+    >
       {/* 顶部模糊 */}
       <div
         className="pointer-events-none absolute left-0 top-0 z-10 w-full select-none"
@@ -31,9 +33,7 @@ const ProgressiveBlur = ({ className = "", children }: ProgressiveBlurProps) => 
         }}
       />
       {/* 可滚动内容 */}
-      <div className="h-[600px] overflow-y-auto px-6 py-8">
-        {children}
-      </div>
+      <div className="h-[600px] overflow-y-auto px-6 py-8">{children}</div>
     </div>
   );
 };
