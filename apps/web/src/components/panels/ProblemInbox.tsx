@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { cn } from "#/lib/utils";
-import { ScrollArea } from "#/components/ui/scroll-area";
-import { Badge } from "#/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   Fire02Icon,
@@ -24,9 +24,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu";
-import { m } from "#/paraglide/messages";
-import type { Problem, ProblemPriority, ProblemStatus, Goal, ActivityEntry } from "#/lib/types";
+} from "@/components/ui/dropdown-menu";
+import { m } from "@/paraglide/messages";
+import type { Problem, ProblemPriority, ProblemStatus, Goal, ActivityEntry } from "@/lib/types";
 
 type PriorityFilter = "all" | "critical" | "warning" | "info";
 

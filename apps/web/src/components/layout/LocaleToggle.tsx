@@ -1,12 +1,12 @@
-import { AVAILABLE_LOCALES } from "#/lib/i18n";
-import { useLocale } from "#/lib/useI18n";
+import { AVAILABLE_LOCALES } from "@/lib/i18n";
+import { useLocale } from "@/lib/useI18n";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu";
-import { Button } from "#/components/ui/button";
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { Languages } from "lucide-react";
 
 const LOCALE_LABELS: Record<string, string> = {

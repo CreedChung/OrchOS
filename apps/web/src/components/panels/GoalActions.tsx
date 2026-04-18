@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { cn } from "#/lib/utils";
-import { m } from "#/paraglide/messages";
+import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Play,
@@ -15,9 +15,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu";
-import { ConfirmDialog } from "#/components/ui/confirm-dialog";
-import type { Goal } from "#/lib/types";
+} from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import type { Goal } from "@/lib/types";
 
 interface GoalActionsProps {
   goal: Goal;

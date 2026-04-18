@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Button } from "#/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -8,11 +8,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select";
-import { api, type SkillRepositoryAnalysis } from "#/lib/api";
-import type { Project } from "#/lib/types";
-import { m } from "#/paraglide/messages";
-import { cn } from "#/lib/utils";
+} from "@/components/ui/select";
+import { api, type SkillRepositoryAnalysis } from "@/lib/api";
+import type { Project } from "@/lib/types";
+import { m } from "@/paraglide/messages";
+import { cn } from "@/lib/utils";
 
 interface CreateSkillDialogProps {
   open: boolean;

@@ -25,6 +25,7 @@ export function createConversationController(db: AppDb) {
         return conv;
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: ConversationModel.response,
           404: ConversationModel.errorNotFound,
@@ -49,6 +50,7 @@ export function createConversationController(db: AppDb) {
         return conv;
       },
       {
+        params: t.Object({ id: t.String() }),
         body: ConversationModel.updateBody,
         response: {
           200: ConversationModel.response,
@@ -64,6 +66,7 @@ export function createConversationController(db: AppDb) {
         return { success: true };
       },
       {
+        params: t.Object({ id: t.String() }),
         response: t.Object({ success: t.Boolean() }),
       },
     )
@@ -75,6 +78,7 @@ export function createConversationController(db: AppDb) {
         return await ConversationService.getMessages(db, id);
       },
       {
+        params: t.Object({ id: t.String() }),
         response: t.Array(ConversationModel.messageResponse),
       },
     )
@@ -86,6 +90,7 @@ export function createConversationController(db: AppDb) {
         return await ConversationService.sendAndReply(db, id, body.content);
       },
       {
+        params: t.Object({ id: t.String() }),
         body: ConversationModel.sendMessageBody,
         response: ConversationModel.messageResponse,
       },

@@ -1,10 +1,10 @@
-import { db } from "../../db";
-import { goals, states } from "../../db/schema";
+import { db } from "@/db";
+import { goals, states } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { generateId, timestamp } from "../../utils";
-import { eventBus } from "../event/event-bus";
-import type { Goal, Status } from "../../types";
-import type { GoalModel } from "./model";
+import { generateId, timestamp } from "@/utils";
+import { eventBus } from "@/modules/event/event-bus";
+import type { Goal, Status } from "@/types";
+import type { GoalModel } from "@/modules/goal/model";
 
 export abstract class GoalService {
   static create(req: GoalModel["createBody"]): Goal {
@@ -70,8 +70,10 @@ export abstract class GoalService {
   }
 
   static delete(id: string): boolean {
-    const result = db.delete(goals).where(eq(goals.id, id)).run();
-    return result.changes > 0;
+    const existing = GoalService.get(id);
+    if (!existing) return false;
+    db.delete(goals).where(eq(goals.id, id)).run();
+    return true;
   }
 
   static checkCompletion(id: string): boolean {

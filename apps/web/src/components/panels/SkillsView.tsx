@@ -7,14 +7,14 @@ import {
   ToggleLeft,
   ToggleRight,
 } from "@hugeicons/core-free-icons";
-import { Button } from "#/components/ui/button";
-import { ConfirmDialog } from "#/components/ui/confirm-dialog";
-import { ScrollArea } from "#/components/ui/scroll-area";
-import { CreateSkillDialog } from "#/components/dialogs/CreateSkillDialog";
-import { api, type SkillProfile } from "#/lib/api";
-import type { Project } from "#/lib/types";
-import { cn } from "#/lib/utils";
-import { m } from "#/paraglide/messages";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { CreateSkillDialog } from "@/components/dialogs/CreateSkillDialog";
+import { api, type SkillProfile } from "@/lib/api";
+import type { Project } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
 
 interface SkillsViewProps {
   skills: SkillProfile[];

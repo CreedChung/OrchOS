@@ -17,8 +17,8 @@ import {
   FolderOpenIcon,
   AlertIcon,
 } from "@hugeicons/core-free-icons";
-import { cn } from "#/lib/utils";
-import ThemeToggle from "#/components/layout/ThemeToggle";
+import { cn } from "@/lib/utils";
+import ThemeToggle from "@/components/layout/ThemeToggle";
 import {
   Select,
   SelectContent,
@@ -26,14 +26,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
-import { useLocale } from "#/lib/useI18n";
-import { AVAILABLE_LOCALES } from "#/lib/i18n";
-import { m } from "#/paraglide/messages";
-import type { ControlSettings, NotificationEvent } from "#/lib/types";
-import { NOTIFICATION_EVENTS } from "#/lib/types";
-import { api, type DetectRuntimesResponse, type RuntimeProfile } from "#/lib/api";
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLocale } from "@/lib/useI18n";
+import { AVAILABLE_LOCALES } from "@/lib/i18n";
+import { m } from "@/paraglide/messages";
+import type { ControlSettings, NotificationEvent } from "@/lib/types";
+import { NOTIFICATION_EVENTS } from "@/lib/types";
+import { api, type DetectRuntimesResponse, type RuntimeProfile } from "@/lib/api";
 
 type SettingsTab = "general" | "notifications" | "integrations" | "runtimes" | "about";
 
@@ -390,7 +390,7 @@ export function SettingsDialog({
                     <span className="text-sm font-medium text-foreground">{m.language()}</span>
                     <p className="text-xs text-muted-foreground">{m.language_desc()}</p>
                   </div>
-                  <Select value={currentLocale} onValueChange={handleLocaleChange}>
+                  <Select value={currentLocale} onValueChange={(value) => value && void handleLocaleChange(value)}>
                     <SelectTrigger className="w-[160px]">
                       <SelectValue>
                         {AVAILABLE_LOCALES.find((l) => l.value === currentLocale)?.label ||

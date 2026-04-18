@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { FolderIcon, ArrowLeft01Icon, Home01Icon, Loading01Icon } from "@hugeicons/core-free-icons";
-import { Button } from "#/components/ui/button";
-import { api } from "#/lib/api";
-import { cn } from "#/lib/utils";
+import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 interface DirectoryPickerDialogProps {
   open: boolean;

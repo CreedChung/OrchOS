@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { cn } from "#/lib/utils";
+import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { SentIcon, Robot02Icon, FolderGitIcon, Cancel01Icon } from "@hugeicons/core-free-icons";
-import { m } from "#/paraglide/messages";
-import type { RuntimeProfile, Project } from "#/lib/types";
+import { m } from "@/paraglide/messages";
+import type { RuntimeProfile, Project } from "@/lib/types";
 
 interface CommandBarProps {
   open: boolean;

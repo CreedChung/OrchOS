@@ -21,6 +21,7 @@ export function createActivityController(db: AppDb) {
         return await ActivityService.getByGoal(db, goalId);
       },
       {
+        params: t.Object({ goalId: t.String() }),
         response: t.Array(ActivityModel.response),
       },
     );

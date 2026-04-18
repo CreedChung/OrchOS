@@ -1,12 +1,12 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
-import { authPlugin } from "../auth";
-import { ProjectService } from "./service";
-import { ProjectModel } from "./model";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { ProjectService } from "@/modules/project/service";
+import { ProjectModel } from "@/modules/project/model";
 
 export const projectController = new Elysia({ prefix: "/api/projects" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get("/", () => ProjectService.list(), {
     response: t.Array(ProjectModel.response),
   })
@@ -28,6 +28,7 @@ export const projectController = new Elysia({ prefix: "/api/projects" })
       return project;
     },
     {
+      params: t.Object({ id: t.String() }),
       response: {
         200: ProjectModel.response,
         404: ProjectModel.errorNotFound,
@@ -42,6 +43,7 @@ export const projectController = new Elysia({ prefix: "/api/projects" })
       return project;
     },
     {
+      params: t.Object({ id: t.String() }),
       body: ProjectModel.updateBody,
       response: {
         200: ProjectModel.response,
@@ -57,6 +59,7 @@ export const projectController = new Elysia({ prefix: "/api/projects" })
       return { success: true };
     },
     {
+      params: t.Object({ id: t.String() }),
       response: {
         200: ProjectModel.successDeleted,
         404: ProjectModel.errorNotFound,
@@ -70,6 +73,7 @@ export const projectController = new Elysia({ prefix: "/api/projects" })
       return result;
     },
     {
+      params: t.Object({ id: t.String() }),
       body: t.Optional(ProjectModel.cloneBody),
       response: ProjectModel.cloneResponse,
     },

@@ -1,10 +1,10 @@
-import { db } from "../../db";
-import { projects } from "../../db/schema";
+import { db } from "@/db";
+import { projects } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { generateId, timestamp } from "../../utils";
-import type { Project } from "../../types";
-import type { ProjectModel } from "./model";
-import { executor } from "../execution/executor";
+import { generateId, timestamp } from "@/utils";
+import type { Project } from "@/types";
+import type { ProjectModel } from "@/modules/project/model";
+import { executor } from "@/modules/execution/executor";
 import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
 
@@ -54,8 +54,10 @@ export abstract class ProjectService {
   }
 
   static delete(id: string): boolean {
-    const result = db.delete(projects).where(eq(projects.id, id)).run();
-    return result.changes > 0;
+    const existing = ProjectService.get(id);
+    if (!existing) return false;
+    db.delete(projects).where(eq(projects.id, id)).run();
+    return true;
   }
 
   static async clone(

@@ -78,6 +78,7 @@ export function createOrganizationController(db: AppDb) {
         return org;
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: OrganizationModel.response,
           404: OrganizationModel.errorNotFound,
@@ -92,6 +93,7 @@ export function createOrganizationController(db: AppDb) {
         return org;
       },
       {
+        params: t.Object({ id: t.String() }),
         body: updateBody,
         response: {
           200: OrganizationModel.response,
@@ -107,6 +109,7 @@ export function createOrganizationController(db: AppDb) {
         return { success: true };
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: OrganizationModel.successDeleted,
           404: OrganizationModel.errorNotFound,

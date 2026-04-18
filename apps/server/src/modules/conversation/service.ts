@@ -1,8 +1,8 @@
-import { db } from "../../db";
-import { conversations, messages } from "../../db/schema";
+import { db } from "@/db";
+import { conversations, messages } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { generateId } from "../../utils";
-import { RuntimeService } from "../runtime/service";
+import { generateId } from "@/utils";
+import { RuntimeService } from "@/modules/runtime/service";
 
 export interface Conversation {
   id: string;
@@ -87,14 +87,15 @@ export abstract class ConversationService {
       // Only updatedAt, still update
     }
 
-    const result = db.update(conversations).set(updates).where(eq(conversations.id, id)).run();
-    if (result.changes === 0) return undefined;
+    db.update(conversations).set(updates).where(eq(conversations.id, id)).run();
     return ConversationService.get(id);
   }
 
   static delete(id: string): boolean {
-    const result = db.delete(conversations).where(eq(conversations.id, id)).run();
-    return result.changes > 0;
+    const existing = ConversationService.get(id);
+    if (!existing) return false;
+    db.delete(conversations).where(eq(conversations.id, id)).run();
+    return true;
   }
 
   static getMessages(conversationId: string): Message[] {

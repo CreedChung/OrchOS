@@ -27,6 +27,7 @@ export function createProjectController(db: AppDb) {
         return project;
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: ProjectModel.response,
           404: ProjectModel.errorNotFound,
@@ -41,6 +42,7 @@ export function createProjectController(db: AppDb) {
         return project;
       },
       {
+        params: t.Object({ id: t.String() }),
         body: ProjectModel.updateBody,
         response: {
           200: ProjectModel.response,
@@ -56,6 +58,7 @@ export function createProjectController(db: AppDb) {
         return { success: true };
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: ProjectModel.successDeleted,
           404: ProjectModel.errorNotFound,
@@ -69,6 +72,7 @@ export function createProjectController(db: AppDb) {
         return result;
       },
       {
+        params: t.Object({ id: t.String() }),
         body: t.Optional(ProjectModel.cloneBody),
         response: ProjectModel.cloneResponse,
       },

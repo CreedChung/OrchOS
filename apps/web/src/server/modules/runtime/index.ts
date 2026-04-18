@@ -92,6 +92,7 @@ export function createRuntimeController(db: AppDb) {
         throw status(400, "No valid fields to update");
       },
       {
+        params: t.Object({ id: t.String() }),
         body: t.Object({
           status: t.Optional(t.Union([t.Literal("idle"), t.Literal("active"), t.Literal("error")])),
           enabled: t.Optional(t.Boolean()),
@@ -115,6 +116,7 @@ export function createRuntimeController(db: AppDb) {
         return result;
       },
       {
+        params: t.Object({ runtimeId: t.String() }),
         query: t.Object({
           level: t.Optional(t.Union([t.Literal("basic"), t.Literal("ping"), t.Literal("full")])),
           prompt: t.Optional(t.String()),
@@ -131,6 +133,7 @@ export function createRuntimeController(db: AppDb) {
         return await RuntimeService.getCurrentModel(db, runtimeId);
       },
       {
+        params: t.Object({ runtimeId: t.String() }),
         response: RuntimeModel.modelResponse,
       },
     )
@@ -144,6 +147,7 @@ export function createRuntimeController(db: AppDb) {
         return result;
       },
       {
+        params: t.Object({ runtimeId: t.String() }),
         body: RuntimeModel.chatBody,
         response: RuntimeModel.chatResponse,
       },

@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
-import { cn } from "#/lib/utils";
-import { ScrollArea } from "#/components/ui/scroll-area";
-import { Badge } from "#/components/ui/badge";
-import { Button } from "#/components/ui/button";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   GitPullRequestIcon,
@@ -15,9 +15,9 @@ import {
   CheckmarkBadge01Icon,
   InboxIcon,
 } from "@hugeicons/core-free-icons";
-import { m } from "#/paraglide/messages";
-import type { Problem, InboxSource } from "#/lib/types";
-import { isInboxItem } from "#/lib/types";
+import { m } from "@/paraglide/messages";
+import type { Problem, InboxSource } from "@/lib/types";
+import { isInboxItem } from "@/lib/types";
 
 // --- Mock Data ---
 const mockProblems: Problem[] = [

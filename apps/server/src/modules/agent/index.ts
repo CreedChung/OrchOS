@@ -1,8 +1,8 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
-import { authPlugin } from "../auth";
-import { AgentService } from "./service";
-import { AgentModel } from "./model";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { AgentService } from "@/modules/agent/service";
+import { AgentModel } from "@/modules/agent/model";
 import { S3Client } from "bun";
 
 const s3 = new S3Client({
@@ -14,7 +14,7 @@ const s3 = new S3Client({
 
 export const agentController = new Elysia({ prefix: "/api/agents" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get("/", () => AgentService.list(), {
     response: t.Array(AgentModel.response),
   })
@@ -56,6 +56,7 @@ export const agentController = new Elysia({ prefix: "/api/agents" })
       return agent;
     },
     {
+      params: t.Object({ id: t.String() }),
       body: AgentModel.updateBody,
       response: {
         200: AgentModel.response,
@@ -85,6 +86,7 @@ export const agentController = new Elysia({ prefix: "/api/agents" })
       return updated;
     },
     {
+      params: t.Object({ id: t.String() }),
       body: t.Object({
         file: t.File(),
       }),

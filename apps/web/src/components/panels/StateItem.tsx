@@ -1,6 +1,6 @@
-import { cn } from "#/lib/utils";
-import { m } from "#/paraglide/messages";
-import type { Status } from "#/lib/types";
+import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
+import type { Status } from "@/lib/types";
 
 interface StateItemProps {
   label: string;

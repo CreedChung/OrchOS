@@ -1,1 +1,1 @@
-export { Header as default } from "#/components/ui/header-1";
+export { Header as default } from "@/components/ui/header-1";

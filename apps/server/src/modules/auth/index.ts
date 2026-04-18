@@ -48,22 +48,11 @@ async function authenticateRequest(request: Request, jwtKey: string): Promise<Au
 }
 
 export function createAuthPlugin(jwtKey: string) {
-  const isClerkConfigured = jwtKey.length > 0;
-
   return new Elysia({ name: "auth" })
     .derive({ as: "global" }, async ({ request }): Promise<{ auth: AuthContext }> => {
       const auth = await authenticateRequest(request, jwtKey);
       return { auth };
-    })
-    .macro(({ onBeforeHandle }) => ({
-      requireAuth(enabled: boolean) {
-        if (!enabled) return;
-        onBeforeHandle(({ auth }: { auth: AuthContext }) => {
-          if (!isClerkConfigured) return;
-          if (!auth.userId) throw status(401, "Unauthorized");
-        });
-      },
-    }));
+    });
 }
 
 const jwtKey = process.env.CLERK_JWT_KEY?.trim() ?? "";
@@ -74,20 +63,4 @@ export const authPlugin = createAuthPlugin(jwtKey);
 export function requireAuth({ auth }: { auth: AuthContext }) {
   if (!isClerkConfigured) return;
   if (!auth.userId) throw status(401, "Unauthorized");
-}
-
-type ElysiaWithRequireAuth = Elysia & {
-  requireAuth?: (enabled: boolean) => Elysia;
-};
-
-const elysiaPrototype = Elysia.prototype as ElysiaWithRequireAuth;
-
-if (!elysiaPrototype.requireAuth) {
-  elysiaPrototype.requireAuth = function (enabled: boolean) {
-    if (enabled) {
-      this.onBeforeHandle(requireAuth);
-    }
-
-    return this;
-  };
 }

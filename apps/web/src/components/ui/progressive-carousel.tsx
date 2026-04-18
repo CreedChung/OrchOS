@@ -1,16 +1,9 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-  ReactNode,
-  FC,
-} from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import type { FC, ReactElement, ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { cn } from "#/lib/utils";
+import { cn } from "@/lib/utils";
 
 // Define the type for the context value
 interface ProgressSliderContextType {
@@ -83,12 +76,13 @@ export const ProgressSlider: FC<ProgressSliderProps> = ({
   useEffect(() => {
     const getChildren = React.Children.toArray(children).find(
       (child) => (child as React.ReactElement).type === SliderContent,
-    ) as React.ReactElement | undefined;
+    ) as ReactElement<{ children?: ReactNode }> | undefined;
 
     if (getChildren) {
-      const values = React.Children.toArray(getChildren.props.children).map(
-        (child) => (child as React.ReactElement).props.value as string,
-      );
+      const values = React.Children.toArray(getChildren.props.children).map((child) => {
+        const element = child as ReactElement<{ value?: string }>;
+        return element.props.value ?? "";
+      });
       setSliderValues(values);
     }
   }, [children]);

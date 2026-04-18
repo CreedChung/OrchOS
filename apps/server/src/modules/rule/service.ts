@@ -1,7 +1,7 @@
-import { db } from "../../db";
-import { rules } from "../../db/schema";
+import { db } from "@/db";
+import { rules } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { generateId } from "../../utils";
+import { generateId } from "@/utils";
 
 export interface Rule {
   id: string;
@@ -66,7 +66,9 @@ export const RuleService = {
   },
 
   delete(id: string): boolean {
-    const result = db.delete(rules).where(eq(rules.id, id)).run();
-    return result.rowsAffected > 0;
+    const existing = RuleService.get(id);
+    if (!existing) return false;
+    db.delete(rules).where(eq(rules.id, id)).run();
+    return true;
   },
 };

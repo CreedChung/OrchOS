@@ -1,11 +1,11 @@
 import { Elysia, t } from "elysia";
-import { authPlugin } from "../auth";
-import { eventBus } from "./event-bus";
-import { EventModel } from "./model";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { eventBus } from "@/modules/event/event-bus";
+import { EventModel } from "@/modules/event/model";
 
 export const eventController = new Elysia({ prefix: "/api" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get(
     "/events",
     ({ query }) => {

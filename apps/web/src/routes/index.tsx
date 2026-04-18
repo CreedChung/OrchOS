@@ -1,20 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import Header from "#/components/layout/Header";
-import Footer from "#/components/layout/Footer";
-import { m } from "#/paraglide/messages";
-import { I18nProvider } from "#/lib/useI18n";
-import { ShimmerText } from "#/components/ui/shimmer-text";
-import { FeaturesBento } from "#/components/ui/features-bento";
-import { GoalPreviewCard } from "#/components/ui/goal-preview-card";
-import { AgentPreviewCard } from "#/components/ui/agent-preview-card";
-import { InboxPreviewCard } from "#/components/ui/inbox-preview-card";
-import { GooeyFilter } from "#/components/ui/gooey-filter";
-import { FloatingIconsHero } from "#/components/ui/floating-icons-hero-section";
-import { Badge } from "#/components/ui/badge";
-import { useScreenSize } from "#/lib/use-screen-size";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import { m } from "@/paraglide/messages";
+import { I18nProvider } from "@/lib/useI18n";
+import { ShimmerText } from "@/components/ui/shimmer-text";
+import { FeaturesBento } from "@/components/ui/features-bento";
+import { GoalPreviewCard } from "@/components/ui/goal-preview-card";
+import { AgentPreviewCard } from "@/components/ui/agent-preview-card";
+import { InboxPreviewCard } from "@/components/ui/inbox-preview-card";
+import { GooeyFilter } from "@/components/ui/gooey-filter";
+import { FloatingIconsHero } from "@/components/ui/floating-icons-hero-section";
+import { Badge } from "@/components/ui/badge";
+import { useScreenSize } from "@/lib/use-screen-size";
 import { motion, AnimatePresence } from "motion/react";
-import { cn } from "#/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   AppWindow,
   BellRing,

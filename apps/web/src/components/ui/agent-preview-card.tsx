@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { cn } from "#/lib/utils";
-import { ScrollArea } from "#/components/ui/scroll-area";
-import { Badge } from "#/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Robot02Icon, CodeIcon, CloudIcon, Clock01Icon } from "@hugeicons/core-free-icons";
-import { m } from "#/paraglide/messages";
+import { m } from "@/paraglide/messages";
 
 // --- Mock Data ---
 type AgentStatus = "idle" | "active" | "error";

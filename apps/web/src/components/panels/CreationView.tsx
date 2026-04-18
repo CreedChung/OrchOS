@@ -12,21 +12,21 @@ import {
   ArrowRight01Icon,
   Folder01Icon,
 } from "@hugeicons/core-free-icons";
-import { Button } from "#/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select";
-import { ConfirmDialog } from "#/components/ui/confirm-dialog";
-import { ScrollArea } from "#/components/ui/scroll-area";
-import { cn } from "#/lib/utils";
-import { api, type Conversation, type ConversationMessage } from "#/lib/api";
-import type { AgentProfile, Project, RuntimeProfile } from "#/lib/types";
-import { m } from "#/paraglide/messages";
-import type { CreationArchiveFilter } from "#/components/layout/Toolbar";
+} from "@/components/ui/select";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { api, type Conversation, type ConversationMessage } from "@/lib/api";
+import type { AgentProfile, Project, RuntimeProfile } from "@/lib/types";
+import { m } from "@/paraglide/messages";
+import type { CreationArchiveFilter } from "@/components/layout/Toolbar";
 
 interface CreationViewProps {
   agents: AgentProfile[];
@@ -89,6 +89,16 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
     }
   }, [activeConversationId, loadMessages]);
 
+  const handleNewConversation = useCallback(async () => {
+    try {
+      const conv = await api.createConversation({});
+      await loadConversations();
+      setActiveConversationId(conv.id);
+    } catch (err) {
+      console.error("Failed to create conversation:", err);
+    }
+  }, [loadConversations]);
+
   useEffect(() => {
     if (!hasLoadedConversations) return;
 
@@ -110,16 +120,6 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
       autoCreatingConversationRef.current = false;
     });
   }, [activeConversationId, archiveFilter, filteredConversations, handleNewConversation, hasLoadedConversations]);
-
-  const handleNewConversation = useCallback(async () => {
-    try {
-      const conv = await api.createConversation({});
-      await loadConversations();
-      setActiveConversationId(conv.id);
-    } catch (err) {
-      console.error("Failed to create conversation:", err);
-    }
-  }, [loadConversations]);
 
   const handleDeleteConversation = useCallback(async () => {
     if (!convToDelete) return;
@@ -281,11 +281,6 @@ function ChatArea({
     [runtimes, conversation.runtimeId],
   );
 
-  const _selectedProject = useMemo(
-    () => projects.find((p) => p.id === conversation.projectId),
-    [projects, conversation.projectId],
-  );
-
   const modelDisplay = selectedRuntime?.model.replace(/^(cloud|local)\//, "") || "";
   const isCloudModel = selectedRuntime?.model.startsWith("cloud/");
 
@@ -367,9 +362,11 @@ function ChatArea({
           {/* Project selector */}
           <Select
             value={conversation.projectId || "__none__"}
-            onValueChange={(v) =>
-              onUpdateConversation(conversation.id, { projectId: v === "__none__" ? undefined : v })
-            }
+              onValueChange={(v) =>
+                onUpdateConversation(conversation.id, {
+                  projectId: !v || v === "__none__" ? undefined : v,
+                })
+              }
           >
             <SelectTrigger className="h-7 w-32 text-xs">
               <HugeiconsIcon icon={Folder01Icon} className="size-3 mr-1 shrink-0" />
@@ -388,9 +385,11 @@ function ChatArea({
           {/* Agent/Runtime selector */}
           <Select
             value={conversation.runtimeId || "__none__"}
-            onValueChange={(v) =>
-              onUpdateConversation(conversation.id, { runtimeId: v === "__none__" ? undefined : v })
-            }
+              onValueChange={(v) =>
+                onUpdateConversation(conversation.id, {
+                  runtimeId: !v || v === "__none__" ? undefined : v,
+                })
+              }
           >
             <SelectTrigger className="h-7 w-40 text-xs">
               <HugeiconsIcon icon={Robot02Icon} className="size-3 mr-1 shrink-0" />

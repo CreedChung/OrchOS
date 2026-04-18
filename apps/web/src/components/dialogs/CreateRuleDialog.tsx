@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, ArrowRight01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
-import { m } from "#/paraglide/messages";
+import { m } from "@/paraglide/messages";
 import {
   Select,
   SelectContent,
@@ -9,8 +9,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select";
-import type { Problem } from "#/lib/types";
+} from "@/components/ui/select";
+import type { Problem } from "@/lib/types";
 
 interface CreateRuleDialogProps {
   open: boolean;
@@ -125,7 +125,7 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
               {m.rule_logic()}
             </label>
             <div className="flex items-center gap-2">
-              <Select value={condition} onValueChange={setCondition}>
+              <Select value={condition} onValueChange={(value) => setCondition(value ?? condition)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -143,7 +143,7 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
                 icon={ArrowRight01Icon}
                 className="size-4 text-muted-foreground shrink-0"
               />
-              <Select value={action} onValueChange={setAction}>
+              <Select value={action} onValueChange={(value) => setAction(value ?? action)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

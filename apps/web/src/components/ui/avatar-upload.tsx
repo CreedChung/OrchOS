@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import { cn } from "#/lib/utils";
+import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Camera01Icon, Loading01Icon } from "@hugeicons/core-free-icons";
-import { api } from "#/lib/api";
+import { api } from "@/lib/api";
 
 interface AvatarUploadProps {
   agentId: string;

@@ -1,4 +1,4 @@
-import { cn } from "#/lib/utils";
+import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   GitPullRequestIcon,
@@ -7,11 +7,11 @@ import {
   Robot02Icon,
   CheckmarkBadge01Icon,
 } from "@hugeicons/core-free-icons";
-import { ScrollArea } from "#/components/ui/scroll-area";
-import { Badge } from "#/components/ui/badge";
-import { m } from "#/paraglide/messages";
-import type { Problem, InboxSource } from "#/lib/types";
-import { isInboxItem } from "#/lib/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { m } from "@/paraglide/messages";
+import type { Problem, InboxSource } from "@/lib/types";
+import { isInboxItem } from "@/lib/types";
 
 type SourceFilter = "all" | InboxSource;
 

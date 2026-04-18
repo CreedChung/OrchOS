@@ -1,5 +1,5 @@
-import { cn } from "#/lib/utils";
-import { Button } from "#/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Search01Icon,
@@ -18,8 +18,8 @@ import {
   CodeIcon,
   CloudIcon,
 } from "@hugeicons/core-free-icons";
-import { m } from "#/paraglide/messages";
-import type { SidebarView, InboxSource } from "#/lib/types";
+import { m } from "@/paraglide/messages";
+import type { SidebarView, InboxSource } from "@/lib/types";
 
 type SourceFilter = "all" | InboxSource;
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
@@ -222,7 +222,7 @@ export function Toolbar({
       )}
 
       {/* Agents: model-based filter tabs */}
-      {(activeView === "agents" || activeView === "agent-detail") && (
+      {activeView === "agents" && (
         <div className="flex items-center gap-1.5">
           {(["all", "local", "cloud"] as AgentModelFilter[]).map((filter) => {
             const config = filter === "all" ? null : agentModelFilterConfig[filter];

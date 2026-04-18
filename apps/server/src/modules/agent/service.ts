@@ -1,8 +1,8 @@
-import { db } from "../../db";
-import { agents } from "../../db/schema";
+import { db } from "@/db";
+import { agents } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { generateId } from "../../utils";
-import type { AgentProfile, Action, ControlSettings } from "../../types";
+import { generateId } from "@/utils";
+import type { AgentProfile, Action, ControlSettings } from "@/types";
 
 export abstract class AgentService {
   static register(agent: Omit<AgentProfile, "id">): AgentProfile {
@@ -71,30 +71,22 @@ export abstract class AgentService {
 
     if (Object.keys(updates).length === 0) return AgentService.get(id);
 
-    const result = db.update(agents).set(updates).where(eq(agents.id, id)).run();
-    if (result.changes === 0) return undefined;
+    db.update(agents).set(updates).where(eq(agents.id, id)).run();
     return AgentService.get(id);
   }
 
   static updateStatus(id: string, status: AgentProfile["status"]): AgentProfile | undefined {
-    const result = db.update(agents).set({ status }).where(eq(agents.id, id)).run();
-    if (result.changes === 0) return undefined;
+    db.update(agents).set({ status }).where(eq(agents.id, id)).run();
     return AgentService.get(id);
   }
 
   static updateEnabled(id: string, enabled: boolean): AgentProfile | undefined {
-    const result = db
-      .update(agents)
-      .set({ enabled: String(enabled) })
-      .where(eq(agents.id, id))
-      .run();
-    if (result.changes === 0) return undefined;
+    db.update(agents).set({ enabled: String(enabled) }).where(eq(agents.id, id)).run();
     return AgentService.get(id);
   }
 
   static updateAvatar(id: string, avatarUrl: string): AgentProfile | undefined {
-    const result = db.update(agents).set({ avatarUrl }).where(eq(agents.id, id)).run();
-    if (result.changes === 0) return undefined;
+    db.update(agents).set({ avatarUrl }).where(eq(agents.id, id)).run();
     return AgentService.get(id);
   }
 

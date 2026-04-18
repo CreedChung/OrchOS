@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { Moon, Sun, Monitor } from "lucide-react";
-import { m } from "#/paraglide/messages";
-import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
-import { useUIStore } from "#/lib/store";
+import { m } from "@/paraglide/messages";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUIStore } from "@/lib/store";
 
 type ThemeMode = "light" | "dark" | "auto";
 

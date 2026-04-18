@@ -1,5 +1,5 @@
-import { ScrollArea } from "#/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Robot02Icon,
@@ -12,9 +12,9 @@ import {
   Message01Icon,
   Workflow,
 } from "@hugeicons/core-free-icons";
-import { cn } from "#/lib/utils";
-import { m } from "#/paraglide/messages";
-import type { ActivityEntry } from "#/lib/types";
+import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
+import type { ActivityEntry } from "@/lib/types";
 
 interface ActivityPanelProps {
   activities: ActivityEntry[];

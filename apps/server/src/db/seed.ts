@@ -1,6 +1,6 @@
-import { OrganizationService } from "../modules/organization";
-import { db } from "./index";
-import { organizations } from "./schema";
+import { OrganizationService } from "@/modules/organization";
+import { db } from "@/db/index";
+import { organizations } from "@/db/schema";
 import { sql } from "drizzle-orm";
 
 export function seedData() {

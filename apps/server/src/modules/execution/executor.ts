@@ -378,9 +378,8 @@ export const executor = {
       });
 
       if (stdin !== undefined && proc.stdin) {
-        const writer = proc.stdin.getWriter();
-        await writer.write(new TextEncoder().encode(stdin));
-        await writer.close();
+        proc.stdin.write(new TextEncoder().encode(stdin));
+        await proc.stdin.end();
       }
 
       const timer = setTimeout(() => {

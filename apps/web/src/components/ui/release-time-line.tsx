@@ -2,8 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Package } from "lucide-react";
-import { Button } from "#/components/ui/button";
-import { m } from "#/paraglide/messages";
+import { Button } from "@/components/ui/button";
+import { m } from "@/paraglide/messages";
 
 export type TimeLine_01Entry = {
   icon: React.ComponentType<{ className?: string }>;

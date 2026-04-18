@@ -1,4 +1,4 @@
-import { ComponentFileViewerWrapper, type ApiComponent } from "#/components/ui/file-viewer-wrapper";
+import { ComponentFileViewerWrapper, type ApiComponent } from "@/components/ui/file-viewer-wrapper";
 
 const changelogMarkdown = `# OrchOS v0.1.0
 

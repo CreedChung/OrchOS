@@ -1,13 +1,14 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
-import { authPlugin } from "../auth";
-import { StateService } from "./service";
-import { StateModel } from "./model";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { StateService } from "@/modules/state/service";
+import { StateModel } from "@/modules/state/model";
 
 export const stateController = new Elysia({ prefix: "/api/goals/:goalId" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get("/states", ({ params: { goalId } }) => StateService.getStatesByGoal(goalId), {
+    params: t.Object({ goalId: t.String() }),
     response: t.Array(StateModel.stateResponse),
   })
   .post(
@@ -16,11 +17,13 @@ export const stateController = new Elysia({ prefix: "/api/goals/:goalId" })
       return StateService.createState(goalId, body.label, body.status as any, body.actions);
     },
     {
+      params: t.Object({ goalId: t.String() }),
       body: StateModel.createBody,
       response: StateModel.stateResponse,
     },
   )
   .get("/artifacts", ({ params: { goalId } }) => StateService.getArtifactsByGoal(goalId), {
+    params: t.Object({ goalId: t.String() }),
     response: t.Array(StateModel.artifactResponse),
   })
   .post(
@@ -35,6 +38,7 @@ export const stateController = new Elysia({ prefix: "/api/goals/:goalId" })
       );
     },
     {
+      params: t.Object({ goalId: t.String() }),
       body: StateModel.artifactCreateBody,
       response: StateModel.artifactResponse,
     },
@@ -42,7 +46,7 @@ export const stateController = new Elysia({ prefix: "/api/goals/:goalId" })
 
 export const stateItemController = new Elysia({ prefix: "/api/states" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .patch(
     "/:id",
     ({ params: { id }, body }) => {
@@ -51,6 +55,7 @@ export const stateItemController = new Elysia({ prefix: "/api/states" })
       return state;
     },
     {
+      params: t.Object({ id: t.String() }),
       body: StateModel.updateBody,
       response: {
         200: StateModel.stateResponse,
@@ -66,6 +71,7 @@ export const stateItemController = new Elysia({ prefix: "/api/states" })
       return { success: true };
     },
     {
+      params: t.Object({ id: t.String() }),
       response: {
         200: StateModel.successDeleted,
         404: StateModel.errorNotFound,
@@ -75,7 +81,7 @@ export const stateItemController = new Elysia({ prefix: "/api/states" })
 
 export const artifactItemController = new Elysia({ prefix: "/api/artifacts" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .patch(
   "/:id",
   ({ params: { id }, body }) => {
@@ -84,6 +90,7 @@ export const artifactItemController = new Elysia({ prefix: "/api/artifacts" })
     return artifact;
   },
   {
+    params: t.Object({ id: t.String() }),
     body: StateModel.artifactUpdateBody,
     response: {
       200: StateModel.artifactResponse,

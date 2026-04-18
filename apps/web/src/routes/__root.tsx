@@ -1,10 +1,10 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ClerkProvider } from "@clerk/clerk-react";
-import { TooltipProvider } from "#/components/ui/tooltip";
-import { getLocale } from "#/paraglide/runtime";
-import { initializeClientLocale } from "#/lib/i18n-runtime";
-import { clerkPublishableKey, isClerkConfigured } from "#/lib/auth";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { getLocale } from "@/paraglide/runtime";
+import { initializeClientLocale } from "@/lib/i18n-runtime";
+import { clerkPublishableKey, isClerkConfigured } from "@/lib/auth";
 
 import appCss from "../styles.css?url";
 

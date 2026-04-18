@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { cn } from "#/lib/utils";
-import { m } from "#/paraglide/messages";
+import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Edit02Icon, Tick02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 import {
@@ -10,8 +10,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select";
-import type { Status, StateItem } from "#/lib/types";
+} from "@/components/ui/select";
+import type { Status, StateItem } from "@/lib/types";
 
 interface StateEditorProps {
   state: StateItem;

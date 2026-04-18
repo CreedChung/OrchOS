@@ -56,6 +56,7 @@ export function createAgentController(db: AppDb, storage?: StorageAdapter) {
         return agent;
       },
       {
+        params: t.Object({ id: t.String() }),
         body: AgentModel.updateBody,
         response: {
           200: AgentModel.response,
@@ -83,6 +84,7 @@ export function createAgentController(db: AppDb, storage?: StorageAdapter) {
         return updated;
       },
       {
+        params: t.Object({ id: t.String() }),
         body: t.Object({
           file: t.File(),
         }),

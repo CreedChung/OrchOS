@@ -3,7 +3,7 @@ import {
   getLocale as getParaglideLocale,
   overwriteGetLocale,
   setLocale as setParaglideLocale,
-} from "#/paraglide/runtime";
+} from "@/paraglide/runtime";
 
 let activeLocale = baseLocale;
 let clientLocaleInitialized = false;

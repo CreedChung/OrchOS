@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AgentList } from "#/components/panels/AgentList";
-import { AgentDetailView } from "#/components/panels/AgentDetail";
-import { useDashboard } from "#/lib/dashboard-context";
-import { useUIStore } from "#/lib/store";
-import { m } from "#/paraglide/messages";
+import { AgentList } from "@/components/panels/AgentList";
+import { AgentDetailView } from "@/components/panels/AgentDetail";
+import { useDashboard } from "@/lib/dashboard-context";
+import { useUIStore } from "@/lib/store";
+import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/dashboard/agents")({ component: AgentsPage });
 

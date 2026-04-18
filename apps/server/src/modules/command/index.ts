@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
-import { authPlugin } from "../auth";
-import { CommandService } from "./service";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { CommandService } from "@/modules/command/service";
 
 const CommandResponse = t.Object({
   id: t.String(),
@@ -20,7 +20,7 @@ const CommandResponse = t.Object({
 
 export const commandController = new Elysia({ prefix: "/api/commands" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get("/", () => CommandService.list(), {
     response: t.Array(CommandResponse),
   })
@@ -46,6 +46,7 @@ export const commandController = new Elysia({ prefix: "/api/commands" })
       return command;
     },
     {
+      params: t.Object({ id: t.String() }),
       response: {
         200: CommandResponse,
         404: t.String(),
@@ -60,6 +61,7 @@ export const commandController = new Elysia({ prefix: "/api/commands" })
       return command;
     },
     {
+      params: t.Object({ id: t.String() }),
       body: t.Object({
         status: t.Optional(
           t.Union([
@@ -85,6 +87,7 @@ export const commandController = new Elysia({ prefix: "/api/commands" })
       return { success: true };
     },
     {
+      params: t.Object({ id: t.String() }),
       response: {
         200: t.Object({ success: t.Boolean() }),
         404: t.String(),

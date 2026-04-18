@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { cn } from "#/lib/utils";
+import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   GitPullRequestIcon,
@@ -11,16 +11,16 @@ import {
   MoreHorizontal,
   CheckmarkBadge01Icon,
 } from "@hugeicons/core-free-icons";
-import { Badge } from "#/components/ui/badge";
-import { Button } from "#/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu";
-import { m } from "#/paraglide/messages";
-import type { Problem, InboxSource } from "#/lib/types";
+} from "@/components/ui/dropdown-menu";
+import { m } from "@/paraglide/messages";
+import type { Problem, InboxSource } from "@/lib/types";
 
 const sourceConfig: Record<
   InboxSource,

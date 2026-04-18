@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ControlSettings } from "#/lib/types";
+import type { ControlSettings } from "@/lib/types";
 
 type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_request";
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";

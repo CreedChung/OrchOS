@@ -1,7 +1,7 @@
 import { toolKit, hostTool } from "@rivet-dev/agent-os-core";
 import { z } from "zod";
-import { ProjectService } from "../project/service";
-import { executor } from "../execution/executor";
+import { ProjectService } from "@/modules/project/service";
+import { executor } from "@/modules/execution/executor";
 
 export const orchosToolkit = toolKit({
   name: "orchos",

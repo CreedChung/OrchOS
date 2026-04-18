@@ -17,10 +17,10 @@ import {
   Download01Icon,
   Loading01Icon,
 } from "@hugeicons/core-free-icons";
-import { Button } from "#/components/ui/button";
-import { Badge } from "#/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "#/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "#/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -28,13 +28,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select";
-import { DirectoryPickerDialog } from "#/components/ui/directory-picker-dialog";
-import { api, type DetectedRuntime } from "#/lib/api";
-import { useUIStore } from "#/lib/store";
-import { cn } from "#/lib/utils";
-import { m } from "#/paraglide/messages";
-import type { RuntimeProfile, Project } from "#/lib/types";
+} from "@/components/ui/select";
+import { DirectoryPickerDialog } from "@/components/ui/directory-picker-dialog";
+import { api, type DetectedRuntime } from "@/lib/api";
+import { useUIStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
+import type { RuntimeProfile, Project } from "@/lib/types";
 
 interface EnvironmentsViewProps {
   runtimes: RuntimeProfile[];

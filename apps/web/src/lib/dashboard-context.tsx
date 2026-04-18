@@ -8,9 +8,9 @@ import {
   type ReactNode,
 } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { api, type McpServerProfile, type SkillProfile, type RuntimeProfile } from "#/lib/api";
-import { useWebSocket } from "#/lib/hooks";
-import { useUIStore } from "#/lib/store";
+import { api, type McpServerProfile, type SkillProfile, type RuntimeProfile } from "@/lib/api";
+import { useWebSocket } from "@/lib/hooks";
+import { useUIStore } from "@/lib/store";
 import type {
   Goal,
   StateItem,
@@ -24,10 +24,10 @@ import type {
   Rule,
   Command,
   ControlSettings,
-} from "#/lib/types";
-import { isInboxItem, isSystemProblem } from "#/lib/types";
+} from "@/lib/types";
+import { isInboxItem, isSystemProblem } from "@/lib/types";
 
-export type { AgentModelFilter } from "#/components/layout/Toolbar";
+export type { AgentModelFilter } from "@/components/layout/Toolbar";
 
 interface InboxCounts {
   all: number;

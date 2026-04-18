@@ -1,15 +1,15 @@
-import type { ControlSettings, Action } from "../../types";
-import { db } from "../../db";
-import { settings, projects } from "../../db/schema";
-import { GoalService } from "../goal/service";
-import { StateService } from "../state/service";
-import { AgentService } from "../agent/service";
-import { ActivityService } from "../activity/service";
-import { eventBus } from "../event/event-bus";
-import { executor } from "./executor";
-import { SandboxService } from "../sandbox/service";
-import { generateId } from "../../utils";
-import type { ExecutionModel } from "./model";
+import type { ControlSettings, Action } from "@/types";
+import { db } from "@/db";
+import { settings, projects } from "@/db/schema";
+import { GoalService } from "@/modules/goal/service";
+import { StateService } from "@/modules/state/service";
+import { AgentService } from "@/modules/agent/service";
+import { ActivityService } from "@/modules/activity/service";
+import { eventBus } from "@/modules/event/event-bus";
+import { executor } from "@/modules/execution/executor";
+import { SandboxService } from "@/modules/sandbox/service";
+import { generateId } from "@/utils";
+import type { ExecutionModel } from "@/modules/execution/model";
 
 export class ExecutionService {
   private settings: ControlSettings = {

@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
-import { authPlugin } from "../auth";
-import { RuleService } from "./service";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { RuleService } from "@/modules/rule/service";
 
 const RuleResponse = t.Object({
   id: t.String(),
@@ -14,7 +14,7 @@ const RuleResponse = t.Object({
 
 export const ruleController = new Elysia({ prefix: "/api/rules" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get("/", () => RuleService.list(), {
     response: t.Array(RuleResponse),
   })
@@ -41,6 +41,7 @@ export const ruleController = new Elysia({ prefix: "/api/rules" })
       return rule;
     },
     {
+      params: t.Object({ id: t.String() }),
       body: t.Object({
         name: t.Optional(t.String()),
         condition: t.Optional(t.String()),
@@ -61,6 +62,7 @@ export const ruleController = new Elysia({ prefix: "/api/rules" })
       return { success: true };
     },
     {
+      params: t.Object({ id: t.String() }),
       response: {
         200: t.Object({ success: t.Boolean() }),
         404: t.String(),

@@ -1,7 +1,7 @@
-import type { Event, EventType } from "../../types";
-import { generateId, timestamp } from "../../utils";
-import { db } from "../../db";
-import { events } from "../../db/schema";
+import type { Event, EventType } from "@/types";
+import { generateId, timestamp } from "@/utils";
+import { db } from "@/db";
+import { events } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 type EventHandler = (event: Event) => void;

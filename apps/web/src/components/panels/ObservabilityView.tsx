@@ -6,8 +6,8 @@ import {
   Clock01Icon,
   CheckmarkCircle01Icon,
 } from "@hugeicons/core-free-icons";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "#/components/ui/card";
-import { Badge } from "#/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   ChartContainer,
   ChartTooltip,
@@ -15,8 +15,8 @@ import {
   ChartLegend,
   ChartLegendContent,
   type ChartConfig,
-} from "#/components/ui/chart";
-import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
+} from "@/components/ui/chart";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Area,
   AreaChart,
@@ -29,8 +29,8 @@ import {
   Pie,
   PieChart,
 } from "recharts";
-import { m } from "#/paraglide/messages";
-import type { AgentProfile, Goal, Problem } from "#/lib/types";
+import { m } from "@/paraglide/messages";
+import type { AgentProfile, Goal, Problem } from "@/lib/types";
 
 interface ObservabilityViewProps {
   agents: AgentProfile[];

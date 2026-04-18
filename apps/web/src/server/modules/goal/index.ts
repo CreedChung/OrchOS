@@ -41,6 +41,7 @@ export function createGoalController(db: AppDb) {
         return goal;
       },
       {
+        params: t.Object({ goalId: t.String() }),
         response: {
           200: GoalModel.response,
           404: GoalModel.errorNotFound,
@@ -56,6 +57,7 @@ export function createGoalController(db: AppDb) {
         return goal;
       },
       {
+        params: t.Object({ goalId: t.String() }),
         body: GoalModel.updateBody,
         response: {
           200: GoalModel.response,
@@ -72,6 +74,7 @@ export function createGoalController(db: AppDb) {
         return { success: true };
       },
       {
+        params: t.Object({ goalId: t.String() }),
         response: {
           200: GoalModel.successDeleted,
           404: GoalModel.errorNotFound,

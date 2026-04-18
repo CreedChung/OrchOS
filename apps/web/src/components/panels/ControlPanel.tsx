@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { cn } from "#/lib/utils";
+import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ChevronDown,
@@ -8,9 +8,9 @@ import {
   ToggleLeft,
   ToggleRight,
 } from "@hugeicons/core-free-icons";
-import { m } from "#/paraglide/messages";
-import type { ControlSettings } from "#/lib/types";
-import { api } from "#/lib/api";
+import { m } from "@/paraglide/messages";
+import type { ControlSettings } from "@/lib/types";
+import { api } from "@/lib/api";
 
 interface ControlPanelProps {
   settings: ControlSettings | null;

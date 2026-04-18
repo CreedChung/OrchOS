@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EnvironmentsView } from "#/components/panels/EnvironmentsView";
-import { useDashboard } from "#/lib/dashboard-context";
+import { EnvironmentsView } from "@/components/panels/EnvironmentsView";
+import { useDashboard } from "@/lib/dashboard-context";
 
 export const Route = createFileRoute("/dashboard/environments")({ component: EnvironmentsPage });
 

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
-import { cn } from "#/lib/utils";
-import { m } from "#/paraglide/messages";
+import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
 
 interface RenameDialogProps {
   open: boolean;

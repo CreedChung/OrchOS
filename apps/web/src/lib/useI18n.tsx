@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, createContext, useContext, type ReactNode } from "react";
-import { useUIStore } from "#/lib/store";
-import { api } from "#/lib/api";
-import { getInitialLocale, syncRuntimeLocale } from "#/lib/i18n-runtime";
+import { useUIStore } from "@/lib/store";
+import { api } from "@/lib/api";
+import { getInitialLocale, syncRuntimeLocale } from "@/lib/i18n-runtime";
 
 interface I18nContextValue {
   locale: string;

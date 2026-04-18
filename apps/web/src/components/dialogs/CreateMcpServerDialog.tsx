@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { m } from "#/paraglide/messages";
-import { Button } from "#/components/ui/button";
+import { m } from "@/paraglide/messages";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -8,8 +8,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select";
-import { api } from "#/lib/api";
+} from "@/components/ui/select";
+import { api } from "@/lib/api";
 
 interface CreateMcpServerDialogProps {
   open: boolean;

@@ -17,7 +17,7 @@ import {
   Loading01Icon,
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
-import { Button } from "#/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -25,11 +25,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select";
-import { cn } from "#/lib/utils";
-import { api } from "#/lib/api";
-import { m } from "#/paraglide/messages";
-import type { RuntimeProfile } from "#/lib/types";
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
+import { m } from "@/paraglide/messages";
+import type { RuntimeProfile } from "@/lib/types";
 
 const SPEED_FACTOR = 1;
 const FORM_WIDTH = 420;

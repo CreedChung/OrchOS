@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Add01Icon, Delete02Icon, FolderGitIcon } from "@hugeicons/core-free-icons";
-import { cn } from "#/lib/utils";
-import { m } from "#/paraglide/messages";
+import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
 import {
   Select,
   SelectContent,
@@ -10,8 +10,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select";
-import type { Project } from "#/lib/types";
+} from "@/components/ui/select";
+import type { Project } from "@/lib/types";
 
 interface CreateGoalDialogProps {
   open: boolean;
@@ -103,7 +103,7 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
                 <HugeiconsIcon icon={FolderGitIcon} className="size-3 inline mr-1" />
                 {m.project()}
               </label>
-              <Select value={projectId} onValueChange={setProjectId}>
+              <Select value={projectId} onValueChange={(value) => setProjectId(value ?? "")}>
                 <SelectTrigger>
                   <SelectValue placeholder={m.no_project()} />
                 </SelectTrigger>

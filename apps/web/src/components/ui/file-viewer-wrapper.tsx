@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import ComponentFileViewer, { type ApiComponent } from "#/components/ui/file-viewer";
+import ComponentFileViewer, { type ApiComponent } from "@/components/ui/file-viewer";
+
+export type { ApiComponent };
 
 export function ComponentFileViewerWrapper({ component }: { component: ApiComponent }) {
   const [isMounted, setIsMounted] = useState(false);

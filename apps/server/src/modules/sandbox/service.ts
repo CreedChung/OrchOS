@@ -2,14 +2,14 @@ import { Sandbox } from "e2b";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, posix as posixPath, relative, sep } from "node:path";
-import { executor } from "../execution/executor";
-import { ProjectService } from "../project/service";
-import { RuntimeService } from "../runtime/service";
-import { db } from "../../db";
-import { sandboxes } from "../../db/schema";
+import { executor } from "@/modules/execution/executor";
+import { ProjectService } from "@/modules/project/service";
+import { RuntimeService } from "@/modules/runtime/service";
+import { db } from "@/db";
+import { sandboxes } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { generateId, timestamp } from "../../utils";
-import { eventBus } from "../event/event-bus";
+import { generateId, timestamp } from "@/utils";
+import { eventBus } from "@/modules/event/event-bus";
 
 type PermissionReply = "once" | "always" | "reject";
 

@@ -1,11 +1,11 @@
-import { cn } from "#/lib/utils";
+import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Robot02Icon, Add01Icon } from "@hugeicons/core-free-icons";
-import { Button } from "#/components/ui/button";
-import { ScrollArea } from "#/components/ui/scroll-area";
-import { AvatarUpload } from "#/components/ui/avatar-upload";
-import { m } from "#/paraglide/messages";
-import type { AgentProfile } from "#/lib/types";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
+import { m } from "@/paraglide/messages";
+import type { AgentProfile } from "@/lib/types";
 
 interface AgentListProps {
   agents: AgentProfile[];

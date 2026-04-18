@@ -1,7 +1,7 @@
-import { cn } from "#/lib/utils";
-import { Badge } from "#/components/ui/badge";
-import { StatusIcon } from "#/components/panels/StatusIcon";
-import { m } from "#/paraglide/messages";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { StatusIcon } from "@/components/panels/StatusIcon";
+import { m } from "@/paraglide/messages";
 import type {
   Goal,
   StateItem as StateItemType,
@@ -11,7 +11,7 @@ import type {
   Project,
   Command,
   Problem,
-} from "#/lib/types";
+} from "@/lib/types";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   FileCodeIcon,

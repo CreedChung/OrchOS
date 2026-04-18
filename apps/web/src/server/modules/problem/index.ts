@@ -72,6 +72,7 @@ export function createProblemController(db: AppDb) {
         return problem;
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: ProblemResponse,
           404: t.String(),
@@ -86,6 +87,7 @@ export function createProblemController(db: AppDb) {
         return problem;
       },
       {
+        params: t.Object({ id: t.String() }),
         body: t.Object({
           title: t.Optional(t.String()),
           priority: t.Optional(
@@ -116,6 +118,7 @@ export function createProblemController(db: AppDb) {
         return { success: true };
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: t.Object({ success: t.Boolean() }),
           404: t.String(),

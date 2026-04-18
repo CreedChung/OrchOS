@@ -46,6 +46,7 @@ export function createRuleController(db: AppDb) {
         return rule;
       },
       {
+        params: t.Object({ id: t.String() }),
         body: t.Object({
           name: t.Optional(t.String()),
           condition: t.Optional(t.String()),
@@ -66,6 +67,7 @@ export function createRuleController(db: AppDb) {
         return { success: true };
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: t.Object({ success: t.Boolean() }),
           404: t.String(),

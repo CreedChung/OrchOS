@@ -8,6 +8,7 @@ import { createEventBus } from "../event/event-bus";
 export function createStateController(db: AppDb) {
   return new Elysia({ prefix: "/api/goals/:goalId" })
     .get("/states", ({ params: { goalId } }) => StateService.getStatesByGoal(db, goalId), {
+      params: t.Object({ goalId: t.String() }),
       response: t.Array(StateModel.stateResponse),
     })
     .post(
@@ -15,11 +16,13 @@ export function createStateController(db: AppDb) {
       ({ params: { goalId }, body }) =>
         StateService.createState(db, goalId, body.label, body.status as any, body.actions),
       {
+        params: t.Object({ goalId: t.String() }),
         body: StateModel.createBody,
         response: StateModel.stateResponse,
       },
     )
     .get("/artifacts", ({ params: { goalId } }) => StateService.getArtifactsByGoal(db, goalId), {
+      params: t.Object({ goalId: t.String() }),
       response: t.Array(StateModel.artifactResponse),
     })
     .post(
@@ -34,6 +37,7 @@ export function createStateController(db: AppDb) {
           body.detail,
         ),
       {
+        params: t.Object({ goalId: t.String() }),
         body: StateModel.artifactCreateBody,
         response: StateModel.artifactResponse,
       },
@@ -51,6 +55,7 @@ export function createStateItemController(db: AppDb) {
         return state;
       },
       {
+        params: t.Object({ id: t.String() }),
         body: StateModel.updateBody,
         response: {
           200: StateModel.stateResponse,
@@ -66,6 +71,7 @@ export function createStateItemController(db: AppDb) {
         return { success: true };
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: StateModel.successDeleted,
           404: StateModel.errorNotFound,
@@ -83,6 +89,7 @@ export function createArtifactItemController(db: AppDb) {
       return artifact;
     },
     {
+      params: t.Object({ id: t.String() }),
       body: StateModel.artifactUpdateBody,
       response: {
         200: StateModel.artifactResponse,

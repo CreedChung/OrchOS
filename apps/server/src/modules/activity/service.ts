@@ -1,8 +1,8 @@
-import { db } from "../../db";
-import { activities } from "../../db/schema";
+import { db } from "@/db";
+import { activities } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { generateId, timeLabel } from "../../utils";
-import type { ActivityEntry } from "../../types";
+import { generateId, timeLabel } from "@/utils";
+import type { ActivityEntry } from "@/types";
 
 export abstract class ActivityService {
   static add(

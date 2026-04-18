@@ -1,7 +1,7 @@
-import { db } from "../../db";
-import { problems } from "../../db/schema";
+import { db } from "@/db";
+import { problems } from "@/db/schema";
 import { eq, desc, and, inArray } from "drizzle-orm";
-import { generateId } from "../../utils";
+import { generateId } from "@/utils";
 
 export type ProblemPriority = "critical" | "warning" | "info";
 export type ProblemStatus = "open" | "fixed" | "ignored" | "assigned";
@@ -10,10 +10,10 @@ export interface Problem {
   id: string;
   title: string;
   priority: ProblemPriority;
-  source?: string;
-  context?: string;
-  goalId?: string;
-  stateId?: string;
+  source: string | null;
+  context: string | null;
+  goalId: string | null;
+  stateId: string | null;
   status: ProblemStatus;
   actions: string[];
   createdAt: string;
@@ -96,16 +96,20 @@ export const ProblemService = {
   },
 
   delete(id: string): boolean {
-    const result = db.delete(problems).where(eq(problems.id, id)).run();
-    return result.rowsAffected > 0;
+    const existing = ProblemService.get(id);
+    if (!existing) return false;
+    db.delete(problems).where(eq(problems.id, id)).run();
+    return true;
   },
 
   bulkUpdate(ids: string[], data: Partial<Pick<Problem, "status">>): number {
     const now = new Date().toISOString();
     const updates: Record<string, unknown> = { updatedAt: now };
     if (data.status !== undefined) updates.status = data.status;
-    const result = db.update(problems).set(updates).where(inArray(problems.id, ids)).run();
-    return result.rowsAffected;
+    const existing = db.select({ id: problems.id }).from(problems).where(inArray(problems.id, ids)).all();
+    if (existing.length === 0) return 0;
+    db.update(problems).set(updates).where(inArray(problems.id, ids)).run();
+    return existing.length;
   },
 
   countByStatus(): Record<ProblemStatus, number> {

@@ -1,19 +1,20 @@
-import { Elysia } from "elysia";
-import { authPlugin } from "../auth";
-import { ExecutionService } from "./service";
-import { ExecutionModel } from "./model";
+import { Elysia, t } from "elysia";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { ExecutionService } from "@/modules/execution/service";
+import { ExecutionModel } from "@/modules/execution/model";
 
 const engine = new ExecutionService();
 
 export const executionController = new Elysia({ prefix: "/api/goals/:goalId" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .post(
     "/actions",
     async ({ params: { goalId }, body }) => {
       return engine.executeAction(goalId, body.action, body.stateId, body.agentId);
     },
     {
+      params: t.Object({ goalId: t.String() }),
       body: ExecutionModel.actionBody,
       response: ExecutionModel.actionResponse,
     },
@@ -25,13 +26,14 @@ export const executionController = new Elysia({ prefix: "/api/goals/:goalId" })
       return { success: true };
     },
     {
+      params: t.Object({ goalId: t.String() }),
       response: ExecutionModel.loopResponse,
     },
   );
 
 export const settingsController = new Elysia({ prefix: "/api/settings" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get("/", () => engine.getSettings(), {
     response: ExecutionModel.settingsResponse,
   })

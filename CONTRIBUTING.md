@@ -107,7 +107,6 @@ OrchOS/
 │   └── server/       # Elysia backend (Bun runtime) — "Cortex"
 ├── packages/
 │   ├── ui/           # Shared React components
-│   ├── eslint-config/
 │   └── typescript-config/
 ```
 

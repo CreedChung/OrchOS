@@ -1,5 +1,5 @@
-import type { Status } from "#/lib/types";
-import { cn } from "#/lib/utils";
+import type { Status } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface StatusIconProps {
   status: Status;

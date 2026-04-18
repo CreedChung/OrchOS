@@ -1,20 +1,20 @@
 import { createFileRoute, Outlet, useLocation, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
-import { isClerkConfigured } from "#/lib/auth";
-import { Sidebar } from "#/components/layout/Sidebar";
-import { ActivityPanel } from "#/components/panels/ActivityPanel";
-import { CommandBar } from "#/components/panels/CommandBar";
-import { CreateGoalDialog } from "#/components/dialogs/CreateGoalDialog";
-import { CreateRuleDialog } from "#/components/dialogs/CreateRuleDialog";
-import { SettingsDialog } from "#/components/dialogs/SettingsDialog";
-import { CreateAgentDialog } from "#/components/dialogs/CreateAgentDialog";
-import { MorphPanel } from "#/components/ui/ai-input";
-import { Toolbar } from "#/components/layout/Toolbar";
-import { I18nProvider } from "#/lib/useI18n";
-import { m } from "#/paraglide/messages";
-import { useUIStore } from "#/lib/store";
-import { DashboardProvider, useDashboard } from "#/lib/dashboard-context";
-import type { SidebarView } from "#/lib/types";
+import { isClerkConfigured } from "@/lib/auth";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { ActivityPanel } from "@/components/panels/ActivityPanel";
+import { CommandBar } from "@/components/panels/CommandBar";
+import { CreateGoalDialog } from "@/components/dialogs/CreateGoalDialog";
+import { CreateRuleDialog } from "@/components/dialogs/CreateRuleDialog";
+import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
+import { CreateAgentDialog } from "@/components/dialogs/CreateAgentDialog";
+import { MorphPanel } from "@/components/ui/ai-input";
+import { Toolbar } from "@/components/layout/Toolbar";
+import { I18nProvider } from "@/lib/useI18n";
+import { m } from "@/paraglide/messages";
+import { useUIStore } from "@/lib/store";
+import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
+import type { SidebarView } from "@/lib/types";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardWrapper,

@@ -3,11 +3,11 @@
 import { createHighlighter } from "shiki";
 import ReactMarkdown from "react-markdown";
 
-import { Badge } from "#/components/ui/badge";
-import { Button } from "#/components/ui/button";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "#/components/ui/resizable";
-import { ScrollArea } from "#/components/ui/scroll-area";
-import { cn } from "#/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { Check, Copy, FileCode, FileIcon, FolderIcon, FolderOpenIcon } from "lucide-react";
 import {
@@ -63,7 +63,7 @@ const SHIKI_LANGS = [
   "html",
   "markdown",
   "md",
-] as const;
+];
 
 let highlighterPromise: ReturnType<typeof createHighlighter> | null = null;
 
@@ -652,8 +652,14 @@ export default function ComponentFileViewer({ component }: { component: ApiCompo
   const files = useMemo(() => component.files.filter((file) => file.content), [component.files]);
 
   const tree = useMemo(() => {
-    const root: Record<string, TreeViewElement & { children?: Record<string, TreeViewElement> }> =
-      {};
+    type TreeNode = {
+      id: string;
+      name: string;
+      isSelectable: boolean;
+      children?: Record<string, TreeNode>;
+    };
+
+    const root: Record<string, TreeNode> = {};
 
     for (const file of files) {
       const parts = file.path.split("/");
@@ -679,27 +685,24 @@ export default function ComponentFileViewer({ component }: { component: ApiCompo
                 };
         }
 
-        current = (current[part].children as Record<string, TreeViewElement>) ?? {};
+        current = current[part].children ?? {};
       }
     }
 
-    const toArray = (
-      value: Record<string, TreeViewElement & { children?: Record<string, TreeViewElement> }>,
-    ): TreeViewElement[] =>
+    const toArray = (value: Record<string, TreeNode>): TreeViewElement[] =>
       Object.values(value).map((item) =>
         item.children
           ? {
               id: item.id,
               name: item.name,
               isSelectable: item.isSelectable,
-              children: toArray(
-                item.children as Record<
-                  string,
-                  TreeViewElement & { children?: Record<string, TreeViewElement> }
-                >,
-              ),
+              children: toArray(item.children),
             }
-          : item,
+          : {
+              id: item.id,
+              name: item.name,
+              isSelectable: item.isSelectable,
+            },
       );
 
     return toArray(root);

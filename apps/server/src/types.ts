@@ -46,6 +46,7 @@ export interface Project {
   name: string;
   path: string;
   repositoryUrl?: string;
+  createdAt: string;
 }
 
 export interface AgentProfile {

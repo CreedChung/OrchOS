@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
-import { authPlugin } from "../auth";
-import { ProblemService } from "./service";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { ProblemService } from "@/modules/problem/service";
 
 const ProblemResponse = t.Object({
   id: t.String(),
@@ -24,7 +24,7 @@ const ProblemResponse = t.Object({
 
 export const problemController = new Elysia({ prefix: "/api/problems" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get(
     "/",
     ({ query }) => {
@@ -73,6 +73,7 @@ export const problemController = new Elysia({ prefix: "/api/problems" })
       return problem;
     },
     {
+      params: t.Object({ id: t.String() }),
       response: {
         200: ProblemResponse,
         404: t.String(),
@@ -87,6 +88,7 @@ export const problemController = new Elysia({ prefix: "/api/problems" })
       return problem;
     },
     {
+      params: t.Object({ id: t.String() }),
       body: t.Object({
         title: t.Optional(t.String()),
         priority: t.Optional(
@@ -117,6 +119,7 @@ export const problemController = new Elysia({ prefix: "/api/problems" })
       return { success: true };
     },
     {
+      params: t.Object({ id: t.String() }),
       response: {
         200: t.Object({ success: t.Boolean() }),
         404: t.String(),

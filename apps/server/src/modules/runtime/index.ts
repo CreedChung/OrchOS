@@ -1,12 +1,12 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
-import { authPlugin } from "../auth";
-import { RuntimeService } from "./service";
-import { RuntimeModel } from "./model";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { RuntimeService } from "@/modules/runtime/service";
+import { RuntimeModel } from "@/modules/runtime/model";
 
 export const runtimeController = new Elysia({ prefix: "/api/runtimes" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get("/", () => RuntimeService.list(), {
     response: t.Array(RuntimeModel.response),
   })
@@ -87,6 +87,7 @@ export const runtimeController = new Elysia({ prefix: "/api/runtimes" })
       throw status(400, "No valid fields to update");
     },
     {
+      params: t.Object({ id: t.String() }),
       body: t.Object({
         status: t.Optional(t.Union([t.Literal("idle"), t.Literal("active"), t.Literal("error")])),
         enabled: t.Optional(t.Boolean()),
@@ -110,6 +111,7 @@ export const runtimeController = new Elysia({ prefix: "/api/runtimes" })
       return result;
     },
     {
+      params: t.Object({ runtimeId: t.String() }),
       query: t.Object({
         level: t.Optional(t.Union([t.Literal("basic"), t.Literal("ping"), t.Literal("full")])),
         prompt: t.Optional(t.String()),
@@ -126,6 +128,7 @@ export const runtimeController = new Elysia({ prefix: "/api/runtimes" })
       return RuntimeService.getCurrentModel(runtimeId);
     },
     {
+      params: t.Object({ runtimeId: t.String() }),
       response: RuntimeModel.modelResponse,
     },
   )
@@ -139,6 +142,7 @@ export const runtimeController = new Elysia({ prefix: "/api/runtimes" })
       return result;
     },
     {
+      params: t.Object({ runtimeId: t.String() }),
       body: RuntimeModel.chatBody,
       response: RuntimeModel.chatResponse,
     },

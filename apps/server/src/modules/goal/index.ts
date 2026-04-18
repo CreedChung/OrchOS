@@ -1,13 +1,13 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
-import { authPlugin } from "../auth";
-import { GoalService } from "./service";
-import { GoalModel } from "./model";
-import { StateService } from "../state/service";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { GoalService } from "@/modules/goal/service";
+import { GoalModel } from "@/modules/goal/model";
+import { StateService } from "@/modules/state/service";
 
 export const goalController = new Elysia({ prefix: "/api/goals" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get("/", () => GoalService.list(), {
     response: t.Array(GoalModel.response),
   })
@@ -39,6 +39,7 @@ export const goalController = new Elysia({ prefix: "/api/goals" })
       return goal;
     },
     {
+      params: t.Object({ goalId: t.String() }),
       response: {
         200: GoalModel.response,
         404: GoalModel.errorNotFound,
@@ -53,6 +54,7 @@ export const goalController = new Elysia({ prefix: "/api/goals" })
       return goal;
     },
     {
+      params: t.Object({ goalId: t.String() }),
       body: GoalModel.updateBody,
       response: {
         200: GoalModel.response,
@@ -68,6 +70,7 @@ export const goalController = new Elysia({ prefix: "/api/goals" })
       return { success: true };
     },
     {
+      params: t.Object({ goalId: t.String() }),
       response: {
         200: GoalModel.successDeleted,
         404: GoalModel.errorNotFound,

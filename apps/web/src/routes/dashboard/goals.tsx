@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { StateBoard } from "#/components/panels/StateBoard";
-import { GoalActions } from "#/components/panels/GoalActions";
-import { GoalList } from "#/components/panels/GoalList";
-import { useDashboard } from "#/lib/dashboard-context";
-import { useUIStore } from "#/lib/store";
-import { m } from "#/paraglide/messages";
-import { isSystemProblem } from "#/lib/types";
+import { StateBoard } from "@/components/panels/StateBoard";
+import { GoalActions } from "@/components/panels/GoalActions";
+import { GoalList } from "@/components/panels/GoalList";
+import { useDashboard } from "@/lib/dashboard-context";
+import { useUIStore } from "@/lib/store";
+import { m } from "@/paraglide/messages";
+import { isSystemProblem } from "@/lib/types";
 
 export const Route = createFileRoute("/dashboard/goals")({ component: GoalsPage });
 

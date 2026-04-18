@@ -1,8 +1,8 @@
-import { db } from "../../db";
-import { mcpServers } from "../../db/schema";
+import { db } from "@/db";
+import { mcpServers } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { generateId } from "../../utils";
-import type { McpServerProfile } from "../../types";
+import { generateId } from "@/utils";
+import type { McpServerProfile } from "@/types";
 import { spawn, type Subprocess } from "bun";
 
 export type { McpServerProfile };
@@ -137,8 +137,7 @@ export abstract class McpServerService {
     if (data.enabled !== undefined) updates.enabled = String(data.enabled);
     if (data.scope !== undefined) updates.scope = data.scope;
 
-    const result = db.update(mcpServers).set(updates).where(eq(mcpServers.id, id)).run();
-    if (result.changes === 0) return undefined;
+    db.update(mcpServers).set(updates).where(eq(mcpServers.id, id)).run();
 
     const updated = McpServerService.get(id)!;
 
@@ -156,21 +155,20 @@ export abstract class McpServerService {
 
   static delete(id: string): boolean {
     McpServerService.stopProcess(id);
-    const result = db.delete(mcpServers).where(eq(mcpServers.id, id)).run();
-    return result.changes > 0;
+    const existing = McpServerService.get(id);
+    if (!existing) return false;
+    db.delete(mcpServers).where(eq(mcpServers.id, id)).run();
+    return true;
   }
 
   static toggleEnabled(id: string, enabled: boolean): McpServerProfile | undefined {
     const existing = McpServerService.get(id);
     if (!existing) return undefined;
 
-    const result = db
-      .update(mcpServers)
+    db.update(mcpServers)
       .set({ enabled: String(enabled), updatedAt: new Date().toISOString() })
       .where(eq(mcpServers.id, id))
       .run();
-
-    if (result.changes === 0) return undefined;
 
     if (enabled) {
       const profile = McpServerService.get(id)!;

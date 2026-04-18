@@ -10,7 +10,7 @@ import {
   useCallback,
 } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { cn } from "#/lib/utils";
+import { cn } from "@/lib/utils";
 import React from "react";
 
 interface InfoCardTitleProps extends React.HTMLAttributes<HTMLDivElement> {

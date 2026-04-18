@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { cn } from "#/lib/utils";
+import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Shield01Icon,
@@ -12,10 +12,10 @@ import {
   PencilEdit02Icon,
   CheckmarkCircle02Icon,
 } from "@hugeicons/core-free-icons";
-import { ConfirmDialog } from "#/components/ui/confirm-dialog";
-import { AvatarUpload } from "#/components/ui/avatar-upload";
-import { m } from "#/paraglide/messages";
-import type { AgentProfile, Rule } from "#/lib/types";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
+import { m } from "@/paraglide/messages";
+import type { AgentProfile, Rule } from "@/lib/types";
 
 const CAPABILITY_OPTIONS = [
   { value: "write_code", labelKey: "cap_write_code" },

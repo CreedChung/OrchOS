@@ -1,12 +1,12 @@
-import { db } from "../../db";
-import { commands } from "../../db/schema";
+import { db } from "@/db";
+import { commands } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { generateId, timestamp } from "../../utils";
-import { eventBus } from "../event/event-bus";
-import { GoalService } from "../goal/service";
-import { AgentService } from "../agent/service";
-import { ActivityService } from "../activity/service";
-import type { Command, CommandStatus } from "../../types";
+import { generateId, timestamp } from "@/utils";
+import { eventBus } from "@/modules/event/event-bus";
+import { GoalService } from "@/modules/goal/service";
+import { AgentService } from "@/modules/agent/service";
+import { ActivityService } from "@/modules/activity/service";
+import type { Command, CommandStatus } from "@/types";
 
 export abstract class CommandService {
   static create(data: {
@@ -101,8 +101,10 @@ export abstract class CommandService {
   }
 
   static delete(id: string): boolean {
-    const result = db.delete(commands).where(eq(commands.id, id)).run();
-    return result.changes > 0;
+    const existing = CommandService.get(id);
+    if (!existing) return false;
+    db.delete(commands).where(eq(commands.id, id)).run();
+    return true;
   }
 
   static mapRow(row: typeof commands.$inferSelect): Command {

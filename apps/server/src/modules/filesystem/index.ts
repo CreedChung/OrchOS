@@ -1,10 +1,10 @@
 import { Elysia, t } from "elysia";
-import { authPlugin } from "../auth";
-import { FilesystemService } from "./service";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { FilesystemService } from "@/modules/filesystem/service";
 
 export const filesystemController = new Elysia({ prefix: "/api/filesystem" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get(
   "/browse",
   ({ query }) => {

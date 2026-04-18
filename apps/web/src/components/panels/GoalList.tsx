@@ -1,11 +1,11 @@
-import { cn } from "#/lib/utils";
-import { Badge } from "#/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Target01Icon, FolderGitIcon, Add01Icon } from "@hugeicons/core-free-icons";
-import { Button } from "#/components/ui/button";
-import { ScrollArea } from "#/components/ui/scroll-area";
-import { m } from "#/paraglide/messages";
-import type { Goal, Project } from "#/lib/types";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { m } from "@/paraglide/messages";
+import type { Goal, Project } from "@/lib/types";
 
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
 

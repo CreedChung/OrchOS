@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import type { AppDb } from "../../db/types";
 import { createEventBus } from "../event/event-bus";
 import { ExecutionService } from "./service";
@@ -16,6 +16,7 @@ export function createExecutionController(db: AppDb, artifactStorage?: ObjectSto
         return engine.executeAction(goalId, body.action, body.stateId, body.agentId);
       },
       {
+        params: t.Object({ goalId: t.String() }),
         body: ExecutionModel.actionBody,
         response: ExecutionModel.actionResponse,
       },
@@ -28,6 +29,7 @@ export function createExecutionController(db: AppDb, artifactStorage?: ObjectSto
         return { success: true };
       },
       {
+        params: t.Object({ goalId: t.String() }),
         response: ExecutionModel.loopResponse,
       },
     );

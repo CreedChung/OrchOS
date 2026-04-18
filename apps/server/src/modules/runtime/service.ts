@@ -1,8 +1,8 @@
-import { db } from "../../db";
-import { runtimes } from "../../db/schema";
+import { db } from "@/db";
+import { runtimes } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { generateId } from "../../utils";
-import { executor } from "../../modules/execution/executor";
+import { generateId } from "@/utils";
+import { executor } from "@/modules/execution/executor";
 
 export interface RuntimeProfile {
   id: string;
@@ -74,18 +74,12 @@ export abstract class RuntimeService {
   }
 
   static updateEnabled(id: string, enabled: boolean): RuntimeProfile | undefined {
-    const result = db
-      .update(runtimes)
-      .set({ enabled: String(enabled) })
-      .where(eq(runtimes.id, id))
-      .run();
-    if (result.changes === 0) return undefined;
+    db.update(runtimes).set({ enabled: String(enabled) }).where(eq(runtimes.id, id)).run();
     return RuntimeService.get(id);
   }
 
   static updateStatus(id: string, status: RuntimeProfile["status"]): RuntimeProfile | undefined {
-    const result = db.update(runtimes).set({ status }).where(eq(runtimes.id, id)).run();
-    if (result.changes === 0) return undefined;
+    db.update(runtimes).set({ status }).where(eq(runtimes.id, id)).run();
     return RuntimeService.get(id);
   }
 

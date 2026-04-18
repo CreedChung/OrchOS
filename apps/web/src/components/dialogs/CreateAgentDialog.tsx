@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, CloudIcon, Server } from "@hugeicons/core-free-icons";
-import { cn } from "#/lib/utils";
-import { m } from "#/paraglide/messages";
-import type { RuntimeProfile } from "#/lib/types";
+import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
+import type { RuntimeProfile } from "@/lib/types";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
-} from "#/components/ui/select";
+} from "@/components/ui/select";
 
 const CAPABILITY_OPTIONS = [
   { value: "write_code", labelKey: "cap_write_code" },
@@ -155,7 +155,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
               {m.agent_runtime()}
             </label>
             {runtimes.length > 0 ? (
-              <Select value={runtimeId ?? ""} onValueChange={handleRuntimeChange}>
+              <Select value={runtimeId ?? ""} onValueChange={(value) => handleRuntimeChange(value ?? "")}>
                 <SelectTrigger>
                   <span className="flex items-center gap-1.5 flex-1 text-start truncate">
                     {selectedRuntime ? (

@@ -12,12 +12,12 @@ import { homedir, tmpdir } from "os";
 import { basename, extname, join, relative, resolve } from "path";
 import { eq } from "drizzle-orm";
 
-import { db } from "../../db";
-import { skills } from "../../db/schema";
-import { generateId, timestamp } from "../../utils";
-import { executor } from "../execution/executor";
-import { ProjectService } from "../project/service";
-import type { SkillProfile, SkillRepositoryAnalysis, SkillRepositoryCandidate } from "../../types";
+import { db } from "@/db";
+import { skills } from "@/db/schema";
+import { generateId, timestamp } from "@/utils";
+import { executor } from "@/modules/execution/executor";
+import { ProjectService } from "@/modules/project/service";
+import type { SkillProfile, SkillRepositoryAnalysis, SkillRepositoryCandidate } from "@/types";
 
 export type { SkillProfile };
 

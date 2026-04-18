@@ -1,9 +1,9 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
-import { authPlugin } from "../auth";
+import { authPlugin, requireAuth } from "@/modules/auth";
 import { eq } from "drizzle-orm";
-import { db } from "../../db";
-import { organizations } from "../../db/schema";
+import { db } from "@/db";
+import { organizations } from "@/db/schema";
 
 export const OrganizationModel = {
   response: t.Object({
@@ -58,7 +58,7 @@ const updateBody = t.Object({
 
 export const organizationController = new Elysia({ prefix: "/api/organizations" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get("/", () => OrganizationService.list(), {
     response: t.Array(OrganizationModel.response),
   })
@@ -80,6 +80,7 @@ export const organizationController = new Elysia({ prefix: "/api/organizations" 
       return org;
     },
     {
+      params: t.Object({ id: t.String() }),
       response: {
         200: OrganizationModel.response,
         404: OrganizationModel.errorNotFound,
@@ -94,6 +95,7 @@ export const organizationController = new Elysia({ prefix: "/api/organizations" 
       return org;
     },
     {
+      params: t.Object({ id: t.String() }),
       body: updateBody,
       response: {
         200: OrganizationModel.response,
@@ -109,6 +111,7 @@ export const organizationController = new Elysia({ prefix: "/api/organizations" 
       return { success: true };
     },
     {
+      params: t.Object({ id: t.String() }),
       response: {
         200: OrganizationModel.successDeleted,
         404: OrganizationModel.errorNotFound,

@@ -59,6 +59,7 @@ export function createCommandController(db: AppDb) {
         return command;
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: CommandResponse,
           404: t.String(),
@@ -73,6 +74,7 @@ export function createCommandController(db: AppDb) {
         return command;
       },
       {
+        params: t.Object({ id: t.String() }),
         body: t.Object({
           status: t.Optional(
             t.Union([
@@ -98,6 +100,7 @@ export function createCommandController(db: AppDb) {
         return { success: true };
       },
       {
+        params: t.Object({ id: t.String() }),
         response: {
           200: t.Object({ success: t.Boolean() }),
           404: t.String(),

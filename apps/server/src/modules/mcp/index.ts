@@ -1,12 +1,12 @@
 import { Elysia, t } from "elysia";
 import { status } from "elysia";
-import { authPlugin } from "../auth";
-import { McpServerService } from "./service";
-import { McpServerModel } from "./model";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { McpServerService } from "@/modules/mcp/service";
+import { McpServerModel } from "@/modules/mcp/model";
 
 export const mcpController = new Elysia({ prefix: "/api/mcp-servers" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get(
     "/",
     ({ query }) => {

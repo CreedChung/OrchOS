@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { cn } from "#/lib/utils";
-import { ScrollArea } from "#/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -8,8 +8,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "#/components/ui/select";
-import { ConfirmDialog } from "#/components/ui/confirm-dialog";
+} from "@/components/ui/select";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Shield01Icon,
@@ -20,8 +20,8 @@ import {
   Cancel01Icon,
   ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
-import { m } from "#/paraglide/messages";
-import type { Rule } from "#/lib/types";
+import { m } from "@/paraglide/messages";
+import type { Rule } from "@/lib/types";
 
 interface RulesPanelProps {
   rules: Rule[];
@@ -119,7 +119,7 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
               {m.when()}
             </span>
-            <Select value={condition} onValueChange={setCondition}>
+            <Select value={condition} onValueChange={(value) => setCondition(value ?? condition)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -134,7 +134,7 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
               </SelectContent>
             </Select>
             <HugeiconsIcon icon={ArrowRight01Icon} className="size-3 text-muted-foreground" />
-            <Select value={action} onValueChange={setAction}>
+            <Select value={action} onValueChange={(value) => setAction(value ?? action)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

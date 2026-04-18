@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
-import * as schema from "./schema";
+import * as schema from "@/db/schema";
 
 const DB_PATH = process.env.CORTEX_DB_PATH || "cortex.db";
 

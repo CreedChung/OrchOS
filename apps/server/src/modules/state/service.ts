@@ -1,10 +1,10 @@
-import { db } from "../../db";
-import { states, artifacts } from "../../db/schema";
+import { db } from "@/db";
+import { states, artifacts } from "@/db/schema";
 import { eq, asc, desc } from "drizzle-orm";
-import { generateId, timestamp } from "../../utils";
-import { eventBus } from "../event/event-bus";
-import type { StateEntry, Artifact, Status } from "../../types";
-import type { StateModel } from "./model";
+import { generateId, timestamp } from "@/utils";
+import { eventBus } from "@/modules/event/event-bus";
+import type { StateEntry, Artifact, Status } from "@/types";
+import type { StateModel } from "@/modules/state/model";
 
 export abstract class StateService {
   static createState(
@@ -64,8 +64,10 @@ export abstract class StateService {
   }
 
   static deleteState(id: string): boolean {
-    const result = db.delete(states).where(eq(states.id, id)).run();
-    return result.changes > 0;
+    const existing = StateService.getState(id);
+    if (!existing) return false;
+    db.delete(states).where(eq(states.id, id)).run();
+    return true;
   }
 
   static createArtifact(
@@ -121,8 +123,10 @@ export abstract class StateService {
   }
 
   static deleteArtifact(id: string): boolean {
-    const result = db.delete(artifacts).where(eq(artifacts.id, id)).run();
-    return result.changes > 0;
+    const existing = db.select().from(artifacts).where(eq(artifacts.id, id)).get();
+    if (!existing) return false;
+    db.delete(artifacts).where(eq(artifacts.id, id)).run();
+    return true;
   }
 
   static mapRowToState(row: typeof states.$inferSelect): StateEntry {

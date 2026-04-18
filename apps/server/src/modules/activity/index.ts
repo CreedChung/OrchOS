@@ -1,11 +1,11 @@
 import { Elysia, t } from "elysia";
-import { authPlugin } from "../auth";
-import { ActivityService } from "./service";
-import { ActivityModel } from "./model";
+import { authPlugin, requireAuth } from "@/modules/auth";
+import { ActivityService } from "@/modules/activity/service";
+import { ActivityModel } from "@/modules/activity/model";
 
 export const activityController = new Elysia({ prefix: "/api" })
   .use(authPlugin)
-  .requireAuth(true)
+  .onBeforeHandle(requireAuth)
   .get(
     "/activities",
     ({ query }) => {
@@ -22,6 +22,7 @@ export const activityController = new Elysia({ prefix: "/api" })
       return ActivityService.getByGoal(goalId);
     },
     {
+      params: t.Object({ goalId: t.String() }),
       response: t.Array(ActivityModel.response),
     },
   );

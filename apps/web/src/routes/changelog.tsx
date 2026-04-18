@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import Header from "#/components/layout/Header";
-import Footer from "#/components/layout/Footer";
-import ChangelogFileViewer from "#/components/ui/file-viewer-demo";
-import { I18nProvider } from "#/lib/useI18n";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import ChangelogFileViewer from "@/components/ui/file-viewer-demo";
+import { I18nProvider } from "@/lib/useI18n";
 
 export const Route = createFileRoute("/changelog")({
   component: Changelog,

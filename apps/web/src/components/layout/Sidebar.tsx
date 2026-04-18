@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { useUser, useClerk } from "@clerk/clerk-react";
-import { cn } from "#/lib/utils";
-import { ScrollArea } from "#/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   InfoCard,
   InfoCardTitle,
@@ -12,7 +12,7 @@ import {
   InfoCardMedia,
   InfoCardFooter,
   InfoCardDismiss,
-} from "#/components/ui/info-card";
+} from "@/components/ui/info-card";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   Cancel01Icon,
@@ -43,14 +43,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "#/components/ui/dropdown-menu";
-import { Button } from "#/components/ui/button";
-import { RenameDialog } from "#/components/dialogs/RenameDialog";
-import { ConfirmDialog } from "#/components/ui/confirm-dialog";
-import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
-import { m } from "#/paraglide/messages";
-import type { Organization, Problem, SidebarView } from "#/lib/types";
-import { isInboxItem } from "#/lib/types";
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { RenameDialog } from "@/components/dialogs/RenameDialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { m } from "@/paraglide/messages";
+import type { Organization, Problem, SidebarView } from "@/lib/types";
+import { isInboxItem } from "@/lib/types";
 
 interface SidebarSection {
   label: string;
