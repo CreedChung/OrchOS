@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -114,8 +115,48 @@ export function Toolbar({
   environmentSection,
   onEnvironmentSectionChange,
 }: ToolbarProps) {
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [isMac, setIsMac] = useState(false);
   const creationDeletedLabel =
     typeof m.creation_deleted === "function" ? m.creation_deleted() : "Deleted";
+
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad|iPod/.test(window.navigator.platform));
+  }, []);
+
+  useEffect(() => {
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      const tagName = target.tagName;
+      return (
+        target.isContentEditable ||
+        tagName === "INPUT" ||
+        tagName === "TEXTAREA" ||
+        tagName === "SELECT"
+      );
+    };
+
+    const focusSearch = () => {
+      searchInputRef.current?.focus();
+      searchInputRef.current?.select();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        focusSearch();
+        return;
+      }
+
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey && !isEditableTarget(e.target)) {
+        e.preventDefault();
+        focusSearch();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
@@ -287,12 +328,16 @@ export function Toolbar({
         <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 w-full max-w-xs">
           <HugeiconsIcon icon={Search01Icon} className="size-3.5 shrink-0 text-muted-foreground" />
           <input
+            ref={searchInputRef}
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={m.search()}
             className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
+          <span className="shrink-0 text-[10px] text-muted-foreground/70">
+            {isMac ? "Cmd+F" : "Ctrl+F"}
+          </span>
           {searchQuery && (
             <button
               onClick={() => onSearchChange("")}

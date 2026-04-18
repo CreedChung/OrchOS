@@ -11,9 +11,38 @@ import {
   Loading01Icon,
   Robot02Icon,
 } from "@hugeicons/core-free-icons";
-import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { RuntimeProfile } from "@/lib/types";
+
+const MOCK_RUNTIME: RuntimeProfile = {
+  id: "mock-runtime-01",
+  name: "OrchOS Agent",
+  command: "orchos",
+  version: "0.1.0",
+  role: "assistant",
+  capabilities: ["chat", "code", "debug"],
+  model: "claude-4-sonnet",
+  enabled: true,
+  status: "idle",
+};
+
+const MOCK_RESPONSES: Record<string, string> = {
+  default: "I'm OrchOS Agent, your AI assistant. I can help you orchestrate agents, manage goals, and automate workflows. What would you like to do?",
+  "what can you do": "I can help you with:\n\n1. **Agent Management** — Create, configure, and coordinate multiple AI agents\n2. **Goal Tracking** — Set goals and let agents work toward them autonomously\n3. **Code Generation** — Write, review, and refactor code across your projects\n4. **Debugging** — Identify and fix issues in your codebase\n5. **Integrations** — Connect with GitHub, Slack, Linear, Sentry, and more\n\nWhat would you like to explore?",
+  "help": "Here's how to get started with OrchOS:\n\n1. **Create a Goal** — Define what you want to achieve\n2. **Assign Agents** — Let OrchOS match the right agents to your goal\n3. **Monitor Progress** — Track status in real-time from the dashboard\n4. **Review Results** — Check outputs, PRs, and test results\n\nTry asking me about any of these topics!",
+};
+
+const MOCK_INPUT = "What can you do?";
+
+function getMockResponse(userMessage: string): string {
+  const lower = userMessage.toLowerCase().trim();
+  for (const [key, response] of Object.entries(MOCK_RESPONSES)) {
+    if (key !== "default" && lower.includes(key)) {
+      return response;
+    }
+  }
+  return MOCK_RESPONSES.default;
+}
 
 interface AskMessage {
   id: string;
@@ -25,20 +54,13 @@ interface AskMessage {
 
 export function FeaturesBento() {
   const [open, setOpen] = useState(false);
-  const [runtimes, setRuntimes] = useState<RuntimeProfile[]>([]);
+  const [runtimes] = useState<RuntimeProfile[]>([MOCK_RUNTIME]);
   const [messages, setMessages] = useState<AskMessage[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(MOCK_INPUT);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const selectedRuntime = useMemo(() => runtimes.find((runtime) => runtime.enabled) ?? null, [runtimes]);
-
-  useEffect(() => {
-    void api
-      .listRuntimes()
-      .then(setRuntimes)
-      .catch((err) => console.error("Failed to load runtimes:", err));
-  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -73,31 +95,23 @@ export function FeaturesBento() {
     setInput("");
     setSending(true);
 
-    try {
-      const result = await api.chatWithRuntime(selectedRuntime.id, userMessage.content);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `ask_${Date.now()}_response`,
-          role: "assistant",
-          content: result.output || result.error || "No response",
-          error: result.success ? undefined : result.error,
-          responseTime: result.responseTime,
-        },
-      ]);
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `ask_${Date.now()}_error`,
-          role: "assistant",
-          content: err instanceof Error ? err.message : "Failed to send message",
-          error: "Request failed",
-        },
-      ]);
-    } finally {
-      setSending(false);
-    }
+    const startTime = Date.now();
+
+    await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 1200));
+
+    const responseContent = getMockResponse(userMessage.content);
+    const responseTime = Date.now() - startTime;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `ask_${Date.now()}_response`,
+        role: "assistant",
+        content: responseContent,
+        responseTime,
+      },
+    ]);
+    setSending(false);
   }, [input, selectedRuntime, sending]);
 
   return (
@@ -239,6 +253,7 @@ export function FeaturesBento() {
             </CardContent>
           </Card>
           </div>
+
         </div>
       </section>
 

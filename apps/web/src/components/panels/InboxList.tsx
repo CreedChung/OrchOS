@@ -65,7 +65,7 @@ export function InboxList({ problems, activeInboxId, sourceFilter, onSelectItem 
   return (
     <div className="flex h-full w-72 flex-col border-r border-border bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+      <div className="flex h-14 items-center justify-between border-b border-border px-4">
         <h2 className="text-sm font-semibold text-foreground">{m.inbox()}</h2>
         <div className="flex items-center gap-1 h-7">
           {inboxItems.length > 0 && (

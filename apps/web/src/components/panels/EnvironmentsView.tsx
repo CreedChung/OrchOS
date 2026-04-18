@@ -890,19 +890,16 @@ export function EnvironmentsView({ runtimes, projects, onRefresh }: Environments
     {
       id: "projects" as const,
       title: m.env_projects(),
-      description: m.env_projects_desc(),
       icon: FolderIcon,
     },
     {
       id: "runtimes" as const,
       title: m.runtimes(),
-      description: m.runtimes_desc(),
       icon: Rocket01Icon,
     },
     {
       id: "env-vars" as const,
       title: m.env_variables(),
-      description: m.env_vars_desc(),
       icon: VariableIcon,
     },
   ];
@@ -925,7 +922,7 @@ export function EnvironmentsView({ runtimes, projects, onRefresh }: Environments
           {activeSection !== "projects" && <div className="size-8 shrink-0" aria-hidden="true" />}
         </div>
 
-        <div className="space-y-0.5 p-2">
+        <div className="grid grid-cols-3 gap-1 border-b border-border p-2">
           {sections.map((section) => {
             const isActive = activeSection === section.id;
 
@@ -934,27 +931,88 @@ export function EnvironmentsView({ runtimes, projects, onRefresh }: Environments
                 key={section.id}
                 onClick={() => setEnvironmentSection(section.id)}
                 className={cn(
-                  "flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
+                  "inline-flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors",
                   isActive
                     ? "bg-accent text-accent-foreground"
                     : "text-foreground/80 hover:bg-accent/50",
                 )}
                 type="button"
               >
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                  <HugeiconsIcon icon={section.icon} className="size-3.5 text-primary" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={cn("truncate text-xs font-medium", isActive && "text-accent-foreground")}>
-                    {section.title}
-                  </p>
-                  <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground">
-                    {section.description}
-                  </p>
-                </div>
+                <HugeiconsIcon icon={section.icon} className="size-3.5 shrink-0" />
+                <span className="truncate">{section.title}</span>
               </button>
             );
           })}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-2">
+          {activeSection === "projects" && (
+            <div className="space-y-1">
+              {projects.map((project) => (
+                <div
+                  key={project.id}
+                  className="flex items-start gap-2.5 rounded-md px-2.5 py-2 text-left text-foreground/80"
+                >
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                    <HugeiconsIcon icon={FolderIcon} className="size-3.5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-foreground">{project.name}</p>
+                    <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{project.path}</p>
+                  </div>
+                </div>
+              ))}
+
+              {projects.length === 0 && (
+                <div className="rounded-md border border-dashed border-border/60 px-3 py-4 text-center text-xs text-muted-foreground">
+                  {m.env_no_projects()}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeSection === "runtimes" && (
+            <div className="space-y-1">
+              {runtimes.map((runtime) => (
+                <div
+                  key={runtime.id}
+                  className="flex items-start gap-2.5 rounded-md px-2.5 py-2 text-left text-foreground/80"
+                >
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                    <HugeiconsIcon icon={CodeIcon} className="size-3.5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-xs font-medium text-foreground">{runtime.name}</p>
+                      <span
+                        className={cn(
+                          "rounded-full px-1.5 py-0.5 text-[9px] font-medium",
+                          runtime.enabled
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {runtime.enabled ? m.enabled() : m.disabled()}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{runtime.command}</p>
+                  </div>
+                </div>
+              ))}
+
+              {runtimes.length === 0 && (
+                <div className="rounded-md border border-dashed border-border/60 px-3 py-4 text-center text-xs text-muted-foreground">
+                  {m.no_runtimes_registered()}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeSection === "env-vars" && (
+            <div className="rounded-md border border-dashed border-border/60 px-3 py-4 text-center text-xs text-muted-foreground">
+              {m.env_variables()}
+            </div>
+          )}
         </div>
       </div>
 

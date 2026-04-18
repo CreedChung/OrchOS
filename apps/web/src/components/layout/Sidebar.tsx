@@ -18,6 +18,7 @@ import {
   Cancel01Icon,
   InformationCircleIcon,
   InboxIcon,
+  KeyboardIcon,
   Key01Icon,
   NotificationIcon,
   Target01Icon,
@@ -247,7 +248,7 @@ export function Sidebar({
                         )}
                         aria-label={`Shortcut ${shortcut}`}
                       >
-                        <HugeiconsIcon icon={Key01Icon} className="size-3 shrink-0" />
+                        <HugeiconsIcon icon={KeyboardIcon} className="size-3 shrink-0" />
                         {shortcut}
                       </span>
                     )}

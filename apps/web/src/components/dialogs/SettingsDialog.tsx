@@ -17,6 +17,7 @@ import {
   BubbleChatIcon,
   FolderOpenIcon,
   AlertIcon,
+  Delete02Icon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/layout/ThemeToggle";
@@ -445,11 +446,16 @@ export function SettingsDialog({
                 </div>
 
                 <div className="flex items-center justify-between rounded-lg border border-border/50 px-4 py-3">
-                  <div className="max-w-[320px]">
-                    <span className="text-sm font-medium text-foreground">{m.creation_trash()}</span>
-                    <p className="text-xs text-muted-foreground">
-                      {m.creation_trash_desc({ count: deletedConversationCount })}
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-destructive/10 text-destructive">
+                      <HugeiconsIcon icon={Delete02Icon} className="size-4" />
+                    </div>
+                    <div className="max-w-[320px]">
+                      <span className="text-sm font-medium text-foreground">{m.creation_trash()}</span>
+                      <p className="text-xs text-muted-foreground">
+                        {m.creation_trash_desc({ count: deletedConversationCount })}
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => void handleClearTrash()}
