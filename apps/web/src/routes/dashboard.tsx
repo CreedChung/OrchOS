@@ -121,6 +121,8 @@ function DashboardLayout() {
     setGoalStatusFilter,
     scopeFilter,
     setScopeFilter,
+    creationArchiveFilter,
+    setCreationArchiveFilter,
     activityPanelOpen,
     toggleActivityPanel,
   } = useUIStore();
@@ -170,6 +172,8 @@ function DashboardLayout() {
               scopeFilter={scopeFilter}
               onScopeFilterChange={setScopeFilter}
               scopeCounts={scopeCounts}
+              creationArchiveFilter={creationArchiveFilter}
+              onCreationArchiveFilterChange={setCreationArchiveFilter}
               agentModelFilter={agentModelFilter}
               onAgentModelFilterChange={setAgentModelFilter}
               agentModelCounts={agentModelCounts}

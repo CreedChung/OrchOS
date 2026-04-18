@@ -34,7 +34,7 @@ import type { RuntimeProfile } from "#/lib/types";
 const SPEED_FACTOR = 1;
 const FORM_WIDTH = 420;
 const FORM_HEIGHT = 480;
-const COLLAPSED_WIDTH = 200;
+const COLLAPSED_WIDTH = 44;
 const COLLAPSED_HEIGHT = 44;
 
 interface ContextShape {
@@ -125,18 +125,17 @@ function DockBar() {
   if (showForm) return null;
 
   return (
-    <footer className="mt-auto flex h-[44px] items-center justify-center whitespace-nowrap select-none">
-      <div className="flex w-full items-center justify-center gap-2 px-3">
+    <footer className="flex h-[44px] w-[44px] items-center justify-center select-none">
+      <Button
+        type="button"
+        size="icon"
+        className="size-9 rounded-full"
+        variant="ghost"
+        onClick={triggerOpen}
+        aria-label={m.ai_ask()}
+      >
         <HugeiconsIcon icon={Robot02Icon} className="size-4 text-primary shrink-0" />
-        <Button
-          type="button"
-          className="flex h-fit flex-1 justify-end rounded-full px-2 !py-0.5"
-          variant="ghost"
-          onClick={triggerOpen}
-        >
-          <span className="truncate">{m.ai_ask()}</span>
-        </Button>
-      </div>
+      </Button>
     </footer>
   );
 }

@@ -26,14 +26,16 @@ import { cn } from "#/lib/utils";
 import { api, type Conversation, type ConversationMessage } from "#/lib/api";
 import type { AgentProfile, Project, RuntimeProfile } from "#/lib/types";
 import { m } from "#/paraglide/messages";
+import type { CreationArchiveFilter } from "#/components/layout/Toolbar";
 
 interface CreationViewProps {
   agents: AgentProfile[];
   runtimes: RuntimeProfile[];
   projects: Project[];
+  archiveFilter: CreationArchiveFilter;
 }
 
-export function CreationView({ agents, runtimes, projects }: CreationViewProps) {
+export function CreationView({ agents, runtimes, projects, archiveFilter }: CreationViewProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
@@ -46,6 +48,12 @@ export function CreationView({ agents, runtimes, projects }: CreationViewProps) 
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
     [conversations, activeConversationId],
   );
+
+  const filteredConversations = useMemo(() => {
+    if (archiveFilter === "archived") return conversations.filter((c) => c.archived);
+    if (archiveFilter === "active") return conversations.filter((c) => !c.archived);
+    return conversations;
+  }, [archiveFilter, conversations]);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -128,8 +136,8 @@ export function CreationView({ agents, runtimes, projects }: CreationViewProps) 
           </Button>
         </div>
         <ScrollArea className="flex-1">
-          <div className="p-1.5 space-y-0.5">
-            {conversations.map((conv) => (
+            <div className="p-1.5 space-y-0.5">
+            {filteredConversations.map((conv) => (
               <div
                 key={conv.id}
                 className={cn(
@@ -156,7 +164,7 @@ export function CreationView({ agents, runtimes, projects }: CreationViewProps) 
                 </button>
               </div>
             ))}
-            {conversations.length === 0 && (
+            {filteredConversations.length === 0 && (
               <div className="py-6 text-center">
                 <HugeiconsIcon
                   icon={Chat01Icon}

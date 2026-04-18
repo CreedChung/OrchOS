@@ -5,6 +5,7 @@ import type { ControlSettings } from "#/lib/types";
 type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_request";
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
 type ScopeFilter = "all" | "global" | "project";
+type CreationArchiveFilter = "all" | "active" | "archived";
 type ThemeMode = "light" | "dark" | "auto";
 
 interface UIState {
@@ -18,6 +19,7 @@ interface UIState {
   sourceFilter: SourceFilter;
   goalStatusFilter: GoalStatusFilter;
   scopeFilter: ScopeFilter;
+  creationArchiveFilter: CreationArchiveFilter;
 
   // Panel states
   activityPanelOpen: boolean;
@@ -37,6 +39,7 @@ interface UIActions {
   setSourceFilter: (filter: SourceFilter) => void;
   setGoalStatusFilter: (filter: GoalStatusFilter) => void;
   setScopeFilter: (filter: ScopeFilter) => void;
+  setCreationArchiveFilter: (filter: CreationArchiveFilter) => void;
   setActivityPanelOpen: (open: boolean) => void;
   toggleActivityPanel: () => void;
   setTheme: (mode: ThemeMode) => void;
@@ -65,6 +68,7 @@ export const useUIStore = create<UIState & UIActions>()(
       sourceFilter: "all" as SourceFilter,
       goalStatusFilter: "all" as GoalStatusFilter,
       scopeFilter: "all" as ScopeFilter,
+      creationArchiveFilter: "all" as CreationArchiveFilter,
 
       // Panel states
       activityPanelOpen: false,
@@ -82,6 +86,7 @@ export const useUIStore = create<UIState & UIActions>()(
       setSourceFilter: (filter) => set({ sourceFilter: filter }),
       setGoalStatusFilter: (filter) => set({ goalStatusFilter: filter }),
       setScopeFilter: (filter) => set({ scopeFilter: filter }),
+      setCreationArchiveFilter: (filter) => set({ creationArchiveFilter: filter }),
       setActivityPanelOpen: (open) => set({ activityPanelOpen: open }),
       toggleActivityPanel: () => set((s) => ({ activityPanelOpen: !s.activityPanelOpen })),
       setTheme: (mode) => set({ theme: mode }),

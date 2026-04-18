@@ -25,6 +25,7 @@ type SourceFilter = "all" | InboxSource;
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
 export type ScopeFilter = "all" | "global" | "project";
 export type AgentModelFilter = "all" | "local" | "cloud";
+export type CreationArchiveFilter = "all" | "active" | "archived";
 
 const scopeFilterConfig: Record<
   Exclude<ScopeFilter, "all">,
@@ -83,6 +84,8 @@ interface ToolbarProps {
   scopeFilter: ScopeFilter;
   onScopeFilterChange: (filter: ScopeFilter) => void;
   scopeCounts: { all: number; global: number; project: number };
+  creationArchiveFilter: CreationArchiveFilter;
+  onCreationArchiveFilterChange: (filter: CreationArchiveFilter) => void;
 }
 
 export function Toolbar({
@@ -103,9 +106,34 @@ export function Toolbar({
   scopeFilter,
   onScopeFilterChange,
   scopeCounts,
+  creationArchiveFilter,
+  onCreationArchiveFilterChange,
 }: ToolbarProps) {
   return (
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
+      {activeView === "creation" && (
+        <div className="flex items-center gap-1.5">
+          {([
+            { value: "all", label: m.all() },
+            { value: "active", label: m.creation_active() },
+            { value: "archived", label: m.creation_archived() },
+          ] as const).map((filter) => (
+            <button
+              key={filter.value}
+              onClick={() => onCreationArchiveFilterChange(filter.value)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                creationArchiveFilter === filter.value
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+              )}
+            >
+              <span>{filter.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Inbox: source-based filter tabs */}
       {activeView === "inbox" && (
         <div className="flex items-center gap-1.5">

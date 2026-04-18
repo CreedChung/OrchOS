@@ -245,6 +245,7 @@ export interface Conversation {
   projectId?: string;
   agentId?: string;
   runtimeId?: string;
+  archived: boolean;
   createdAt: string;
   updatedAt: string;
 }
