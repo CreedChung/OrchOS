@@ -1,15 +1,24 @@
-"use client";
-
 import { createHighlighter } from "shiki";
 import ReactMarkdown from "react-markdown";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { Check, Copy, FileCode, FileIcon, FolderIcon, FolderOpenIcon } from "lucide-react";
+import {
+  Check,
+  Copy,
+  FileCode,
+  FileIcon,
+  FolderIcon,
+  FolderOpenIcon,
+} from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -274,9 +283,20 @@ function ShikiViewer({
   );
 }
 
-function MarkdownPreview({ content, className }: { content: string; className?: string }) {
+function MarkdownPreview({
+  content,
+  className,
+}: {
+  content: string;
+  className?: string;
+}) {
   return (
-    <div className={cn("overflow-hidden rounded-2xl border border-border bg-card", className)}>
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl border border-border bg-card",
+        className,
+      )}
+    >
       <div className="prose prose-sm max-w-none px-5 py-4 text-foreground dark:prose-invert prose-headings:text-foreground prose-headings:font-semibold prose-p:text-foreground/85 prose-li:text-foreground/85 prose-strong:text-foreground prose-code:rounded prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-[0.8125rem] prose-code:text-foreground prose-code:before:content-none prose-code:after:content-none prose-pre:overflow-x-auto prose-pre:rounded-xl prose-pre:border prose-pre:border-border prose-pre:bg-muted/60 prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
         <ReactMarkdown
           components={{
@@ -329,7 +349,9 @@ function FileHeader({
         <Badge variant="outline" className="text-[11px]">
           {getFileType(file.path)}
         </Badge>
-        <span className="truncate text-xs text-muted-foreground">{file.path}</span>
+        <span className="truncate text-xs text-muted-foreground">
+          {file.path}
+        </span>
       </div>
       <div className="flex items-center gap-1">
         {canPreview ? (
@@ -349,14 +371,21 @@ function FileHeader({
           className="cursor-pointer"
           title="Copy file content"
         >
-          {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+          {copied ? (
+            <Check className="size-3.5" />
+          ) : (
+            <Copy className="size-3.5" />
+          )}
         </Button>
       </div>
     </div>
   );
 }
 
-function TreeIndicator({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+function TreeIndicator({
+  className,
+  ...props
+}: HTMLAttributes<HTMLDivElement>) {
   const { direction } = useTree();
 
   return (
@@ -386,7 +415,14 @@ function Folder({
   children: ReactNode;
   className?: string;
 }) {
-  const { direction, handleExpand, expandedItems, indicator, openIcon, closeIcon } = useTree();
+  const {
+    direction,
+    handleExpand,
+    expandedItems,
+    indicator,
+    openIcon,
+    closeIcon,
+  } = useTree();
 
   return (
     <AccordionPrimitive.Item value={value} className="relative overflow-hidden">
@@ -411,7 +447,10 @@ function Folder({
         {indicator ? <TreeIndicator /> : null}
         <AccordionPrimitive.Root
           type="multiple"
-          className={cn("flex flex-col gap-1 py-1", direction === "rtl" ? "mr-5" : "ml-5")}
+          className={cn(
+            "flex flex-col gap-1 py-1",
+            direction === "rtl" ? "mr-5" : "ml-5",
+          )}
           value={expandedItems}
         >
           {children}
@@ -483,8 +522,12 @@ function Tree({
   closeIcon?: ReactNode;
   dir?: "rtl" | "ltr";
 }) {
-  const [selectedId, setSelectedId] = useState<string | undefined>(initialSelectedId);
-  const [expandedItems, setExpandedItems] = useState<string[] | undefined>(initialExpandedItems);
+  const [selectedId, setSelectedId] = useState<string | undefined>(
+    initialSelectedId,
+  );
+  const [expandedItems, setExpandedItems] = useState<string[] | undefined>(
+    initialExpandedItems,
+  );
 
   useEffect(() => {
     setSelectedId(initialSelectedId);
@@ -544,7 +587,12 @@ function TreeItem({
 }) {
   if (item.children?.length) {
     return (
-      <Folder key={item.id} element={item.name} value={item.id} className="truncate">
+      <Folder
+        key={item.id}
+        element={item.name}
+        value={item.id}
+        className="truncate"
+      >
         {item.children.map((child) => (
           <TreeItem
             key={child.id}
@@ -612,7 +660,9 @@ function FileTree({
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <FileCode className="size-4" />
           </div>
-          <p className="truncate text-sm font-medium text-foreground">{component.name}</p>
+          <p className="truncate text-sm font-medium text-foreground">
+            {component.name}
+          </p>
         </div>
         {component.author ? (
           <Badge variant="secondary" className="shrink-0">
@@ -643,13 +693,20 @@ function FileTree({
   );
 }
 
-export default function ComponentFileViewer({ component }: { component: ApiComponent }) {
+export default function ComponentFileViewer({
+  component,
+}: {
+  component: ApiComponent;
+}) {
   const [selectedFile, setSelectedFile] = useState<string | undefined>();
   const [copied, setCopied] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
   const isDesktop = useIsDesktop();
 
-  const files = useMemo(() => component.files.filter((file) => file.content), [component.files]);
+  const files = useMemo(
+    () => component.files.filter((file) => file.content),
+    [component.files],
+  );
 
   const tree = useMemo(() => {
     type TreeNode = {
@@ -736,9 +793,13 @@ export default function ComponentFileViewer({ component }: { component: ApiCompo
   return (
     <ResizablePanelGroup
       direction={isDesktop ? "horizontal" : "vertical"}
-      className="min-h-[640px] overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+      className="min-h-16 overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
     >
-      <ResizablePanel defaultSize={isDesktop ? "28%" : "36%"} minSize="20%" maxSize="40%">
+      <ResizablePanel
+        defaultSize={isDesktop ? "28%" : "36%"}
+        minSize="20%"
+        maxSize="40%"
+      >
         <FileTree
           tree={tree}
           selectedFile={selectedFile}
@@ -762,7 +823,10 @@ export default function ComponentFileViewer({ component }: { component: ApiCompo
             <div className="flex-1 overflow-hidden bg-background/30 p-3">
               <ScrollArea className="h-full w-full">
                 {canPreview && isPreview ? (
-                  <MarkdownPreview content={selected.content ?? ""} className="min-h-full" />
+                  <MarkdownPreview
+                    content={selected.content ?? ""}
+                    className="min-h-full"
+                  />
                 ) : (
                   <ShikiViewer
                     code={selected.content ?? ""}

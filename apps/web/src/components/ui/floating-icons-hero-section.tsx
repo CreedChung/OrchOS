@@ -115,7 +115,7 @@ const FloatingIconsHero = React.forwardRef<HTMLElement, FloatingIconsHeroProps>(
         ref={ref}
         onMouseMove={handleMouseMove}
         className={cn(
-          "relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background px-6 py-20 md:px-8",
+          "relative flex w-full items-center justify-center overflow-hidden bg-background px-6 py-20 md:px-8",
           className,
         )}
         {...props}

@@ -5,9 +5,6 @@ import Footer from "@/components/layout/Footer";
 import { m } from "@/paraglide/messages";
 import { I18nProvider, useLocale } from "@/lib/useI18n";
 import { FeaturesBento } from "@/components/ui/features-bento";
-import { GoalPreviewCard } from "@/components/ui/goal-preview-card";
-import { AgentPreviewCard } from "@/components/ui/agent-preview-card";
-import { InboxPreviewCard } from "@/components/ui/inbox-preview-card";
 import { FloatingIconsHero } from "@/components/ui/floating-icons-hero-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +25,10 @@ import {
   ShieldAlert,
   Sparkles,
   Workflow,
+  ChevronRight,
+  CircleDot,
+  FolderOpen,
+  Monitor,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({ component: HomePage });
@@ -119,20 +120,34 @@ function HomePageInner() {
         <FeaturesBento />
 
         {/* How it works - Interactive Steps */}
-        <section className="border-t border-border min-h-screen flex flex-col justify-center">
-          <div className="mx-auto w-full max-w-[80rem] px-6 py-16 sm:px-8 sm:py-20">
-            <SectionLabel text={m.section_how_it_works()} />
-            <h2 className="mb-12 text-center text-2xl font-bold text-foreground sm:text-3xl">
-              {m.how_it_works_heading()}
-            </h2>
+        <section className="border-t border-border flex items-center overflow-hidden p-6 sm:p-10 lg:p-14" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+          <div className="grid w-full rounded-2xl bg-card shadow-sm ring-1 ring-foreground/10 overflow-hidden lg:grid-cols-2">
+            <div className="flex flex-col justify-center px-8 py-16 sm:px-12 lg:px-16 lg:py-20">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">
+                {m.section_how_it_works()}
+              </p>
+              <h2 className="mb-10 text-3xl font-bold text-foreground sm:text-4xl lg:text-[2.75rem] lg:leading-tight">
+                {m.how_it_works_heading()}
+              </h2>
 
-            <HowItWorksSteps />
+              <HowItWorksSteps />
+            </div>
+
+            <div className="relative flex items-center justify-center px-6 py-12 lg:px-10 lg:py-16">
+              <div className="absolute inset-0">
+                <img src="/gradients-background.png" alt="" className="size-full object-cover" />
+              </div>
+              <div className="relative w-full max-w-2xl">
+                <DashboardMockWindow />
+              </div>
+            </div>
           </div>
         </section>
 
         {/* Integrations */}
         <FloatingIconsHero
           className="border-t border-border bg-card/40"
+          style={{ minHeight: 'calc(100vh - 3.5rem)' }}
           eyebrow={m.section_integrations()}
           title={m.integrations_heading()}
           subtitle={m.connect_services_desc()}
@@ -165,88 +180,6 @@ function HomePageInner() {
             {m.integration_sentry()}
           </Badge>
         </FloatingIconsHero>
-
-        {/* Architecture */}
-        <section className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-4 py-16 sm:py-20">
-            <div className="grid gap-10 sm:grid-cols-2 sm:items-center">
-              <div>
-                <SectionLabel text={m.section_architecture()} />
-                <h2 className="mb-4 text-2xl font-bold text-foreground sm:text-3xl">
-                  {m.architecture_heading()}
-                </h2>
-                <p className="mb-6 text-sm leading-7 text-muted-foreground">
-                  {m.architecture_desc()}
-                </p>
-                <ul className="space-y-3">
-                  {[
-                    m.arch_feat_bun(),
-                    m.arch_feat_elysia(),
-                    m.arch_feat_react(),
-                    m.arch_feat_mcp(),
-                    m.arch_feat_i18n(),
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-                <div className="space-y-3 font-mono text-xs">
-                  <div className="rounded-lg bg-muted/60 p-3">
-                    <span className="text-primary">orchos</span>
-                    <span className="text-muted-foreground">@</span>
-                    <span className="text-foreground">v0.1.0</span>
-                  </div>
-                  <div className="rounded-lg bg-muted/60 p-3">
-                    <span className="text-muted-foreground">agents:</span>
-                    <span className="ml-2 text-foreground">3 {m.arch_status_agents()}</span>
-                  </div>
-                  <div className="rounded-lg bg-muted/60 p-3">
-                    <span className="text-muted-foreground">goals:</span>
-                    <span className="ml-2 text-green-500">5 {m.arch_status_goals_completed()}</span>
-                    <span className="ml-2 text-primary">2 {m.arch_status_goals_active()}</span>
-                  </div>
-                  <div className="rounded-lg bg-muted/60 p-3">
-                    <span className="text-muted-foreground">rules:</span>
-                    <span className="ml-2 text-foreground">7 {m.arch_status_rules()}</span>
-                  </div>
-                  <div className="rounded-lg bg-muted/60 p-3">
-                    <span className="text-muted-foreground">mcp servers:</span>
-                    <span className="ml-2 text-foreground">2 {m.arch_status_mcp()}</span>
-                  </div>
-                  <div className="rounded-lg bg-primary/10 p-3 text-primary">
-                    ✓ {m.arch_status_healthy()}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="border-t border-border bg-gradient-to-b from-card/50 to-background">
-          <div className="mx-auto max-w-5xl px-4 py-16 sm:py-24">
-            <div className="flex flex-col items-center text-center">
-              <h2 className="mb-4 text-2xl font-bold text-foreground sm:text-4xl">
-                {m.cta_heading()}
-              </h2>
-              <p className="mb-8 max-w-lg text-sm text-muted-foreground">{m.cta_desc()}</p>
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <Button asChild className="h-auto px-6 py-3 shadow-sm">
-                  <Link to="/dashboard">{m.open_dashboard()}</Link>
-                </Button>
-                <Button asChild variant="outline" className="h-auto bg-card px-6 py-3 shadow-sm">
-                  <a href="https://github.com/orchos" target="_blank" rel="noreferrer">
-                    {m.view_on_github()}
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
       <Footer />
     </div>
@@ -268,7 +201,7 @@ function HowItWorksSteps() {
   const steps = [
     {
       step: 1,
-      label: m.step_1_title(),
+      icon: CircleDot,
       title: m.step_1_title(),
       description:
         locale === "zh-CN"
@@ -276,11 +209,10 @@ function HowItWorksSteps() {
           : locale === "zh-TW"
             ? "先定義明確目標、約束與驗收標準，將工作拆成可執行結果。"
             : "Start with a clear goal, constraints, and success criteria so work stays grounded in outcomes.",
-      card: <GoalPreviewCard />,
     },
     {
       step: 2,
-      label: m.step_2_title(),
+      icon: Bot,
       title: m.step_2_title(),
       description:
         locale === "zh-CN"
@@ -288,11 +220,10 @@ function HowItWorksSteps() {
           : locale === "zh-TW"
             ? "按能力分配代理，讓不同角色並行協作，而不是把所有任務塞給一個助手。"
             : "Assign the right agents for the job so specialized roles can work in parallel with clear responsibility.",
-      card: <AgentPreviewCard />,
     },
     {
       step: 3,
-      label: m.step_3_title(),
+      icon: Workflow,
       title: m.step_3_title(),
       description:
         locale === "zh-CN"
@@ -300,77 +231,295 @@ function HowItWorksSteps() {
           : locale === "zh-TW"
             ? "執行過程中持續接收回饋、處理異常並迭代，自動化流程不會脫離你的控制。"
             : "Keep the loop running with feedback, approvals, and iteration so automation stays visible and controllable.",
-      card: <InboxPreviewCard />,
     },
   ];
-  const currentStep = steps[activeStep - 1] ?? steps[0];
 
   return (
-    <div className="mx-auto w-full max-w-[76rem]">
-      <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-10">
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-3xl border border-border bg-card/70 p-3 shadow-sm backdrop-blur-sm">
-            <div className="space-y-2">
-              {steps.map((step) => (
-                <button
-                  key={step.step}
-                  type="button"
-                  onClick={() => setActiveStep(step.step)}
+    <div className="space-y-4">
+      {steps.map((step, idx) => {
+        const Icon = step.icon;
+        const isActive = activeStep === step.step;
+        return (
+          <button
+            key={step.step}
+            type="button"
+            onClick={() => setActiveStep(step.step)}
+            className={cn(
+              "group flex w-full items-start gap-4 rounded-2xl px-5 py-4 text-left transition-all duration-200",
+              isActive
+                ? "bg-primary/5 ring-1 ring-primary/15 shadow-sm"
+                : "hover:bg-muted/60",
+            )}
+          >
+            <div
+              className={cn(
+                "flex size-11 shrink-0 items-center justify-center rounded-xl transition-all duration-200",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-muted text-muted-foreground group-hover:bg-muted/80",
+              )}
+            >
+              <Icon className="size-5" />
+            </div>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <div className="flex items-center gap-2">
+                <span
                   className={cn(
-                    "flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left transition-colors",
-                    activeStep === step.step
-                      ? "bg-accent text-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                    "text-xs font-bold tabular-nums transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground",
                   )}
-                  aria-current={activeStep === step.step ? "step" : undefined}
+                >
+                  {String(step.step).padStart(2, "0")}
+                </span>
+                <h3
+                  className={cn(
+                    "text-base font-semibold transition-colors sm:text-lg",
+                    isActive ? "text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {step.title}
+                </h3>
+              </div>
+              <p
+                className={cn(
+                  "mt-1 text-sm leading-6 transition-colors",
+                  isActive ? "text-foreground/70" : "text-muted-foreground/60",
+                )}
+              >
+                {step.description}
+              </p>
+            </div>
+            {idx < steps.length - 1 && (
+              <div className="absolute left-[3.1rem] mt-11 hidden h-4 w-px bg-border" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function DashboardMockWindow() {
+  const treeData = [
+    {
+      label: "OrchOS Project",
+      open: true,
+      children: [
+        {
+          label: "Goals",
+          open: true,
+          children: [
+            { label: "Auth System", status: "active" as const },
+            { label: "Collaboration", status: "active" as const },
+            { label: "Bun Migration", status: "completed" as const },
+          ],
+        },
+        {
+          label: "Agents",
+          open: true,
+          children: [
+            { label: "CodeAgent", status: "active" as const },
+            { label: "ReviewAgent", status: "idle" as const },
+            { label: "TestAgent", status: "active" as const },
+          ],
+        },
+        {
+          label: "Workflows",
+          open: false,
+          children: [
+            { label: "Deploy Pipeline", status: "idle" as const },
+            { label: "Review Flow", status: "active" as const },
+          ],
+        },
+      ],
+    },
+  ];
+
+  const statusDot: Record<string, string> = {
+    active: "bg-emerald-400",
+    idle: "bg-gray-400",
+    completed: "bg-blue-400",
+  };
+
+  return (
+    <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
+      <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-2.5">
+        <div className="flex items-center gap-1.5">
+          <div className="size-3 rounded-full bg-[#ff5f57]" />
+          <div className="size-3 rounded-full bg-[#febc2e]" />
+          <div className="size-3 rounded-full bg-[#28c840]" />
+        </div>
+        <div className="flex-1 text-center">
+          <span className="text-[11px] font-medium text-gray-400">OrchOS Dashboard</span>
+        </div>
+        <div className="w-[52px]" />
+      </div>
+
+      <div className="flex h-[420px]">
+        <div className="w-52 shrink-0 border-r border-gray-200 bg-gray-50/80">
+          <div className="border-b border-gray-200 px-3 py-2">
+            <div className="flex items-center gap-1.5">
+              <Monitor className="size-3 text-gray-400" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Layers</span>
+            </div>
+          </div>
+          <div className="px-1.5 py-1.5">
+            {treeData.map((root) => (
+              <TreeItem key={root.label} item={root} depth={0} statusDot={statusDot} />
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 bg-white p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="size-6 rounded-md bg-indigo-50 flex items-center justify-center">
+                <CircleDot className="size-3 text-indigo-500" />
+              </div>
+              <span className="text-xs font-semibold text-gray-800">Auth System</span>
+            </div>
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold text-emerald-600">
+              Active
+            </span>
+          </div>
+
+          <div className="mb-3 h-1.5 w-full rounded-full bg-gray-100">
+            <div className="h-1.5 w-[65%] rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
+          </div>
+
+          <div className="mb-4 space-y-2">
+            {["JWT refresh token rotation", "Session persistence", "OAuth2 login flow"].map(
+              (item, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-1.5"
                 >
                   <div
                     className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
-                      activeStep === step.step
-                        ? "border-primary/30 bg-primary/10 text-primary"
-                        : "border-border bg-background text-muted-foreground",
+                      "flex size-4 items-center justify-center rounded",
+                      i < 2 ? "bg-emerald-50 text-emerald-500" : "bg-gray-100 text-gray-300",
                     )}
                   >
-                    {step.step}
+                    <span className="text-[8px]">{i < 2 ? "✓" : "○"}</span>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold">{step.label}</p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{step.description}</p>
-                  </div>
-                </button>
+                  <span className={cn("text-[10px]", i < 2 ? "text-gray-600" : "text-gray-400")}>
+                    {item}
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400">Assigned Agents</p>
+            <div className="flex gap-2">
+              {[
+                { name: "CodeAgent", status: "active" },
+                { name: "TestAgent", status: "active" },
+              ].map((agent) => (
+                <div
+                  key={agent.name}
+                  className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2.5 py-1.5"
+                >
+                  <div className={cn("size-1.5 rounded-full", statusDot[agent.status])} />
+                  <span className="text-[10px] text-gray-500">{agent.name}</span>
+                </div>
               ))}
             </div>
           </div>
-        </aside>
 
-        <section className="rounded-[2rem] border border-border bg-card/40 p-4 shadow-sm backdrop-blur-sm sm:p-6">
-          <div className="mb-5 flex items-start gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-sm font-semibold text-primary">
-              {currentStep.step}
+          <div className="mt-4 space-y-2">
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400">Activity</p>
+            <div className="rounded-lg bg-gray-50 p-2.5">
+              <div className="flex items-start gap-2">
+                <Bot className="mt-0.5 size-3 text-indigo-500" />
+                <div>
+                  <p className="text-[10px] text-gray-500">CodeAgent implementing auth module</p>
+                  <p className="text-[8px] text-gray-400">2 min ago</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-semibold text-foreground sm:text-2xl">{currentStep.title}</h3>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-                {currentStep.description}
-              </p>
+            <div className="rounded-lg bg-gray-50 p-2.5">
+              <div className="flex items-start gap-2">
+                <Workflow className="mt-0.5 size-3 text-purple-500" />
+                <div>
+                  <p className="text-[10px] text-gray-500">Tests running for session persistence</p>
+                  <p className="text-[8px] text-gray-400">5 min ago</p>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div className="overflow-hidden rounded-[1.5rem] border border-border/80 bg-background/70 p-2 sm:p-3">
-            <div className="h-[520px] w-full">{currentStep.card}</div>
-          </div>
-
-        </section>
+        </div>
       </div>
     </div>
   );
 }
 
-function SectionLabel({ text }: { text: string }) {
+function TreeItem({
+  item,
+  depth,
+  statusDot,
+}: {
+  item: {
+    label: string;
+    open?: boolean;
+    children?: Array<{
+      label: string;
+      open?: boolean;
+      status?: string;
+      children?: Array<{ label: string; status?: string }>;
+    }>;
+    status?: string;
+  };
+  depth: number;
+  statusDot: Record<string, string>;
+}) {
+  const [isOpen, setIsOpen] = useState(item.open ?? false);
+  const hasChildren = item.children && item.children.length > 0;
+  const isRoot = depth === 0;
+
   return (
-    <p className="mb-2 text-center text-xs font-bold uppercase tracking-widest text-primary">
-      {text}
-    </p>
+    <div>
+      <button
+        type="button"
+        onClick={() => hasChildren && setIsOpen(!isOpen)}
+        className="flex w-full items-center gap-1 rounded px-1 py-[3px] text-left hover:bg-gray-100 transition-colors"
+        style={{ paddingLeft: `${depth * 12 + 4}px` }}
+      >
+        {hasChildren ? (
+          <ChevronRight
+            className={cn(
+              "size-3 shrink-0 text-gray-400 transition-transform duration-150",
+              isOpen && "rotate-90",
+            )}
+          />
+        ) : (
+          <span className="w-3 shrink-0" />
+        )}
+        {hasChildren ? (
+          <FolderOpen className="size-3 shrink-0 text-gray-400" />
+        ) : (
+          <span className="flex size-3 shrink-0 items-center justify-center">
+            <div className={cn("size-1.5 rounded-full", item.status ? statusDot[item.status] : "bg-gray-300")} />
+          </span>
+        )}
+        <span
+          className={cn(
+            "truncate text-[10px]",
+            isRoot ? "font-semibold text-gray-700" : "text-gray-500",
+          )}
+        >
+          {item.label}
+        </span>
+      </button>
+      {isOpen && hasChildren && (
+        <div>
+          {item.children!.map((child) => (
+            <TreeItem key={child.label} item={child} depth={depth + 1} statusDot={statusDot} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
+
