@@ -26,7 +26,7 @@ import "@/db";
 
 seedData();
 
-const app = new Elysia()
+export const app = new Elysia()
   .use(cors())
   .use(authPlugin)
   .use(projectController)
@@ -50,6 +50,11 @@ const app = new Elysia()
   .use(sandboxController)
   .use(filesystemController)
   .use(conversationController)
-  .listen(5173);
+  .listen({
+    hostname: "0.0.0.0",
+    port: 5173,
+  });
 
 console.log(`🦊 Elysia server running at ${app.server?.hostname}:${app.server?.port}`);
+
+export type App = typeof app;

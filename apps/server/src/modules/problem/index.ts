@@ -22,6 +22,27 @@ const ProblemResponse = t.Object({
   updatedAt: t.String(),
 });
 
+const ProblemSummaryResponse = t.Object({
+  status: t.Object({
+    open: t.Number(),
+    fixed: t.Number(),
+    ignored: t.Number(),
+    assigned: t.Number(),
+  }),
+  inbox: t.Object({
+    all: t.Number(),
+    github_pr: t.Number(),
+    github_issue: t.Number(),
+    mention: t.Number(),
+    agent_request: t.Number(),
+  }),
+  system: t.Object({
+    critical: t.Number(),
+    warning: t.Number(),
+    info: t.Number(),
+  }),
+});
+
 export const problemController = new Elysia({ prefix: "/api/problems" })
   .use(authPlugin)
   .onBeforeHandle(requireAuth)
@@ -44,6 +65,9 @@ export const problemController = new Elysia({ prefix: "/api/problems" })
       ignored: t.Number(),
       assigned: t.Number(),
     }),
+  })
+  .get("/summary", () => ProblemService.summarize(), {
+    response: ProblemSummaryResponse,
   })
   .post(
     "/",

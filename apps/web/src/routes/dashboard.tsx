@@ -126,21 +126,6 @@ function DashboardLayout() {
     toggleActivityPanel,
   } = useUIStore();
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-sm" suppressHydrationWarning>
-            {m.loading()}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  const scopeCounts = activeView === "skills" ? skillsScopeCounts : mcpScopeCounts;
-
   useEffect(() => {
     let cancelled = false;
 
@@ -164,6 +149,21 @@ function DashboardLayout() {
       globalThis.clearTimeout(timeoutId);
     };
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span className="text-sm" suppressHydrationWarning>
+            {m.loading()}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  const scopeCounts = activeView === "skills" ? skillsScopeCounts : mcpScopeCounts;
 
   return (
     <I18nProvider>

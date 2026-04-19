@@ -1,15 +1,11 @@
-const RAW_API_BASE =
-  import.meta.env.VITE_API_BASE_URL?.trim() ?? import.meta.env.VITE_API_BASE?.trim() ?? "";
-
-export const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
-export const DEFAULT_BACKEND_BASE_URL = "http://127.0.0.1:5173";
+import { API_BASE, getServerBaseUrl } from "./eden";
 
 export function resolveApiUrl(path: string) {
   if (API_BASE) {
     return `${API_BASE}${path}`;
   }
 
-  return new URL(path, DEFAULT_BACKEND_BASE_URL).toString();
+  return new URL(path, `${getServerBaseUrl()}/`).toString();
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -302,6 +298,27 @@ export interface ProblemSummary {
   };
 }
 
+const EMPTY_PROBLEM_SUMMARY: ProblemSummary = {
+  status: {
+    open: 0,
+    fixed: 0,
+    ignored: 0,
+    assigned: 0,
+  },
+  inbox: {
+    all: 0,
+    github_pr: 0,
+    github_issue: 0,
+    mention: 0,
+    agent_request: 0,
+  },
+  system: {
+    critical: 0,
+    warning: 0,
+    info: 0,
+  },
+};
+
 // API functions
 export const api = {
   // Goals
@@ -490,7 +507,17 @@ export const api = {
     return request<Problem[]>(`/api/problems${qs ? `?${qs}` : ""}`);
   },
   getProblemCounts: () => request<Record<ProblemStatus, number>>("/api/problems/counts"),
-  getProblemSummary: () => request<ProblemSummary>("/api/problems/summary"),
+  getProblemSummary: async () => {
+    try {
+      return await request<ProblemSummary>("/api/problems/summary");
+    } catch {
+      const counts = await request<Record<ProblemStatus, number>>("/api/problems/counts");
+      return {
+        ...EMPTY_PROBLEM_SUMMARY,
+        status: counts,
+      };
+    }
+  },
   createProblem: (data: {
     title: string;
     priority?: ProblemPriority;

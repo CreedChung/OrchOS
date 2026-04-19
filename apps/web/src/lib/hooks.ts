@@ -1,18 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { api, API_BASE } from "./api";
+import { api } from "./api";
+import { createEdenClient } from "./eden";
 
 const WS_BASE_RECONNECT_DELAY_MS = 1000;
 const WS_MAX_RECONNECT_DELAY_MS = 30000;
 
-function getWsUrl() {
-  if (API_BASE) {
-    const url = new URL(API_BASE);
-    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-    url.pathname = "/ws";
-    return url.toString();
-  }
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.host}/ws`;
+function shouldEnableWebSocket() {
+  const envValue = import.meta.env.VITE_ENABLE_WEBSOCKET?.trim().toLowerCase();
+  if (envValue === "true") return true;
+  if (envValue === "false") return false;
+
+  return false;
 }
 
 function useAsyncData<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
@@ -81,9 +79,13 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
   onEventRef.current = onEvent;
 
   useEffect(() => {
+    if (!shouldEnableWebSocket()) {
+      return;
+    }
+
     let isShuttingDown = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let ws: WebSocket | null = null;
+    let ws: ReturnType<ReturnType<typeof createEdenClient>["ws"]["subscribe"]> | null = null;
     let reconnectAttempts = 0;
 
     const connect = () => {
@@ -91,22 +93,21 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
         return;
       }
 
-      ws = new WebSocket(getWsUrl());
+      const client = createEdenClient();
+      ws = client.ws.subscribe();
 
-      ws.onopen = () => {
+      ws.on("open", () => {
         reconnectAttempts = 0;
-      };
+      });
 
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(typeof event.data === "string" ? event.data : "");
-          if (message?.type === "event" && message.data) {
-            onEventRef.current(message.data as Record<string, unknown>);
-          }
-        } catch {}
-      };
+      ws.subscribe((event) => {
+        const message = event.data;
+        if (message && typeof message === "object" && "type" in message && "data" in message && message.type === "event") {
+          onEventRef.current(message.data as Record<string, unknown>);
+        }
+      });
 
-      ws.onclose = () => {
+      ws.on("close", () => {
         if (isShuttingDown) {
           return;
         }
@@ -121,9 +122,9 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
           reconnectTimer = null;
           connect();
         }, delay);
-      };
+      });
 
-      ws.onerror = () => {};
+      ws.on("error", () => {});
     };
 
     connect();
