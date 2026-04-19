@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon, CloudIcon, Server } from "@hugeicons/core-free-icons";
+import { CloudIcon, Loading01Icon, Server } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import type { RuntimeProfile } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { AppDialog } from "@/components/ui/app-dialog";
+import { api } from "@/lib/api";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 
 const CAPABILITY_OPTIONS = [
@@ -67,9 +71,9 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
   const [role, setRole] = useState("");
   const [runtimeId, setRuntimeId] = useState<string | null>(null);
   const [selectedCapabilities, setSelectedCapabilities] = useState<string[]>([]);
-  const [model, setModel] = useState("");
-
-  if (!open) return null;
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [loadingModels, setLoadingModels] = useState(false);
 
   const selectedRuntime = runtimes.find((r) => r.id === runtimeId);
 
@@ -77,10 +81,57 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
     setRuntimeId(id);
     const rt = runtimes.find((r) => r.id === id);
     if (rt) {
-      setModel(rt.model);
       setSelectedCapabilities([...rt.capabilities]);
     }
   };
+
+  useEffect(() => {
+    if (!selectedRuntime) {
+      setLoadingModels(false);
+      setAvailableModels([]);
+      setSelectedModel("");
+      return;
+    }
+
+    let cancelled = false;
+    const fallbackModel = selectedRuntime.currentModel || selectedRuntime.model;
+
+    setLoadingModels(true);
+    setAvailableModels(fallbackModel ? [fallbackModel] : []);
+    setSelectedModel(fallbackModel || "");
+
+    void api
+      .listRuntimeModels(selectedRuntime.id)
+      .then((result) => {
+        if (cancelled) return;
+
+        const models = result.models.length > 0 ? result.models : fallbackModel ? [fallbackModel] : [];
+        const nextSelected =
+          (result.currentModel && models.includes(result.currentModel) && result.currentModel) ||
+          (fallbackModel && models.includes(fallbackModel) && fallbackModel) ||
+          models[0] ||
+          "";
+
+        setAvailableModels(models);
+        setSelectedModel(nextSelected);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setAvailableModels(fallbackModel ? [fallbackModel] : []);
+        setSelectedModel(fallbackModel || "");
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingModels(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRuntime]);
+
+  if (!open) return null;
 
   const toggleCapability = (cap: string) => {
     setSelectedCapabilities((prev) =>
@@ -90,12 +141,12 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !role.trim() || selectedCapabilities.length === 0) return;
+    if (!name.trim() || !role.trim() || !selectedRuntime || !selectedModel || selectedCapabilities.length === 0) return;
     onSubmit({
       name: name.trim(),
       role: role.trim(),
       capabilities: selectedCapabilities,
-      model: model.trim() || (selectedRuntime?.model ?? "local/custom"),
+      model: selectedModel,
       cliCommand: selectedRuntime?.command,
       runtimeId: runtimeId ?? undefined,
     });
@@ -103,57 +154,67 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
     setRole("");
     setRuntimeId(null);
     setSelectedCapabilities([]);
-    setModel("");
+    setAvailableModels([]);
+    setSelectedModel("");
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-2xl">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">{m.create_agent()}</h2>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+    <AppDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+      title={m.create_agent()}
+      size="md"
+      bodyClassName="pt-5"
+      footer={
+        <>
+          <Button size="sm" type="button" variant="outline" onClick={onClose}>
+            {m.cancel()}
+          </Button>
+          <Button
+            size="sm"
+            type="submit"
+            form="create-agent-form"
+            disabled={
+              !name.trim() ||
+              !role.trim() ||
+              !selectedRuntime ||
+              !selectedModel ||
+              selectedCapabilities.length === 0
+            }
           >
-            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
+            {m.create_agent()}
+          </Button>
+        </>
+      }
+    >
+      <form id="create-agent-form" onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.agent_name()}
-            </label>
+            <label className="text-xs text-muted-foreground">{m.agent_name()}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={m.agent_name_placeholder()}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
               autoFocus
             />
           </div>
 
-          {/* Role */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.agent_role()}
-            </label>
+            <label className="text-xs text-muted-foreground">{m.agent_role()}</label>
             <input
               type="text"
               value={role}
               onChange={(e) => setRole(e.target.value)}
               placeholder={m.agent_role_placeholder()}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             />
           </div>
 
-          {/* Runtime */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.agent_runtime()}
-            </label>
+            <label className="text-xs text-muted-foreground">{m.agent_runtime()}</label>
             {runtimes.length > 0 ? (
               <Select value={runtimeId ?? ""} onValueChange={(value) => handleRuntimeChange(value ?? "")}>
                 <SelectTrigger>
@@ -216,11 +277,8 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
             <p className="mt-1 text-[10px] text-muted-foreground/60">{m.create_agent_hint()}</p>
           </div>
 
-          {/* Capabilities */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.agent_capabilities()}
-            </label>
+            <label className="text-xs text-muted-foreground">{m.agent_capabilities()}</label>
             <div className="flex flex-wrap gap-1.5">
               {CAPABILITY_OPTIONS.map((cap) => {
                 const colors = CAPABILITY_COLORS[cap.value];
@@ -242,46 +300,49 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
                 );
               })}
             </div>
+            <p className="mt-1 text-[10px] text-muted-foreground/60">
+              {selectedRuntime
+                ? "Prefilled from the selected runtime. You can still adjust capabilities before creating the agent."
+                : "Select a runtime to prefill recommended capabilities, then adjust them if needed."}
+            </p>
           </div>
 
-          {/* Model */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.agent_model()}
-            </label>
-            <input
-              type="text"
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              placeholder={m.agent_model_placeholder()}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            <label className="text-xs text-muted-foreground">{m.agent_model()}</label>
+            <Select
+              value={selectedModel}
+              onValueChange={(value) => setSelectedModel(value ?? "")}
+              disabled={!selectedRuntime || loadingModels || availableModels.length === 0}
             >
-              {m.cancel()}
-            </button>
-            <button
-              type="submit"
-              disabled={!name.trim() || !role.trim() || selectedCapabilities.length === 0}
-              className={cn(
-                "rounded-md px-4 py-2 text-sm font-medium text-primary-foreground transition-colors",
-                name.trim() && role.trim() && selectedCapabilities.length > 0
-                  ? "bg-primary hover:bg-primary/90"
-                  : "bg-muted text-muted-foreground cursor-not-allowed",
-              )}
-            >
-              {m.create_agent()}
-            </button>
+              <SelectTrigger className="w-full">
+                {loadingModels ? (
+                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                    Models...
+                  </span>
+                ) : (
+                  <SelectValue>
+                    {selectedModel || (!selectedRuntime ? m.agent_runtime_placeholder() : m.agent_model_placeholder())}
+                  </SelectValue>
+                )}
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {availableModels.map((model) => (
+                    <SelectItem key={model} value={model}>
+                      {model}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {!loadingModels && selectedRuntime && availableModels.length === 0 && (
+              <p className="mt-1 text-[10px] text-muted-foreground/60">
+                No models reported by runtime.
+              </p>
+            )}
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </AppDialog>
   );
 }

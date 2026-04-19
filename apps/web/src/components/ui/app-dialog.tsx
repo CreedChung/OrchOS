@@ -1,0 +1,102 @@
+import type { ReactNode } from "react";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+
+import { cn } from "@/lib/utils";
+
+type AppDialogSize = "sm" | "md" | "lg" | "xl";
+
+const dialogSizeClasses: Record<AppDialogSize, string> = {
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-2xl",
+};
+
+interface AppDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: ReactNode;
+  description?: ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
+  size?: AppDialogSize;
+  nested?: boolean;
+  className?: string;
+  bodyClassName?: string;
+  footerClassName?: string;
+  hideCloseButton?: boolean;
+}
+
+export function AppDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  footer,
+  size = "md",
+  nested = false,
+  className,
+  bodyClassName,
+  footerClassName,
+  hideCloseButton = false,
+}: AppDialogProps) {
+  const zIndexClass = nested ? "z-[60]" : "z-50";
+
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Backdrop
+          className={cn(
+            "fixed inset-0 bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+            zIndexClass,
+          )}
+        />
+        <div className={cn("fixed inset-0 flex items-center justify-center p-4", zIndexClass)}>
+          <DialogPrimitive.Popup
+            className={cn(
+              "relative flex max-h-[min(90vh,720px)] w-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl ring-1 ring-background/60 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+              dialogSizeClasses[size],
+              className,
+            )}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
+              <div className="min-w-0">
+                <DialogPrimitive.Title className="text-sm font-semibold text-foreground">
+                  {title}
+                </DialogPrimitive.Title>
+                {description ? (
+                  <DialogPrimitive.Description className="mt-1 text-xs text-muted-foreground">
+                    {description}
+                  </DialogPrimitive.Description>
+                ) : null}
+              </div>
+              {!hideCloseButton ? (
+                <DialogPrimitive.Close
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+                </DialogPrimitive.Close>
+              ) : null}
+            </div>
+
+            <div className={cn("min-h-0 flex-1 overflow-y-auto p-6", bodyClassName)}>{children}</div>
+
+            {footer ? (
+              <div
+                className={cn(
+                  "flex flex-wrap items-center justify-end gap-2 border-t border-border px-6 py-4",
+                  footerClassName,
+                )}
+              >
+                {footer}
+              </div>
+            ) : null}
+          </DialogPrimitive.Popup>
+        </div>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  );
+}

@@ -149,6 +149,15 @@ export function McpServersView({
                 />
                 <p className="text-sm text-muted-foreground">{m.no_mcp_servers()}</p>
                 <p className="mt-1 text-xs text-muted-foreground/60">{m.no_mcp_servers_desc()}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-3"
+                  onClick={() => setCreateOpen(true)}
+                >
+                  <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
+                  Add MCP Server
+                </Button>
               </div>
             )}
           </div>

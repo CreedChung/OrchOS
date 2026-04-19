@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon, ArrowRight01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, Shield01Icon } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
+import { Button } from "@/components/ui/button";
+import { AppDialog } from "@/components/ui/app-dialog";
 import {
   Select,
   SelectContent,
@@ -79,31 +81,40 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl">
-        <div className="mb-5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <HugeiconsIcon icon={Shield01Icon} className="size-4 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">{m.create_rule()}</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
-          </button>
-        </div>
-
-        {/* Source problem info */}
-        <div className="mb-4 rounded-md border border-border/50 bg-accent/20 px-3 py-2">
+    <AppDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+      title={
+        <span className="flex items-center gap-2">
+          <HugeiconsIcon icon={Shield01Icon} className="size-4 text-primary" />
+          <span>{m.create_rule()}</span>
+        </span>
+      }
+      size="md"
+      bodyClassName="space-y-4 pt-5"
+      footer={
+        <>
+          <Button size="sm" type="button" variant="outline" onClick={onClose}>
+            {m.cancel()}
+          </Button>
+          <Button size="sm" type="submit" form="create-rule-form">
+            {m.create_rule()}
+          </Button>
+        </>
+      }
+    >
+      {/* Source problem info */}
+      <div className="rounded-md border border-border/50 bg-accent/20 px-3 py-2">
           <p className="text-xs text-muted-foreground">{m.from_problem()}</p>
           <p className="text-sm font-medium text-foreground">{problem.title}</p>
           {problem.context && (
             <p className="text-xs text-muted-foreground mt-0.5">{problem.context}</p>
           )}
-        </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <form id="create-rule-form" onSubmit={handleSubmit} className="space-y-4">
           {/* Rule Name */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
@@ -159,25 +170,7 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
               </Select>
             </div>
           </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-            >
-              {m.cancel()}
-            </button>
-            <button
-              type="submit"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              {m.create_rule()}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </AppDialog>
   );
 }

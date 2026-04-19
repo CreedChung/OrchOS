@@ -155,6 +155,28 @@ export function SkillsView({
               </div>
             )}
 
+            {skills.length === 0 && (
+              <div className="py-8 text-center">
+                <HugeiconsIcon
+                  icon={Wrench01Icon}
+                  className="mx-auto mb-2 size-6 text-muted-foreground/30"
+                />
+                <p className="text-sm text-muted-foreground">{m.no_skills()}</p>
+                <p className="mx-auto mt-1 max-w-44 text-xs text-muted-foreground/60">
+                  {m.no_skills_desc()}
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-3"
+                  onClick={() => setCreateOpen(true)}
+                >
+                  <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
+                  Add Skill
+                </Button>
+              </div>
+            )}
+
           </div>
         </ScrollArea>
       </div>

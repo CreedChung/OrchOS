@@ -85,9 +85,9 @@ export function DirectoryPickerDialog({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <DialogPrimitive.Popup className="relative z-50 w-full max-w-md rounded-lg border border-border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+        <DialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/15 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <DialogPrimitive.Popup className="relative z-[60] w-full max-w-md rounded-lg border border-border bg-background p-0 shadow-lg ring-1 ring-background/60 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <DialogPrimitive.Title className="text-sm font-semibold text-foreground">
@@ -153,9 +153,9 @@ export function DirectoryPickerDialog({
                 Use This Directory
               </Button>
               <div className="flex gap-2">
-                <DialogPrimitive.Close className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted">
-                  Cancel
-                </DialogPrimitive.Close>
+                <Button size="sm" variant="outline" asChild>
+                  <DialogPrimitive.Close>Cancel</DialogPrimitive.Close>
+                </Button>
                 <Button size="sm" onClick={handleSelect} disabled={!selectedPath}>
                   Open
                 </Button>

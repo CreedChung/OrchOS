@@ -3,7 +3,13 @@ import { runtimes } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateId } from "@/utils";
 import { executor } from "@/modules/execution/executor";
-import { getAcpAgentConfig, getAcpCurrentModel, probeAcpAgent, promptManagedAcpAgent } from "@/modules/runtime/acp";
+import {
+  getAcpAgentConfig,
+  getAcpAvailableModels,
+  getAcpCurrentModel,
+  probeAcpAgent,
+  promptManagedAcpAgent,
+} from "@/modules/runtime/acp";
 
 export interface RuntimeProfile {
   id: string;
@@ -327,6 +333,48 @@ export abstract class RuntimeService {
         .run();
     }
     return result;
+  }
+
+  static async getAvailableModels(runtimeId: string): Promise<{
+    models: string[];
+    currentModel?: string;
+    source: "acp" | "config";
+    rawOutput?: string;
+  }> {
+    const runtime = RuntimeService.getByRegistryId(runtimeId) || RuntimeService.get(runtimeId);
+
+    if (!runtime) {
+      return { models: [], currentModel: undefined, source: "config" };
+    }
+
+    const acpConfig = getAcpAgentConfig(runtime);
+    if (acpConfig) {
+      try {
+        const result = await getAcpAvailableModels(acpConfig);
+        if (result.currentModel) {
+          db.update(runtimes)
+            .set({ currentModel: result.currentModel })
+            .where(eq(runtimes.id, runtime.id))
+            .run();
+        }
+
+        return {
+          models: result.models,
+          currentModel: result.currentModel,
+          source: "acp",
+          rawOutput: result.rawOutput,
+        };
+      } catch {
+        // Fall back to configured model when ACP model discovery is unavailable.
+      }
+    }
+
+    const configuredModels = Array.from(new Set([runtime.currentModel, runtime.model].filter(Boolean)));
+    return {
+      models: configuredModels,
+      currentModel: runtime.currentModel || runtime.model,
+      source: "config",
+    };
   }
 
   static async chat(

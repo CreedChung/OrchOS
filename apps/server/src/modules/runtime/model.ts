@@ -86,6 +86,12 @@ export const RuntimeModel = {
     source: t.Union([t.Literal("acp"), t.Literal("cli"), t.Literal("config"), t.Literal("registry")]),
     rawOutput: t.Optional(t.String()),
   }),
+  modelsResponse: t.Object({
+    models: t.Array(t.String()),
+    currentModel: t.Optional(t.String()),
+    source: t.Union([t.Literal("acp"), t.Literal("config")]),
+    rawOutput: t.Optional(t.String()),
+  }),
   chatBody: t.Object({
     prompt: t.String(),
   }),

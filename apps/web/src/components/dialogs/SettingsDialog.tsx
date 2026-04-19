@@ -21,6 +21,8 @@ import {
 } from "@hugeicons/core-free-icons";
 import { cn, getRuntimeIcon } from "@/lib/utils";
 import ThemeToggle from "@/components/layout/ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { AppDialog } from "@/components/ui/app-dialog";
 import {
   Select,
   SelectContent,
@@ -157,23 +159,27 @@ function EditAcpDialog({ runtime, draft, saving, onClose, onDraftChange, onSave 
   if (!runtime || !draft) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/15">
-      <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-2xl ring-1 ring-background/60">
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Edit ACP</h3>
-            <p className="mt-1 text-xs text-muted-foreground">{runtime.name}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            type="button"
-          >
-            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
-          </button>
-        </div>
-
-        <div className="grid gap-3 p-6">
+    <AppDialog
+      open={Boolean(runtime && draft)}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+      title="Edit ACP"
+      description={runtime.name}
+      size="xl"
+      nested
+      bodyClassName="grid gap-3"
+      footer={
+        <>
+          <Button size="sm" type="button" variant="outline" onClick={onClose}>
+            {m.cancel()}
+          </Button>
+          <Button size="sm" type="button" onClick={onSave} disabled={saving}>
+            {saving ? "Saving..." : m.save()}
+          </Button>
+        </>
+      }
+    >
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1">
               <span className="text-[11px] font-medium text-muted-foreground">Transport</span>
@@ -243,27 +249,7 @@ function EditAcpDialog({ runtime, draft, saving, onClose, onDraftChange, onSave 
               placeholder={"DEBUG=true\nOPENAI_API_KEY=..."}
             />
           </label>
-        </div>
-
-        <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
-          <button
-            onClick={onClose}
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-            type="button"
-          >
-            {m.cancel()}
-          </button>
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            type="button"
-          >
-            {saving ? "Saving..." : m.save()}
-          </button>
-        </div>
-      </div>
-    </div>
+    </AppDialog>
   );
 }
 
@@ -819,7 +805,7 @@ export function SettingsDialog({
                   value={activeIntegrationCat}
                   onValueChange={(v) => setActiveIntegrationCat(v as IntegrationCategory)}
                 >
-                  <TabsList>
+                  <TabsList className="max-w-full flex-wrap">
                     {integrationCategoryDefs.map((cat) => {
                       const Icon = cat.icon;
                       return (

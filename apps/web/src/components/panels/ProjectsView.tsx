@@ -642,11 +642,12 @@ export function ProjectsView({
                     <Button
                       size="sm"
                       variant="outline"
+                      className="h-9 w-9 px-0"
                       onClick={() => setShowDirectoryPicker(true)}
                       title="Browse for directory"
+                      aria-label="Browse for directory"
                     >
-                      <HugeiconsIcon icon={FolderIcon} className="size-3.5 mr-1" />
-                      Browse
+                      <HugeiconsIcon icon={FolderIcon} className="size-3.5" />
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground/60 mt-1">
@@ -680,11 +681,12 @@ export function ProjectsView({
                     <Button
                       size="sm"
                       variant="outline"
+                      className="h-9 w-9 px-0"
                       onClick={() => setShowDirectoryPicker(true)}
                       title="Browse for directory"
+                      aria-label="Browse for directory"
                     >
-                      <HugeiconsIcon icon={FolderIcon} className="size-3.5 mr-1" />
-                      Browse
+                      <HugeiconsIcon icon={FolderIcon} className="size-3.5" />
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground/60 mt-1">
@@ -694,7 +696,10 @@ export function ProjectsView({
               </div>
             )}
 
-            <div className="flex gap-2 mt-4">
+            <div className="mt-4 flex justify-end gap-2">
+              <Button size="sm" variant="outline" onClick={handleCancel}>
+                {m.cancel()}
+              </Button>
               <Button
                 size="sm"
                 onClick={editingId ? handleUpdate : handleCreate}
@@ -707,9 +712,6 @@ export function ProjectsView({
                     : formMode === "clone"
                       ? "Clone & Create"
                       : "Import Project"}
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleCancel}>
-                {m.cancel()}
               </Button>
             </div>
           </div>

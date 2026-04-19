@@ -111,6 +111,13 @@ export interface RuntimeProfile {
   registryId?: string;
 }
 
+export interface RuntimeModelsResponse {
+  models: string[];
+  currentModel?: string;
+  source: "acp" | "config";
+  rawOutput?: string;
+}
+
 export interface StateItem {
   id: string;
   goalId: string;

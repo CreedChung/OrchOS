@@ -8,15 +8,6 @@ export function resolveApiUrl(path: string) {
   return new URL(path, `${getServerBaseUrl()}/`).toString();
 }
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(resolveApiUrl(path), {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  return res.json();
-}
-
 function assertData<T>(result: { data: T | null; error: unknown; status: number }): T {
   if (result.data !== null) {
     return result.data;
@@ -105,6 +96,13 @@ export interface RuntimeProfile {
   currentModel?: string;
   status: "idle" | "active" | "error";
   registryId?: string;
+}
+
+export interface RuntimeModelsResponse {
+  models: string[];
+  currentModel?: string;
+  source: "acp" | "config";
+  rawOutput?: string;
 }
 
 export interface DetectedRuntime {
@@ -371,16 +369,34 @@ export const api = {
   },
 
   // States
-  getStates: (goalId: string) => request<StateEntry[]>(`/api/goals/${goalId}/states`),
-  updateState: (id: string, status: Status) =>
-    request<StateEntry>(`/api/states/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  getStates: async (goalId: string) => {
+    const client = createEdenClient();
+    const result = await client.api.goals({ goalId }).states.get();
+    return assertData(result);
+  },
+  updateState: (id: string, status: Status) => {
+    const client = createEdenClient();
+    return client.api.states({ id }).patch({ status }).then(assertData);
+  },
 
   // Artifacts
-  getArtifacts: (goalId: string) => request<Artifact[]>(`/api/goals/${goalId}/artifacts`),
+  getArtifacts: async (goalId: string) => {
+    const client = createEdenClient();
+    const result = await client.api.goals({ goalId }).artifacts.get();
+    return assertData(result);
+  },
 
   // Activities
-  getActivities: (goalId: string) => request<ActivityEntry[]>(`/api/goals/${goalId}/activities`),
-  getAllActivities: () => request<ActivityEntry[]>("/api/activities"),
+  getActivities: async (goalId: string) => {
+    const client = createEdenClient();
+    const result = await client.api.goals({ goalId }).activities.get();
+    return assertData(result);
+  },
+  getAllActivities: async () => {
+    const client = createEdenClient();
+    const result = await client.api.activities.get();
+    return assertData(result);
+  },
 
   // Agents
   listAgents: async () => {
@@ -419,7 +435,7 @@ export const api = {
   uploadAgentAvatar: async (id: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch(`${API_BASE}/api/agents/${id}/avatar`, {
+    const res = await fetch(resolveApiUrl(`/api/agents/${id}/avatar`), {
       method: "POST",
       body: formData,
     });
@@ -428,13 +444,20 @@ export const api = {
   },
 
   // Runtimes
-  listRuntimes: () => request<RuntimeProfile[]>("/api/runtimes"),
-  detectRuntimes: () => request<DetectRuntimesResponse>("/api/runtimes/detect"),
-  registerDetectedRuntimes: (data: { runtimeIds?: string[]; registerAll?: boolean }) =>
-    request<RegisterRuntimesResponse>("/api/runtimes/detect/register", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+  listRuntimes: async () => {
+    const client = createEdenClient();
+    const result = await client.api.runtimes.get();
+    return assertData(result);
+  },
+  detectRuntimes: async () => {
+    const client = createEdenClient();
+    const result = await client.api.runtimes.detect.get();
+    return assertData(result);
+  },
+  registerDetectedRuntimes: (data: { runtimeIds?: string[]; registerAll?: boolean }) => {
+    const client = createEdenClient();
+    return client.api.runtimes.detect.register.post(data).then(assertData);
+  },
   updateRuntime: (
     id: string,
     data: {
@@ -447,10 +470,18 @@ export const api = {
       acpEnv?: Record<string, string>;
       communicationMode?: RuntimeProfile["communicationMode"];
     },
-  ) =>
-    request<RuntimeProfile>(`/api/runtimes/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
-  healthCheckRuntime: (runtimeId: string, level?: "basic" | "ping" | "full") =>
-    request<{
+  ) => {
+    const client = createEdenClient();
+    return client.api.runtimes({ id }).patch(data).then(assertData);
+  },
+  healthCheckRuntime: async (runtimeId: string, level?: "basic" | "ping" | "full") => {
+    const client = createEdenClient();
+    const result = await client.api.runtimes({ runtimeId }).health.get({
+      query: {
+        level,
+      },
+    });
+    return assertData(result) as {
       healthy: boolean;
       level: string;
       output: string;
@@ -459,17 +490,25 @@ export const api = {
       agentName: string;
       agentCommand: string;
       authRequired?: boolean;
-    }>(`/api/runtimes/${runtimeId}/health${level ? `?level=${level}` : ""}`),
+    };
+  },
+  listRuntimeModels: async (runtimeId: string) => {
+    const client = createEdenClient();
+    const result = await client.api.runtimes({ runtimeId }).models.get();
+    return assertData(result) as RuntimeModelsResponse;
+  },
 
   // Runtime Chat
-  chatWithRuntime: (runtimeId: string, prompt: string) =>
-    request<{
+  chatWithRuntime: (runtimeId: string, prompt: string) => {
+    const client = createEdenClient();
+    return client.api.runtimes({ runtimeId }).chat.post({ prompt }).then(assertData) as Promise<{
       success: boolean;
       output: string;
       error?: string;
       agentName: string;
       responseTime: number;
-    }>(`/api/runtimes/${runtimeId}/chat`, { method: "POST", body: JSON.stringify({ prompt }) }),
+    }>;
+  },
 
   // Projects
   listProjects: async () => {
@@ -500,27 +539,41 @@ export const api = {
   },
 
   // Filesystem
-  browseDirectory: (path?: string) =>
-    request<{
+  browseDirectory: async (path?: string) => {
+    const client = createEdenClient();
+    const result = await client.api.filesystem.browse.get({
+      query: {
+        path,
+      },
+    });
+    return assertData(result) as {
       currentPath: string;
       parentPath?: string;
       directories: { name: string; path: string }[];
-    }>(`/api/filesystem/browse${path ? `?path=${encodeURIComponent(path)}` : ""}`),
+    };
+  },
 
   // History
-  getHistory: (goalId?: string, limit?: number) =>
-    request<HistoryEntry[]>(
-      `/api/history${goalId ? `?goalId=${goalId}` : ""}${limit ? `&limit=${limit}` : ""}`,
-    ),
+  getHistory: async (goalId?: string, limit?: number) => {
+    const client = createEdenClient();
+    const result = await client.api.history.get({
+      query: {
+        goalId,
+        limit,
+      },
+    });
+    return assertData(result);
+  },
 
   // Execution
-  triggerAction: (goalId: string, action: Action, stateId?: string, agentId?: string) =>
-    request<{ success: boolean; message: string }>(`/api/goals/${goalId}/actions`, {
-      method: "POST",
-      body: JSON.stringify({ action, stateId, agentId }),
-    }),
-  runLoop: (goalId: string) =>
-    request<{ success: boolean }>(`/api/goals/${goalId}/loop`, { method: "POST" }),
+  triggerAction: (goalId: string, action: Action, stateId?: string, agentId?: string) => {
+    const client = createEdenClient();
+    return client.api.goals({ goalId }).actions.post({ action, stateId, agentId }).then(assertData);
+  },
+  runLoop: (goalId: string) => {
+    const client = createEdenClient();
+    return client.api.goals({ goalId }).loop.post(undefined).then(assertData);
+  },
 
   // Settings
   getSettings: async () => {
@@ -535,20 +588,32 @@ export const api = {
   },
 
   // Events
-  getEvents: (goalId?: string, limit?: number) =>
-    request<Event[]>(
-      `/api/events${goalId ? `?goalId=${goalId}` : ""}${limit ? `&limit=${limit}` : ""}`,
-    ),
+  getEvents: async (goalId?: string, limit?: number) => {
+    const client = createEdenClient();
+    const result = await client.api.events.get({
+      query: {
+        goalId,
+        limit,
+      },
+    });
+    return assertData(result);
+  },
 
   // Organizations
-  listOrganizations: () => request<Organization[]>("/api/organizations"),
-  updateOrganization: (id: string, data: { name?: string }) =>
-    request<Organization>(`/api/organizations/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    }),
-  deleteOrganization: (id: string) =>
-    request<{ success: boolean }>(`/api/organizations/${id}`, { method: "DELETE" }),
+  listOrganizations: async () => {
+    const client = createEdenClient();
+    const result = await client.api.organizations.get();
+    return assertData(result);
+  },
+  updateOrganization: (id: string, data: { name?: string }) => {
+    const client = createEdenClient();
+    return client.api.organizations({ id }).patch(data).then(assertData);
+  },
+  deleteOrganization: async (id: string) => {
+    const client = createEdenClient();
+    const result = await client.api.organizations({ id }).delete();
+    return assertData(result);
+  },
 
   // Problems
   listProblems: async (filters?: { status?: ProblemStatus; priority?: ProblemPriority }) => {

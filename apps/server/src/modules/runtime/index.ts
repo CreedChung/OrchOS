@@ -147,6 +147,16 @@ export const runtimeController = new Elysia({ prefix: "/api/runtimes" })
     },
   )
   .get(
+    "/:runtimeId/models",
+    async ({ params: { runtimeId } }) => {
+      return RuntimeService.getAvailableModels(runtimeId);
+    },
+    {
+      params: t.Object({ runtimeId: t.String() }),
+      response: RuntimeModel.modelsResponse,
+    },
+  )
+  .get(
     "/:runtimeId/model",
     async ({ params: { runtimeId } }) => {
       return RuntimeService.getCurrentModel(runtimeId);

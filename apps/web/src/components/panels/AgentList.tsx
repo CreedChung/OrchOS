@@ -95,6 +95,12 @@ export function AgentList({
               <p className="text-xs text-muted-foreground/60 mt-1 px-4">
                 {m.no_agent_instances_desc()}
               </p>
+              {onCreateAgent && (
+                <Button size="sm" variant="outline" className="mt-3" onClick={onCreateAgent}>
+                  <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
+                  Add Agent
+                </Button>
+              )}
             </div>
           )}
         </div>

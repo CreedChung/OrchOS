@@ -124,8 +124,13 @@ function extractTextContent(value: unknown): string[] {
   return [];
 }
 
-function extractModelFromSession(result: unknown): string | undefined {
-  if (!result || typeof result !== "object") return undefined;
+function extractSessionModels(result: unknown): {
+  currentModel?: string;
+  availableModels: string[];
+} {
+  if (!result || typeof result !== "object") {
+    return { currentModel: undefined, availableModels: [] };
+  }
 
   const session = result as {
     models?: {
@@ -134,8 +139,15 @@ function extractModelFromSession(result: unknown): string | undefined {
     };
   };
 
-  if (session.models?.currentModelId) return session.models.currentModelId;
-  return session.models?.availableModels?.[0]?.modelId || session.models?.availableModels?.[0]?.name;
+  const availableModels =
+    session.models?.availableModels
+      ?.map((model) => model.modelId || model.name)
+      .filter((model): model is string => typeof model === "string" && model.length > 0) || [];
+
+  return {
+    currentModel: session.models?.currentModelId || availableModels[0],
+    availableModels,
+  };
 }
 
 async function consumeStream(
@@ -273,8 +285,25 @@ export async function getAcpCurrentModel(config: AcpAgentConfig, cwd?: string) {
     config,
     async ({ request, getStderr }) => {
       const session = await request("session/new", { cwd: cwd || process.cwd(), mcpServers: [] });
+      const { currentModel } = extractSessionModels(session);
       return {
-        model: extractModelFromSession(session),
+        model: currentModel,
+        rawOutput: getStderr() || undefined,
+      };
+    },
+    cwd,
+  );
+}
+
+export async function getAcpAvailableModels(config: AcpAgentConfig, cwd?: string) {
+  return withAcpProcess(
+    config,
+    async ({ request, getStderr }) => {
+      const session = await request("session/new", { cwd: cwd || process.cwd(), mcpServers: [] });
+      const { currentModel, availableModels } = extractSessionModels(session);
+      return {
+        currentModel,
+        models: availableModels,
         rawOutput: getStderr() || undefined,
       };
     },

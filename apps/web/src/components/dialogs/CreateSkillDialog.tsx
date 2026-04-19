@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { AppDialog } from "@/components/ui/app-dialog";
 import {
   Select,
   SelectContent,
@@ -170,23 +171,58 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-xl border border-border bg-card p-6 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between gap-4">
+    <AppDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+      title={m.skills()}
+      description={m.skill_install_intro()}
+      size="xl"
+      bodyClassName="space-y-4 pt-5"
+      footer={
+        <>
+          <Button size="sm" variant="outline" onClick={onClose}>
+            {m.cancel()}
+          </Button>
+
+          {mode === "manual" ? (
+            <Button size="sm" onClick={handleCreate} disabled={manualLoading || !canCreateManual}>
+              {manualLoading ? m.creating() : m.create()}
+            </Button>
+          ) : analysis ? (
+            <Button
+              size="sm"
+              onClick={handleInstall}
+              disabled={
+                installLoading ||
+                selectedCount === 0 ||
+                (analysis.riskLevel === "high" && !allowHighRisk)
+              }
+            >
+              {installLoading ? m.installing_skills() : m.install_skills()}
+            </Button>
+          ) : (
+            <Button size="sm" onClick={handleAnalyze} disabled={analysisLoading || !canAnalyzeRepository}>
+              {analysisLoading ? m.analyzing_repository() : m.analyze_repository()}
+            </Button>
+          )}
+        </>
+      }
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">{m.skills()}</h2>
-            <p className="text-sm text-muted-foreground">{m.skill_install_intro()}</p>
           </div>
           <Tabs value={mode} onValueChange={(v) => setMode(v as DialogMode)}>
-            <TabsList>
+            <TabsList className="max-w-full flex-wrap">
               <TabsTrigger value="manual">{m.skill_mode_manual()}</TabsTrigger>
               <TabsTrigger value="repository">{m.skill_mode_repository()}</TabsTrigger>
             </TabsList>
           </Tabs>
-        </div>
+      </div>
 
-        {mode === "manual" ? (
-          <div className="space-y-3">
+      {mode === "manual" ? (
+        <div className="space-y-3">
             <div>
               <label className="text-xs text-muted-foreground">{m.skill_name()}</label>
               <input
@@ -257,9 +293,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                 </div>
               ) : null}
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
+        </div>
+      ) : (
+        <div className="space-y-4">
             <div>
               <label className="text-xs text-muted-foreground">{m.repository_source()}</label>
               <input
@@ -416,47 +452,14 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                 ) : null}
               </div>
             ) : null}
-          </div>
-        )}
-
-        {error ? (
-          <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {error}
-          </div>
-        ) : null}
-
-        <div className="mt-5 flex justify-end gap-2 pt-2">
-          <Button size="sm" variant="outline" onClick={onClose}>
-            {m.cancel()}
-          </Button>
-
-          {mode === "manual" ? (
-            <Button size="sm" onClick={handleCreate} disabled={manualLoading || !canCreateManual}>
-              {manualLoading ? m.creating() : m.create()}
-            </Button>
-          ) : analysis ? (
-            <Button
-              size="sm"
-              onClick={handleInstall}
-              disabled={
-                installLoading ||
-                selectedCount === 0 ||
-                (analysis.riskLevel === "high" && !allowHighRisk)
-              }
-            >
-              {installLoading ? m.installing_skills() : m.install_skills()}
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              onClick={handleAnalyze}
-              disabled={analysisLoading || !canAnalyzeRepository}
-            >
-              {analysisLoading ? m.analyzing_repository() : m.analyze_repository()}
-            </Button>
-          )}
         </div>
-      </div>
-    </div>
+      )}
+
+      {error ? (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      ) : null}
+    </AppDialog>
   );
 }

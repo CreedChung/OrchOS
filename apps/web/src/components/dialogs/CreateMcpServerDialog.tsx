@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { m } from "@/paraglide/messages";
 import { Button } from "@/components/ui/button";
+import { AppDialog } from "@/components/ui/app-dialog";
 import {
   Select,
   SelectContent,
@@ -55,10 +56,26 @@ export function CreateMcpServerDialog({ open, onClose, onCreated }: CreateMcpSer
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">{m.mcp_servers()}</h2>
-        <div className="space-y-3">
+    <AppDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+      title={m.mcp_servers()}
+      size="md"
+      bodyClassName="space-y-3 pt-5"
+      footer={
+        <>
+          <Button size="sm" type="button" variant="outline" onClick={onClose}>
+            {m.cancel()}
+          </Button>
+          <Button size="sm" type="button" onClick={handleCreate} disabled={loading || !formData.name || !formData.command}>
+            {loading ? m.creating() : m.create()}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
           <div>
             <label className="text-xs text-muted-foreground">{m.field_name()}</label>
             <input
@@ -103,23 +120,11 @@ export function CreateMcpServerDialog({ open, onClose, onCreated }: CreateMcpSer
                   <SelectItem value="global">{m.scope_global()}</SelectItem>
                   <SelectItem value="project">{m.scope_project()}</SelectItem>
                 </SelectGroup>
-              </SelectContent>
-            </Select>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button size="sm" variant="outline" onClick={onClose}>
-              {m.cancel()}
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleCreate}
-              disabled={loading || !formData.name || !formData.command}
-            >
-              {loading ? m.creating() : m.create()}
-            </Button>
-          </div>
-        </div>
       </div>
-    </div>
+    </AppDialog>
   );
 }

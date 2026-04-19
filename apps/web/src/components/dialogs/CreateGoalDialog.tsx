@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon, Add01Icon, Delete02Icon, FolderGitIcon } from "@hugeicons/core-free-icons";
+import { Add01Icon, Delete02Icon, FolderGitIcon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
+import { Button } from "@/components/ui/button";
+import { AppDialog } from "@/components/ui/app-dialog";
 import {
   Select,
   SelectContent,
@@ -54,19 +56,31 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-2xl">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">{m.create_new_goal()}</h2>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+    <AppDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+      title={m.create_new_goal()}
+      size="lg"
+      bodyClassName="pt-5"
+      footer={
+        <>
+          <Button size="sm" type="button" variant="outline" onClick={onClose}>
+            {m.cancel()}
+          </Button>
+          <Button
+            size="sm"
+            type="submit"
+            form="create-goal-form"
+            disabled={!title.trim() || criteria.filter((c) => c.trim()).length === 0}
           >
-            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+            {m.create_goal()}
+          </Button>
+        </>
+      }
+    >
+      <form id="create-goal-form" onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
@@ -198,31 +212,7 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
               </button>
             </div>
           </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-            >
-              {m.cancel()}
-            </button>
-            <button
-              type="submit"
-              disabled={!title.trim() || criteria.filter((c) => c.trim()).length === 0}
-              className={cn(
-                "rounded-md px-4 py-2 text-sm font-medium text-primary-foreground transition-colors",
-                title.trim() && criteria.filter((c) => c.trim()).length > 0
-                  ? "bg-primary hover:bg-primary/90"
-                  : "bg-muted text-muted-foreground cursor-not-allowed",
-              )}
-            >
-              {m.create_goal()}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </AppDialog>
   );
 }
