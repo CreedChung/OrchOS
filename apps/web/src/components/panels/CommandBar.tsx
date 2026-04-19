@@ -146,15 +146,7 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
                 )}
               </div>
 
-              <div className="mt-4 flex items-end justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground/70">
-                    {m.command_label()}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground/60">{m.command_to_goal()}</p>
-                </div>
-
-                <div className="flex items-center gap-2">
+              <div className="mt-4 flex items-end justify-end gap-2">
                   <Button type="button" variant="ghost" size="sm" onClick={onClose}>
                     {m.cancel()}
                   </Button>
@@ -162,7 +154,6 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
                     <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
                   </Button>
                 </div>
-              </div>
             </div>
           </BorderBeam>
         </form>

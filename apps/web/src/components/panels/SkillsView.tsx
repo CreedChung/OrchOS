@@ -155,16 +155,6 @@ export function SkillsView({
               </div>
             )}
 
-            {skills.length === 0 && (
-              <div className="py-8 text-center">
-                <HugeiconsIcon
-                  icon={Wrench01Icon}
-                  className="mx-auto mb-2 size-6 text-muted-foreground/30"
-                />
-                <p className="text-sm text-muted-foreground">{m.no_skills()}</p>
-                <p className="mt-1 text-xs text-muted-foreground/60">{m.no_skills_desc()}</p>
-              </div>
-            )}
           </div>
         </ScrollArea>
       </div>
@@ -253,14 +243,7 @@ export function SkillsView({
               </section>
             </div>
           </ScrollArea>
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">{m.no_skills()}</p>
-              <p className="mt-1 text-xs text-muted-foreground/60">{m.no_skills_desc()}</p>
-            </div>
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
 

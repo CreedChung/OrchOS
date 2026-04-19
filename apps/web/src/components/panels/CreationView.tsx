@@ -11,6 +11,8 @@ import {
   Server,
   ArrowUp01Icon,
   Folder01Icon,
+  Upload04Icon,
+  Mic01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { BorderBeam } from "border-beam";
@@ -555,6 +557,26 @@ function ChatArea({
             className="rounded-xl"
           >
             <div className="flex items-end gap-2 rounded-xl border border-border bg-background px-3 py-4">
+              <div className="flex items-center gap-1 mb-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  title={m.upload()}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <HugeiconsIcon icon={Upload04Icon} className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  title={m.voice_input()}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <HugeiconsIcon icon={Mic01Icon} className="size-4" />
+                </Button>
+              </div>
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -567,11 +589,11 @@ function ChatArea({
                 onKeyDown={handleKeys}
                 spellCheck={false}
                 disabled={sending}
-                style={{ minHeight: "68px", maxHeight: "220px" }}
+                style={{ minHeight: "88px", maxHeight: "280px" }}
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
                   target.style.height = "auto";
-                  target.style.height = `${Math.min(target.scrollHeight, 220)}px`;
+                  target.style.height = `${Math.min(target.scrollHeight, 280)}px`;
                 }}
               />
               <Button

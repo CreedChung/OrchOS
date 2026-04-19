@@ -221,7 +221,7 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                     }))
                   }
                 >
-                  <SelectTrigger className="mt-1 w-full">
+                  <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -241,7 +241,7 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                       setManualForm((current) => ({ ...current, projectId: value ?? "" }))
                     }
                   >
-                    <SelectTrigger className="mt-1 w-full" disabled={!hasProjects}>
+                    <SelectTrigger className="mt-1" disabled={!hasProjects}>
                       <SelectValue placeholder={m.select_project()} />
                     </SelectTrigger>
                     <SelectContent>
@@ -284,7 +284,7 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                     }))
                   }
                 >
-                  <SelectTrigger className="mt-1 w-full">
+                  <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -304,7 +304,7 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                       setRepoForm((current) => ({ ...current, projectId: value ?? "" }))
                     }
                   >
-                    <SelectTrigger className="mt-1 w-full" disabled={!hasProjects}>
+                    <SelectTrigger className="mt-1" disabled={!hasProjects}>
                       <SelectValue placeholder={m.select_project()} />
                     </SelectTrigger>
                     <SelectContent>

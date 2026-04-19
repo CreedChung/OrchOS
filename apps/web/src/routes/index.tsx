@@ -361,41 +361,6 @@ function HowItWorksSteps() {
             <div className="h-[520px] w-full">{currentStep.card}</div>
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full"
-              onClick={() => setActiveStep((prev) => (prev === 1 ? steps.length : prev - 1))}
-            >
-              {locale === "zh-CN" ? "上一步" : locale === "zh-TW" ? "上一步" : "Previous"}
-            </Button>
-
-            <div className="flex items-center gap-2">
-              {steps.map((step) => (
-                <button
-                  key={step.step}
-                  type="button"
-                  onClick={() => setActiveStep(step.step)}
-                  className={cn(
-                    "h-2.5 rounded-full transition-all",
-                    activeStep === step.step ? "w-8 bg-primary" : "w-2.5 bg-border hover:bg-primary/50",
-                  )}
-                  aria-label={step.title}
-                  aria-current={activeStep === step.step ? "true" : undefined}
-                />
-              ))}
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full"
-              onClick={() => setActiveStep((prev) => (prev === steps.length ? 1 : prev + 1))}
-            >
-              {locale === "zh-CN" ? "下一步" : locale === "zh-TW" ? "下一步" : "Next"}
-            </Button>
-          </div>
         </section>
       </div>
     </div>

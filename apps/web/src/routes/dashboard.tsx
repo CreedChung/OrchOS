@@ -177,6 +177,7 @@ function DashboardLayout() {
               agentModelFilter={agentModelFilter}
               onAgentModelFilterChange={setAgentModelFilter}
               agentModelCounts={agentModelCounts}
+              onRefresh={refreshAll}
             />
             <Outlet />
           </div>

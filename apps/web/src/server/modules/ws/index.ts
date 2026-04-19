@@ -1,20 +1,24 @@
 import { Elysia } from "elysia";
-import type { EventBus } from "../event/event-bus";
 
-export function createWsController(eventBus: EventBus) {
-  const subscriptions = new WeakMap<object, () => void>();
+const clients = new Set<any>();
 
+export function broadcastEvent(event: unknown) {
+  const message = JSON.stringify({ type: "event", data: event });
+  for (const ws of clients) {
+    try {
+      ws.send(message);
+    } catch {}
+  }
+}
+
+export function createWsController() {
   return new Elysia({ prefix: "/" }).ws("/ws", {
     open(ws) {
-      const unsubscribe = eventBus.onAny((event) => {
-        ws.send(JSON.stringify({ type: "event", data: event }));
-      });
-      subscriptions.set(ws, unsubscribe);
+      clients.add(ws);
       ws.send(JSON.stringify({ type: "connected" }));
     },
     close(ws) {
-      subscriptions.get(ws)?.();
-      subscriptions.delete(ws);
+      clients.delete(ws);
     },
     message(ws, message) {
       ws.send(JSON.stringify({ type: "pong", data: message }));

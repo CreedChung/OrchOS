@@ -270,7 +270,7 @@
   "nav_changelog": "Changelog",
   "nav_get_started": "Get Started",
   "nav_home": "Home",
-  "new_command": "neew creation",
+  "new_command": "New Command",
   "new_goal": "New Goal",
   "new_rule": "New Rule",
   "no_activity_recorded": "No activity recorded",
@@ -299,6 +299,7 @@
   "no_rules_yet": "No rules yet",
   "no_runtimes_registered": "No runtimes registered yet",
   "no_runtimes_registered_desc": "Register runtimes in Settings → Runtimes first",
+  "add_skill": "Add Skill",
   "no_skills": "No skills configured",
   "no_skills_desc": "Add skills to enhance your agents' capabilities",
   "no_states_yet": "No states yet",
@@ -499,5 +500,7 @@
   "assistant": "Assistant",
   "thinking": "Thinking...",
   "untitled_conversation": "New chat",
+  "upload": "Upload",
+  "voice_input": "Voice input",
   "workspace": "Workspace"
 }

@@ -26,6 +26,8 @@ import { createMcpController } from "./modules/mcp";
 import { createSkillController } from "./modules/skill";
 import { filesystemController } from "./modules/filesystem";
 import { createConversationController } from "./modules/conversation";
+import { createWsController, broadcastEvent } from "./modules/ws";
+import { configureRealtimePublisher } from "./modules/event/event-bus";
 
 export interface AppOptions {
   db: AppDb;
@@ -57,6 +59,10 @@ export function createApp(options: AppOptions) {
   const skillController = createSkillController(db);
   const conversationController = createConversationController(db);
 
+  configureRealtimePublisher(async (event) => {
+    broadcastEvent(event);
+  });
+
   return new Elysia()
     .use(cors())
     .use(dbPlugin)
@@ -79,5 +85,6 @@ export function createApp(options: AppOptions) {
     .use(mcpController)
     .use(skillController)
     .use(filesystemController)
-    .use(conversationController);
+    .use(conversationController)
+    .use(createWsController());
 }

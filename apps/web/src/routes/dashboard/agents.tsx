@@ -18,6 +18,7 @@ function AgentsPage() {
   } = useDashboard();
 
   const { activeAgentId, setActiveAgentId } = useUIStore();
+  const { setShowCreateAgentDialog } = useDashboard();
 
   // Show all agents (user-created). Runtimes are managed separately in Environments.
   const agentInstances = agents;
@@ -30,6 +31,7 @@ function AgentsPage() {
         activeAgentId={activeAgentId}
         onSelectAgent={setActiveAgentId}
         onAgentUpdated={refreshAll}
+        onCreateAgent={() => setShowCreateAgentDialog(true)}
       />
       <div className="flex-1 overflow-hidden">
         {activeAgent ? (

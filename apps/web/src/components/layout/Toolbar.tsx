@@ -21,6 +21,7 @@ import {
   CloudIcon,
   Archive01Icon,
   Delete02Icon,
+  ArrowReloadHorizontalIcon,
 } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
 import type { SidebarView, InboxSource } from "@/lib/types";
@@ -95,6 +96,7 @@ interface ToolbarProps {
   scopeCounts: { all: number; global: number; project: number };
   creationArchiveFilter: CreationArchiveFilter;
   onCreationArchiveFilterChange: (filter: CreationArchiveFilter) => void;
+  onRefresh?: () => void;
 }
 
 export function Toolbar({
@@ -117,6 +119,7 @@ export function Toolbar({
   scopeCounts,
   creationArchiveFilter,
   onCreationArchiveFilterChange,
+  onRefresh,
 }: ToolbarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [isMac, setIsMac] = useState(false);
@@ -303,8 +306,18 @@ export function Toolbar({
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Right side: Search + Activity panel toggle */}
+      {/* Right side: Refresh + Search + Activity panel toggle */}
       <div className="flex items-center gap-2">
+        {onRefresh && (
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={onRefresh}
+            title={m.refresh()}
+          >
+            <HugeiconsIcon icon={ArrowReloadHorizontalIcon} className="size-3.5" />
+          </Button>
+        )}
         <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 w-full max-w-xs">
           <HugeiconsIcon icon={Search01Icon} className="size-3.5 shrink-0 text-muted-foreground" />
           <input

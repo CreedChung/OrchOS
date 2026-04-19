@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { treaty } from "@elysiajs/eden";
 import { api, resolveApiUrl } from "./api";
 
-const WS_RECONNECT_DELAY_MS = 1000;
+const WS_BASE_RECONNECT_DELAY_MS = 1000;
+const WS_MAX_RECONNECT_DELAY_MS = 30000;
 
 function getWsBaseUrl() {
   const apiUrl = new URL(resolveApiUrl("/ws"));
@@ -85,6 +86,7 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
       on: (event: string, handler: (...args: unknown[]) => void) => void;
       close: () => void;
     } | null = null;
+    let reconnectAttempts = 0;
 
     const connect = () => {
       if (isShuttingDown) {
@@ -93,32 +95,31 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
 
       ws = (treaty(getWsBaseUrl()).ws as any).subscribe();
 
-      ws.on("message", (message: any) => {
+      ws!.on("message", (message: any) => {
         if (message?.type === "event" && message.data) {
           onEventRef.current(message.data as Record<string, unknown>);
         }
       });
 
-      ws.on("open", () => {
-        console.log("WebSocket connected");
+      ws!.on("open", () => {
+        reconnectAttempts = 0;
       });
 
-      ws.on("close", (event?: unknown) => {
+      ws!.on("close", () => {
         if (isShuttingDown) {
           return;
         }
 
-        const closeEvent = event as { code?: unknown; reason?: unknown; wasClean?: unknown } | undefined;
-        console.warn("WebSocket disconnected unexpectedly", {
-          code: closeEvent?.code,
-          reason: closeEvent?.reason,
-          wasClean: closeEvent?.wasClean,
-        });
+        const delay = Math.min(
+          WS_BASE_RECONNECT_DELAY_MS * Math.pow(2, reconnectAttempts),
+          WS_MAX_RECONNECT_DELAY_MS,
+        );
+        reconnectAttempts++;
 
         reconnectTimer = setTimeout(() => {
           reconnectTimer = null;
           connect();
-        }, WS_RECONNECT_DELAY_MS);
+        }, delay);
       });
     };
 
