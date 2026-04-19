@@ -286,6 +286,22 @@ export interface ConversationMessage {
   createdAt: string;
 }
 
+export interface ProblemSummary {
+  status: Record<ProblemStatus, number>;
+  inbox: {
+    all: number;
+    github_pr: number;
+    github_issue: number;
+    mention: number;
+    agent_request: number;
+  };
+  system: {
+    critical: number;
+    warning: number;
+    info: number;
+  };
+}
+
 // API functions
 export const api = {
   // Goals
@@ -474,6 +490,7 @@ export const api = {
     return request<Problem[]>(`/api/problems${qs ? `?${qs}` : ""}`);
   },
   getProblemCounts: () => request<Record<ProblemStatus, number>>("/api/problems/counts"),
+  getProblemSummary: () => request<ProblemSummary>("/api/problems/summary"),
   createProblem: (data: {
     title: string;
     priority?: ProblemPriority;

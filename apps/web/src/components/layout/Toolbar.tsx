@@ -13,8 +13,6 @@ import {
   InformationCircleIcon,
   Robot02Icon,
   Clock01Icon,
-  CheckmarkCircleIcon,
-  CancelCircleIcon,
   Globe02Icon,
   Folder01Icon,
   CodeIcon,
@@ -27,7 +25,6 @@ import { m } from "@/paraglide/messages";
 import type { SidebarView, InboxSource } from "@/lib/types";
 
 type SourceFilter = "all" | InboxSource;
-type GoalStatusFilter = "all" | "active" | "completed" | "paused";
 export type ScopeFilter = "all" | "global" | "project";
 export type AgentModelFilter = "all" | "local" | "cloud";
 export type CreationArchiveFilter = "all" | "active" | "archived" | "deleted";
@@ -47,15 +44,6 @@ const sourceFilterConfig: Record<InboxSource, { icon: typeof GitPullRequestIcon;
     mention: { icon: InformationCircleIcon, label: m.mentions() },
     agent_request: { icon: Robot02Icon, label: m.agents() },
   };
-
-const goalStatusFilterConfig: Record<
-  Exclude<GoalStatusFilter, "all">,
-  { icon: typeof Clock01Icon; label: string }
-> = {
-  active: { icon: Clock01Icon, label: m.active() },
-  completed: { icon: CheckmarkCircleIcon, label: m.completed() },
-  paused: { icon: CancelCircleIcon, label: m.paused() },
-};
 
 const agentModelFilterConfig: Record<
   Exclude<AgentModelFilter, "all">,
@@ -85,9 +73,6 @@ interface ToolbarProps {
     mention: number;
     agent_request: number;
   };
-  goalStatusFilter: GoalStatusFilter;
-  onGoalStatusFilterChange: (filter: GoalStatusFilter) => void;
-  goalCounts: { all: number; active: number; completed: number; paused: number };
   agentModelFilter: AgentModelFilter;
   onAgentModelFilterChange: (filter: AgentModelFilter) => void;
   agentModelCounts: { all: number; local: number; cloud: number };
@@ -108,9 +93,6 @@ export function Toolbar({
   sourceFilter,
   onSourceFilterChange,
   inboxCounts,
-  goalStatusFilter,
-  onGoalStatusFilterChange,
-  goalCounts,
   agentModelFilter,
   onAgentModelFilterChange,
   agentModelCounts,
@@ -219,33 +201,6 @@ export function Toolbar({
               );
             },
           )}
-        </div>
-      )}
-
-      {/* Goals: status-based filter tabs */}
-      {activeView === "goals" && (
-        <div className="flex items-center gap-1.5">
-          {(["all", "active", "completed", "paused"] as GoalStatusFilter[]).map((filter) => {
-            const config = filter === "all" ? allFilterConfig : goalStatusFilterConfig[filter];
-            return (
-              <button
-                key={filter}
-                onClick={() => onGoalStatusFilterChange(filter)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                  goalStatusFilter === filter
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                )}
-              >
-                <HugeiconsIcon icon={config.icon} className="size-3" />
-                <span className="capitalize">
-                  {config.label || filter}
-                </span>
-                <span className="tabular-nums text-[10px] opacity-60">{goalCounts[filter]}</span>
-              </button>
-            );
-          })}
         </div>
       )}
 

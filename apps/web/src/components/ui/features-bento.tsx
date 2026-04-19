@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
@@ -60,16 +60,11 @@ interface AskMessage {
 
 export function FeaturesBento() {
   const [open, setOpen] = useState(false);
-  const [runtimes] = useState<RuntimeProfile[]>([MOCK_RUNTIME]);
   const [messages, setMessages] = useState<AskMessage[]>([]);
   const [input, setInput] = useState(MOCK_INPUT);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const selectedRuntime = useMemo(
-    () => runtimes.find((runtime) => runtime.enabled) ?? null,
-    [runtimes],
-  );
+  const selectedRuntime: RuntimeProfile | null = MOCK_RUNTIME.enabled ? MOCK_RUNTIME : null;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -127,7 +122,7 @@ export function FeaturesBento() {
 
   return (
     <>
-      <section className="dark:bg-muted/25 bg-zinc-50 flex items-center justify-center py-16 md:py-24" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+      <section className="dark:bg-muted/25 bg-zinc-50 flex items-center justify-center py-16 md:py-24 min-h-screen">
         <div className="mx-auto w-full max-w-5xl px-6">
           <div className="mx-auto grid gap-2 sm:grid-cols-5">
             {/* Main: Multi-Agent Coordination */}
@@ -149,6 +144,9 @@ export function FeaturesBento() {
                     alt="Dashboard dark"
                     width={1207}
                     height={929}
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
                   />
                   <img
                     src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop"
@@ -156,6 +154,9 @@ export function FeaturesBento() {
                     alt="Dashboard light"
                     width={1207}
                     height={929}
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
                   />
                 </div>
               </div>
@@ -176,6 +177,9 @@ export function FeaturesBento() {
                       alt="Analytics dark"
                       width={1207}
                       height={929}
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
                     />
                     <img
                       src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop"
@@ -183,6 +187,9 @@ export function FeaturesBento() {
                       alt="Analytics light"
                       width={1207}
                       height={929}
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
                     />
                   </div>
                 </div>
@@ -231,6 +238,9 @@ export function FeaturesBento() {
                       alt="GitHub logo"
                       width={32}
                       height={32}
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
                     />
                   </div>
                   <div className="rounded-(--radius) bg-muted/50 flex aspect-square items-center justify-center border p-3">
@@ -240,6 +250,9 @@ export function FeaturesBento() {
                       alt="Slack logo"
                       width={32}
                       height={32}
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
                     />
                   </div>
                   <div className="rounded-(--radius) bg-muted/50 flex aspect-square items-center justify-center border p-3">
@@ -249,6 +262,9 @@ export function FeaturesBento() {
                       alt="Linear logo"
                       width={32}
                       height={32}
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
                     />
                   </div>
                   <div className="rounded-[var(--radius)] bg-muted/50 flex aspect-square items-center justify-center border p-3">
@@ -258,6 +274,9 @@ export function FeaturesBento() {
                       alt="Sentry logo"
                       width={32}
                       height={32}
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
                     />
                   </div>
                   <div className="rounded-[var(--radius)] aspect-square border border-dashed" />

@@ -6,6 +6,21 @@ import { getRowsAffected } from "../../db/utils";
 
 export type ProblemPriority = "critical" | "warning" | "info";
 export type ProblemStatus = "open" | "fixed" | "ignored" | "assigned";
+export type ProblemSummary = {
+  status: Record<ProblemStatus, number>;
+  inbox: {
+    all: number;
+    github_pr: number;
+    github_issue: number;
+    mention: number;
+    agent_request: number;
+  };
+  system: {
+    critical: number;
+    warning: number;
+    info: number;
+  };
+};
 
 export interface Problem {
   id: string;
@@ -143,5 +158,56 @@ export const ProblemService = {
       counts[row.status] = (counts[row.status] || 0) + 1;
     }
     return counts as Record<ProblemStatus, number>;
+  },
+
+  async summarize(db: AppDb): Promise<ProblemSummary> {
+    const all = await db.select().from(problems).all();
+    const summary: ProblemSummary = {
+      status: {
+        open: 0,
+        fixed: 0,
+        ignored: 0,
+        assigned: 0,
+      },
+      inbox: {
+        all: 0,
+        github_pr: 0,
+        github_issue: 0,
+        mention: 0,
+        agent_request: 0,
+      },
+      system: {
+        critical: 0,
+        warning: 0,
+        info: 0,
+      },
+    };
+
+    for (const row of all) {
+      const status = row.status as ProblemStatus;
+      if (status in summary.status) {
+        summary.status[status] += 1;
+      }
+
+      const isOpen = status === "open";
+      const source = row.source ?? undefined;
+      const priority = row.priority as ProblemPriority;
+      const isInboxSource =
+        source === "github_pr" ||
+        source === "github_issue" ||
+        source === "mention" ||
+        source === "agent_request";
+
+      if (isOpen && isInboxSource) {
+        summary.inbox.all += 1;
+        summary.inbox[source] += 1;
+      }
+
+      if (isOpen && !isInboxSource && (priority === "critical" || priority === "warning" || priority === "info")) {
+        summary.system[priority] += 1;
+      }
+    }
+
+    return summary;
   },
 };

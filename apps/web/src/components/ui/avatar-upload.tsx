@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, getRuntimeIcon } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Camera01Icon, Loading01Icon } from "@hugeicons/core-free-icons";
 import { api } from "@/lib/api";
@@ -8,6 +8,7 @@ interface AvatarUploadProps {
   agentId: string;
   avatarUrl?: string;
   name: string;
+  runtimeId?: string;
   size?: "sm" | "md" | "lg";
   onUploaded?: (avatarUrl: string) => void;
 }
@@ -28,6 +29,7 @@ export function AvatarUpload({
   agentId,
   avatarUrl,
   name,
+  runtimeId,
   size = "md",
   onUploaded,
 }: AvatarUploadProps) {
@@ -69,6 +71,8 @@ export function AvatarUpload({
     >
       {avatarUrl ? (
         <img src={avatarUrl} alt={name} className="size-full object-cover" />
+      ) : getRuntimeIcon({ id: runtimeId, name }) ? (
+        <img src={getRuntimeIcon({ id: runtimeId, name })!} alt={name} className="size-full p-1" />
       ) : (
         <span
           className={cn(

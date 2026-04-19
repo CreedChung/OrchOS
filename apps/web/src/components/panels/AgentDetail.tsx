@@ -243,6 +243,7 @@ export function AgentDetailView({
               agentId={agent.id}
               avatarUrl={agent.avatarUrl}
               name={agent.name}
+              runtimeId={agent.runtimeId}
               size="lg"
               onUploaded={onAgentUpdated}
             />

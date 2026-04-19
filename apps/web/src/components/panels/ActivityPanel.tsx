@@ -215,44 +215,15 @@ export function ActivityPanel({ activities, collapsed, onToggle: _onToggle }: Ac
         <TabsContent value="flow" className="flex-1 overflow-hidden m-0">
           <ScrollArea className="h-full">
             <AcpFlow activities={activities} />
-            {/* Detailed Timeline below flow */}
-            <div className="border-t border-border/50 p-3 space-y-0">
-              {activities.map((activity, idx) => (
-                <div key={activity.id}>
-                  <div className="group flex gap-2.5 py-2">
-                    <div className="flex flex-col items-center">
-                      <div className="size-2 rounded-full bg-primary/60 ring-2 ring-sidebar" />
-                      {idx < activities.length - 1 && (
-                        <div className="mt-1 h-full w-px bg-border" />
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-xs font-semibold text-foreground">
-                          {activity.agent}
-                        </span>
-                        <span className="text-[10px] tabular-nums text-muted-foreground">
-                          {activity.timestamp}
-                        </span>
-                      </div>
-                      <p className="text-xs text-foreground/80">{activity.action}</p>
-                      {activity.detail && (
-                        <p className="text-[11px] text-muted-foreground">{activity.detail}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {activities.length === 0 && (
-                <div className="py-8 text-center">
-                  <HugeiconsIcon
-                    icon={Robot02Icon}
-                    className="mx-auto size-6 text-muted-foreground/30 mb-2"
-                  />
-                  <p className="text-xs text-muted-foreground">{m.no_activity_yet()}</p>
-                </div>
-              )}
-            </div>
+            {activities.length === 0 && (
+              <div className="py-8 text-center">
+                <HugeiconsIcon
+                  icon={Robot02Icon}
+                  className="mx-auto mb-2 size-6 text-muted-foreground/30"
+                />
+                <p className="text-xs text-muted-foreground">{m.no_activity_yet()}</p>
+              </div>
+            )}
           </ScrollArea>
         </TabsContent>
         <TabsContent value="messages" className="flex-1 overflow-hidden m-0">

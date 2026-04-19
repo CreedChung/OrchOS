@@ -19,7 +19,7 @@ import {
   AlertIcon,
   Delete02Icon,
 } from "@hugeicons/core-free-icons";
-import { cn } from "@/lib/utils";
+import { cn, getRuntimeIcon } from "@/lib/utils";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import {
   Select,
@@ -134,6 +134,136 @@ function RuntimeModeBadge({
     <span className="rounded-md border border-border bg-card px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
       {mode === "acp-native" ? "ACP Native" : mode === "acp-adapter" ? "ACP Adapter" : "CLI Fallback"}
     </span>
+  );
+}
+
+interface EditAcpDialogProps {
+  runtime: RuntimeProfile | null;
+  draft: {
+    protocol: RuntimeProfile["protocol"];
+    transport: RuntimeProfile["transport"];
+    communicationMode: RuntimeProfile["communicationMode"];
+    acpCommand: string;
+    acpArgs: string;
+    acpEnv: string;
+  } | null;
+  saving: boolean;
+  onClose: () => void;
+  onDraftChange: (patch: Partial<NonNullable<EditAcpDialogProps["draft"]>>) => void;
+  onSave: () => void;
+}
+
+function EditAcpDialog({ runtime, draft, saving, onClose, onDraftChange, onSave }: EditAcpDialogProps) {
+  if (!runtime || !draft) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/15">
+      <div className="w-full max-w-2xl rounded-xl border border-border bg-card shadow-2xl ring-1 ring-background/60">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Edit ACP</h3>
+            <p className="mt-1 text-xs text-muted-foreground">{runtime.name}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            type="button"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+          </button>
+        </div>
+
+        <div className="grid gap-3 p-6">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1">
+              <span className="text-[11px] font-medium text-muted-foreground">Transport</span>
+              <Select
+                value={draft.transport}
+                onValueChange={(value) => onDraftChange({ transport: value as RuntimeProfile["transport"] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stdio">stdio</SelectItem>
+                  <SelectItem value="tcp">tcp</SelectItem>
+                </SelectContent>
+              </Select>
+            </label>
+
+            <label className="space-y-1">
+              <span className="text-[11px] font-medium text-muted-foreground">Mode</span>
+              <Select
+                value={draft.communicationMode}
+                onValueChange={(value) =>
+                  onDraftChange({ communicationMode: value as RuntimeProfile["communicationMode"] })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="acp-native">ACP Native</SelectItem>
+                  <SelectItem value="acp-adapter">ACP Adapter</SelectItem>
+                  <SelectItem value="cli-fallback">CLI Fallback</SelectItem>
+                </SelectContent>
+              </Select>
+            </label>
+          </div>
+
+          <label className="space-y-1">
+            <span className="text-[11px] font-medium text-muted-foreground">ACP Command</span>
+            <input
+              type="text"
+              value={draft.acpCommand}
+              onChange={(e) => onDraftChange({ acpCommand: e.target.value })}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
+              placeholder="npx"
+            />
+          </label>
+
+          <label className="space-y-1">
+            <span className="text-[11px] font-medium text-muted-foreground">ACP Args (one per line)</span>
+            <textarea
+              value={draft.acpArgs}
+              onChange={(e) => onDraftChange({ acpArgs: e.target.value })}
+              rows={4}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
+              placeholder={"-y\n@zed-industries/claude-code-acp"}
+            />
+          </label>
+
+          <label className="space-y-1">
+            <span className="text-[11px] font-medium text-muted-foreground">ACP Env (KEY=value per line)</span>
+            <textarea
+              value={draft.acpEnv}
+              onChange={(e) => onDraftChange({ acpEnv: e.target.value })}
+              rows={4}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
+              placeholder={"DEBUG=true\nOPENAI_API_KEY=..."}
+            />
+          </label>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-border px-6 py-4">
+          <button
+            onClick={onClose}
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+            type="button"
+          >
+            {m.cancel()}
+          </button>
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            type="button"
+          >
+            {saving ? "Saving..." : m.save()}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -350,6 +480,26 @@ export function SettingsDialog({
     [],
   );
 
+  const handleOpenRuntimeEditor = useCallback(
+    (runtime: RuntimeProfile) => {
+      setEditingRuntimeId(runtime.id);
+      setRuntimeDrafts((prev) => ({
+        ...prev,
+        [runtime.id]: getRuntimeDraft(runtime),
+        [runtime.id]: {
+          ...getRuntimeDraft(runtime),
+          protocol: "acp",
+        },
+      }));
+    },
+    [getRuntimeDraft],
+  );
+
+  const editingRuntime = editingRuntimeId
+    ? registeredRuntimes.find((runtime) => runtime.id === editingRuntimeId) ?? null
+    : null;
+  const editingDraft = editingRuntime ? getRuntimeDraft(editingRuntime) : null;
+
   const handleSaveRuntimeConfig = useCallback(
     async (runtime: RuntimeProfile) => {
       const draft = getRuntimeDraft(runtime);
@@ -374,7 +524,7 @@ export function SettingsDialog({
         );
 
         await api.updateRuntime(runtime.id, {
-          protocol: draft.protocol,
+          protocol: "acp",
           transport: draft.transport,
           communicationMode: draft.communicationMode,
           acpCommand: draft.acpCommand.trim(),
@@ -793,13 +943,28 @@ export function SettingsDialog({
                         >
                           <div
                             className={cn(
-                              "flex size-8 items-center justify-center rounded-md text-sm font-bold",
+                              "flex size-8 items-center justify-center rounded-md",
                               isRegistered
-                                ? "bg-muted text-muted-foreground"
-                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                                ? "bg-white dark:bg-white/10"
+                                : "bg-white dark:bg-white/10",
                             )}
                           >
-                            {agent.name.charAt(0).toUpperCase()}
+                            {getRuntimeIcon(agent) ? (
+                              <img
+                                src={getRuntimeIcon(agent)}
+                                alt={agent.name}
+                                className="size-5"
+                              />
+                            ) : (
+                              <span className={cn(
+                                "text-sm font-bold",
+                                isRegistered
+                                  ? "text-muted-foreground"
+                                  : "text-emerald-600 dark:text-emerald-400",
+                              )}>
+                                {agent.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
@@ -817,9 +982,25 @@ export function SettingsDialog({
                             <p className="text-xs text-muted-foreground">{agent.role}</p>
                           </div>
                           {isRegistered ? (
-                            <span className="rounded-md px-2.5 py-1 text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                              {m.connected()}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-md px-2.5 py-1 text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                {m.connected()}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  const runtime = registeredRuntimes.find(
+                                    (r) => r.name === agent.name || r.registryId === agent.id,
+                                  );
+                                  if (runtime) {
+                                    handleOpenRuntimeEditor(runtime);
+                                  }
+                                }}
+                                className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                                type="button"
+                              >
+                                Edit ACP
+                              </button>
+                            </div>
                           ) : (
                             <button
                               onClick={() => handleRegisterAgent(agent.id)}
@@ -854,8 +1035,18 @@ export function SettingsDialog({
                         key={agent.id}
                         className="flex items-center gap-3 rounded-lg border border-border/30 bg-muted/20 px-4 py-2.5 opacity-50"
                       >
-                        <div className="flex size-8 items-center justify-center rounded-md bg-muted text-sm font-bold text-muted-foreground">
-                          {agent.name.charAt(0).toUpperCase()}
+                        <div className="flex size-8 items-center justify-center rounded-md bg-white dark:bg-white/10">
+                          {getRuntimeIcon(agent) ? (
+                            <img
+                              src={getRuntimeIcon(agent)}
+                              alt={agent.name}
+                              className="size-5 opacity-50"
+                            />
+                          ) : (
+                            <span className="text-sm font-bold text-muted-foreground">
+                              {agent.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
@@ -889,169 +1080,6 @@ export function SettingsDialog({
                   </div>
                 )}
 
-                {registeredRuntimes.length > 0 && (
-                  <div className="space-y-2 pt-2">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                      <span className="size-1.5 rounded-full bg-primary" />
-                      Registered ({registeredRuntimes.length})
-                    </div>
-                    {registeredRuntimes.map((runtime) => {
-                      const draft = getRuntimeDraft(runtime);
-                      const isEditing = editingRuntimeId === runtime.id;
-                      return (
-                        <div key={runtime.id} className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                          <div className="flex items-start gap-3">
-                            <div className="flex size-8 items-center justify-center rounded-md bg-primary/10 text-sm font-bold text-primary">
-                              {runtime.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-medium text-foreground">{runtime.name}</span>
-                                <ModelBadge model={runtime.currentModel || runtime.model} isLocalRuntime />
-                                <RuntimeModeBadge mode={runtime.communicationMode} />
-                              </div>
-                              <p className="mt-1 text-xs text-muted-foreground">{runtime.command}</p>
-                            </div>
-                            <button
-                              onClick={() => {
-                                setEditingRuntimeId((prev) => (prev === runtime.id ? null : runtime.id));
-                                setRuntimeDrafts((prev) => ({
-                                  ...prev,
-                                  [runtime.id]: getRuntimeDraft(runtime),
-                                }));
-                              }}
-                              className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-                            >
-                              {isEditing ? m.cancel() : "Edit ACP"}
-                            </button>
-                          </div>
-
-                          {isEditing && (
-                            <div className="mt-3 grid gap-3 rounded-lg border border-border/50 bg-background/70 p-3">
-                              <div className="grid gap-3 sm:grid-cols-3">
-                                <label className="space-y-1">
-                                  <span className="text-[11px] font-medium text-muted-foreground">Protocol</span>
-                                  <Select
-                                    value={draft.protocol}
-                                    onValueChange={(value) =>
-                                      updateRuntimeDraft(runtime.id, {
-                                        protocol: value as RuntimeProfile["protocol"],
-                                      })
-                                    }
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="acp">ACP</SelectItem>
-                                      <SelectItem value="cli">CLI</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </label>
-
-                                <label className="space-y-1">
-                                  <span className="text-[11px] font-medium text-muted-foreground">Transport</span>
-                                  <Select
-                                    value={draft.transport}
-                                    onValueChange={(value) =>
-                                      updateRuntimeDraft(runtime.id, {
-                                        transport: value as RuntimeProfile["transport"],
-                                      })
-                                    }
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="stdio">stdio</SelectItem>
-                                      <SelectItem value="tcp">tcp</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </label>
-
-                                <label className="space-y-1">
-                                  <span className="text-[11px] font-medium text-muted-foreground">Mode</span>
-                                  <Select
-                                    value={draft.communicationMode}
-                                    onValueChange={(value) =>
-                                      updateRuntimeDraft(runtime.id, {
-                                        communicationMode: value as RuntimeProfile["communicationMode"],
-                                      })
-                                    }
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="acp-native">ACP Native</SelectItem>
-                                      <SelectItem value="acp-adapter">ACP Adapter</SelectItem>
-                                      <SelectItem value="cli-fallback">CLI Fallback</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </label>
-                              </div>
-
-                              <label className="space-y-1">
-                                <span className="text-[11px] font-medium text-muted-foreground">ACP Command</span>
-                                <input
-                                  type="text"
-                                  value={draft.acpCommand}
-                                  onChange={(e) =>
-                                    updateRuntimeDraft(runtime.id, { acpCommand: e.target.value })
-                                  }
-                                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
-                                  placeholder="npx"
-                                />
-                              </label>
-
-                              <label className="space-y-1">
-                                <span className="text-[11px] font-medium text-muted-foreground">
-                                  ACP Args (one per line)
-                                </span>
-                                <textarea
-                                  value={draft.acpArgs}
-                                  onChange={(e) => updateRuntimeDraft(runtime.id, { acpArgs: e.target.value })}
-                                  rows={4}
-                                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
-                                  placeholder={"-y\n@zed-industries/claude-code-acp"}
-                                />
-                              </label>
-
-                              <label className="space-y-1">
-                                <span className="text-[11px] font-medium text-muted-foreground">
-                                  ACP Env (KEY=value per line)
-                                </span>
-                                <textarea
-                                  value={draft.acpEnv}
-                                  onChange={(e) => updateRuntimeDraft(runtime.id, { acpEnv: e.target.value })}
-                                  rows={4}
-                                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
-                                  placeholder={"DEBUG=true\nOPENAI_API_KEY=..."}
-                                />
-                              </label>
-
-                              <div className="flex justify-end gap-2">
-                                <button
-                                  onClick={() => setEditingRuntimeId(null)}
-                                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-                                >
-                                  {m.cancel()}
-                                </button>
-                                <button
-                                  onClick={() => void handleSaveRuntimeConfig(runtime)}
-                                  disabled={savingRuntimeId === runtime.id}
-                                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                                >
-                                  {savingRuntimeId === runtime.id ? "Saving..." : m.save()}
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             )}
 
@@ -1088,6 +1116,21 @@ export function SettingsDialog({
           </div>
         </div>
       </div>
+
+      <EditAcpDialog
+        runtime={editingRuntime}
+        draft={editingDraft}
+        saving={savingRuntimeId === editingRuntime?.id}
+        onClose={() => setEditingRuntimeId(null)}
+        onDraftChange={(patch) => {
+          if (!editingRuntime) return;
+          updateRuntimeDraft(editingRuntime.id, patch);
+        }}
+        onSave={() => {
+          if (!editingRuntime) return;
+          void handleSaveRuntimeConfig(editingRuntime);
+        }}
+      />
     </div>
   );
 }

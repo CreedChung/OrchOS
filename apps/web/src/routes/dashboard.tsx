@@ -1,3 +1,4 @@
+import { lazy, Suspense, useEffect, useState } from "react";
 import { createFileRoute, Outlet, useLocation, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/auth";
@@ -8,13 +9,14 @@ import { CreateGoalDialog } from "@/components/dialogs/CreateGoalDialog";
 import { CreateRuleDialog } from "@/components/dialogs/CreateRuleDialog";
 import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { CreateAgentDialog } from "@/components/dialogs/CreateAgentDialog";
-import { MorphPanel } from "@/components/ui/ai-input";
 import { Toolbar } from "@/components/layout/Toolbar";
 import { I18nProvider } from "@/lib/useI18n";
 import { m } from "@/paraglide/messages";
 import { useUIStore } from "@/lib/store";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
 import type { SidebarView } from "@/lib/types";
+
+const MorphPanel = lazy(() => import("@/components/ui/ai-input").then((module) => ({ default: module.MorphPanel })));
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardWrapper,
@@ -50,7 +52,6 @@ function getViewFromPath(pathname: string): SidebarView {
   const segment = pathname.replace("/dashboard/", "").replace("/dashboard", "");
   const validViews: SidebarView[] = [
     "inbox",
-    "goals",
     "creation",
     "agents",
     "mcp-servers",
@@ -74,6 +75,7 @@ function DashboardWrapper() {
 function DashboardLayout() {
   const location = useLocation();
   const activeView = getViewFromPath(location.pathname);
+  const [showMorphPanel, setShowMorphPanel] = useState(false);
 
   const {
     runtimes,
@@ -105,7 +107,6 @@ function DashboardLayout() {
     agentModelFilter,
     setAgentModelFilter,
     inboxCounts,
-    goalCounts,
     agentModelCounts,
     mcpScopeCounts,
     skillsScopeCounts,
@@ -117,8 +118,6 @@ function DashboardLayout() {
     setActiveOrganizationId,
     sourceFilter,
     setSourceFilter,
-    goalStatusFilter,
-    setGoalStatusFilter,
     scopeFilter,
     setScopeFilter,
     creationArchiveFilter,
@@ -141,6 +140,30 @@ function DashboardLayout() {
   }
 
   const scopeCounts = activeView === "skills" ? skillsScopeCounts : mcpScopeCounts;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const enableMorphPanel = () => {
+      if (!cancelled) {
+        setShowMorphPanel(true);
+      }
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(enableMorphPanel, { timeout: 1200 });
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback(idleId);
+      };
+    }
+
+    const timeoutId = globalThis.setTimeout(enableMorphPanel, 300);
+    return () => {
+      cancelled = true;
+      globalThis.clearTimeout(timeoutId);
+    };
+  }, []);
 
   return (
     <I18nProvider>
@@ -166,9 +189,6 @@ function DashboardLayout() {
               sourceFilter={sourceFilter}
               onSourceFilterChange={setSourceFilter}
               inboxCounts={inboxCounts}
-              goalStatusFilter={goalStatusFilter}
-              onGoalStatusFilterChange={setGoalStatusFilter}
-              goalCounts={goalCounts}
               scopeFilter={scopeFilter}
               onScopeFilterChange={setScopeFilter}
               scopeCounts={scopeCounts}
@@ -187,41 +207,55 @@ function DashboardLayout() {
             onToggle={toggleActivityPanel}
           />
         </div>
-        <CommandBar
-          runtimes={runtimes}
-          projects={projects}
-          open={showCommandBar}
-          onSubmit={handleCommand}
-          onClose={() => setShowCommandBar(false)}
-        />
-        <CreateGoalDialog
-          open={showCreateDialog}
-          onClose={() => setShowCreateDialog(false)}
-          projects={projects}
-          onSubmit={handleCreateGoal}
-        />
-        <CreateRuleDialog
-          open={showCreateRuleDialog}
-          onClose={() => setShowCreateRuleDialog(false)}
-          problem={ruleFromProblem}
-          onSubmit={handleCreateRule}
-        />
-        <SettingsDialog
-          open={showSettingsDialog}
-          onClose={() => setShowSettingsDialog(false)}
-          settings={settings}
-          onSettingsChange={useUIStore.getState().setSettings}
-          onRuntimesRefresh={refreshAll}
-          onConversationsRefresh={refreshAll}
-          registeredRuntimes={runtimes}
-        />
-        <CreateAgentDialog
-          open={showCreateAgentDialog}
-          onClose={() => setShowCreateAgentDialog(false)}
-          runtimes={runtimes}
-          onSubmit={handleCreateAgent}
-        />
-        <MorphPanel runtimes={runtimes} />
+        {showCommandBar && (
+          <CommandBar
+            runtimes={runtimes}
+            projects={projects}
+            open={showCommandBar}
+            onSubmit={handleCommand}
+            onClose={() => setShowCommandBar(false)}
+          />
+        )}
+        {showCreateDialog && (
+          <CreateGoalDialog
+            open={showCreateDialog}
+            onClose={() => setShowCreateDialog(false)}
+            projects={projects}
+            onSubmit={handleCreateGoal}
+          />
+        )}
+        {showCreateRuleDialog && (
+          <CreateRuleDialog
+            open={showCreateRuleDialog}
+            onClose={() => setShowCreateRuleDialog(false)}
+            problem={ruleFromProblem}
+            onSubmit={handleCreateRule}
+          />
+        )}
+        {showSettingsDialog && (
+          <SettingsDialog
+            open={showSettingsDialog}
+            onClose={() => setShowSettingsDialog(false)}
+            settings={settings}
+            onSettingsChange={useUIStore.getState().setSettings}
+            onRuntimesRefresh={refreshAll}
+            onConversationsRefresh={refreshAll}
+            registeredRuntimes={runtimes}
+          />
+        )}
+        {showCreateAgentDialog && (
+          <CreateAgentDialog
+            open={showCreateAgentDialog}
+            onClose={() => setShowCreateAgentDialog(false)}
+            runtimes={runtimes}
+            onSubmit={handleCreateAgent}
+          />
+        )}
+        {showMorphPanel && (
+          <Suspense fallback={null}>
+            <MorphPanel runtimes={runtimes} />
+          </Suspense>
+        )}
       </div>
     </I18nProvider>
   );

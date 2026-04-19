@@ -1,17 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { treaty } from "@elysiajs/eden";
-import { api, resolveApiUrl } from "./api";
+import { api, API_BASE } from "./api";
 
 const WS_BASE_RECONNECT_DELAY_MS = 1000;
 const WS_MAX_RECONNECT_DELAY_MS = 30000;
 
-function getWsBaseUrl() {
-  const apiUrl = new URL(resolveApiUrl("/ws"));
-  apiUrl.protocol = apiUrl.protocol === "https:" ? "wss:" : "ws:";
-  apiUrl.pathname = "";
-  apiUrl.search = "";
-  apiUrl.hash = "";
-  return apiUrl.toString().replace(/\/$/, "");
+function getWsUrl() {
+  if (API_BASE) {
+    const url = new URL(API_BASE);
+    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    url.pathname = "/ws";
+    return url.toString();
+  }
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}/ws`;
 }
 
 function useAsyncData<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
@@ -82,10 +83,7 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
   useEffect(() => {
     let isShuttingDown = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let ws: {
-      on: (event: string, handler: (...args: unknown[]) => void) => void;
-      close: () => void;
-    } | null = null;
+    let ws: WebSocket | null = null;
     let reconnectAttempts = 0;
 
     const connect = () => {
@@ -93,19 +91,22 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
         return;
       }
 
-      ws = (treaty(getWsBaseUrl()).ws as any).subscribe();
+      ws = new WebSocket(getWsUrl());
 
-      ws!.on("message", (message: any) => {
-        if (message?.type === "event" && message.data) {
-          onEventRef.current(message.data as Record<string, unknown>);
-        }
-      });
-
-      ws!.on("open", () => {
+      ws.onopen = () => {
         reconnectAttempts = 0;
-      });
+      };
 
-      ws!.on("close", () => {
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(typeof event.data === "string" ? event.data : "");
+          if (message?.type === "event" && message.data) {
+            onEventRef.current(message.data as Record<string, unknown>);
+          }
+        } catch {}
+      };
+
+      ws.onclose = () => {
         if (isShuttingDown) {
           return;
         }
@@ -120,7 +121,9 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
           reconnectTimer = null;
           connect();
         }, delay);
-      });
+      };
+
+      ws.onerror = () => {};
     };
 
     connect();

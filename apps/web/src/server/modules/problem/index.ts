@@ -44,6 +44,28 @@ export function createProblemController(db: AppDb) {
         assigned: t.Number(),
       }),
     })
+    .get("/summary", () => ProblemService.summarize(db), {
+      response: t.Object({
+        status: t.Object({
+          open: t.Number(),
+          fixed: t.Number(),
+          ignored: t.Number(),
+          assigned: t.Number(),
+        }),
+        inbox: t.Object({
+          all: t.Number(),
+          github_pr: t.Number(),
+          github_issue: t.Number(),
+          mention: t.Number(),
+          agent_request: t.Number(),
+        }),
+        system: t.Object({
+          critical: t.Number(),
+          warning: t.Number(),
+          info: t.Number(),
+        }),
+      }),
+    })
     .post(
       "/",
       ({ body }) => {

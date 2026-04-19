@@ -123,7 +123,6 @@ export function Sidebar({
           badge: openInboxCount,
           badgeCritical: criticalCount > 0,
         },
-        { id: "goals", to: "/dashboard/goals", icon: Target01Icon, label: m.goals() },
       ],
     },
     {

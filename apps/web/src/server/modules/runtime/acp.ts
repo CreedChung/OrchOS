@@ -53,7 +53,6 @@ const ACP_AGENT_CONFIGS: Record<string, AcpAgentConfig> = {
   opencode: { command: "opencode", args: ["acp"], communicationMode: "acp-native" },
   "gemini-cli": { command: "gemini", args: ["--acp"], communicationMode: "acp-native" },
   "qwen-code": { command: "qwen", args: ["--acp"], communicationMode: "acp-native" },
-  aider: { command: "aider-acp", args: [], communicationMode: "acp-adapter" },
   pi: { command: "pi-acp", args: [], communicationMode: "acp-adapter" },
   amp: { command: "amp-acp", args: [], communicationMode: "acp-adapter" },
   copilot: { command: "copilot", args: ["--acp", "--stdio"], communicationMode: "acp-native" },

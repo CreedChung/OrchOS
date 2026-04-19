@@ -9,6 +9,14 @@ const config = defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  server: {
+    proxy: {
+      "/ws": {
+        target: "http://127.0.0.1:5173",
+        ws: true,
+      },
+    },
+  },
   plugins: [
     paraglideVitePlugin({
       project: "./project.inlang",

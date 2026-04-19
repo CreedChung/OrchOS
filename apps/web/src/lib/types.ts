@@ -214,7 +214,6 @@ export interface Rule {
 
 export type SidebarView =
   | "inbox"
-  | "goals"
   | "creation"
   | "agents"
   | "mcp-servers"

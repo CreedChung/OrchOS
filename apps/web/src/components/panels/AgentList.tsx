@@ -126,6 +126,7 @@ function AgentItem({
         agentId={agent.id}
         avatarUrl={agent.avatarUrl}
         name={agent.name}
+        runtimeId={agent.runtimeId}
         size="sm"
         onUploaded={onAvatarUploaded}
       />

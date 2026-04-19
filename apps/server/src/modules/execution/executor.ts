@@ -226,37 +226,7 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
     ],
     modelQueries: [{ cmd: "gemini --version 2>&1" }, { cmd: "gemini version 2>&1" }],
   },
-  {
-    id: "aider",
-    name: "Aider",
-    command: "aider",
-    aliases: ["aider chat", "aider ai"],
-    versionArgs: ["--version"],
-    versionArgSets: [["--version"], ["version"]],
-    helpArgs: ["--help"],
-    helpArgSets: [["--help"]],
-    role: "Terminal pair-programming assistant",
-    capabilities: ["write_code", "fix_bug", "review", "run_tests"],
-    model: "cloud/aider",
-    invoke: {
-      mode: "argv",
-      args: ["--message", "$PROMPT"],
-      successIndicators: ["aider"],
-      timeout: 60000,
-      truncateLines: 20,
-    },
-    invokeFallbacks: [
-      {
-        mode: "argv",
-        args: ["-m", "$PROMPT"],
-      },
-      {
-        mode: "stdin",
-        stdinTemplate: "$PROMPT",
-      },
-    ],
-    modelQueries: [{ cmd: "aider --version 2>&1" }, { cmd: "aider version 2>&1" }],
-  },
+
   {
     id: "qwen-code",
     name: "Qwen Code",

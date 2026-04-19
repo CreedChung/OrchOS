@@ -7,8 +7,8 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { api, type McpServerProfile, type SkillProfile, type RuntimeProfile } from "@/lib/api";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { api, type McpServerProfile, type ProblemSummary, type SkillProfile, type RuntimeProfile } from "@/lib/api";
 import { useWebSocket } from "@/lib/hooks";
 import { useUIStore } from "@/lib/store";
 import type {
@@ -25,7 +25,29 @@ import type {
   Command,
   ControlSettings,
 } from "@/lib/types";
-import { isInboxItem, isSystemProblem } from "@/lib/types";
+
+type DashboardView =
+  | "inbox"
+  | "creation"
+  | "agents"
+  | "mcp-servers"
+  | "skills"
+  | "projects"
+  | "observability";
+
+function getViewFromPath(pathname: string): DashboardView {
+  const segment = pathname.replace("/dashboard/", "").replace("/dashboard", "");
+  const validViews: DashboardView[] = [
+    "inbox",
+    "creation",
+    "agents",
+    "mcp-servers",
+    "skills",
+    "projects",
+    "observability",
+  ];
+  return validViews.includes(segment as DashboardView) ? (segment as DashboardView) : "inbox";
+}
 
 export type { AgentModelFilter } from "@/components/layout/Toolbar";
 
@@ -187,6 +209,8 @@ export function useDashboard() {
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const activeView = getViewFromPath(location.pathname);
 
   // Persisted state from zustand store
   const {
@@ -205,6 +229,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [problems, setProblems] = useState<Problem[]>([]);
+  const [problemSummary, setProblemSummary] = useState<ProblemSummary>({
+    status: { open: 0, fixed: 0, ignored: 0, assigned: 0 },
+    inbox: { all: 0, github_pr: 0, github_issue: 0, mention: 0, agent_request: 0 },
+    system: { critical: 0, warning: 0, info: 0 },
+  });
   const [rules, setRules] = useState<Rule[]>([]);
   const [commands, setCommands] = useState<Command[]>([]);
   const [mcpServers, setMcpServers] = useState<McpServerProfile[]>([]);
@@ -235,29 +264,22 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   );
 
   const inboxCounts = useMemo<InboxCounts>(() => {
-    const inboxItems = problems.filter((p) => p.status === "open" && isInboxItem(p));
     return {
-      all: inboxItems.length,
-      github_pr: inboxItems.filter((p) => p.source === "github_pr").length,
-      github_issue: inboxItems.filter((p) => p.source === "github_issue").length,
-      mention: inboxItems.filter((p) => p.source === "mention").length,
-      agent_request: inboxItems.filter((p) => p.source === "agent_request").length,
+      all: problemSummary.inbox.all,
+      github_pr: problemSummary.inbox.github_pr,
+      github_issue: problemSummary.inbox.github_issue,
+      mention: problemSummary.inbox.mention,
+      agent_request: problemSummary.inbox.agent_request,
     };
-  }, [problems]);
+  }, [problemSummary]);
 
   const systemProblemCounts = useMemo<SystemProblemCounts>(
     () => ({
-      critical: problems.filter(
-        (p) => p.status === "open" && p.priority === "critical" && isSystemProblem(p),
-      ).length,
-      warning: problems.filter(
-        (p) => p.status === "open" && p.priority === "warning" && isSystemProblem(p),
-      ).length,
-      info: problems.filter(
-        (p) => p.status === "open" && p.priority === "info" && isSystemProblem(p),
-      ).length,
+      critical: problemSummary.system.critical,
+      warning: problemSummary.system.warning,
+      info: problemSummary.system.info,
     }),
-    [problems],
+    [problemSummary],
   );
 
   const goalCounts = useMemo<GoalCounts>(
@@ -297,43 +319,69 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     [runtimes],
   );
 
+  const shouldLoadGoals = activeView === "projects" || activeView === "observability";
+  const shouldLoadProjects =
+    activeView === "creation" ||
+    activeView === "projects" ||
+    activeView === "skills";
+  const shouldLoadProblems =
+    activeView === "inbox" || activeView === "projects" || activeView === "observability";
+  const shouldLoadAgents = activeView === "agents" || activeView === "creation" || activeView === "observability";
+  const shouldLoadRules = activeView === "agents";
+  const shouldLoadCommands = activeView === "projects";
+  const shouldLoadMcpServers = activeView === "mcp-servers";
+  const shouldLoadSkills = activeView === "skills";
+
   // Data fetching
   const refreshAll = useCallback(async () => {
     const results = await Promise.allSettled([
-      api.listGoals(),
-      api.listAgents(),
+      shouldLoadGoals ? api.listGoals() : Promise.resolve<Goal[]>([]),
       api.listRuntimes(),
-      api.listProjects(),
+      shouldLoadProjects ? api.listProjects() : Promise.resolve<Project[]>([]),
       api.getSettings(),
       api.listOrganizations(),
-      api.listProblems(),
-      api.listRules(),
-      api.listCommands(),
-      api.listMcpServers(),
-      api.listSkills(),
+      api.getProblemSummary(),
+      shouldLoadProblems ? api.listProblems() : Promise.resolve<Problem[]>([]),
+      shouldLoadAgents ? api.listAgents() : Promise.resolve<AgentProfile[]>([]),
+      shouldLoadRules ? api.listRules() : Promise.resolve<Rule[]>([]),
+      shouldLoadCommands ? api.listCommands() : Promise.resolve<Command[]>([]),
+      shouldLoadMcpServers ? api.listMcpServers() : Promise.resolve<McpServerProfile[]>([]),
+      shouldLoadSkills ? api.listSkills() : Promise.resolve<SkillProfile[]>([]),
     ]);
     if (results[0].status === "fulfilled") setGoals(results[0].value);
-    if (results[1].status === "fulfilled") setAgents(results[1].value);
-    if (results[2].status === "fulfilled") setRuntimes(results[2].value);
-    if (results[3].status === "fulfilled") setProjects(results[3].value);
-    if (results[4].status === "fulfilled") setSettings(results[4].value);
-    if (results[5].status === "fulfilled") {
-      setOrganizations(results[5].value);
+    if (results[1].status === "fulfilled") setRuntimes(results[1].value);
+    if (results[2].status === "fulfilled") setProjects(results[2].value);
+    if (results[3].status === "fulfilled") setSettings(results[3].value);
+    if (results[4].status === "fulfilled") {
+      setOrganizations(results[4].value);
       const currentOrgId = useUIStore.getState().activeOrganizationId;
-      if (results[5].value.length > 0 && !currentOrgId) {
-        setActiveOrganizationId(results[5].value[0].id);
+      if (results[4].value.length > 0 && !currentOrgId) {
+        setActiveOrganizationId(results[4].value[0].id);
       }
     }
+    if (results[5].status === "fulfilled") setProblemSummary(results[5].value);
     if (results[6].status === "fulfilled") setProblems(results[6].value);
-    if (results[7].status === "fulfilled") setRules(results[7].value);
-    if (results[8].status === "fulfilled") setCommands(results[8].value);
-    if (results[9].status === "fulfilled") setMcpServers(results[9].value);
-    if (results[10].status === "fulfilled") setSkills(results[10].value);
+    if (results[7].status === "fulfilled") setAgents(results[7].value);
+    if (results[8].status === "fulfilled") setRules(results[8].value);
+    if (results[9].status === "fulfilled") setCommands(results[9].value);
+    if (results[10].status === "fulfilled") setMcpServers(results[10].value);
+    if (results[11].status === "fulfilled") setSkills(results[11].value);
     for (const r of results) {
       if (r.status === "rejected") console.error("Failed to fetch data:", r.reason);
     }
     setLoading(false);
-  }, [setSettings, setActiveOrganizationId]);
+  }, [
+    setSettings,
+    setActiveOrganizationId,
+    shouldLoadGoals,
+    shouldLoadProjects,
+    shouldLoadProblems,
+    shouldLoadAgents,
+    shouldLoadRules,
+    shouldLoadCommands,
+    shouldLoadMcpServers,
+    shouldLoadSkills,
+  ]);
 
   const refreshGoalData = useCallback(async (goalId: string | null) => {
     if (!goalId) return;
@@ -356,13 +404,78 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }, [refreshAll]);
 
   useEffect(() => {
+    if (!shouldLoadGoals) {
+      setGoals([]);
+    }
+    if (!shouldLoadProjects) {
+      setProjects([]);
+    }
+    if (!shouldLoadProblems) {
+      setProblems([]);
+    }
+    if (!shouldLoadAgents) {
+      setAgents([]);
+    }
+    if (!shouldLoadRules) {
+      setRules([]);
+    }
+    if (!shouldLoadCommands) {
+      setCommands([]);
+    }
+    if (!shouldLoadMcpServers) {
+      setMcpServers([]);
+    }
+    if (!shouldLoadSkills) {
+      setSkills([]);
+    }
+  }, [
+    shouldLoadGoals,
+    shouldLoadProjects,
+    shouldLoadProblems,
+    shouldLoadAgents,
+    shouldLoadRules,
+    shouldLoadCommands,
+    shouldLoadMcpServers,
+    shouldLoadSkills,
+  ]);
+
+  useEffect(() => {
     refreshGoalData(activeGoalId);
   }, [activeGoalId, refreshGoalData]);
 
+  useEffect(() => {
+    if (!activeGoalId) {
+      setStates([]);
+      setArtifacts([]);
+      setActivities([]);
+    }
+  }, [activeGoalId]);
+
   useWebSocket((event) => {
-    if (event.goalId === activeGoalId || !event.goalId) {
-      refreshGoalData(activeGoalId);
-      refreshAll();
+    const eventGoalId = typeof event.goalId === "string" ? event.goalId : null;
+    const eventType = typeof event.type === "string" ? event.type : null;
+    const touchesActiveGoal = Boolean(activeGoalId && eventGoalId === activeGoalId);
+    const touchesGoalCollections =
+      eventType === "goal_created" ||
+      eventType === "goal_completed" ||
+      eventType === "state_changed" ||
+      eventType === "command_sent";
+
+    if (touchesActiveGoal) {
+      void refreshGoalData(activeGoalId);
+      if (shouldLoadGoals || shouldLoadCommands || shouldLoadProblems) {
+        void refreshAll();
+      }
+      return;
+    }
+
+    if (!eventGoalId && touchesGoalCollections && (shouldLoadGoals || shouldLoadCommands || shouldLoadProblems)) {
+      void refreshAll();
+      return;
+    }
+
+    if (activeView === "inbox" || activeView === "observability") {
+      void refreshAll();
     }
   });
 
@@ -430,7 +543,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         await api.updateProblem(problemId, { status: "assigned" });
         await refreshAll();
         setActiveGoalId(goal.id);
-        navigate({ to: "/dashboard/goals" });
+        navigate({ to: "/dashboard/projects" });
       } catch (err) {
         console.error("Convert to goal failed:", err);
       }
@@ -542,7 +655,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         setShowCreateDialog(false);
         await refreshAll();
         setActiveGoalId(goal.id);
-        navigate({ to: "/dashboard/goals" });
+        navigate({ to: "/dashboard/projects" });
       } catch (err) {
         console.error("Failed to create goal:", err);
       }
@@ -568,7 +681,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         setShowCommandBar(false);
         await refreshAll();
         setActiveGoalId(goal.id);
-        navigate({ to: "/dashboard/goals" });
+        navigate({ to: "/dashboard/projects" });
       } catch (err) {
         console.error("Command failed:", err);
       }
