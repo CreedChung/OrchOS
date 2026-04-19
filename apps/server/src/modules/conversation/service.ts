@@ -10,6 +10,8 @@ export interface Conversation {
   projectId?: string;
   agentId?: string;
   runtimeId?: string;
+  archived: boolean;
+  deleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -41,6 +43,8 @@ export abstract class ConversationService {
         projectId: data.projectId || null,
         agentId: data.agentId || null,
         runtimeId: data.runtimeId || null,
+        archived: "false",
+        deleted: "false",
         createdAt: now,
         updatedAt: now,
       })
@@ -52,6 +56,8 @@ export abstract class ConversationService {
       projectId: data.projectId,
       agentId: data.agentId,
       runtimeId: data.runtimeId,
+      archived: false,
+      deleted: false,
       createdAt: now,
       updatedAt: now,
     };
@@ -74,13 +80,22 @@ export abstract class ConversationService {
 
   static update(
     id: string,
-    data: { title?: string; projectId?: string; agentId?: string; runtimeId?: string },
+    data: {
+      title?: string;
+      projectId?: string;
+      agentId?: string;
+      runtimeId?: string;
+      archived?: boolean;
+      deleted?: boolean;
+    },
   ): Conversation | undefined {
     const updates: Record<string, unknown> = {};
     if (data.title !== undefined) updates.title = data.title;
     if (data.projectId !== undefined) updates.projectId = data.projectId || null;
     if (data.agentId !== undefined) updates.agentId = data.agentId || null;
     if (data.runtimeId !== undefined) updates.runtimeId = data.runtimeId || null;
+    if (data.archived !== undefined) updates.archived = String(data.archived);
+    if (data.deleted !== undefined) updates.deleted = String(data.deleted);
     updates.updatedAt = new Date().toISOString();
 
     if (Object.keys(updates).length === 1 && updates.updatedAt) {
@@ -91,11 +106,34 @@ export abstract class ConversationService {
     return ConversationService.get(id);
   }
 
-  static delete(id: string): boolean {
+  static delete(id: string, options?: { permanent?: boolean }): boolean {
     const existing = ConversationService.get(id);
     if (!existing) return false;
+
+    if (!options?.permanent) {
+      db.update(conversations)
+        .set({ deleted: "true", archived: "false", updatedAt: new Date().toISOString() })
+        .where(eq(conversations.id, id))
+        .run();
+      return true;
+    }
+
     db.delete(conversations).where(eq(conversations.id, id)).run();
     return true;
+  }
+
+  static clearDeleted(): number {
+    const deletedConversations = db
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(eq(conversations.deleted, "true"))
+      .all();
+
+    for (const conversation of deletedConversations) {
+      db.delete(conversations).where(eq(conversations.id, conversation.id)).run();
+    }
+
+    return deletedConversations.length;
   }
 
   static getMessages(conversationId: string): Message[] {
@@ -194,6 +232,8 @@ export abstract class ConversationService {
       projectId: row.projectId || undefined,
       agentId: row.agentId || undefined,
       runtimeId: row.runtimeId || undefined,
+      archived: row.archived === "true",
+      deleted: row.deleted === "true",
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

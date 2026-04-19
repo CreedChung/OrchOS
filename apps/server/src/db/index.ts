@@ -146,8 +146,14 @@ function migrate(sqlite: Database) {
   } catch {}
   try {
     sqlite.run(
-      "CREATE TABLE IF NOT EXISTS conversations (id TEXT PRIMARY KEY, title TEXT, project_id TEXT REFERENCES projects(id), agent_id TEXT REFERENCES agents(id), runtime_id TEXT REFERENCES runtimes(id), created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
+      "CREATE TABLE IF NOT EXISTS conversations (id TEXT PRIMARY KEY, title TEXT, project_id TEXT REFERENCES projects(id), agent_id TEXT REFERENCES agents(id), runtime_id TEXT REFERENCES runtimes(id), archived TEXT NOT NULL DEFAULT 'false', deleted TEXT NOT NULL DEFAULT 'false', created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
     );
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE conversations ADD COLUMN archived TEXT NOT NULL DEFAULT 'false'");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE conversations ADD COLUMN deleted TEXT NOT NULL DEFAULT 'false'");
   } catch {}
   try {
     sqlite.run(

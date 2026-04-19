@@ -53,14 +53,26 @@ export const conversationController = new Elysia({ prefix: "/api/conversations" 
   )
   .delete(
     "/:id",
-    ({ params: { id } }) => {
-      const success = ConversationService.delete(id);
+    ({ params: { id }, query }) => {
+      const success = ConversationService.delete(id, {
+        permanent: query.permanent === "true",
+      });
       if (!success) throw status(404, "Conversation not found");
       return { success: true };
     },
     {
       params: t.Object({ id: t.String() }),
+      query: t.Object({ permanent: t.Optional(t.String()) }),
       response: t.Object({ success: t.Boolean() }),
+    },
+  )
+  .delete(
+    "/deleted",
+    () => {
+      return { success: true, count: ConversationService.clearDeleted() };
+    },
+    {
+      response: t.Object({ success: t.Boolean(), count: t.Number() }),
     },
   )
   .get(
