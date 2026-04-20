@@ -150,12 +150,14 @@ export function Toolbar({
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
       {activeView === "creation" && (
         <div className="flex items-center gap-1.5">
-          {([
-            { value: "all", label: m.all(), icon: Menu01Icon },
-            { value: "active", label: m.creation_active(), icon: Clock01Icon },
-            { value: "archived", label: m.creation_archived(), icon: Archive01Icon },
-            { value: "deleted", label: creationDeletedLabel, icon: Delete02Icon },
-          ] as const).map((filter) => (
+          {(
+            [
+              { value: "all", label: m.all(), icon: Menu01Icon },
+              { value: "active", label: m.creation_active(), icon: Clock01Icon },
+              { value: "archived", label: m.creation_archived(), icon: Archive01Icon },
+              { value: "deleted", label: creationDeletedLabel, icon: Delete02Icon },
+            ] as const
+          ).map((filter) => (
             <button
               key={filter.value}
               onClick={() => onCreationArchiveFilterChange(filter.value)}
@@ -191,9 +193,7 @@ export function Toolbar({
                   )}
                 >
                   <HugeiconsIcon icon={config.icon} className="size-3" />
-                  <span className="capitalize">
-                    {config.label || filter}
-                  </span>
+                  <span className="capitalize">{config.label || filter}</span>
                   <span className="tabular-nums text-[10px] opacity-60">
                     {inboxCounts[filter as keyof typeof inboxCounts]}
                   </span>
@@ -248,9 +248,7 @@ export function Toolbar({
                 )}
               >
                 <HugeiconsIcon icon={config.icon} className="size-3" />
-                <span className="capitalize">
-                  {config.label || filter}
-                </span>
+                <span className="capitalize">{config.label || filter}</span>
                 <span className="tabular-nums text-[10px] opacity-60">{scopeCounts[filter]}</span>
               </button>
             );
@@ -264,12 +262,7 @@ export function Toolbar({
       {/* Right side: Refresh + Search + Activity panel toggle */}
       <div className="flex items-center gap-2">
         {onRefresh && (
-          <Button
-            variant="outline"
-            size="icon-sm"
-            onClick={onRefresh}
-            title={m.refresh()}
-          >
+          <Button variant="outline" size="icon-sm" onClick={onRefresh} title={m.refresh()}>
             <HugeiconsIcon icon={ArrowReloadHorizontalIcon} className="size-3.5" />
           </Button>
         )}

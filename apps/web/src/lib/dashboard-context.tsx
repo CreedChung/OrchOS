@@ -8,7 +8,13 @@ import {
   type ReactNode,
 } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { api, type McpServerProfile, type ProblemSummary, type SkillProfile, type RuntimeProfile } from "@/lib/api";
+import {
+  api,
+  type McpServerProfile,
+  type ProblemSummary,
+  type SkillProfile,
+  type RuntimeProfile,
+} from "@/lib/api";
 import { useWebSocket } from "@/lib/hooks";
 import { useUIStore } from "@/lib/store";
 import type {
@@ -322,12 +328,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const shouldLoadGoals = activeView === "projects" || activeView === "observability";
   const shouldLoadProjects =
-    activeView === "creation" ||
-    activeView === "projects" ||
-    activeView === "skills";
+    activeView === "creation" || activeView === "projects" || activeView === "skills";
   const shouldLoadProblems =
     activeView === "inbox" || activeView === "projects" || activeView === "observability";
-  const shouldLoadAgents = activeView === "agents" || activeView === "creation" || activeView === "observability";
+  const shouldLoadAgents =
+    activeView === "agents" || activeView === "creation" || activeView === "observability";
   const shouldLoadRules = activeView === "agents";
   const shouldLoadCommands = activeView === "projects";
   const shouldLoadMcpServers = activeView === "mcp-servers";
@@ -470,7 +475,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (!eventGoalId && touchesGoalCollections && (shouldLoadGoals || shouldLoadCommands || shouldLoadProblems)) {
+    if (
+      !eventGoalId &&
+      touchesGoalCollections &&
+      (shouldLoadGoals || shouldLoadCommands || shouldLoadProblems)
+    ) {
       void refreshAll();
       return;
     }

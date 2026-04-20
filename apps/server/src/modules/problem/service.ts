@@ -122,7 +122,11 @@ export const ProblemService = {
     const now = new Date().toISOString();
     const updates: Record<string, unknown> = { updatedAt: now };
     if (data.status !== undefined) updates.status = data.status;
-    const existing = db.select({ id: problems.id }).from(problems).where(inArray(problems.id, ids)).all();
+    const existing = db
+      .select({ id: problems.id })
+      .from(problems)
+      .where(inArray(problems.id, ids))
+      .all();
     if (existing.length === 0) return 0;
     db.update(problems).set(updates).where(inArray(problems.id, ids)).run();
     return existing.length;

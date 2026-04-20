@@ -190,10 +190,7 @@ function AgentListSkeleton() {
   return (
     <>
       {[1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          className="flex w-full items-start gap-2.5 rounded-md px-2.5 py-2"
-        >
+        <div key={i} className="flex w-full items-start gap-2.5 rounded-md px-2.5 py-2">
           <div className="size-8 rounded-full bg-muted animate-pulse" />
           <div className="min-w-0 flex-1 space-y-1">
             <div className="h-3.5 w-24 bg-muted animate-pulse rounded" />

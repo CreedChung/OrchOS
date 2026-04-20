@@ -74,15 +74,15 @@ export function AppDialog({
                 ) : null}
               </div>
               {!hideCloseButton ? (
-                <DialogPrimitive.Close
-                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                >
+                <DialogPrimitive.Close className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                   <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
                 </DialogPrimitive.Close>
               ) : null}
             </div>
 
-            <div className={cn("min-h-0 flex-1 overflow-y-auto p-6", bodyClassName)}>{children}</div>
+            <div className={cn("min-h-0 flex-1 overflow-y-auto p-6", bodyClassName)}>
+              {children}
+            </div>
 
             {footer ? (
               <div

@@ -83,7 +83,12 @@ export const RuntimeModel = {
   }),
   modelResponse: t.Object({
     model: t.Optional(t.String()),
-    source: t.Union([t.Literal("acp"), t.Literal("cli"), t.Literal("config"), t.Literal("registry")]),
+    source: t.Union([
+      t.Literal("acp"),
+      t.Literal("cli"),
+      t.Literal("config"),
+      t.Literal("registry"),
+    ]),
     rawOutput: t.Optional(t.String()),
   }),
   modelsResponse: t.Object({

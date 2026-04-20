@@ -88,7 +88,7 @@ export function ProjectsView({
   const [loading, setLoading] = useState(false);
   const [cloningId, setCloningId] = useState<string | null>(null);
   const [cloneResults, setCloneResults] = useState<
-    Record<string, { success: boolean; output: string; error?: string; path: string }>
+    Record<string, { success: boolean; output?: string; error?: string; path: string }>
   >({});
   const [showDirectoryPicker, setShowDirectoryPicker] = useState(false);
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
@@ -259,9 +259,7 @@ export function ProjectsView({
           <div className="flex items-center gap-1 border-b border-border px-3 py-1.5">
             {(["all", "active", "completed", "paused"] as GoalStatusFilter[]).map((filter) => {
               const count =
-                filter === "all"
-                  ? goals.length
-                  : goals.filter((g) => g.status === filter).length;
+                filter === "all" ? goals.length : goals.filter((g) => g.status === filter).length;
               return (
                 <button
                   key={filter}
@@ -298,7 +296,10 @@ export function ProjectsView({
                       onClick={() => toggleProject(project.id)}
                       className="flex flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-accent/50"
                     >
-                      <HugeiconsIcon icon={FolderIcon} className="size-3.5 shrink-0 text-primary/70" />
+                      <HugeiconsIcon
+                        icon={FolderIcon}
+                        className="size-3.5 shrink-0 text-primary/70"
+                      />
                       <span className="flex-1 truncate text-xs font-medium text-foreground">
                         {project.name}
                       </span>
@@ -426,11 +427,13 @@ export function ProjectsView({
                           </div>
                         </button>
                       ))}
-                      {projectGoals.length === 0 && goalStatusFilter !== "all" && totalGoals > 0 && (
-                        <p className="px-2.5 py-1 text-[10px] text-muted-foreground/60">
-                          No {goalStatusFilter} goals
-                        </p>
-                      )}
+                      {projectGoals.length === 0 &&
+                        goalStatusFilter !== "all" &&
+                        totalGoals > 0 && (
+                          <p className="px-2.5 py-1 text-[10px] text-muted-foreground/60">
+                            No {goalStatusFilter} goals
+                          </p>
+                        )}
                       {totalGoals === 0 && (
                         <p className="px-2.5 py-1 text-[10px] text-muted-foreground/60">
                           No goals yet
@@ -445,16 +448,19 @@ export function ProjectsView({
             {unassignedGoals.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 px-2.5 py-1.5">
-                  <HugeiconsIcon icon={Target01Icon} className="size-3.5 text-muted-foreground/50" />
-                  <span className="text-xs font-semibold text-muted-foreground">{m.no_project()}</span>
+                  <HugeiconsIcon
+                    icon={Target01Icon}
+                    className="size-3.5 text-muted-foreground/50"
+                  />
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {m.no_project()}
+                  </span>
                   <span className="ml-auto text-[10px] tabular-nums text-muted-foreground">
                     {unassignedGoals.length}
                   </span>
                 </div>
                 {unassignedGoals
-                  .filter(
-                    (g) => goalStatusFilter === "all" || g.status === goalStatusFilter,
-                  )
+                  .filter((g) => goalStatusFilter === "all" || g.status === goalStatusFilter)
                   .map((goal) => (
                     <button
                       key={goal.id}
@@ -481,10 +487,7 @@ export function ProjectsView({
                         >
                           {goal.title}
                         </p>
-                        <Badge
-                          variant="outline"
-                          className="text-[9px] px-1 py-0 h-4 mt-0.5"
-                        >
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 mt-0.5">
                           {goalStatusLabel[goal.status] || goal.status}
                         </Badge>
                       </div>
@@ -609,7 +612,9 @@ export function ProjectsView({
             {formMode === "clone" ? (
               <div className="space-y-3 mt-4">
                 <div>
-                  <label className="text-xs text-muted-foreground">{m.env_project_repo_url()}</label>
+                  <label className="text-xs text-muted-foreground">
+                    {m.env_project_repo_url()}
+                  </label>
                   <input
                     type="text"
                     value={formData.repositoryUrl}

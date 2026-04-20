@@ -69,7 +69,12 @@ export function CreateMcpServerDialog({ open, onClose, onCreated }: CreateMcpSer
           <Button size="sm" type="button" variant="outline" onClick={onClose}>
             {m.cancel()}
           </Button>
-          <Button size="sm" type="button" onClick={handleCreate} disabled={loading || !formData.name || !formData.command}>
+          <Button
+            size="sm"
+            type="button"
+            onClick={handleCreate}
+            disabled={loading || !formData.name || !formData.command}
+          >
             {loading ? m.creating() : m.create()}
           </Button>
         </>

@@ -63,15 +63,15 @@ function HomePageInner() {
       <main className="flex-1">
         {/* Hero */}
         <section className="relative flex h-screen -mt-14 items-start justify-center overflow-hidden px-6 pt-14 sm:px-10 lg:px-14">
-            <div className="absolute inset-0 z-0">
-              <img
-                src="/background.png"
-                alt=""
-                className="size-full object-cover"
-                fetchPriority="high"
-                decoding="async"
-              />
-            </div>
+          <div className="absolute inset-0 z-0">
+            <img
+              src="/background.png"
+              alt=""
+              className="size-full object-cover"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </div>
           <div className="relative z-10 flex h-full w-full max-w-5xl flex-col items-start pt-16 text-left sm:pt-20 lg:pt-24">
             <p
               className="mb-3 max-w-3xl font-serif leading-tight text-white"
@@ -103,7 +103,7 @@ function HomePageInner() {
                 className="h-full w-full object-cover object-top"
                 loading="lazy"
                 decoding="async"
-                />
+              />
             </div>
           </div>
         </section>

@@ -81,7 +81,10 @@ export abstract class AgentService {
   }
 
   static updateEnabled(id: string, enabled: boolean): AgentProfile | undefined {
-    db.update(agents).set({ enabled: String(enabled) }).where(eq(agents.id, id)).run();
+    db.update(agents)
+      .set({ enabled: String(enabled) })
+      .where(eq(agents.id, id))
+      .run();
     return AgentService.get(id);
   }
 

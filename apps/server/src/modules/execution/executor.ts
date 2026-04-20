@@ -310,7 +310,9 @@ function getCheckArgSets(agent: AgentCLIDefinition, kind: "version" | "help"): s
   return [];
 }
 
-function getInvokeStrategies(agent: AgentCLIDefinition): NonNullable<AgentCLIDefinition["invoke"]>[] {
+function getInvokeStrategies(
+  agent: AgentCLIDefinition,
+): NonNullable<AgentCLIDefinition["invoke"]>[] {
   const strategies: NonNullable<AgentCLIDefinition["invoke"]>[] = [];
   if (agent.invoke) strategies.push(agent.invoke);
   if (agent.invokeFallbacks?.length) {
@@ -326,7 +328,9 @@ function getInvokeStrategies(agent: AgentCLIDefinition): NonNullable<AgentCLIDef
   return strategies;
 }
 
-function getModelQueries(agent: AgentCLIDefinition): NonNullable<AgentCLIDefinition["modelQueries"]> {
+function getModelQueries(
+  agent: AgentCLIDefinition,
+): NonNullable<AgentCLIDefinition["modelQueries"]> {
   if (agent.modelQueries?.length) return agent.modelQueries;
   if (agent.modelQuery) return [agent.modelQuery];
   return [];
@@ -453,10 +457,11 @@ export const executor = {
           for (const argSet of getCheckArgSets(agent, "version")) {
             const versionResult = await this.run({ cmd: [agent.command, ...argSet] });
             if (versionResult.success) {
-              const versionOutput = `${versionResult.output}${versionResult.error ? `\n${versionResult.error}` : ""}`
-                .trim()
-                .split("\n")[0]
-                .trim();
+              const versionOutput =
+                `${versionResult.output}${versionResult.error ? `\n${versionResult.error}` : ""}`
+                  .trim()
+                  .split("\n")[0]
+                  .trim();
               const versionMatch = versionOutput.match(/v?\d+(\.\d+)+/);
               detected.version = versionMatch ? versionMatch[0] : versionOutput;
               break;

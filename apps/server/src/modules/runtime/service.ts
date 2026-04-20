@@ -99,7 +99,10 @@ export abstract class RuntimeService {
   }
 
   static updateEnabled(id: string, enabled: boolean): RuntimeProfile | undefined {
-    db.update(runtimes).set({ enabled: String(enabled) }).where(eq(runtimes.id, id)).run();
+    db.update(runtimes)
+      .set({ enabled: String(enabled) })
+      .where(eq(runtimes.id, id))
+      .run();
     return RuntimeService.get(id);
   }
 
@@ -126,7 +129,9 @@ export abstract class RuntimeService {
         ...(data.acpCommand !== undefined ? { acpCommand: data.acpCommand || null } : {}),
         ...(data.acpArgs !== undefined ? { acpArgs: JSON.stringify(data.acpArgs) } : {}),
         ...(data.acpEnv !== undefined ? { acpEnv: JSON.stringify(data.acpEnv) } : {}),
-        ...(data.communicationMode !== undefined ? { communicationMode: data.communicationMode } : {}),
+        ...(data.communicationMode !== undefined
+          ? { communicationMode: data.communicationMode }
+          : {}),
       })
       .where(eq(runtimes.id, id))
       .run();
@@ -316,7 +321,10 @@ export abstract class RuntimeService {
         try {
           const result = await getAcpCurrentModel(acpConfig);
           if (result.model) {
-            db.update(runtimes).set({ currentModel: result.model }).where(eq(runtimes.id, runtime.id)).run();
+            db.update(runtimes)
+              .set({ currentModel: result.model })
+              .where(eq(runtimes.id, runtime.id))
+              .run();
           }
           return { model: result.model, source: "acp", rawOutput: result.rawOutput };
         } catch {
@@ -369,7 +377,9 @@ export abstract class RuntimeService {
       }
     }
 
-    const configuredModels = Array.from(new Set([runtime.currentModel, runtime.model].filter(Boolean)));
+    const configuredModels = Array.from(
+      new Set([runtime.currentModel, runtime.model].filter(Boolean)),
+    );
     return {
       models: configuredModels,
       currentModel: runtime.currentModel || runtime.model,
@@ -403,13 +413,21 @@ export abstract class RuntimeService {
     if (acpConfig) {
       try {
         const startTime = Date.now();
-        const result = await promptManagedAcpAgent(acpConfig, prompt, undefined, options?.conversationId);
+        const result = await promptManagedAcpAgent(
+          acpConfig,
+          prompt,
+          undefined,
+          options?.conversationId,
+        );
         const responseTime = Date.now() - startTime;
 
         return {
           success: result.output.trim().length > 0,
           output: result.output.trim(),
-          error: result.output.trim().length > 0 ? undefined : result.rawOutput || "ACP agent returned no output",
+          error:
+            result.output.trim().length > 0
+              ? undefined
+              : result.rawOutput || "ACP agent returned no output",
           agentName: runtime.name,
           responseTime,
         };
@@ -419,9 +437,13 @@ export abstract class RuntimeService {
     }
 
     const startTime = Date.now();
-    const result = await executor.invokeAgentCLI(runtime.registryId || runtime.name || runtime.command, prompt, {
-      timeout: 120000,
-    });
+    const result = await executor.invokeAgentCLI(
+      runtime.registryId || runtime.name || runtime.command,
+      prompt,
+      {
+        timeout: 120000,
+      },
+    );
     const responseTime = Date.now() - startTime;
 
     return {

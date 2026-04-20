@@ -101,9 +101,7 @@ export function FeaturesBento() {
 
     const startTime = Date.now();
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, 800 + Math.random() * 1200),
-    );
+    await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 1200));
 
     const responseContent = getMockResponse(userMessage.content);
     const responseTime = Date.now() - startTime;
@@ -207,13 +205,8 @@ export function FeaturesBento() {
 
               <div className="flex justify-center gap-4">
                 <div className="inset-shadow-sm dark:inset-shadow-white/5 bg-muted/35 relative flex aspect-square size-14 items-center rounded-[7px] border p-3 shadow-lg ring dark:shadow-white/5 dark:ring-black">
-                  <span className="absolute right-2 top-1 block text-sm">
-                    ⌘
-                  </span>
-                  <HugeiconsIcon
-                    icon={Robot02Icon}
-                    className="mt-auto size-4 text-primary"
-                  />
+                  <span className="absolute right-2 top-1 block text-sm">⌘</span>
+                  <HugeiconsIcon icon={Robot02Icon} className="mt-auto size-4 text-primary" />
                 </div>
                 <div className="inset-shadow-sm dark:inset-shadow-white/5 bg-muted/35 flex aspect-square size-14 items-center justify-center rounded-[7px] border p-3 shadow-lg ring dark:shadow-white/5 dark:ring-black">
                   <span className="font-semibold">K</span>
@@ -299,14 +292,9 @@ export function FeaturesBento() {
           >
             <div className="flex items-center justify-between border-b border-border px-5 py-3">
               <div className="flex items-center gap-2">
-                <HugeiconsIcon
-                  icon={Robot02Icon}
-                  className="size-4 text-primary"
-                />
+                <HugeiconsIcon icon={Robot02Icon} className="size-4 text-primary" />
                 <div>
-                  <h2 className="text-sm font-semibold text-foreground">
-                    {m.ai_ask()}
-                  </h2>
+                  <h2 className="text-sm font-semibold text-foreground">{m.ai_ask()}</h2>
                   <p className="text-xs text-muted-foreground">
                     {selectedRuntime
                       ? `Fixed chat with ${selectedRuntime.name}`
@@ -327,10 +315,7 @@ export function FeaturesBento() {
               <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
                 {messages.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-                    <HugeiconsIcon
-                      icon={Robot02Icon}
-                      className="size-6 opacity-20"
-                    />
+                    <HugeiconsIcon icon={Robot02Icon} className="size-6 opacity-20" />
                     <p className="text-sm text-foreground">{m.ai_ask()}</p>
                     <p className="max-w-sm text-xs text-muted-foreground/70">
                       {selectedRuntime
@@ -366,10 +351,7 @@ export function FeaturesBento() {
                 {sending ? (
                   <div className="mr-12 rounded-xl bg-muted px-4 py-3 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <HugeiconsIcon
-                        icon={Loading01Icon}
-                        className="size-4 animate-spin"
-                      />
+                      <HugeiconsIcon icon={Loading01Icon} className="size-4 animate-spin" />
                       <span className="text-xs">{m.thinking()}</span>
                     </div>
                   </div>
@@ -390,9 +372,7 @@ export function FeaturesBento() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={
-                      selectedRuntime
-                        ? `Ask ${selectedRuntime.name}...`
-                        : m.no_agents_available()
+                      selectedRuntime ? `Ask ${selectedRuntime.name}...` : m.no_agents_available()
                     }
                     className="min-h-[68px] max-h-[220px] flex-1 resize-none bg-transparent px-2 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
                     disabled={!selectedRuntime || sending}
@@ -415,21 +395,14 @@ export function FeaturesBento() {
                     className="mb-1 shrink-0"
                   >
                     {sending ? (
-                      <HugeiconsIcon
-                        icon={Loading01Icon}
-                        className="size-3.5 animate-spin"
-                      />
+                      <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
                     ) : (
-                      <HugeiconsIcon
-                        icon={ArrowUp01Icon}
-                        className="size-3.5"
-                      />
+                      <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
                     )}
                   </Button>
                 </div>
                 <p className="mt-1.5 text-center text-[10px] text-muted-foreground/50">
-                  Enter to send · Shift+Enter for new line ·{" "}
-                  {selectedRuntime?.name || m.ai_ask()}
+                  Enter to send · Shift+Enter for new line · {selectedRuntime?.name || m.ai_ask()}
                 </p>
               </form>
             </div>

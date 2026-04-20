@@ -360,7 +360,7 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                   {sending ? (
                     <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
                   ) : (
-                      <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
+                    <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
                   )}
                 </Button>
               </div>

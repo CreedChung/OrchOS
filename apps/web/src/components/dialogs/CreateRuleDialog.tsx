@@ -107,69 +107,69 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
     >
       {/* Source problem info */}
       <div className="rounded-md border border-border/50 bg-accent/20 px-3 py-2">
-          <p className="text-xs text-muted-foreground">{m.from_problem()}</p>
-          <p className="text-sm font-medium text-foreground">{problem.title}</p>
-          {problem.context && (
-            <p className="text-xs text-muted-foreground mt-0.5">{problem.context}</p>
-          )}
+        <p className="text-xs text-muted-foreground">{m.from_problem()}</p>
+        <p className="text-sm font-medium text-foreground">{problem.title}</p>
+        {problem.context && (
+          <p className="text-xs text-muted-foreground mt-0.5">{problem.context}</p>
+        )}
       </div>
 
       <form id="create-rule-form" onSubmit={handleSubmit} className="space-y-4">
-          {/* Rule Name */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.rule_name()}
-            </label>
-            <input
-              type="text"
-              value={name || defaultName}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={defaultName}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              autoFocus
-            />
-          </div>
+        {/* Rule Name */}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            {m.rule_name()}
+          </label>
+          <input
+            type="text"
+            value={name || defaultName}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={defaultName}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            autoFocus
+          />
+        </div>
 
-          {/* Condition -> Action */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.rule_logic()}
-            </label>
-            <div className="flex items-center gap-2">
-              <Select value={condition} onValueChange={(value) => setCondition(value ?? condition)}>
-                <SelectTrigger>
-                  <SelectValue>{conditionLabels[condition]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {Object.entries(conditionLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <HugeiconsIcon
-                icon={ArrowRight01Icon}
-                className="size-4 text-muted-foreground shrink-0"
-              />
-              <Select value={action} onValueChange={(value) => setAction(value ?? action)}>
-                <SelectTrigger>
-                  <SelectValue>{actionLabels[action]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {Object.entries(actionLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Condition -> Action */}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            {m.rule_logic()}
+          </label>
+          <div className="flex items-center gap-2">
+            <Select value={condition} onValueChange={(value) => setCondition(value ?? condition)}>
+              <SelectTrigger>
+                <SelectValue>{conditionLabels[condition]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {Object.entries(conditionLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <HugeiconsIcon
+              icon={ArrowRight01Icon}
+              className="size-4 text-muted-foreground shrink-0"
+            />
+            <Select value={action} onValueChange={(value) => setAction(value ?? action)}>
+              <SelectTrigger>
+                <SelectValue>{actionLabels[action]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {Object.entries(actionLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
+        </div>
       </form>
     </AppDialog>
   );

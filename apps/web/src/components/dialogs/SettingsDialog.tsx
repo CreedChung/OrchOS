@@ -135,14 +135,14 @@ function ModelBadge({ model, isLocalRuntime }: { model: string; isLocalRuntime?:
   );
 }
 
-function RuntimeModeBadge({
-  mode,
-}: {
-  mode: "acp-native" | "acp-adapter" | "cli-fallback";
-}) {
+function RuntimeModeBadge({ mode }: { mode: "acp-native" | "acp-adapter" | "cli-fallback" }) {
   return (
     <span className="rounded-md border border-border bg-card px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-      {mode === "acp-native" ? "ACP Native" : mode === "acp-adapter" ? "ACP Adapter" : "CLI Fallback"}
+      {mode === "acp-native"
+        ? "ACP Native"
+        : mode === "acp-adapter"
+          ? "ACP Adapter"
+          : "CLI Fallback"}
     </span>
   );
 }
@@ -163,7 +163,14 @@ interface EditAcpDialogProps {
   onSave: () => void;
 }
 
-function EditAcpDialog({ runtime, draft, saving, onClose, onDraftChange, onSave }: EditAcpDialogProps) {
+function EditAcpDialog({
+  runtime,
+  draft,
+  saving,
+  onClose,
+  onDraftChange,
+  onSave,
+}: EditAcpDialogProps) {
   if (!runtime || !draft) return null;
 
   return (
@@ -188,81 +195,87 @@ function EditAcpDialog({ runtime, draft, saving, onClose, onDraftChange, onSave 
         </>
       }
     >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="space-y-1">
-              <span className="text-[11px] font-medium text-muted-foreground">Transport</span>
-              <Select
-                value={draft.transport}
-                onValueChange={(value) => onDraftChange({ transport: value as RuntimeProfile["transport"] })}
-              >
-                <SelectTrigger>
-                  <SelectValue>{draft.transport}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="stdio">stdio</SelectItem>
-                  <SelectItem value="tcp">tcp</SelectItem>
-                </SelectContent>
-              </Select>
-            </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="space-y-1">
+          <span className="text-[11px] font-medium text-muted-foreground">Transport</span>
+          <Select
+            value={draft.transport}
+            onValueChange={(value) =>
+              onDraftChange({ transport: value as RuntimeProfile["transport"] })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue>{draft.transport}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="stdio">stdio</SelectItem>
+              <SelectItem value="tcp">tcp</SelectItem>
+            </SelectContent>
+          </Select>
+        </label>
 
-            <label className="space-y-1">
-              <span className="text-[11px] font-medium text-muted-foreground">Mode</span>
-              <Select
-                value={draft.communicationMode}
-                onValueChange={(value) =>
-                  onDraftChange({ communicationMode: value as RuntimeProfile["communicationMode"] })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue>
-                    {draft.communicationMode === "acp-native"
-                      ? "ACP Native"
-                      : draft.communicationMode === "acp-adapter"
-                        ? "ACP Adapter"
-                        : "CLI Fallback"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="acp-native">ACP Native</SelectItem>
-                  <SelectItem value="acp-adapter">ACP Adapter</SelectItem>
-                  <SelectItem value="cli-fallback">CLI Fallback</SelectItem>
-                </SelectContent>
-              </Select>
-            </label>
-          </div>
+        <label className="space-y-1">
+          <span className="text-[11px] font-medium text-muted-foreground">Mode</span>
+          <Select
+            value={draft.communicationMode}
+            onValueChange={(value) =>
+              onDraftChange({ communicationMode: value as RuntimeProfile["communicationMode"] })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue>
+                {draft.communicationMode === "acp-native"
+                  ? "ACP Native"
+                  : draft.communicationMode === "acp-adapter"
+                    ? "ACP Adapter"
+                    : "CLI Fallback"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="acp-native">ACP Native</SelectItem>
+              <SelectItem value="acp-adapter">ACP Adapter</SelectItem>
+              <SelectItem value="cli-fallback">CLI Fallback</SelectItem>
+            </SelectContent>
+          </Select>
+        </label>
+      </div>
 
-          <label className="space-y-1">
-            <span className="text-[11px] font-medium text-muted-foreground">ACP Command</span>
-            <input
-              type="text"
-              value={draft.acpCommand}
-              onChange={(e) => onDraftChange({ acpCommand: e.target.value })}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
-              placeholder="npx"
-            />
-          </label>
+      <label className="space-y-1">
+        <span className="text-[11px] font-medium text-muted-foreground">ACP Command</span>
+        <input
+          type="text"
+          value={draft.acpCommand}
+          onChange={(e) => onDraftChange({ acpCommand: e.target.value })}
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
+          placeholder="npx"
+        />
+      </label>
 
-          <label className="space-y-1">
-            <span className="text-[11px] font-medium text-muted-foreground">ACP Args (one per line)</span>
-            <textarea
-              value={draft.acpArgs}
-              onChange={(e) => onDraftChange({ acpArgs: e.target.value })}
-              rows={4}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
-              placeholder={"-y\n@zed-industries/claude-code-acp"}
-            />
-          </label>
+      <label className="space-y-1">
+        <span className="text-[11px] font-medium text-muted-foreground">
+          ACP Args (one per line)
+        </span>
+        <textarea
+          value={draft.acpArgs}
+          onChange={(e) => onDraftChange({ acpArgs: e.target.value })}
+          rows={4}
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
+          placeholder={"-y\n@zed-industries/claude-code-acp"}
+        />
+      </label>
 
-          <label className="space-y-1">
-            <span className="text-[11px] font-medium text-muted-foreground">ACP Env (KEY=value per line)</span>
-            <textarea
-              value={draft.acpEnv}
-              onChange={(e) => onDraftChange({ acpEnv: e.target.value })}
-              rows={4}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
-              placeholder={"DEBUG=true\nOPENAI_API_KEY=..."}
-            />
-          </label>
+      <label className="space-y-1">
+        <span className="text-[11px] font-medium text-muted-foreground">
+          ACP Env (KEY=value per line)
+        </span>
+        <textarea
+          value={draft.acpEnv}
+          onChange={(e) => onDraftChange({ acpEnv: e.target.value })}
+          rows={4}
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground"
+          placeholder={"DEBUG=true\nOPENAI_API_KEY=..."}
+        />
+      </label>
     </AppDialog>
   );
 }
@@ -315,7 +328,9 @@ export function SettingsDialog({
     void api
       .listConversations()
       .then((conversations) => {
-        setDeletedConversationCount(conversations.filter((conversation) => conversation.deleted).length);
+        setDeletedConversationCount(
+          conversations.filter((conversation) => conversation.deleted).length,
+        );
       })
       .catch((err) => {
         console.error("Failed to load deleted conversations:", err);
@@ -522,7 +537,7 @@ export function SettingsDialog({
   );
 
   const editingRuntime = editingRuntimeId
-    ? registeredRuntimes.find((runtime) => runtime.id === editingRuntimeId) ?? null
+    ? (registeredRuntimes.find((runtime) => runtime.id === editingRuntimeId) ?? null)
     : null;
   const editingDraft = editingRuntime ? getRuntimeDraft(editingRuntime) : null;
 
@@ -562,7 +577,9 @@ export function SettingsDialog({
         setEditingRuntimeId(null);
         toast.success("Runtime configuration saved");
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to save runtime configuration");
+        toast.error(
+          error instanceof Error ? error.message : "Failed to save runtime configuration",
+        );
       } finally {
         setSavingRuntimeId(null);
       }
@@ -577,7 +594,9 @@ export function SettingsDialog({
       setDeletedConversationCount(0);
       await onConversationsRefresh?.();
       toast.success(
-        result.count > 0 ? m.creation_trash_cleared({ count: result.count }) : m.creation_trash_empty(),
+        result.count > 0
+          ? m.creation_trash_cleared({ count: result.count })
+          : m.creation_trash_empty(),
       );
     } catch (err) {
       console.error("Failed to clear trash:", err);
@@ -704,7 +723,10 @@ export function SettingsDialog({
                     <span className="text-sm font-medium text-foreground">{m.language()}</span>
                     <p className="text-xs text-muted-foreground">{m.language_desc()}</p>
                   </div>
-                  <Select value={currentLocale} onValueChange={(value) => value && void handleLocaleChange(value)}>
+                  <Select
+                    value={currentLocale}
+                    onValueChange={(value) => value && void handleLocaleChange(value)}
+                  >
                     <SelectTrigger className="w-[160px]">
                       <SelectValue>
                         {AVAILABLE_LOCALES.find((l) => l.value === currentLocale)?.label ||
@@ -729,7 +751,9 @@ export function SettingsDialog({
                       <HugeiconsIcon icon={Delete02Icon} className="size-4" />
                     </div>
                     <div className="max-w-[320px]">
-                      <span className="text-sm font-medium text-foreground">{m.creation_trash()}</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {m.creation_trash()}
+                      </span>
                       <p className="text-xs text-muted-foreground">
                         {m.creation_trash_desc({ count: deletedConversationCount })}
                       </p>
@@ -808,14 +832,18 @@ export function SettingsDialog({
                   <p className="text-xs text-muted-foreground">{m.event_sounds_desc()}</p>
                   <div className="space-y-1.5 pt-1">
                     {NOTIFICATION_EVENTS.map((event) => {
-                      const currentSoundId = currentSettings.notifications?.eventSoundFiles?.[event.id] || "bell";
-                      const isEnabled = currentSettings.notifications?.eventSounds?.[event.id] !== false;
+                      const currentSoundId =
+                        currentSettings.notifications?.eventSoundFiles?.[event.id] || "bell";
+                      const isEnabled =
+                        currentSettings.notifications?.eventSounds?.[event.id] !== false;
                       return (
                         <div
                           key={event.id}
                           className="flex items-center gap-3 rounded-lg border border-border/50 px-4 py-2.5"
                         >
-                          <span className="text-sm text-foreground min-w-[120px]">{m[event.labelKey]()}</span>
+                          <span className="text-sm text-foreground min-w-[120px]">
+                            {m[event.labelKey]()}
+                          </span>
                           <div className="flex items-center gap-2 flex-1">
                             <DropdownMenu>
                               <DropdownMenuTrigger
@@ -826,9 +854,13 @@ export function SettingsDialog({
                                 )}
                               >
                                 <span className="truncate">
-                                  {AVAILABLE_SOUNDS.find((s) => s.id === currentSoundId)?.name || "Bell"}
+                                  {AVAILABLE_SOUNDS.find((s) => s.id === currentSoundId)?.name ||
+                                    "Bell"}
                                 </span>
-                                <HugeiconsIcon icon={UnfoldMoreIcon} className="size-3 text-muted-foreground" />
+                                <HugeiconsIcon
+                                  icon={UnfoldMoreIcon}
+                                  className="size-3 text-muted-foreground"
+                                />
                               </DropdownMenuTrigger>
                               <DropdownMenuContent className="w-[140px] p-1">
                                 {AVAILABLE_SOUNDS.map((sound) => (
@@ -854,7 +886,10 @@ export function SettingsDialog({
                                     </button>
                                     <span className="flex-1 select-none">{sound.name}</span>
                                     {sound.id === currentSoundId && (
-                                      <HugeiconsIcon icon={Tick02Icon} className="size-3 text-primary" />
+                                      <HugeiconsIcon
+                                        icon={Tick02Icon}
+                                        className="size-3 text-primary"
+                                      />
                                     )}
                                   </div>
                                 ))}
@@ -1027,12 +1062,14 @@ export function SettingsDialog({
                                 className="size-5"
                               />
                             ) : (
-                              <span className={cn(
-                                "text-sm font-bold",
-                                isRegistered
-                                  ? "text-muted-foreground"
-                                  : "text-emerald-600 dark:text-emerald-400",
-                              )}>
+                              <span
+                                className={cn(
+                                  "text-sm font-bold",
+                                  isRegistered
+                                    ? "text-muted-foreground"
+                                    : "text-emerald-600 dark:text-emerald-400",
+                                )}
+                              >
                                 {agent.name.charAt(0).toUpperCase()}
                               </span>
                             )}
@@ -1150,7 +1187,6 @@ export function SettingsDialog({
                     </p>
                   </div>
                 )}
-
               </div>
             )}
 

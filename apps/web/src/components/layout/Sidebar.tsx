@@ -222,50 +222,52 @@ export function Sidebar({
               <span className="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {section.label}
               </span>
-              {section.items.map(({ id, to, icon: Icon, label, shortcut, badge, badgeCritical }) => {
-                const isActive = activeView === id;
-                return (
-                  <Link
-                    key={id}
-                    to={to}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                    )}
-                  >
-                    <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
-                    <span className="flex-1 text-left">{label}</span>
-                    {shortcut && (
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums",
-                          isActive
-                            ? "border-sidebar-foreground/15 bg-sidebar-background/60 text-sidebar-foreground/60"
-                            : "border-border/60 bg-background/70 text-muted-foreground",
-                        )}
-                        aria-label={`Shortcut ${shortcut}`}
-                      >
-                        <HugeiconsIcon icon={KeyboardIcon} className="size-3 shrink-0" />
-                        {shortcut}
-                      </span>
-                    )}
-                    {badge != null && badge > 0 && (
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-                          badgeCritical
-                            ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                            : "bg-muted text-muted-foreground",
-                        )}
-                      >
-                        {badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
+              {section.items.map(
+                ({ id, to, icon: Icon, label, shortcut, badge, badgeCritical }) => {
+                  const isActive = activeView === id;
+                  return (
+                    <Link
+                      key={id}
+                      to={to}
+                      className={cn(
+                        "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                      )}
+                    >
+                      <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
+                      <span className="flex-1 text-left">{label}</span>
+                      {shortcut && (
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums",
+                            isActive
+                              ? "border-sidebar-foreground/15 bg-sidebar-background/60 text-sidebar-foreground/60"
+                              : "border-border/60 bg-background/70 text-muted-foreground",
+                          )}
+                          aria-label={`Shortcut ${shortcut}`}
+                        >
+                          <HugeiconsIcon icon={KeyboardIcon} className="size-3 shrink-0" />
+                          {shortcut}
+                        </span>
+                      )}
+                      {badge != null && badge > 0 && (
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                            badgeCritical
+                              ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          {badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                },
+              )}
             </div>
           ))}
         </div>
@@ -327,7 +329,7 @@ export function Sidebar({
 }
 
 function ClerkUserProfile({ onOpenSettings }: { onOpenSettings: () => void }) {
-  const isClerkConfigured = !!(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim());
+  const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim();
   const [profileOpen, setProfileOpen] = useState(false);
 
   if (!isClerkConfigured) {
@@ -344,7 +346,12 @@ function ClerkUserProfile({ onOpenSettings }: { onOpenSettings: () => void }) {
             </div>
             <HugeiconsIcon icon={ChevronUp} className="size-3 shrink-0 opacity-50" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" sideOffset={8} className="mb-1 min-w-[var(--radix-dropdown-menu-trigger-width)]">
+          <DropdownMenuContent
+            side="top"
+            align="start"
+            sideOffset={8}
+            className="mb-1 min-w-[var(--radix-dropdown-menu-trigger-width)]"
+          >
             <DropdownMenuItem onClick={() => setProfileOpen(true)}>
               <HugeiconsIcon icon={UserCircleIcon} className="size-3.5" />
               {m.profile_settings()}
@@ -386,7 +393,9 @@ function ClerkAuthenticatedProfile({ onOpenSettings }: { onOpenSettings: () => v
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="top" className="min-w-48 mb-1">
           <div className="flex items-center gap-2.5 px-2 py-2">
-            <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">U</div>
+            <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+              U
+            </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground truncate">{m.user()}</p>
               <p className="text-xs text-muted-foreground truncate">user@orchos.dev</p>
@@ -406,17 +415,22 @@ function ClerkAuthenticatedProfile({ onOpenSettings }: { onOpenSettings: () => v
 
   const displayName = user.fullName || user.username || m.user();
   const email = user.primaryEmailAddress?.emailAddress || "";
-  const initials = `${user.firstName?.[0] || ""}${user.lastName?.[0] || user.username?.[0] || user.fullName?.[0] || "U"}`
-    .trim()
-    .slice(0, 2)
-    .toUpperCase();
+  const initials =
+    `${user.firstName?.[0] || ""}${user.lastName?.[0] || user.username?.[0] || user.fullName?.[0] || "U"}`
+      .trim()
+      .slice(0, 2)
+      .toUpperCase();
 
   return (
     <>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-sidebar-accent/50 cursor-pointer">
           {user.imageUrl ? (
-            <img src={user.imageUrl} alt={displayName} className="size-8 shrink-0 rounded-full object-cover" />
+            <img
+              src={user.imageUrl}
+              alt={displayName}
+              className="size-8 shrink-0 rounded-full object-cover"
+            />
           ) : (
             <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
               {initials}
@@ -426,9 +440,17 @@ function ClerkAuthenticatedProfile({ onOpenSettings }: { onOpenSettings: () => v
             <p className="truncate text-sm font-medium text-sidebar-foreground">{displayName}</p>
             <p className="truncate text-xs text-sidebar-foreground/60">{email}</p>
           </div>
-          <HugeiconsIcon icon={ChevronUp} className="size-3 shrink-0 opacity-50 text-sidebar-foreground/70" />
+          <HugeiconsIcon
+            icon={ChevronUp}
+            className="size-3 shrink-0 opacity-50 text-sidebar-foreground/70"
+          />
         </DropdownMenuTrigger>
-        <DropdownMenuContent side="top" align="start" sideOffset={8} className="mb-1 min-w-[var(--radix-dropdown-menu-trigger-width)]">
+        <DropdownMenuContent
+          side="top"
+          align="start"
+          sideOffset={8}
+          className="mb-1 min-w-[var(--radix-dropdown-menu-trigger-width)]"
+        >
           <DropdownMenuItem onClick={() => setProfileOpen(true)}>
             <HugeiconsIcon icon={UserCircleIcon} className="size-3.5" />
             {m.profile_settings()}
@@ -438,7 +460,10 @@ function ClerkAuthenticatedProfile({ onOpenSettings }: { onOpenSettings: () => v
             {m.settings()}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={() => signOut({ redirectUrl: "/sign-in" })}>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => signOut({ redirectUrl: "/sign-in" })}
+          >
             <HugeiconsIcon icon={Logout03Icon} className="size-3.5" />
             {m.log_out()}
           </DropdownMenuItem>
@@ -528,7 +553,8 @@ function ProfileEditDialog({
   const displayEmail = clerkUser?.primaryEmailAddress?.emailAddress || fallbackEmail;
   const canEdit = !!clerkUser;
   const displayName = clerkUser?.fullName || fallbackName;
-  const activeTabLabel = profileTabDefs.find((tab) => tab.id === activeTab)?.label() || m.profile_tab_profile();
+  const activeTabLabel =
+    profileTabDefs.find((tab) => tab.id === activeTab)?.label() || m.profile_tab_profile();
   const hasPassword = clerkUser?.passwordEnabled;
   const hasTwoFactor = clerkUser?.twoFactorEnabled;
   const emailVerified = clerkUser?.primaryEmailAddress?.verification?.status === "verified";
@@ -541,8 +567,13 @@ function ProfileEditDialog({
           <DialogPrimitive.Popup className="relative z-50 flex h-[600px] w-full max-w-4xl overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
             <div className="flex w-48 shrink-0 flex-col border-r border-border bg-muted/30">
               <div className="flex h-12 items-center px-4">
-                <HugeiconsIcon icon={UserCircleIcon} className="mr-2 size-4 text-muted-foreground" />
-                <span className="text-sm font-semibold text-foreground">{m.profile_settings()}</span>
+                <HugeiconsIcon
+                  icon={UserCircleIcon}
+                  className="mr-2 size-4 text-muted-foreground"
+                />
+                <span className="text-sm font-semibold text-foreground">
+                  {m.profile_settings()}
+                </span>
               </div>
               <nav className="flex-1 space-y-0.5 px-2 py-1">
                 {profileTabDefs.map((tab) => {
@@ -568,7 +599,11 @@ function ProfileEditDialog({
               <div className="flex h-24 items-center border-t border-border p-3">
                 <div className="flex w-full items-center gap-3 rounded-lg border border-border/50 bg-card px-3 py-3">
                   {clerkUser?.imageUrl ? (
-                    <img src={clerkUser.imageUrl} alt={displayName} className="size-10 rounded-full object-cover" />
+                    <img
+                      src={clerkUser.imageUrl}
+                      alt={displayName}
+                      className="size-10 rounded-full object-cover"
+                    />
                   ) : (
                     <div className="flex size-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                       {displayName.slice(0, 1).toUpperCase() || "U"}
@@ -576,7 +611,9 @@ function ProfileEditDialog({
                   )}
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
-                    <p className="truncate text-xs text-muted-foreground">{displayEmail || m.profile_no_email()}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {displayEmail || m.profile_no_email()}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -606,13 +643,19 @@ function ProfileEditDialog({
                   <div className="space-y-6">
                     <div className="space-y-2 rounded-lg border border-border/50 p-4">
                       <div className="mb-1">
-                        <p className="text-sm font-medium text-foreground">{m.profile_basic_info()}</p>
-                        <p className="text-xs text-muted-foreground">{m.profile_basic_info_desc()}</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {m.profile_basic_info()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {m.profile_basic_info_desc()}
+                        </p>
                       </div>
 
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
-                          <label className="text-sm font-medium text-foreground">{m.profile_first_name()}</label>
+                          <label className="text-sm font-medium text-foreground">
+                            {m.profile_first_name()}
+                          </label>
                           <input
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
@@ -621,7 +664,9 @@ function ProfileEditDialog({
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-sm font-medium text-foreground">{m.profile_last_name()}</label>
+                          <label className="text-sm font-medium text-foreground">
+                            {m.profile_last_name()}
+                          </label>
                           <input
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
@@ -632,7 +677,9 @@ function ProfileEditDialog({
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-foreground">{m.profile_username()}</label>
+                        <label className="text-sm font-medium text-foreground">
+                          {m.profile_username()}
+                        </label>
                         <input
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
@@ -644,8 +691,12 @@ function ProfileEditDialog({
 
                     <div className="space-y-2 rounded-lg border border-border/50 p-4">
                       <div className="mb-1">
-                        <p className="text-sm font-medium text-foreground">{m.profile_login_email()}</p>
-                        <p className="text-xs text-muted-foreground">{m.profile_login_email_desc()}</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {m.profile_login_email()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {m.profile_login_email_desc()}
+                        </p>
                       </div>
                       <input
                         value={displayEmail}
@@ -663,34 +714,69 @@ function ProfileEditDialog({
                     <div className="space-y-2 rounded-lg border border-border/50 p-4">
                       <div className="flex items-center gap-2">
                         <HugeiconsIcon icon={Key01Icon} className="size-4 text-muted-foreground" />
-                        <p className="text-sm font-medium text-foreground">{m.profile_security_section()}</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {m.profile_security_section()}
+                        </p>
                       </div>
                       <div className="space-y-3 pt-1">
                         <div className="flex items-center justify-between rounded-lg border border-border/50 px-4 py-2.5">
                           <div>
-                            <p className="text-sm text-foreground">{m.profile_email_verification()}</p>
-                            <p className="text-xs text-muted-foreground">{m.profile_email_verification_desc()}</p>
+                            <p className="text-sm text-foreground">
+                              {m.profile_email_verification()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {m.profile_email_verification_desc()}
+                            </p>
                           </div>
-                          <span className={cn("rounded-md px-2.5 py-1 text-[10px] font-medium", emailVerified ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground")}>
-                            {emailVerified ? m.profile_status_verified() : m.profile_status_unverified()}
+                          <span
+                            className={cn(
+                              "rounded-md px-2.5 py-1 text-[10px] font-medium",
+                              emailVerified
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            {emailVerified
+                              ? m.profile_status_verified()
+                              : m.profile_status_unverified()}
                           </span>
                         </div>
                         <div className="flex items-center justify-between rounded-lg border border-border/50 px-4 py-2.5">
                           <div>
                             <p className="text-sm text-foreground">{m.profile_password_signin()}</p>
-                            <p className="text-xs text-muted-foreground">{m.profile_password_signin_desc()}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {m.profile_password_signin_desc()}
+                            </p>
                           </div>
-                          <span className={cn("rounded-md px-2.5 py-1 text-[10px] font-medium", hasPassword ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground")}>
+                          <span
+                            className={cn(
+                              "rounded-md px-2.5 py-1 text-[10px] font-medium",
+                              hasPassword
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "bg-muted text-muted-foreground",
+                            )}
+                          >
                             {hasPassword ? m.profile_status_enabled() : m.profile_status_disabled()}
                           </span>
                         </div>
                         <div className="flex items-center justify-between rounded-lg border border-border/50 px-4 py-2.5">
                           <div>
                             <p className="text-sm text-foreground">{m.profile_two_factor()}</p>
-                            <p className="text-xs text-muted-foreground">{m.profile_two_factor_desc()}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {m.profile_two_factor_desc()}
+                            </p>
                           </div>
-                          <span className={cn("rounded-md px-2.5 py-1 text-[10px] font-medium", hasTwoFactor ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground")}>
-                            {hasTwoFactor ? m.profile_status_enabled() : m.profile_status_disabled()}
+                          <span
+                            className={cn(
+                              "rounded-md px-2.5 py-1 text-[10px] font-medium",
+                              hasTwoFactor
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            {hasTwoFactor
+                              ? m.profile_status_enabled()
+                              : m.profile_status_disabled()}
                           </span>
                         </div>
                       </div>
@@ -702,8 +788,13 @@ function ProfileEditDialog({
                   <div className="space-y-4">
                     <div className="space-y-2 rounded-lg border border-border/50 p-4">
                       <div className="flex items-center gap-2">
-                        <HugeiconsIcon icon={InformationCircleIcon} className="size-4 text-muted-foreground" />
-                        <p className="text-sm font-medium text-foreground">{m.profile_preferences_info()}</p>
+                        <HugeiconsIcon
+                          icon={InformationCircleIcon}
+                          className="size-4 text-muted-foreground"
+                        />
+                        <p className="text-sm font-medium text-foreground">
+                          {m.profile_preferences_info()}
+                        </p>
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {m.profile_preferences_info_desc()}
@@ -712,7 +803,9 @@ function ProfileEditDialog({
 
                     <Tabs value="preferences" className="w-full">
                       <TabsList>
-                        <TabsTrigger value="preferences">{m.profile_preferences_personal()}</TabsTrigger>
+                        <TabsTrigger value="preferences">
+                          {m.profile_preferences_personal()}
+                        </TabsTrigger>
                       </TabsList>
                     </Tabs>
                   </div>

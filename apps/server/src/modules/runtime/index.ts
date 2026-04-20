@@ -109,11 +109,7 @@ export const runtimeController = new Elysia({ prefix: "/api/runtimes" })
         acpArgs: t.Optional(t.Array(t.String())),
         acpEnv: t.Optional(t.Record(t.String(), t.String())),
         communicationMode: t.Optional(
-          t.Union([
-            t.Literal("acp-native"),
-            t.Literal("acp-adapter"),
-            t.Literal("cli-fallback"),
-          ]),
+          t.Union([t.Literal("acp-native"), t.Literal("acp-adapter"), t.Literal("cli-fallback")]),
         ),
       }),
       response: {

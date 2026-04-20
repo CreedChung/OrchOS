@@ -107,7 +107,10 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
   useEffect(() => {
     if (!hasLoadedConversations) return;
 
-    if (activeConversationId && filteredConversations.some((conv) => conv.id === activeConversationId)) {
+    if (
+      activeConversationId &&
+      filteredConversations.some((conv) => conv.id === activeConversationId)
+    ) {
       return;
     }
 
@@ -116,7 +119,11 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
       return;
     }
 
-    if (archiveFilter === "archived" || archiveFilter === "deleted" || autoCreatingConversationRef.current) {
+    if (
+      archiveFilter === "archived" ||
+      archiveFilter === "deleted" ||
+      autoCreatingConversationRef.current
+    ) {
       return;
     }
 
@@ -124,7 +131,13 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
     void handleNewConversation().finally(() => {
       autoCreatingConversationRef.current = false;
     });
-  }, [activeConversationId, archiveFilter, filteredConversations, handleNewConversation, hasLoadedConversations]);
+  }, [
+    activeConversationId,
+    archiveFilter,
+    filteredConversations,
+    handleNewConversation,
+    hasLoadedConversations,
+  ]);
 
   const handleDeleteConversation = useCallback(async () => {
     if (!convToDelete) return;
@@ -197,7 +210,8 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        void handleUpdateConversation(conv.id,
+                        void handleUpdateConversation(
+                          conv.id,
                           conv.deleted
                             ? { deleted: false, archived: false }
                             : { archived: !conv.archived, deleted: false },
@@ -205,7 +219,9 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
                       }}
                       className={cn(
                         "shrink-0 text-muted-foreground transition-opacity hover:text-foreground",
-                        conv.archived || conv.deleted ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                        conv.archived || conv.deleted
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-100",
                       )}
                       title={conv.deleted || conv.archived ? m.restore_conversation() : m.archive()}
                       type="button"
@@ -279,7 +295,10 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <HugeiconsIcon icon={Loading01Icon} className="size-5 animate-spin text-muted-foreground/50" />
+            <HugeiconsIcon
+              icon={Loading01Icon}
+              className="size-5 animate-spin text-muted-foreground/50"
+            />
           </div>
         )}
       </div>
@@ -420,11 +439,11 @@ function ChatArea({
           {/* Project selector */}
           <Select
             value={conversation.projectId || "__none__"}
-              onValueChange={(v) =>
-                onUpdateConversation(conversation.id, {
-                  projectId: !v || v === "__none__" ? undefined : v,
-                })
-              }
+            onValueChange={(v) =>
+              onUpdateConversation(conversation.id, {
+                projectId: !v || v === "__none__" ? undefined : v,
+              })
+            }
           >
             <SelectTrigger className="h-7 w-32 text-xs">
               <HugeiconsIcon icon={Folder01Icon} className="size-3 mr-1 shrink-0" />
@@ -447,9 +466,7 @@ function ChatArea({
             runtimes={runtimes}
             agents={agents.filter((a) => a.enabled)}
             selectedId={conversation.runtimeId}
-            onSelect={(runtimeId) =>
-              onUpdateConversation(conversation.id, { runtimeId })
-            }
+            onSelect={(runtimeId) => onUpdateConversation(conversation.id, { runtimeId })}
           />
 
           {/* Model badge */}
@@ -649,11 +666,7 @@ function RuntimeSelector({ runtimes, agents, selectedId, onSelect }: RuntimeSele
   }, []);
 
   return (
-    <div
-      className="relative inline-flex"
-      onMouseEnter={handleEnter}
-      onMouseLeave={scheduleClose}
-    >
+    <div className="relative inline-flex" onMouseEnter={handleEnter} onMouseLeave={scheduleClose}>
       <button
         ref={triggerRef}
         type="button"
@@ -739,25 +752,26 @@ interface RuntimeItemProps {
   onClick: () => void;
 }
 
-function RuntimeItem({ runtime, isSelected, isHovered, onHover, onLeave, onClick }: RuntimeItemProps) {
+function RuntimeItem({
+  runtime,
+  isSelected,
+  isHovered,
+  onHover,
+  onLeave,
+  onClick,
+}: RuntimeItemProps) {
   const itemRef = useRef<HTMLButtonElement>(null);
   const isCloudModel = runtime.model.startsWith("cloud/");
   const modelDisplay = runtime.model.replace(/^(cloud|local)\//, "");
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={onHover}
-      onMouseLeave={onLeave}
-    >
+    <div className="relative" onMouseEnter={onHover} onMouseLeave={onLeave}>
       <button
         ref={itemRef}
         type="button"
         className={cn(
           "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-left transition-colors",
-          isSelected
-            ? "bg-accent text-accent-foreground"
-            : "text-foreground hover:bg-accent/50",
+          isSelected ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-accent/50",
         )}
         onClick={onClick}
       >
@@ -833,19 +847,13 @@ function AgentItem({ agent, isSelected, isHovered, onHover, onLeave, onClick }: 
   const modelDisplay = agent.model.replace(/^(cloud|local)\//, "");
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={onHover}
-      onMouseLeave={onLeave}
-    >
+    <div className="relative" onMouseEnter={onHover} onMouseLeave={onLeave}>
       <button
         ref={itemRef}
         type="button"
         className={cn(
           "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-left transition-colors",
-          isSelected
-            ? "bg-accent text-accent-foreground"
-            : "text-foreground hover:bg-accent/50",
+          isSelected ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-accent/50",
         )}
         onClick={onClick}
       >
@@ -908,10 +916,7 @@ function ConversationListSkeleton() {
   return (
     <>
       {[1, 2, 3, 4, 5].map((i) => (
-        <div
-          key={i}
-          className="flex items-center gap-2 rounded-md px-2.5 py-2"
-        >
+        <div key={i} className="flex items-center gap-2 rounded-md px-2.5 py-2">
           <div className="size-3.5 rounded bg-muted animate-pulse shrink-0" />
           <div className="flex-1 space-y-1">
             <div className="h-3 w-28 bg-muted animate-pulse rounded" />

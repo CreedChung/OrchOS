@@ -108,7 +108,9 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
                     >
                       <HugeiconsIcon icon={Robot02Icon} className="size-3" />
                       {runtime.name}
-                      {runtime.status === "active" && <span className="size-1.5 rounded-full bg-emerald-500" />}
+                      {runtime.status === "active" && (
+                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                      )}
                     </button>
                   );
                 })}
@@ -147,13 +149,13 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
               </div>
 
               <div className="mt-4 flex items-end justify-end gap-2">
-                  <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-                    {m.cancel()}
-                  </Button>
-                  <Button type="submit" size="icon-sm" disabled={!instruction.trim()}>
-                    <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
-                  </Button>
-                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+                  {m.cancel()}
+                </Button>
+                <Button type="submit" size="icon-sm" disabled={!instruction.trim()}>
+                  <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
+                </Button>
+              </div>
             </div>
           </BorderBeam>
         </form>

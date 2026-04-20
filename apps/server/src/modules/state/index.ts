@@ -83,18 +83,18 @@ export const artifactItemController = new Elysia({ prefix: "/api/artifacts" })
   .use(authPlugin)
   .onBeforeHandle(requireAuth)
   .patch(
-  "/:id",
-  ({ params: { id }, body }) => {
-    const artifact = StateService.updateArtifact(id, body);
-    if (!artifact) throw status(404, "not found");
-    return artifact;
-  },
-  {
-    params: t.Object({ id: t.String() }),
-    body: StateModel.artifactUpdateBody,
-    response: {
-      200: StateModel.artifactResponse,
-      404: StateModel.errorNotFound,
+    "/:id",
+    ({ params: { id }, body }) => {
+      const artifact = StateService.updateArtifact(id, body);
+      if (!artifact) throw status(404, "not found");
+      return artifact;
     },
-  },
-);
+    {
+      params: t.Object({ id: t.String() }),
+      body: StateModel.artifactUpdateBody,
+      response: {
+        200: StateModel.artifactResponse,
+        404: StateModel.errorNotFound,
+      },
+    },
+  );

@@ -100,9 +100,15 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
         reconnectAttempts = 0;
       });
 
-      ws.subscribe((event) => {
+      ws.subscribe((event: { data: unknown }) => {
         const message = event.data;
-        if (message && typeof message === "object" && "type" in message && "data" in message && message.type === "event") {
+        if (
+          message &&
+          typeof message === "object" &&
+          "type" in message &&
+          "data" in message &&
+          message.type === "event"
+        ) {
           onEventRef.current(message.data as Record<string, unknown>);
         }
       });

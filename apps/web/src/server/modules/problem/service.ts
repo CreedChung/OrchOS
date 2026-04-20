@@ -203,7 +203,11 @@ export const ProblemService = {
         summary.inbox[source] += 1;
       }
 
-      if (isOpen && !isInboxSource && (priority === "critical" || priority === "warning" || priority === "info")) {
+      if (
+        isOpen &&
+        !isInboxSource &&
+        (priority === "critical" || priority === "warning" || priority === "info")
+      ) {
         summary.system[priority] += 1;
       }
     }

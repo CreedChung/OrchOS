@@ -48,11 +48,13 @@ async function authenticateRequest(request: Request, jwtKey: string): Promise<Au
 }
 
 export function createAuthPlugin(jwtKey: string) {
-  return new Elysia({ name: "auth" })
-    .derive({ as: "global" }, async ({ request }): Promise<{ auth: AuthContext }> => {
+  return new Elysia({ name: "auth" }).derive(
+    { as: "global" },
+    async ({ request }): Promise<{ auth: AuthContext }> => {
       const auth = await authenticateRequest(request, jwtKey);
       return { auth };
-    });
+    },
+  );
 }
 
 const jwtKey = process.env.CLERK_JWT_KEY?.trim() ?? "";

@@ -39,16 +39,20 @@ function About() {
                 <h2 className="mb-4 text-xl font-semibold">{m.about_core_title()}</h2>
                 <div className="space-y-4 text-muted-foreground leading-7">
                   <p>
-                    <strong className="text-foreground">{m.about_core_item1_label()}</strong> {m.about_em_dash()} {m.about_core_item1_desc()}
+                    <strong className="text-foreground">{m.about_core_item1_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_core_item1_desc()}
                   </p>
                   <p>
-                    <strong className="text-foreground">{m.about_core_item2_label()}</strong> {m.about_em_dash()} {m.about_core_item2_desc()}
+                    <strong className="text-foreground">{m.about_core_item2_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_core_item2_desc()}
                   </p>
                   <p>
-                    <strong className="text-foreground">{m.about_core_item3_label()}</strong> {m.about_em_dash()} {m.about_core_item3_desc()}
+                    <strong className="text-foreground">{m.about_core_item3_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_core_item3_desc()}
                   </p>
                   <p>
-                    <strong className="text-foreground">{m.about_core_item4_label()}</strong> {m.about_em_dash()} {m.about_core_item4_desc()}
+                    <strong className="text-foreground">{m.about_core_item4_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_core_item4_desc()}
                   </p>
                 </div>
               </div>
@@ -57,16 +61,20 @@ function About() {
                 <h2 className="mb-4 text-xl font-semibold">{m.about_problems_title()}</h2>
                 <div className="space-y-4 text-muted-foreground leading-7">
                   <p>
-                    <strong className="text-foreground">{m.about_problem1_label()}</strong> {m.about_em_dash()} {m.about_problem1_desc()}
+                    <strong className="text-foreground">{m.about_problem1_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_problem1_desc()}
                   </p>
                   <p>
-                    <strong className="text-foreground">{m.about_problem2_label()}</strong> {m.about_em_dash()} {m.about_problem2_desc()}
+                    <strong className="text-foreground">{m.about_problem2_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_problem2_desc()}
                   </p>
                   <p>
-                    <strong className="text-foreground">{m.about_problem3_label()}</strong> {m.about_em_dash()} {m.about_problem3_desc()}
+                    <strong className="text-foreground">{m.about_problem3_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_problem3_desc()}
                   </p>
                   <p>
-                    <strong className="text-foreground">{m.about_problem4_label()}</strong> {m.about_em_dash()} {m.about_problem4_desc()}
+                    <strong className="text-foreground">{m.about_problem4_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_problem4_desc()}
                   </p>
                 </div>
               </div>
@@ -75,13 +83,16 @@ function About() {
                 <h2 className="mb-4 text-xl font-semibold">{m.about_users_title()}</h2>
                 <div className="space-y-4 text-muted-foreground leading-7">
                   <p>
-                    <strong className="text-foreground">{m.about_user1_label()}</strong> {m.about_em_dash()} {m.about_user1_desc()}
+                    <strong className="text-foreground">{m.about_user1_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_user1_desc()}
                   </p>
                   <p>
-                    <strong className="text-foreground">{m.about_user2_label()}</strong> {m.about_em_dash()} {m.about_user2_desc()}
+                    <strong className="text-foreground">{m.about_user2_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_user2_desc()}
                   </p>
                   <p>
-                    <strong className="text-foreground">{m.about_user3_label()}</strong> {m.about_em_dash()} {m.about_user3_desc()}
+                    <strong className="text-foreground">{m.about_user3_label()}</strong>{" "}
+                    {m.about_em_dash()} {m.about_user3_desc()}
                   </p>
                 </div>
               </div>

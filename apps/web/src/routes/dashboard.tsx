@@ -16,7 +16,9 @@ import { useUIStore } from "@/lib/store";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
 import type { SidebarView } from "@/lib/types";
 
-const MorphPanel = lazy(() => import("@/components/ui/ai-input").then((module) => ({ default: module.MorphPanel })));
+const MorphPanel = lazy(() =>
+  import("@/components/ui/ai-input").then((module) => ({ default: module.MorphPanel })),
+);
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardWrapper,
@@ -35,7 +37,9 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex items-center gap-3 text-muted-foreground">
           <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-sm" suppressHydrationWarning>{m.loading()}</span>
+          <span className="text-sm" suppressHydrationWarning>
+            {m.loading()}
+          </span>
         </div>
       </div>
     );
@@ -69,7 +73,7 @@ function DashboardWrapper() {
         <DashboardLayout />
       </DashboardProvider>
     </RequireAuth>
-  )
+  );
 }
 
 function DashboardLayout() {

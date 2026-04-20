@@ -142,7 +142,9 @@ export abstract class RuntimeService {
         ...(data.acpCommand !== undefined ? { acpCommand: data.acpCommand || null } : {}),
         ...(data.acpArgs !== undefined ? { acpArgs: JSON.stringify(data.acpArgs) } : {}),
         ...(data.acpEnv !== undefined ? { acpEnv: JSON.stringify(data.acpEnv) } : {}),
-        ...(data.communicationMode !== undefined ? { communicationMode: data.communicationMode } : {}),
+        ...(data.communicationMode !== undefined
+          ? { communicationMode: data.communicationMode }
+          : {}),
       })
       .where(eq(runtimes.id, id))
       .run();
@@ -357,7 +359,11 @@ export abstract class RuntimeService {
   static async getCurrentModel(
     db: AppDb,
     runtimeId: string,
-  ): Promise<{ model?: string; source: "acp" | "cli" | "config" | "registry"; rawOutput?: string }> {
+  ): Promise<{
+    model?: string;
+    source: "acp" | "cli" | "config" | "registry";
+    rawOutput?: string;
+  }> {
     const runtime =
       (await RuntimeService.getByRegistryId(db, runtimeId)) ||
       (await RuntimeService.get(db, runtimeId));
@@ -427,13 +433,21 @@ export abstract class RuntimeService {
     if (acpConfig) {
       try {
         const startTime = Date.now();
-        const result = await promptManagedAcpAgent(acpConfig, prompt, undefined, options?.conversationId);
+        const result = await promptManagedAcpAgent(
+          acpConfig,
+          prompt,
+          undefined,
+          options?.conversationId,
+        );
         const responseTime = Date.now() - startTime;
 
         return {
           success: result.output.trim().length > 0,
           output: result.output.trim(),
-          error: result.output.trim().length > 0 ? undefined : result.rawOutput || "ACP agent returned no output",
+          error:
+            result.output.trim().length > 0
+              ? undefined
+              : result.rawOutput || "ACP agent returned no output",
           agentName: runtime.name,
           responseTime,
         };

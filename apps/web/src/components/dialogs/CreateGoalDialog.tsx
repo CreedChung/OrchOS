@@ -80,139 +80,139 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
       }
     >
       <form id="create-goal-form" onSubmit={handleSubmit} className="space-y-4">
-          {/* Title */}
+        {/* Title */}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            {m.goal_title()}
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={m.goal_title_placeholder()}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            autoFocus
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            {m.description()}
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={m.description_placeholder()}
+            rows={2}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+          />
+        </div>
+
+        {/* Project Selection */}
+        {projects.length > 0 && (
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.goal_title()}
+              <HugeiconsIcon icon={FolderGitIcon} className="size-3 inline mr-1" />
+              {m.project()}
             </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={m.goal_title_placeholder()}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              autoFocus
-            />
+            <Select value={projectId} onValueChange={(value) => setProjectId(value ?? "")}>
+              <SelectTrigger>
+                <SelectValue>
+                  {projects.find((p) => p.id === projectId)?.name || m.no_project()}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="">{m.no_project()}</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
+        )}
 
-          {/* Description */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.description()}
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={m.description_placeholder()}
-              rows={2}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-            />
-          </div>
-
-          {/* Project Selection */}
-          {projects.length > 0 && (
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                <HugeiconsIcon icon={FolderGitIcon} className="size-3 inline mr-1" />
-                {m.project()}
-              </label>
-              <Select value={projectId} onValueChange={(value) => setProjectId(value ?? "")}>
-                <SelectTrigger>
-                  <SelectValue>
-                    {projects.find((p) => p.id === projectId)?.name || m.no_project()}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="">{m.no_project()}</SelectItem>
-                    {projects.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Success Criteria */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.success_criteria()}
-            </label>
-            <div className="space-y-2">
-              {criteria.map((c, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={c}
-                    onChange={(e) => {
-                      const next = [...criteria];
-                      next[i] = e.target.value;
-                      setCriteria(next);
-                    }}
-                    placeholder={m.criteria_placeholder()}
-                    className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                  {criteria.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setCriteria(criteria.filter((_, j) => j !== i))}
-                      className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => setCriteria([...criteria, ""])}
-                className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-accent"
-              >
-                <HugeiconsIcon icon={Add01Icon} className="size-3" /> {m.add_criterion()}
-              </button>
-            </div>
-          </div>
-
-          {/* Constraints */}
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              {m.constraints()}
-            </label>
-            <div className="space-y-2">
-              {constraints.map((c, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={c}
-                    onChange={(e) => {
-                      const next = [...constraints];
-                      next[i] = e.target.value;
-                      setConstraints(next);
-                    }}
-                    placeholder={m.constraints_placeholder()}
-                    className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
+        {/* Success Criteria */}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            {m.success_criteria()}
+          </label>
+          <div className="space-y-2">
+            {criteria.map((c, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  type="text"
+                  value={c}
+                  onChange={(e) => {
+                    const next = [...criteria];
+                    next[i] = e.target.value;
+                    setCriteria(next);
+                  }}
+                  placeholder={m.criteria_placeholder()}
+                  className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                {criteria.length > 1 && (
                   <button
                     type="button"
-                    onClick={() => setConstraints(constraints.filter((_, j) => j !== i))}
+                    onClick={() => setCriteria(criteria.filter((_, j) => j !== i))}
                     className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
                     <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                   </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => setConstraints([...constraints, ""])}
-                className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-accent"
-              >
-                <HugeiconsIcon icon={Add01Icon} className="size-3" /> {m.add_constraint()}
-              </button>
-            </div>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setCriteria([...criteria, ""])}
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-accent"
+            >
+              <HugeiconsIcon icon={Add01Icon} className="size-3" /> {m.add_criterion()}
+            </button>
           </div>
+        </div>
+
+        {/* Constraints */}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            {m.constraints()}
+          </label>
+          <div className="space-y-2">
+            {constraints.map((c, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  type="text"
+                  value={c}
+                  onChange={(e) => {
+                    const next = [...constraints];
+                    next[i] = e.target.value;
+                    setConstraints(next);
+                  }}
+                  placeholder={m.constraints_placeholder()}
+                  className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <button
+                  type="button"
+                  onClick={() => setConstraints(constraints.filter((_, j) => j !== i))}
+                  className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setConstraints([...constraints, ""])}
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-accent"
+            >
+              <HugeiconsIcon icon={Add01Icon} className="size-3" /> {m.add_constraint()}
+            </button>
+          </div>
+        </div>
       </form>
     </AppDialog>
   );

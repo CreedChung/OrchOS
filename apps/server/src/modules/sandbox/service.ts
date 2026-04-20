@@ -602,7 +602,9 @@ export abstract class SandboxService {
 
     const sourceEntries = await this.listHostDirectory(sourceRoot);
     const targetEntries = await this.listSandboxDirectory(sandbox, targetRoot);
-    const sourceMap = new Map(sourceEntries.map((entry) => [this.toPosixPath(entry.relativePath), entry.type]));
+    const sourceMap = new Map(
+      sourceEntries.map((entry) => [this.toPosixPath(entry.relativePath), entry.type]),
+    );
 
     for (const entry of sourceEntries) {
       const relativePath = this.toPosixPath(entry.relativePath);
@@ -614,7 +616,10 @@ export abstract class SandboxService {
       }
 
       const data = await readFile(sourcePath);
-      await sandbox.files.write(targetPath, data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));
+      await sandbox.files.write(
+        targetPath,
+        data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength),
+      );
     }
 
     await this.removeExtraSandboxEntries(sandbox, targetRoot, targetEntries, sourceMap);
@@ -679,10 +684,13 @@ export abstract class SandboxService {
   }
 
   private static buildPrompt(text: string, session: SessionRecord): string {
-    const parts = [session.additionalInstructions, session.model ? `Model: ${session.model}` : undefined,
+    const parts = [
+      session.additionalInstructions,
+      session.model ? `Model: ${session.model}` : undefined,
       session.mode ? `Mode: ${session.mode}` : undefined,
       session.thoughtLevel ? `Thought level: ${session.thoughtLevel}` : undefined,
-      text].filter(Boolean);
+      text,
+    ].filter(Boolean);
     return parts.join("\n\n");
   }
 

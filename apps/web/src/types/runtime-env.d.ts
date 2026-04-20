@@ -3,7 +3,11 @@ declare module "bun" {
 
   export class S3Client {
     constructor(options: Record<string, unknown>);
-    write(key: string, data: File | Blob | string, options?: Record<string, unknown>): Promise<void>;
+    write(
+      key: string,
+      data: File | Blob | string,
+      options?: Record<string, unknown>,
+    ): Promise<void>;
   }
 }
 
@@ -15,7 +19,11 @@ interface R2ObjectBody {
 }
 
 interface R2Bucket {
-  put(key: string, value: ReadableStream<Uint8Array> | string, options?: Record<string, unknown>): Promise<void>;
+  put(
+    key: string,
+    value: ReadableStream<Uint8Array> | string,
+    options?: Record<string, unknown>,
+  ): Promise<void>;
   get(key: string): Promise<R2ObjectBody | null>;
 }
 

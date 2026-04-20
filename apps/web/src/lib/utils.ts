@@ -18,7 +18,11 @@ const RUNTIME_ICONS: Record<string, string> = {
   amp: "/runtimes/amp-color.svg",
 };
 
-export function getRuntimeIcon(agent: { id?: string; name: string; command?: string }): string | undefined {
+export function getRuntimeIcon(agent: {
+  id?: string;
+  name: string;
+  command?: string;
+}): string | undefined {
   const keys = [
     agent.id?.toLowerCase(),
     agent.name.toLowerCase(),

@@ -76,7 +76,11 @@ export function getAcpAgentConfig(runtime: RuntimeLookup): AcpAgentConfig | unde
     };
   }
 
-  const keys = [normalizeKey(runtime.registryId), normalizeKey(runtime.name), extractCommandName(runtime.command)];
+  const keys = [
+    normalizeKey(runtime.registryId),
+    normalizeKey(runtime.name),
+    extractCommandName(runtime.command),
+  ];
 
   for (const key of keys) {
     if (key && ACP_AGENT_CONFIGS[key]) return ACP_AGENT_CONFIGS[key];
@@ -431,7 +435,11 @@ function getConfigKey(config: AcpAgentConfig) {
   return JSON.stringify({ command: config.command, args: config.args, env: config.env || {} });
 }
 
-async function createManagedSession(config: AcpAgentConfig, cwd?: string, key?: string): Promise<ManagedSession> {
+async function createManagedSession(
+  config: AcpAgentConfig,
+  cwd?: string,
+  key?: string,
+): Promise<ManagedSession> {
   ensureSweepTimer();
   registerCleanupHooks();
 
@@ -446,7 +454,10 @@ async function createManagedSession(config: AcpAgentConfig, cwd?: string, key?: 
   });
 
   let nextId = 1;
-  const pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void }>();
+  const pending = new Map<
+    number,
+    { resolve: (value: unknown) => void; reject: (error: Error) => void }
+  >();
   const outputParts: string[] = [];
   const stderrParts: string[] = [];
 

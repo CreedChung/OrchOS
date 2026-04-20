@@ -194,7 +194,9 @@ function migrate(sqlite: Database) {
     sqlite.run("ALTER TABLE runtimes ADD COLUMN acp_env TEXT NOT NULL DEFAULT '{}'");
   } catch {}
   try {
-    sqlite.run("ALTER TABLE runtimes ADD COLUMN communication_mode TEXT NOT NULL DEFAULT 'cli-fallback'");
+    sqlite.run(
+      "ALTER TABLE runtimes ADD COLUMN communication_mode TEXT NOT NULL DEFAULT 'cli-fallback'",
+    );
   } catch {}
   // Migrate existing runtime-like agents to runtimes table
   try {
