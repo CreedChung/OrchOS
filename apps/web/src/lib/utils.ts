@@ -6,16 +6,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 const RUNTIME_ICONS: Record<string, string> = {
-  "claude-code": "/runtime/claudecode-color.svg",
-  "claude code": "/runtime/claudecode-color.svg",
-  codex: "/runtime/codex-color.svg",
-  opencode: "/runtime/opencode.svg",
-  "gemini-cli": "/runtime/gemini-color.svg",
-  "gemini cli": "/runtime/gemini-color.svg",
-  "qwen-code": "/runtime/qwen-color.svg",
-  "qwen code": "/runtime/qwen-color.svg",
-  pi: "/runtime/pi.svg",
-  amp: "/runtime/amp-color.svg",
+  "claude-code": "/runtimes/claudecode-color.svg",
+  "claude code": "/runtimes/claudecode-color.svg",
+  codex: "/runtimes/codex-color.svg",
+  opencode: "/runtimes/opencode.svg",
+  "gemini-cli": "/runtimes/gemini-color.svg",
+  "gemini cli": "/runtimes/gemini-color.svg",
+  "qwen-code": "/runtimes/qwen-color.svg",
+  "qwen code": "/runtimes/qwen-color.svg",
+  pi: "/runtimes/pi.svg",
+  amp: "/runtimes/amp-color.svg",
 };
 
 export function getRuntimeIcon(agent: { id?: string; name: string; command?: string }): string | undefined {

@@ -167,6 +167,18 @@ export const NOTIFICATION_EVENTS: { id: NotificationEvent; labelKey: string }[] 
   { id: "mention", labelKey: "event_mention" },
 ];
 
+export const AVAILABLE_SOUNDS = [
+  { id: "bell", name: "Bell", file: "/sounds/bell.mp3" },
+  { id: "bell2", name: "Bell 2", file: "/sounds/bell2.mp3" },
+  { id: "bell3", name: "Bell 3", file: "/sounds/bell3.mp3" },
+  { id: "error", name: "Error", file: "/sounds/error.mp3" },
+  { id: "pong", name: "Pong", file: "/sounds/pong.mp3" },
+  { id: "ring", name: "Ring", file: "/sounds/ring.mp3" },
+  { id: "ring2", name: "Ring 2", file: "/sounds/ring2.mp3" },
+] as const;
+
+export type SoundId = (typeof AVAILABLE_SOUNDS)[number]["id"];
+
 export interface ControlSettings {
   autoCommit: boolean;
   autoFix: boolean;
@@ -177,6 +189,7 @@ export interface ControlSettings {
     system: boolean;
     sound: boolean;
     eventSounds: Partial<Record<NotificationEvent, boolean>>;
+    eventSoundFiles: Partial<Record<NotificationEvent, SoundId>>;
   };
 }
 

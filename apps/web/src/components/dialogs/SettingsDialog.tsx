@@ -18,6 +18,9 @@ import {
   FolderOpenIcon,
   AlertIcon,
   Delete02Icon,
+  VolumeHighIcon,
+  UnfoldMoreIcon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { cn, getRuntimeIcon } from "@/lib/utils";
 import ThemeToggle from "@/components/layout/ThemeToggle";
@@ -32,11 +35,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useLocale } from "@/lib/useI18n";
 import { AVAILABLE_LOCALES } from "@/lib/i18n";
 import { m } from "@/paraglide/messages";
-import type { ControlSettings, NotificationEvent } from "@/lib/types";
-import { NOTIFICATION_EVENTS } from "@/lib/types";
+import type { ControlSettings, NotificationEvent, SoundId } from "@/lib/types";
+import { NOTIFICATION_EVENTS, AVAILABLE_SOUNDS } from "@/lib/types";
 import { api, type DetectRuntimesResponse, type RuntimeProfile } from "@/lib/api";
 
 type SettingsTab = "general" | "notifications" | "integrations" | "runtimes" | "about";
@@ -331,21 +339,23 @@ export function SettingsDialog({
     onSettingsChange(updated);
   };
 
-  const handleNotificationToggle = async (key: "system" | "sound") => {
+  const handleNotificationToggle = (key: "system" | "sound") => {
     if (!currentSettings) return;
-    const updated = await api.updateSettings({
+    const updated = {
+      ...currentSettings,
       notifications: {
         ...currentSettings.notifications,
         [key]: !currentSettings.notifications[key],
       },
-    });
+    };
     setLocalSettings(updated);
     onSettingsChange(updated);
   };
 
-  const handleEventSoundToggle = async (event: NotificationEvent) => {
+  const handleEventSoundToggle = (event: NotificationEvent) => {
     if (!currentSettings) return;
-    const updated = await api.updateSettings({
+    const updated = {
+      ...currentSettings,
       notifications: {
         ...currentSettings.notifications,
         eventSounds: {
@@ -353,9 +363,33 @@ export function SettingsDialog({
           [event]: !currentSettings.notifications.eventSounds[event],
         },
       },
-    });
+    };
     setLocalSettings(updated);
     onSettingsChange(updated);
+  };
+
+  const handleEventSoundFileChange = (event: NotificationEvent, soundId: SoundId) => {
+    if (!currentSettings) return;
+    const updated = {
+      ...currentSettings,
+      notifications: {
+        ...currentSettings.notifications,
+        eventSoundFiles: {
+          ...currentSettings.notifications.eventSoundFiles,
+          [event]: soundId,
+        },
+      },
+    };
+    setLocalSettings(updated);
+    onSettingsChange(updated);
+  };
+
+  const playSound = (soundId: SoundId) => {
+    const sound = AVAILABLE_SOUNDS.find((s) => s.id === soundId);
+    if (sound) {
+      const audio = new Audio(sound.file);
+      void audio.play();
+    }
   };
 
   const handleDetect = useCallback(async () => {
@@ -773,32 +807,77 @@ export function SettingsDialog({
                   <span className="text-sm font-medium text-foreground">{m.event_sounds()}</span>
                   <p className="text-xs text-muted-foreground">{m.event_sounds_desc()}</p>
                   <div className="space-y-1.5 pt-1">
-                    {NOTIFICATION_EVENTS.map((event) => (
-                      <div
-                        key={event.id}
-                        className="flex items-center justify-between rounded-lg border border-border/50 px-4 py-2.5"
-                      >
-                        <span className="text-sm text-foreground">{m[event.labelKey]()}</span>
-                        <button
-                          onClick={() => handleEventSoundToggle(event.id)}
-                          className={cn(
-                            "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
-                            currentSettings.notifications?.eventSounds?.[event.id] !== false
-                              ? "bg-emerald-500"
-                              : "bg-muted",
-                          )}
+                    {NOTIFICATION_EVENTS.map((event) => {
+                      const currentSoundId = currentSettings.notifications?.eventSoundFiles?.[event.id] || "bell";
+                      const isEnabled = currentSettings.notifications?.eventSounds?.[event.id] !== false;
+                      return (
+                        <div
+                          key={event.id}
+                          className="flex items-center gap-3 rounded-lg border border-border/50 px-4 py-2.5"
                         >
-                          <span
+                          <span className="text-sm text-foreground min-w-[120px]">{m[event.labelKey]()}</span>
+                          <div className="flex items-center gap-2 flex-1">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                disabled={!isEnabled}
+                                className={cn(
+                                  "flex items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent h-7 px-2.5 text-xs min-w-[100px]",
+                                  !isEnabled && "cursor-not-allowed opacity-50",
+                                )}
+                              >
+                                <span className="truncate">
+                                  {AVAILABLE_SOUNDS.find((s) => s.id === currentSoundId)?.name || "Bell"}
+                                </span>
+                                <HugeiconsIcon icon={UnfoldMoreIcon} className="size-3 text-muted-foreground" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="w-[140px] p-1">
+                                {AVAILABLE_SOUNDS.map((sound) => (
+                                  <div
+                                    key={sound.id}
+                                    className={cn(
+                                      "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs",
+                                      sound.id === currentSoundId
+                                        ? "bg-accent text-accent-foreground"
+                                        : "hover:bg-accent/50 cursor-pointer",
+                                    )}
+                                    onClick={(e) => {
+                                      if ((e.target as HTMLElement).closest(".play-btn")) return;
+                                      handleEventSoundFileChange(event.id, sound.id);
+                                    }}
+                                  >
+                                    <button
+                                      onClick={() => playSound(sound.id)}
+                                      className="play-btn rounded p-0.5 hover:bg-muted transition-colors"
+                                      type="button"
+                                    >
+                                      <HugeiconsIcon icon={VolumeHighIcon} className="size-3.5" />
+                                    </button>
+                                    <span className="flex-1 select-none">{sound.name}</span>
+                                    {sound.id === currentSoundId && (
+                                      <HugeiconsIcon icon={Tick02Icon} className="size-3 text-primary" />
+                                    )}
+                                  </div>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          <button
+                            onClick={() => handleEventSoundToggle(event.id)}
                             className={cn(
-                              "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
-                              currentSettings.notifications?.eventSounds?.[event.id] !== false
-                                ? "translate-x-5"
-                                : "translate-x-0.5",
+                              "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+                              isEnabled ? "bg-emerald-500" : "bg-muted",
                             )}
-                          />
-                        </button>
-                      </div>
-                    ))}
+                          >
+                            <span
+                              className={cn(
+                                "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
+                                isEnabled ? "translate-x-5" : "translate-x-0.5",
+                              )}
+                            />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -937,8 +1016,8 @@ export function SettingsDialog({
                             className={cn(
                               "flex size-8 items-center justify-center rounded-md",
                               isRegistered
-                                ? "bg-white dark:bg-white/10"
-                                : "bg-white dark:bg-white/10",
+                                ? "bg-muted/50 dark:bg-white/10"
+                                : "bg-muted/50 dark:bg-white/10",
                             )}
                           >
                             {getRuntimeIcon(agent) ? (
@@ -1027,7 +1106,7 @@ export function SettingsDialog({
                         key={agent.id}
                         className="flex items-center gap-3 rounded-lg border border-border/30 bg-muted/20 px-4 py-2.5 opacity-50"
                       >
-                        <div className="flex size-8 items-center justify-center rounded-md bg-white dark:bg-white/10">
+                        <div className="flex size-8 items-center justify-center rounded-md bg-muted/50 dark:bg-white/10">
                           {getRuntimeIcon(agent) ? (
                             <img
                               src={getRuntimeIcon(agent)}

@@ -52,7 +52,7 @@ const defaultSettings: ControlSettings = {
   modelStrategy: "adaptive",
   locale: "en",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-  notifications: { system: true, sound: true, eventSounds: {} },
+  notifications: { system: true, sound: true, eventSounds: {}, eventSoundFiles: {} },
 };
 
 export const useUIStore = create<UIState & UIActions>()(
