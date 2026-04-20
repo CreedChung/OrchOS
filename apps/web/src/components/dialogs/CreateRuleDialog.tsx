@@ -138,7 +138,7 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
             <div className="flex items-center gap-2">
               <Select value={condition} onValueChange={(value) => setCondition(value ?? condition)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>{conditionLabels[condition]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
@@ -156,7 +156,7 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
               />
               <Select value={action} onValueChange={(value) => setAction(value ?? action)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>{actionLabels[action]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>

@@ -254,7 +254,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                   }
                 >
                   <SelectTrigger className="mt-1">
-                    <SelectValue />
+                    <SelectValue>
+                      {manualForm.scope === "global" ? m.scope_global() : m.scope_project()}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -274,7 +276,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                     }
                   >
                     <SelectTrigger className="mt-1" disabled={!hasProjects}>
-                      <SelectValue placeholder={m.select_project()} />
+                      <SelectValue>
+                        {projects.find((p) => p.id === manualForm.projectId)?.name || m.select_project()}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -317,7 +321,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                   }
                 >
                   <SelectTrigger className="mt-1">
-                    <SelectValue />
+                    <SelectValue>
+                      {repoForm.scope === "global" ? m.scope_global() : m.scope_project()}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -337,7 +343,9 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
                     }
                   >
                     <SelectTrigger className="mt-1" disabled={!hasProjects}>
-                      <SelectValue placeholder={m.select_project()} />
+                      <SelectValue>
+                        {projects.find((p) => p.id === repoForm.projectId)?.name || m.select_project()}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>

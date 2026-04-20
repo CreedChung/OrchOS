@@ -118,7 +118,9 @@ export function CreateGoalDialog({ open, onClose, projects, onSubmit }: CreateGo
               </label>
               <Select value={projectId} onValueChange={(value) => setProjectId(value ?? "")}>
                 <SelectTrigger>
-                  <SelectValue placeholder={m.no_project()} />
+                  <SelectValue>
+                    {projects.find((p) => p.id === projectId)?.name || m.no_project()}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>

@@ -135,6 +135,7 @@
   "cta_heading": "Ready to orchestrate?",
   "database": "Database",
   "delete": "Delete",
+  "delete_agent_confirm": "Delete this agent?",
   "delete_goal_confirm": "Are you sure you want to delete this goal?",
   "delete_mcp_confirm": "Delete this MCP server?",
   "delete_organization": "Delete this organization?",

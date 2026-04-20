@@ -135,6 +135,7 @@
   "cta_heading": "準備好開始編排了嗎？",
   "database": "資料庫",
   "delete": "刪除",
+  "delete_agent_confirm": "刪除此智慧型代理？",
   "delete_goal_confirm": "確定刪除此目標？",
   "delete_mcp_confirm": "刪除此 MCP 伺服器？",
   "delete_organization": "確定刪除此組織？",

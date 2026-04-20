@@ -113,7 +113,9 @@ export function CreateMcpServerDialog({ open, onClose, onCreated }: CreateMcpSer
             onValueChange={(v) => setFormData({ ...formData, scope: v as "global" | "project" })}
           >
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue>
+                {formData.scope === "global" ? m.scope_global() : m.scope_project()}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>

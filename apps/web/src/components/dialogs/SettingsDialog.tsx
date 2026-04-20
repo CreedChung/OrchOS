@@ -188,7 +188,7 @@ function EditAcpDialog({ runtime, draft, saving, onClose, onDraftChange, onSave 
                 onValueChange={(value) => onDraftChange({ transport: value as RuntimeProfile["transport"] })}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>{draft.transport}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="stdio">stdio</SelectItem>
@@ -206,7 +206,13 @@ function EditAcpDialog({ runtime, draft, saving, onClose, onDraftChange, onSave 
                 }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>
+                    {draft.communicationMode === "acp-native"
+                      ? "ACP Native"
+                      : draft.communicationMode === "acp-adapter"
+                        ? "ACP Adapter"
+                        : "CLI Fallback"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="acp-native">ACP Native</SelectItem>

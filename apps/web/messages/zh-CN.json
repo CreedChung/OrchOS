@@ -135,6 +135,7 @@
   "cta_heading": "准备好开始编排了吗？",
   "database": "数据库",
   "delete": "删除",
+  "delete_agent_confirm": "删除此智能体？",
   "delete_goal_confirm": "确定删除此目标？",
   "delete_mcp_confirm": "删除此 MCP 服务器？",
   "delete_organization": "确定删除此组织？",

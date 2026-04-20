@@ -58,7 +58,7 @@ export function StateEditor({ state, onStatusChange }: StateEditorProps) {
         <span className="min-w-[90px] text-sm font-medium text-foreground">{state.label}</span>
         <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as Status)}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue>{statusLabelMap[selectedStatus]()}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>

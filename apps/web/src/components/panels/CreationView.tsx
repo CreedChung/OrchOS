@@ -422,7 +422,9 @@ function ChatArea({
           >
             <SelectTrigger className="h-7 w-32 text-xs">
               <HugeiconsIcon icon={Folder01Icon} className="size-3 mr-1 shrink-0" />
-              <SelectValue placeholder={m.select_project()} />
+              <SelectValue>
+                {projects.find((p) => p.id === conversation.projectId)?.name || m.no_project()}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__none__">{m.no_project()}</SelectItem>
@@ -445,7 +447,19 @@ function ChatArea({
           >
             <SelectTrigger className="h-7 w-40 text-xs">
               <HugeiconsIcon icon={Robot02Icon} className="size-3 mr-1 shrink-0" />
-              <SelectValue placeholder={m.select_agent()} />
+              <SelectValue>
+                {(() => {
+                  const runtime = runtimes.find((r) => r.id === conversation.runtimeId);
+                  if (runtime) {
+                    return runtime.name;
+                  }
+                  const agent = agents.find((a) => (a.runtimeId || a.id) === conversation.runtimeId);
+                  if (agent) {
+                    return agent.name;
+                  }
+                  return m.no_agent();
+                })()}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__none__">{m.no_agent()}</SelectItem>

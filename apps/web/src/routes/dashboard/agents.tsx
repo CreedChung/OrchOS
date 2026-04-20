@@ -78,10 +78,10 @@ function AgentsPage() {
       <ConfirmDialog
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
-        title={m._delete()}
+        title={m.delete()}
         description={m.delete_agent_confirm()}
         onConfirm={handleDeleteConfirm}
-        confirmLabel={m._delete()}
+        confirmLabel={m.delete()}
         variant="destructive"
       />
     </div>

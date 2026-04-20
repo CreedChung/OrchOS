@@ -244,7 +244,9 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                     onValueChange={(v: string | null) => v && setSelectedRuntimeId(v)}
                   >
                     <SelectTrigger className="h-7 flex-1 min-w-0 text-xs">
-                      <SelectValue placeholder="Select Runtime" />
+                      <SelectValue>
+                        {runtimes.find((r) => r.id === selectedRuntimeId)?.name || "Select Runtime"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>

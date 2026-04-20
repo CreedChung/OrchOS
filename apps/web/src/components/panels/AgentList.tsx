@@ -168,7 +168,7 @@ function AgentItem({
             </Button>
           )}
           {onDelete && (
-            <Button variant="ghost" size="icon-sm" onClick={onDelete} title={m._delete()}>
+            <Button variant="ghost" size="icon-sm" onClick={onDelete} title={m.delete()}>
               <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
             </Button>
           )}

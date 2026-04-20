@@ -121,7 +121,7 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
             </span>
             <Select value={condition} onValueChange={(value) => setCondition(value ?? condition)}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue>{conditionLabels[condition]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -136,7 +136,7 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
             <HugeiconsIcon icon={ArrowRight01Icon} className="size-3 text-muted-foreground" />
             <Select value={action} onValueChange={(value) => setAction(value ?? action)}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue>{actionLabels[action]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
