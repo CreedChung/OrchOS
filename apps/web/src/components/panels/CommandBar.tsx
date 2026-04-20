@@ -148,13 +148,18 @@ export function CommandBar({ open, runtimes, projects, onSubmit, onClose }: Comm
                 )}
               </div>
 
-              <div className="mt-4 flex items-end justify-end gap-2">
-                <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-                  {m.cancel()}
-                </Button>
-                <Button type="submit" size="icon-sm" disabled={!instruction.trim()}>
-                  <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
-                </Button>
+              <div className="mt-4 flex items-end justify-between gap-2">
+                <p className="text-[10px] text-muted-foreground/50">
+                  Agent will decompose your instruction into goals
+                </p>
+                <div className="flex items-end gap-2">
+                  <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+                    {m.cancel()}
+                  </Button>
+                  <Button type="submit" size="icon-sm" disabled={!instruction.trim()}>
+                    <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
           </BorderBeam>

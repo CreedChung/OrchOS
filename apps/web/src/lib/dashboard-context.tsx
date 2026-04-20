@@ -336,7 +336,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const shouldLoadRules = activeView === "agents";
   const shouldLoadCommands = activeView === "projects";
   const shouldLoadMcpServers = activeView === "mcp-servers";
-  const shouldLoadSkills = activeView === "skills";
+  const shouldLoadSkills = activeView === "skills" || activeView === "agents";
 
   // Data fetching
   const refreshAll = useCallback(async () => {
@@ -676,27 +676,26 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const handleCommand = useCallback(
     async (data: { instruction: string; agentNames: string[]; projectIds: string[] }) => {
       try {
-        const command = await api.createCommand(data);
-        const goal = await api.createGoal({
-          title:
-            data.instruction.length > 60 ? data.instruction.slice(0, 60) + "..." : data.instruction,
-          description: data.instruction,
-          successCriteria: ["completed"],
-          commandId: command.id,
-          watchers: data.agentNames,
-          projectId: data.projectIds[0],
+        const selectedRuntime = runtimes.find((r) =>
+          data.agentNames.includes(r.name),
+        );
+        const result = await api.dispatchCommand({
+          instruction: data.instruction,
+          agentNames: data.agentNames.length > 0 ? data.agentNames : undefined,
+          projectIds: data.projectIds.length > 0 ? data.projectIds : undefined,
+          runtimeId: selectedRuntime?.id,
         });
-        await api.updateCommand(command.id, { goalId: goal.id });
-        await api.updateCommand(command.id, { status: "executing" });
         setShowCommandBar(false);
         await refreshAll();
-        setActiveGoalId(goal.id);
+        if (result.goals.length > 0) {
+          setActiveGoalId(result.goals[0].id);
+        }
         navigate({ to: "/dashboard/projects" });
       } catch (err) {
         console.error("Command failed:", err);
       }
     },
-    [refreshAll, setActiveGoalId, navigate],
+    [refreshAll, setActiveGoalId, navigate, runtimes],
   );
 
   const handlePauseGoal = useCallback(async () => {

@@ -20,6 +20,8 @@ import { skillController } from "@/modules/skill";
 import { sandboxController } from "@/modules/sandbox";
 import { filesystemController } from "@/modules/filesystem";
 import { conversationController } from "@/modules/conversation";
+import { integrationController } from "@/modules/integration";
+import { observabilityController } from "@/modules/observability";
 import { seedData } from "@/db/seed";
 
 import "@/db";
@@ -50,6 +52,8 @@ export const app = new Elysia()
   .use(sandboxController)
   .use(filesystemController)
   .use(conversationController)
+  .use(integrationController)
+  .use(observabilityController)
   .listen({
     hostname: "0.0.0.0",
     port: 5173,

@@ -6,7 +6,19 @@ import { eventBus } from "@/modules/event/event-bus";
 import { GoalService } from "@/modules/goal/service";
 import { AgentService } from "@/modules/agent/service";
 import { ActivityService } from "@/modules/activity/service";
+import { StateService } from "@/modules/state/service";
+import { PlanningService } from "@/modules/execution/planner";
+import { executionService } from "@/modules/execution/service";
 import type { Command, CommandStatus } from "@/types";
+
+export interface DispatchResult {
+  command: Command;
+  goals: Array<{
+    id: string;
+    title: string;
+    assignedAgentName?: string;
+  }>;
+}
 
 export abstract class CommandService {
   static create(data: {
@@ -32,9 +44,105 @@ export abstract class CommandService {
     const command = CommandService.get(id)!;
     eventBus.emit("command_sent", { commandId: id, instruction: data.instruction }, undefined);
 
-    CommandService.dispatch(command);
-
     return command;
+  }
+
+  static async dispatchAsync(
+    command: Command,
+    runtimeId?: string,
+  ): Promise<DispatchResult> {
+    CommandService.update(command.id, { status: "executing" });
+
+    const resolvedAgentNames =
+      command.agentNames.length > 0
+        ? command.agentNames
+        : AgentService.list()
+            .filter((a) => a.enabled && a.status !== "error")
+            .map((a) => a.name);
+
+    const projectId = command.projectIds.length > 0 ? command.projectIds[0] : undefined;
+
+    let plannedGoals;
+
+    if (runtimeId) {
+      try {
+        plannedGoals = await PlanningService.plan(
+          command.instruction,
+          runtimeId,
+          resolvedAgentNames,
+        );
+      } catch {
+        plannedGoals = PlanningService.fallbackPlan(command.instruction, resolvedAgentNames);
+      }
+    } else {
+      plannedGoals = PlanningService.fallbackPlan(command.instruction, resolvedAgentNames);
+    }
+
+    const createdGoals: DispatchResult["goals"] = [];
+    let primaryGoalId: string | null = null;
+
+    for (const planned of plannedGoals) {
+      const watchers = planned.assignedAgentName
+        ? [planned.assignedAgentName]
+        : resolvedAgentNames;
+
+      const goal = GoalService.create({
+        title: planned.title,
+        description: planned.description,
+        successCriteria: planned.successCriteria,
+        constraints: ["Follow existing code conventions"],
+        projectId,
+        commandId: command.id,
+        watchers,
+      });
+
+      if (!primaryGoalId) {
+        primaryGoalId = goal.id;
+      }
+
+      for (const action of planned.actions) {
+        StateService.createState(
+          goal.id,
+          `${action} — ${planned.title}`,
+          "pending",
+          action === "write_code"
+            ? ["Execute"]
+            : action === "run_tests"
+              ? ["Run", "Fix"]
+              : action === "fix_bug"
+                ? ["Fix", "Ignore"]
+                : action === "commit"
+                  ? ["Commit"]
+                  : ["Review"],
+        );
+      }
+
+      createdGoals.push({
+        id: goal.id,
+        title: goal.title,
+        assignedAgentName: planned.assignedAgentName,
+      });
+
+      for (const agentName of watchers) {
+        ActivityService.add(goal.id, agentName, "command_dispatched", command.instruction);
+      }
+    }
+
+    if (primaryGoalId) {
+      CommandService.update(command.id, { goalId: primaryGoalId });
+    }
+
+    for (const goalEntry of createdGoals) {
+      eventBus.emit("goal_created", { goalId: goalEntry.id, commandId: command.id }, goalEntry.id);
+    }
+
+    for (const goalEntry of createdGoals) {
+      executionService.executeAction(goalEntry.id, "write_code").catch((err) => {
+        console.error(`Auto-execute failed for goal ${goalEntry.id}:`, err);
+      });
+    }
+
+    return { command: CommandService.get(command.id)!, goals: createdGoals };
   }
 
   private static dispatch(command: Command): void {

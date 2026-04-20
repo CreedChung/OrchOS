@@ -522,8 +522,8 @@ function ChatArea({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto pb-[120px]">
-        <div className="mx-auto max-w-3xl px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-[120px] md:px-6">
+        <div className="mx-auto max-w-3xl py-4 space-y-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3">
               <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
@@ -576,49 +576,70 @@ function ChatArea({
       </div>
 
       {/* Input area - absolute positioned */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-background px-2 py-3">
-        <BorderBeam
-          size="md"
-          theme="auto"
-          colorVariant="ocean"
-          strength={0.65}
-          duration={2.6}
-          className="rounded-xl"
-        >
-          <div className="flex flex-col gap-2 rounded-xl border border-border bg-background px-3 py-3">
-            {attachedFiles.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {attachedFiles.map((file, index) => (
-                  <div
-                    key={index}
-                    className="relative group rounded-md border border-border bg-muted overflow-hidden"
-                  >
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      className="h-12 w-12 object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFile(index)}
-                      className="absolute -right-1 -top-1 rounded-full bg-background border border-border p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:border-destructive/30"
+      <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-background px-4 py-4 md:px-6">
+        <div className="mx-auto max-w-3xl">
+          <BorderBeam
+            size="md"
+            theme="auto"
+            colorVariant="ocean"
+            strength={0.65}
+            duration={2.6}
+            className="rounded-xl"
+          >
+            <div className="relative flex flex-col gap-3 rounded-xl border border-border bg-background px-4 py-6">
+              {attachedFiles.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {attachedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="relative group rounded-md border border-border bg-muted overflow-hidden"
                     >
-                      <HugeiconsIcon icon={Delete02Icon} className="size-3 text-muted-foreground" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex items-center gap-2 w-full">
-              <div className="flex items-center gap-1 shrink-0">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileSelect}
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="h-12 w-12 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(index)}
+                        className="absolute -right-1 -top-1 rounded-full border border-border bg-background p-0.5 opacity-0 transition-opacity group-hover:opacity-100 hover:border-destructive/30 hover:bg-destructive/10"
+                      >
+                        <HugeiconsIcon icon={Delete02Icon} className="size-3 text-muted-foreground" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              <div className="w-full">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={
+                    selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()
+                  }
+                  className="block w-full resize-none bg-transparent px-2 pb-12 pt-2 text-sm outline-none placeholder:text-muted-foreground"
+                  rows={1}
+                  onKeyDown={handleKeys}
+                  spellCheck={false}
+                  disabled={sending}
+                  style={{ minHeight: "76px", maxHeight: "180px" }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = "auto";
+                    target.style.height = `${Math.min(target.scrollHeight, 180)}px`;
+                  }}
                 />
+              </div>
+              <div className="absolute bottom-3 left-4 flex items-end gap-1">
                 <Button
                   type="button"
                   variant="ghost"
@@ -644,31 +665,12 @@ function ChatArea({
                   <HugeiconsIcon icon={isListening ? Cancel01Icon : Mic01Icon} className="size-4" />
                 </Button>
               </div>
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={
-                  selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()
-                }
-                className="flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground"
-                rows={1}
-                onKeyDown={handleKeys}
-                spellCheck={false}
-                disabled={sending}
-                style={{ minHeight: "40px", maxHeight: "120px" }}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement;
-                  target.style.height = "auto";
-                  target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
-                }}
-              />
               <Button
                 type="button"
                 size="icon-sm"
                 disabled={(!input.trim() && attachedFiles.length === 0) || sending}
                 onClick={handleSend}
-                className="shrink-0"
+                className="absolute bottom-3 right-2"
               >
                 {sending ? (
                   <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
@@ -677,12 +679,12 @@ function ChatArea({
                 )}
               </Button>
             </div>
-          </div>
-        </BorderBeam>
-        <p className="text-[10px] text-muted-foreground/50 mt-1.5 text-center">
-          Enter to send · Shift+Enter for new line ·{" "}
-          {selectedRuntime ? `${selectedRuntime.name}` : m.select_agent()}
-        </p>
+          </BorderBeam>
+          <p className="mt-1.5 text-center text-[10px] text-muted-foreground/50">
+            Enter to send · Shift+Enter for new line ·{" "}
+            {selectedRuntime ? `${selectedRuntime.name}` : m.select_agent()}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -742,9 +744,9 @@ function RuntimeSelector({ runtimes, agents, selectedId, onSelect }: RuntimeSele
       <button
         ref={triggerRef}
         type="button"
-        className="inline-flex h-7 w-40 items-center justify-between gap-1 rounded-md border border-input bg-background px-2.5 text-xs text-foreground hover:bg-accent/50 transition-colors"
+        className="inline-flex h-8 w-40 items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground transition-colors hover:bg-accent/50"
       >
-        <span className="flex items-center gap-1.5 min-w-0">
+        <span className="flex min-w-0 items-center gap-1.5">
           <HugeiconsIcon icon={Robot02Icon} className="size-3 shrink-0" />
           <span className="truncate">{selectedItem?.name || m.no_agent()}</span>
         </span>

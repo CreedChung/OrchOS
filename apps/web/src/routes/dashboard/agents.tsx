@@ -15,6 +15,7 @@ function AgentsPage() {
     agents,
     rules,
     runtimes,
+    skills,
     loading,
     handleRuleToggle,
     handleRuleDelete,
@@ -29,8 +30,10 @@ function AgentsPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
 
   const activeAgent = agents.find((a) => a.id === activeAgentId);
+  const editingAgent = agents.find((a) => a.id === editingAgentId);
 
   const handleDeleteClick = (id: string) => {
     setAgentToDelete(id);
@@ -50,6 +53,7 @@ function AgentsPage() {
 
   const handleEditAgent = (id: string) => {
     setActiveAgentId(id);
+    setEditingAgentId(id);
     setEditDialogOpen(true);
   };
 
@@ -87,12 +91,16 @@ function AgentsPage() {
         )}
       </div>
 
-      {activeAgent && editDialogOpen && (
+      {editingAgent && editDialogOpen && (
         <EditAgentDialog
           open={editDialogOpen}
-          onClose={() => setEditDialogOpen(false)}
-          agent={activeAgent}
+          onClose={() => {
+            setEditDialogOpen(false);
+            setEditingAgentId(null);
+          }}
+          agent={editingAgent}
           runtimes={runtimes}
+          skills={skills}
           onSubmit={handleUpdateAgent}
         />
       )}

@@ -134,6 +134,41 @@ export interface RegisterRuntimesResponse {
   skipped: DetectedRuntime[];
 }
 
+export interface Integration {
+  id: string;
+  name: string;
+  type: "github" | "gitlab";
+  connected: boolean;
+  username?: string;
+}
+
+export interface IntegrationRepo {
+  id: number | string;
+  name: string;
+  url: string;
+  private: boolean;
+}
+
+export interface ObservabilityMetrics {
+  goals: { total: number; active: number; completed: number; paused: number };
+  activities: { total: number };
+  events: { total: number };
+}
+
+export interface TimeSeriesPoint {
+  time: number;
+  label: string;
+  operations: number;
+  successes: number;
+}
+
+export interface GoalTimeSeriesPoint {
+  time: number;
+  label: string;
+  completed: number;
+  active: number;
+}
+
 export interface StateEntry {
   id: string;
   goalId: string;
@@ -254,6 +289,23 @@ export interface SkillRepositoryInstallResponse {
   installTarget: string;
   warnings: string[];
   riskLevel: "low" | "medium" | "high";
+}
+
+export interface DispatchResult {
+  command: {
+    id: string;
+    instruction: string;
+    agentNames: string[];
+    projectIds: string[];
+    goalId: string | null;
+    status: string;
+    createdAt: string;
+  };
+  goals: Array<{
+    id: string;
+    title: string;
+    assignedAgentName?: string;
+  }>;
 }
 
 export interface Conversation {
@@ -920,5 +972,30 @@ export const api = {
     const client = createEdenClient();
     const result = await client.api.conversations({ id }).messages.post({ content });
     return assertData(result);
+  },
+
+  createGoalsFromConversation: async (
+    id: string,
+    data: {
+      instruction: string;
+      runtimeId?: string;
+      agentNames?: string[];
+      projectIds?: string[];
+    },
+  ): Promise<DispatchResult> => {
+    const client = createEdenClient();
+    const result = await client.api.conversations({ id })["create-goals"].post(data);
+    return assertData(result) as DispatchResult;
+  },
+
+  dispatchCommand: async (data: {
+    instruction: string;
+    agentNames?: string[];
+    projectIds?: string[];
+    runtimeId?: string;
+  }): Promise<DispatchResult> => {
+    const client = createEdenClient();
+    const result = await client.api.commands.dispatch.post(data);
+    return assertData(result) as DispatchResult;
   },
 };

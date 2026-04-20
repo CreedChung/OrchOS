@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { createFileRoute, Outlet, useLocation, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, Navigate, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -78,6 +78,7 @@ function DashboardWrapper() {
 
 function DashboardLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const activeView = getViewFromPath(location.pathname);
   const [showMorphPanel, setShowMorphPanel] = useState(false);
 
@@ -88,6 +89,7 @@ function DashboardLayout() {
     problems,
     activities,
     settings,
+    skills,
     refreshAll,
     handleCreateGoal,
     handleCommand,
@@ -202,6 +204,7 @@ function DashboardLayout() {
               onAgentModelFilterChange={setAgentModelFilter}
               agentModelCounts={agentModelCounts}
               onRefresh={refreshAll}
+              onOpenCapabilityMarket={() => navigate({ to: "/dashboard/skills" })}
             />
             <Outlet />
           </div>
@@ -248,12 +251,13 @@ function DashboardLayout() {
           />
         )}
         {showCreateAgentDialog && (
-          <CreateAgentDialog
-            open={showCreateAgentDialog}
-            onClose={() => setShowCreateAgentDialog(false)}
-            runtimes={runtimes}
-            onSubmit={handleCreateAgent}
-          />
+            <CreateAgentDialog
+              open={showCreateAgentDialog}
+              onClose={() => setShowCreateAgentDialog(false)}
+              runtimes={runtimes}
+              skills={skills}
+              onSubmit={handleCreateAgent}
+            />
         )}
         {showMorphPanel && (
           <Suspense fallback={null}>

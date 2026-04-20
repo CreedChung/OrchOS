@@ -6,7 +6,8 @@ import { m } from "@/paraglide/messages";
 import type { RuntimeProfile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { AppDialog } from "@/components/ui/app-dialog";
-import { api } from "@/lib/api";
+import { api, type SkillProfile } from "@/lib/api";
+import { CAPABILITY_COLORS, getCapabilityOptions } from "@/components/agents/capability-options";
 import {
   Select,
   SelectContent,
@@ -16,46 +17,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const CAPABILITY_OPTIONS = [
-  { value: "write_code", labelKey: "cap_write_code" },
-  { value: "fix_bug", labelKey: "cap_fix_bug" },
-  { value: "run_tests", labelKey: "cap_run_tests" },
-  { value: "commit", labelKey: "cap_commit" },
-  { value: "review", labelKey: "cap_review" },
-] as const;
-
-const CAPABILITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  write_code: {
-    bg: "bg-blue-500/10",
-    text: "text-blue-600 dark:text-blue-400",
-    border: "border-blue-500/30",
-  },
-  fix_bug: {
-    bg: "bg-red-500/10",
-    text: "text-red-600 dark:text-red-400",
-    border: "border-red-500/30",
-  },
-  run_tests: {
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-600 dark:text-emerald-400",
-    border: "border-emerald-500/30",
-  },
-  commit: {
-    bg: "bg-amber-500/10",
-    text: "text-amber-600 dark:text-amber-400",
-    border: "border-amber-500/30",
-  },
-  review: {
-    bg: "bg-violet-500/10",
-    text: "text-violet-600 dark:text-violet-400",
-    border: "border-violet-500/30",
-  },
-};
-
 interface CreateAgentDialogProps {
   open: boolean;
   onClose: () => void;
   runtimes: RuntimeProfile[];
+  skills: SkillProfile[];
   onSubmit: (data: {
     name: string;
     role: string;
@@ -66,7 +32,7 @@ interface CreateAgentDialogProps {
   }) => void;
 }
 
-export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateAgentDialogProps) {
+export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }: CreateAgentDialogProps) {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [runtimeId, setRuntimeId] = useState<string | null>(null);
@@ -76,6 +42,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
   const [loadingModels, setLoadingModels] = useState(false);
 
   const selectedRuntime = runtimes.find((r) => r.id === runtimeId);
+  const { builtinOptions, marketOptions } = getCapabilityOptions(skills);
 
   const handleRuntimeChange = (id: string) => {
     setRuntimeId(id);
@@ -291,7 +258,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
         <div>
           <label className="text-xs text-muted-foreground">{m.agent_capabilities()}</label>
           <div className="flex flex-wrap gap-1.5">
-            {CAPABILITY_OPTIONS.map((cap) => {
+            {builtinOptions.map((cap) => {
               const colors = CAPABILITY_COLORS[cap.value];
               const isSelected = selectedCapabilities.includes(cap.value);
               return (
@@ -310,12 +277,36 @@ export function CreateAgentDialog({ open, onClose, runtimes, onSubmit }: CreateA
                 </button>
               );
             })}
+            {marketOptions.map((cap) => {
+              const isSelected = selectedCapabilities.includes(cap.value);
+              return (
+                <button
+                  key={cap.value}
+                  type="button"
+                  onClick={() => toggleCapability(cap.value)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                    isSelected
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border bg-muted/30 text-muted-foreground hover:bg-accent",
+                  )}
+                  title={m.skills()}
+                >
+                  {cap.label}
+                </button>
+              );
+            })}
           </div>
           <p className="mt-1 text-[10px] text-muted-foreground/60">
             {selectedRuntime
               ? "Prefilled from the selected runtime. You can still adjust capabilities before creating the agent."
               : "Select a runtime to prefill recommended capabilities, then adjust them if needed."}
           </p>
+          {marketOptions.length > 0 && (
+            <p className="mt-1 text-[10px] text-muted-foreground/60">
+              {`Market skills available: ${marketOptions.map((cap) => cap.label).join(", ")}`}
+            </p>
+          )}
         </div>
 
         <div>

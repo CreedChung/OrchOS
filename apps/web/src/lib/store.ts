@@ -5,7 +5,7 @@ import type { ControlSettings } from "@/lib/types";
 type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_request";
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
 type ScopeFilter = "all" | "global" | "project";
-type CreationArchiveFilter = "all" | "active" | "archived" | "deleted";
+type CreationArchiveFilter = "all" | "active" | "archived";
 type ThemeMode = "light" | "dark" | "auto";
 
 interface UIState {

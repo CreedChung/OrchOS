@@ -18,6 +18,17 @@ const CommandResponse = t.Object({
   createdAt: t.String(),
 });
 
+const DispatchGoalResponse = t.Object({
+  id: t.String(),
+  title: t.String(),
+  assignedAgentName: t.Optional(t.String()),
+});
+
+const DispatchResponse = t.Object({
+  command: CommandResponse,
+  goals: t.Array(DispatchGoalResponse),
+});
+
 export const commandController = new Elysia({ prefix: "/api/commands" })
   .use(authPlugin)
   .onBeforeHandle(requireAuth)
@@ -36,6 +47,26 @@ export const commandController = new Elysia({ prefix: "/api/commands" })
         projectIds: t.Optional(t.Array(t.String())),
       }),
       response: CommandResponse,
+    },
+  )
+  .post(
+    "/dispatch",
+    async ({ body }) => {
+      const command = CommandService.create({
+        instruction: body.instruction,
+        agentNames: body.agentNames,
+        projectIds: body.projectIds,
+      });
+      return CommandService.dispatchAsync(command, body.runtimeId);
+    },
+    {
+      body: t.Object({
+        instruction: t.String(),
+        agentNames: t.Optional(t.Array(t.String())),
+        projectIds: t.Optional(t.Array(t.String())),
+        runtimeId: t.Optional(t.String()),
+      }),
+      response: DispatchResponse,
     },
   )
   .get(

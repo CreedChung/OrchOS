@@ -3,6 +3,7 @@ import { status } from "elysia";
 import { authPlugin, requireAuth } from "@/modules/auth";
 import { ConversationService } from "@/modules/conversation/service";
 import { ConversationModel } from "@/modules/conversation/model";
+import { CommandService } from "@/modules/command/service";
 
 export const conversationController = new Elysia({ prefix: "/api/conversations" })
   .use(authPlugin)
@@ -98,5 +99,50 @@ export const conversationController = new Elysia({ prefix: "/api/conversations" 
       params: t.Object({ id: t.String() }),
       body: ConversationModel.sendMessageBody,
       response: ConversationModel.messageResponse,
+    },
+  )
+  .post(
+    "/:id/create-goals",
+    async ({ params: { id }, body }) => {
+      const conv = ConversationService.get(id);
+      if (!conv) throw status(404, "Conversation not found");
+
+      const runtimeId = body.runtimeId || conv.runtimeId;
+      if (!runtimeId) throw status(400, "No runtime configured for this conversation");
+
+      const command = CommandService.create({
+        instruction: body.instruction,
+        agentNames: body.agentNames,
+        projectIds: conv.projectId ? [conv.projectId] : body.projectIds,
+      });
+
+      return CommandService.dispatchAsync(command, runtimeId);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      body: t.Object({
+        instruction: t.String(),
+        runtimeId: t.Optional(t.String()),
+        agentNames: t.Optional(t.Array(t.String())),
+        projectIds: t.Optional(t.Array(t.String())),
+      }),
+      response: t.Object({
+        command: t.Object({
+          id: t.String(),
+          instruction: t.String(),
+          agentNames: t.Array(t.String()),
+          projectIds: t.Array(t.String()),
+          goalId: t.Nullable(t.String()),
+          status: t.String(),
+          createdAt: t.String(),
+        }),
+        goals: t.Array(
+          t.Object({
+            id: t.String(),
+            title: t.String(),
+            assignedAgentName: t.Optional(t.String()),
+          }),
+        ),
+      }),
     },
   );

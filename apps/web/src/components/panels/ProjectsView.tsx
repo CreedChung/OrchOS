@@ -31,6 +31,7 @@ import type {
   ActivityEntry,
   Problem,
   Command,
+  AgentProfile,
 } from "@/lib/types";
 
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
@@ -57,6 +58,7 @@ interface ProjectsViewProps {
   activeGoalId: string | null;
   activeGoal: Goal | null;
   activeCommand: Command | undefined;
+  agents: AgentProfile[];
   onSelectGoal: (id: string) => void;
   onStateAction: (stateId: string, action: string) => void;
   onProblemAction: (problemId: string, action: string) => void;
@@ -76,6 +78,7 @@ export function ProjectsView({
   activeGoalId,
   activeGoal,
   activeCommand,
+  agents,
   onSelectGoal,
   onStateAction,
   onProblemAction,
@@ -448,15 +451,25 @@ export function ProjectsView({
                             >
                               {goal.title}
                             </p>
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-[9px] px-1 py-0 h-4 mt-0.5",
-                                goal.id === activeGoalId && "border-accent-foreground/20",
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-[9px] px-1 py-0 h-4",
+                                  goal.id === activeGoalId && "border-accent-foreground/20",
+                                )}
+                              >
+                                {goalStatusLabel[goal.status] || goal.status}
+                              </Badge>
+                              {goal.watchers.length > 0 && (
+                                <span className="text-[9px] text-muted-foreground">
+                                  {goal.watchers.map((w) => {
+                                    const agent = agents.find((a) => a.name === w);
+                                    return agent ? agent.name : w;
+                                  }).join(", ")}
+                                </span>
                               )}
-                            >
-                              {goalStatusLabel[goal.status] || goal.status}
-                            </Badge>
+                            </div>
                           </div>
                         </button>
                       ))}
@@ -710,9 +723,19 @@ export function ProjectsView({
                                 <p className="text-sm font-medium text-foreground truncate">
                                   {goal.title}
                                 </p>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 mt-1">
-                                  {goalStatusLabel[goal.status] || goal.status}
-                                </Badge>
+                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                                    {goalStatusLabel[goal.status] || goal.status}
+                                  </Badge>
+                                  {goal.watchers.length > 0 && (
+                                    <span className="text-[10px] text-muted-foreground">
+                                      → {goal.watchers.map((w) => {
+                                        const agent = agents.find((a) => a.name === w);
+                                        return agent ? agent.name : w;
+                                      }).join(", ")}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </button>
                           ))}

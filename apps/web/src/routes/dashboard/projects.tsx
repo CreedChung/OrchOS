@@ -15,6 +15,7 @@ function ProjectsPage() {
     problems,
     activeGoal,
     activeCommand,
+    agents,
     refreshAll,
     handleStateAction,
     handleProblemAction,
@@ -36,6 +37,7 @@ function ProjectsPage() {
       activeGoalId={activeGoalId}
       activeGoal={activeGoal}
       activeCommand={activeCommand}
+      agents={agents}
       onSelectGoal={setActiveGoalId}
       onStateAction={handleStateAction}
       onProblemAction={handleProblemAction}

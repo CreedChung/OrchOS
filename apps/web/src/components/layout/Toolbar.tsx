@@ -18,8 +18,8 @@ import {
   CodeIcon,
   CloudIcon,
   Archive01Icon,
-  Delete02Icon,
   ArrowReloadHorizontalIcon,
+  Wrench01Icon,
 } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
 import type { SidebarView, InboxSource } from "@/lib/types";
@@ -27,7 +27,7 @@ import type { SidebarView, InboxSource } from "@/lib/types";
 type SourceFilter = "all" | InboxSource;
 export type ScopeFilter = "all" | "global" | "project";
 export type AgentModelFilter = "all" | "local" | "cloud";
-export type CreationArchiveFilter = "all" | "active" | "archived" | "deleted";
+export type CreationArchiveFilter = "all" | "active" | "archived";
 
 const scopeFilterConfig: Record<
   Exclude<ScopeFilter, "all">,
@@ -82,6 +82,7 @@ interface ToolbarProps {
   creationArchiveFilter: CreationArchiveFilter;
   onCreationArchiveFilterChange: (filter: CreationArchiveFilter) => void;
   onRefresh?: () => void;
+  onOpenCapabilityMarket?: () => void;
 }
 
 export function Toolbar({
@@ -102,11 +103,10 @@ export function Toolbar({
   creationArchiveFilter,
   onCreationArchiveFilterChange,
   onRefresh,
+  onOpenCapabilityMarket,
 }: ToolbarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [isMac, setIsMac] = useState(false);
-  const creationDeletedLabel =
-    typeof m.creation_deleted === "function" ? m.creation_deleted() : "Deleted";
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad|iPod/.test(window.navigator.platform));
@@ -155,7 +155,6 @@ export function Toolbar({
               { value: "all", label: m.all(), icon: Menu01Icon },
               { value: "active", label: m.creation_active(), icon: Clock01Icon },
               { value: "archived", label: m.creation_archived(), icon: Archive01Icon },
-              { value: "deleted", label: creationDeletedLabel, icon: Delete02Icon },
             ] as const
           ).map((filter) => (
             <button
@@ -264,6 +263,16 @@ export function Toolbar({
         {onRefresh && (
           <Button variant="outline" size="icon-sm" onClick={onRefresh} title={m.refresh()}>
             <HugeiconsIcon icon={ArrowReloadHorizontalIcon} className="size-3.5" />
+          </Button>
+        )}
+        {onOpenCapabilityMarket && (
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={onOpenCapabilityMarket}
+            title={m.skills()}
+          >
+            <HugeiconsIcon icon={Wrench01Icon} className="size-3.5" />
           </Button>
         )}
         <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 w-full max-w-xs">

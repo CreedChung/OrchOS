@@ -211,6 +211,10 @@ export function SkillsView({
                         </p>
                       </div>
                     </div>
+                    <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+                      Browse reusable capabilities, inspect how others packaged them, and enable the
+                      ones you want to expose in agent configuration.
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
