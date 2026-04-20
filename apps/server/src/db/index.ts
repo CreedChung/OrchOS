@@ -240,4 +240,7 @@ function migrate(sqlite: Database) {
       );
     }
   } catch {}
+  try {
+    sqlite.run("ALTER TABLE problems ADD COLUMN suggested_goal TEXT");
+  } catch {}
 }

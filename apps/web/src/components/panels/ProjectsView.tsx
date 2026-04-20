@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AppDialog } from "@/components/ui/app-dialog";
+import { Input } from "@/components/ui/input";
 import { DirectoryPickerDialog } from "@/components/ui/directory-picker-dialog";
 import { StateBoard } from "@/components/panels/StateBoard";
 import { GoalActions } from "@/components/panels/GoalActions";
@@ -738,143 +740,137 @@ export function ProjectsView({
         )}
       </div>
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-2xl">
-            <div className="mb-4">
-              <h2 className="text-sm font-semibold text-foreground">
-                {editingId ? m.edit_status() : m.add()} {m.project()}
-              </h2>
+      <AppDialog
+        open={showForm}
+        onOpenChange={(open) => {
+          if (!open) handleCancel();
+        }}
+        title={`${editingId ? m.edit_status() : m.add()} ${m.project()}`}
+        size="lg"
+        footer={
+          <>
+            <Button size="sm" variant="outline" onClick={handleCancel}>
+              {m.cancel()}
+            </Button>
+            <Button
+              size="sm"
+              onClick={editingId ? handleUpdate : handleCreate}
+              disabled={loading || !formData.name || !formData.path}
+            >
+              {loading
+                ? m.creating()
+                : editingId
+                  ? m.save()
+                  : formMode === "clone"
+                    ? "Clone & Create"
+                    : "Import Project"}
+            </Button>
+          </>
+        }
+      >
+        {!editingId && (
+          <Tabs value={formMode} onValueChange={(v) => setFormMode(v as "clone" | "local")} className="mb-4">
+            <TabsList>
+              <TabsTrigger value="clone">
+                <HugeiconsIcon icon={Download01Icon} className="size-4" />
+                Clone Remote
+              </TabsTrigger>
+              <TabsTrigger value="local">
+                <HugeiconsIcon icon={FolderIcon} className="size-4" />
+                Import Local
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+
+        {formMode === "clone" ? (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                {m.env_project_repo_url()}
+              </label>
+              <Input
+                type="text"
+                value={formData.repositoryUrl}
+                onChange={(e) => setFormData({ ...formData, repositoryUrl: e.target.value })}
+                placeholder={m.env_project_repo_placeholder()}
+                className="font-mono"
+              />
             </div>
-
-            {!editingId && (
-              <Tabs value={formMode} onValueChange={(v) => setFormMode(v as "clone" | "local")}>
-                <TabsList>
-                  <TabsTrigger value="clone">
-                    <HugeiconsIcon icon={Download01Icon} className="size-4" />
-                    Clone Remote
-                  </TabsTrigger>
-                  <TabsTrigger value="local">
-                    <HugeiconsIcon icon={FolderIcon} className="size-4" />
-                    Import Local
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            )}
-
-            {formMode === "clone" ? (
-              <div className="space-y-3 mt-4">
-                <div>
-                  <label className="text-xs text-muted-foreground">
-                    {m.env_project_repo_url()}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.repositoryUrl}
-                    onChange={(e) => setFormData({ ...formData, repositoryUrl: e.target.value })}
-                    placeholder={m.env_project_repo_placeholder()}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">{m.env_project_name()}</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder={m.env_project_name_placeholder()}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">{m.env_project_path()}</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={formData.path}
-                      onChange={(e) => setFormData({ ...formData, path: e.target.value })}
-                      placeholder={m.env_project_path_placeholder()}
-                      className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                      readOnly
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-9 w-9 px-0"
-                      onClick={() => setShowDirectoryPicker(true)}
-                      title="Browse for directory"
-                      aria-label="Browse for directory"
-                    >
-                      <HugeiconsIcon icon={FolderIcon} className="size-3.5" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    Auto-generated from repo name. Click Browse to choose a different location.
-                  </p>
-                </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">{m.env_project_name()}</label>
+              <Input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder={m.env_project_name_placeholder()}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">{m.env_project_path()}</label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={formData.path}
+                  onChange={(e) => setFormData({ ...formData, path: e.target.value })}
+                  placeholder={m.env_project_path_placeholder()}
+                  className="flex-1 font-mono"
+                  readOnly
+                />
+                <Button
+                  size="icon-sm"
+                  variant="outline"
+                  onClick={() => setShowDirectoryPicker(true)}
+                  title="Browse for directory"
+                  aria-label="Browse for directory"
+                >
+                  <HugeiconsIcon icon={FolderIcon} className="size-3.5" />
+                </Button>
               </div>
-            ) : (
-              <div className="space-y-3 mt-4">
-                <div>
-                  <label className="text-xs text-muted-foreground">{m.env_project_name()}</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder={m.env_project_name_placeholder()}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Local Directory</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={formData.path}
-                      onChange={(e) => setFormData({ ...formData, path: e.target.value })}
-                      placeholder="/Users/username/Projects/my-project"
-                      className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
-                      readOnly
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-9 w-9 px-0"
-                      onClick={() => setShowDirectoryPicker(true)}
-                      title="Browse for directory"
-                      aria-label="Browse for directory"
-                    >
-                      <HugeiconsIcon icon={FolderIcon} className="size-3.5" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    Click Browse to select your local project directory
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-4 flex justify-end gap-2">
-              <Button size="sm" variant="outline" onClick={handleCancel}>
-                {m.cancel()}
-              </Button>
-              <Button
-                size="sm"
-                onClick={editingId ? handleUpdate : handleCreate}
-                disabled={loading || !formData.name || !formData.path}
-              >
-                {loading
-                  ? m.creating()
-                  : editingId
-                    ? m.save()
-                    : formMode === "clone"
-                      ? "Clone & Create"
-                      : "Import Project"}
-              </Button>
+              <p className="text-xs text-muted-foreground/60">
+                Auto-generated from repo name. Click Browse to choose a different location.
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">{m.env_project_name()}</label>
+              <Input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder={m.env_project_name_placeholder()}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Local Directory</label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={formData.path}
+                  onChange={(e) => setFormData({ ...formData, path: e.target.value })}
+                  placeholder="/Users/username/Projects/my-project"
+                  className="flex-1 font-mono"
+                  readOnly
+                />
+                <Button
+                  size="icon-sm"
+                  variant="outline"
+                  onClick={() => setShowDirectoryPicker(true)}
+                  title="Browse for directory"
+                  aria-label="Browse for directory"
+                >
+                  <HugeiconsIcon icon={FolderIcon} className="size-3.5" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground/60">
+                Click Browse to select your local project directory
+              </p>
+            </div>
+          </div>
+        )}
+      </AppDialog>
 
       <DirectoryPickerDialog
         open={showDirectoryPicker}

@@ -11,6 +11,7 @@ interface AvatarUploadProps {
   runtimeId?: string;
   size?: "sm" | "md" | "lg";
   onUploaded?: (avatarUrl: string) => void;
+  disableHover?: boolean;
 }
 
 const sizeMap = {
@@ -32,6 +33,7 @@ export function AvatarUpload({
   runtimeId,
   size = "md",
   onUploaded,
+  disableHover,
 }: AvatarUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -84,22 +86,32 @@ export function AvatarUpload({
         </span>
       )}
 
-      <div
-        className={cn(
-          "absolute inset-0 flex items-center justify-center bg-foreground/40 opacity-0 transition-opacity",
-          !uploading && "group-hover:opacity-100",
-          uploading && "opacity-100",
-        )}
-      >
-        {uploading ? (
+      {!disableHover && (
+        <div
+          className={cn(
+            "absolute inset-0 flex items-center justify-center bg-foreground/40 opacity-0 transition-opacity",
+            !uploading && "group-hover:opacity-100",
+            uploading && "opacity-100",
+          )}
+        >
+          {uploading ? (
+            <HugeiconsIcon
+              icon={Loading01Icon}
+              className={cn(iconSizeMap[size], "text-background animate-spin")}
+            />
+          ) : (
+            <HugeiconsIcon icon={Camera01Icon} className={cn(iconSizeMap[size], "text-background")} />
+          )}
+        </div>
+      )}
+      {disableHover && uploading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-foreground/40">
           <HugeiconsIcon
             icon={Loading01Icon}
             className={cn(iconSizeMap[size], "text-background animate-spin")}
           />
-        ) : (
-          <HugeiconsIcon icon={Camera01Icon} className={cn(iconSizeMap[size], "text-background")} />
-        )}
-      </div>
+        </div>
+      )}
 
       <input
         ref={inputRef}

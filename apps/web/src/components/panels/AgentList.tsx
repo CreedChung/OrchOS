@@ -137,7 +137,7 @@ function AgentItem({
   return (
     <div
       className={cn(
-        "group flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
+        "group flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
         isActive ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-accent/50",
         !agent.enabled && "opacity-50",
       )}
@@ -149,46 +149,47 @@ function AgentItem({
         runtimeId={agent.runtimeId}
         size="sm"
         onUploaded={onAvatarUploaded}
+        disableHover
       />
       <button onClick={onClick} className="min-w-0 flex-1 text-left flex items-center gap-2">
         <div className={cn("size-2 rounded-full shrink-0", agentStatusColor[agent.status])} />
         <p className={cn("text-xs font-medium", isActive && "text-accent-foreground")}>
           {agent.name}
         </p>
-        <p className="text-[10px] text-muted-foreground/60 shrink-0 ml-auto">{agent.model}</p>
       </button>
-      {(onEdit || onDelete) && (
-        <div className="flex items-center gap-0.5 shrink-0">
-          {onEdit && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-              title={m.edit_status()}
-              className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
-            >
-              <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              title={m.delete()}
-              className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
-            >
-              <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-            </Button>
-          )}
-        </div>
-      )}
+      <div className="flex items-center gap-0.5 shrink-0">
+        <p className="text-[10px] text-muted-foreground/60 group-hover:opacity-0 transition-opacity">
+          {agent.model}
+        </p>
+        {onEdit && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            title={m.edit_status()}
+            className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
+          >
+            <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+          </Button>
+        )}
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            title={m.delete()}
+            className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+          >
+            <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

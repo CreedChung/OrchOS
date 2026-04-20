@@ -367,7 +367,7 @@ export function SettingsDialog({
     }
   };
 
-  const handleNotificationToggle = (key: "system" | "sound") => {
+  const handleNotificationToggle = async (key: "system" | "sound") => {
     if (!currentSettings) return;
     const updated = {
       ...currentSettings,
@@ -378,9 +378,14 @@ export function SettingsDialog({
     };
     setLocalSettings(updated);
     onSettingsChange(updated);
+    try {
+      await api.updateSettings({ notifications: updated.notifications });
+    } catch (err) {
+      console.error("Failed to update notification settings:", err);
+    }
   };
 
-  const handleEventSoundToggle = (event: NotificationEvent) => {
+  const handleEventSoundToggle = async (event: NotificationEvent) => {
     if (!currentSettings) return;
     const updated = {
       ...currentSettings,
@@ -394,9 +399,14 @@ export function SettingsDialog({
     };
     setLocalSettings(updated);
     onSettingsChange(updated);
+    try {
+      await api.updateSettings({ notifications: updated.notifications });
+    } catch (err) {
+      console.error("Failed to update event sound settings:", err);
+    }
   };
 
-  const handleEventSoundFileChange = (event: NotificationEvent, soundId: SoundId) => {
+  const handleEventSoundFileChange = async (event: NotificationEvent, soundId: SoundId) => {
     if (!currentSettings) return;
     const updated = {
       ...currentSettings,
@@ -410,6 +420,11 @@ export function SettingsDialog({
     };
     setLocalSettings(updated);
     onSettingsChange(updated);
+    try {
+      await api.updateSettings({ notifications: updated.notifications });
+    } catch (err) {
+      console.error("Failed to update event sound file settings:", err);
+    }
   };
 
   const playSound = (soundId: SoundId) => {

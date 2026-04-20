@@ -9,6 +9,7 @@ const ProblemResponse = t.Object({
   priority: t.Union([t.Literal("critical"), t.Literal("warning"), t.Literal("info")]),
   source: t.Nullable(t.String()),
   context: t.Nullable(t.String()),
+  suggestedGoal: t.Nullable(t.String()),
   goalId: t.Nullable(t.String()),
   stateId: t.Nullable(t.String()),
   status: t.Union([

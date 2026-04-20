@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AgentList } from "@/components/panels/AgentList";
 import { AgentDetailView } from "@/components/panels/AgentDetail";
+import { EditAgentDialog } from "@/components/dialogs/EditAgentDialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useUIStore } from "@/lib/store";
@@ -13,22 +14,23 @@ function AgentsPage() {
   const {
     agents,
     rules,
+    runtimes,
     loading,
     handleRuleToggle,
     handleRuleDelete,
     handleUpdateAgent,
     handleDeleteAgent,
     refreshAll,
+    setShowCreateAgentDialog,
   } = useDashboard();
 
   const { activeAgentId, setActiveAgentId } = useUIStore();
-  const { setShowCreateAgentDialog } = useDashboard();
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  const agentInstances = agents;
-  const activeAgent = agentInstances.find((a) => a.id === activeAgentId);
+  const activeAgent = agents.find((a) => a.id === activeAgentId);
 
   const handleDeleteClick = (id: string) => {
     setAgentToDelete(id);
@@ -46,16 +48,21 @@ function AgentsPage() {
     setAgentToDelete(null);
   };
 
+  const handleEditAgent = (id: string) => {
+    setActiveAgentId(id);
+    setEditDialogOpen(true);
+  };
+
   return (
     <div className="flex flex-1 overflow-hidden">
       <AgentList
-        agents={agentInstances}
+        agents={agents}
         activeAgentId={activeAgentId}
         loading={loading}
         onSelectAgent={setActiveAgentId}
         onAgentUpdated={refreshAll}
         onCreateAgent={() => setShowCreateAgentDialog(true)}
-        onEditAgent={(id) => setActiveAgentId(id)}
+        onEditAgent={handleEditAgent}
         onDeleteAgent={handleDeleteClick}
       />
       <div className="flex-1 overflow-hidden">
@@ -67,16 +74,29 @@ function AgentsPage() {
             onRuleDelete={handleRuleDelete}
             onAgentUpdated={refreshAll}
             onUpdateAgent={handleUpdateAgent}
+            onDeleteAgent={handleDeleteClick}
+            onEditAgent={handleEditAgent}
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <div className="text-center">
+            <div className="text-center max-w-sm">
               <p className="text-sm text-muted-foreground">{m.no_agent_selected()}</p>
               <p className="text-xs text-muted-foreground/60 mt-1">{m.no_agent_selected_desc()}</p>
             </div>
           </div>
         )}
       </div>
+
+      {activeAgent && editDialogOpen && (
+        <EditAgentDialog
+          open={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          agent={activeAgent}
+          runtimes={runtimes}
+          onSubmit={handleUpdateAgent}
+        />
+      )}
+
       <ConfirmDialog
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}

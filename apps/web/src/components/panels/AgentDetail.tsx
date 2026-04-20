@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -8,22 +8,20 @@ import {
   ToggleRight,
   Cancel01Icon,
   Circle,
-  Wrench01Icon,
-  PencilEdit02Icon,
-  CheckmarkCircle02Icon,
+  Edit02Icon,
+  Delete02Icon,
+  UserIcon,
+  CpuIcon,
+  Settings02Icon,
+  PlayIcon,
+  PauseIcon,
 } from "@hugeicons/core-free-icons";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { m } from "@/paraglide/messages";
 import type { AgentProfile, Rule } from "@/lib/types";
-
-const CAPABILITY_OPTIONS = [
-  { value: "write_code", labelKey: "cap_write_code" },
-  { value: "fix_bug", labelKey: "cap_fix_bug" },
-  { value: "run_tests", labelKey: "cap_run_tests" },
-  { value: "commit", labelKey: "cap_commit" },
-  { value: "review", labelKey: "cap_review" },
-] as const;
 
 const CAPABILITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   write_code: {
@@ -84,88 +82,6 @@ const actionLabels: Record<string, string> = {
   notify: m.notify(),
 };
 
-function InlineEditField({
-  value,
-  onSave,
-  className,
-  inputClassName,
-  placeholder,
-  mono = false,
-}: {
-  value: string;
-  onSave: (val: string) => void;
-  className?: string;
-  inputClassName?: string;
-  placeholder?: string;
-  mono?: boolean;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editing) {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }
-  }, [editing]);
-
-  useEffect(() => {
-    setDraft(value);
-  }, [value]);
-
-  const handleSave = () => {
-    const trimmed = draft.trim();
-    if (trimmed && trimmed !== value) {
-      onSave(trimmed);
-    }
-    setEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleSave();
-    if (e.key === "Escape") {
-      setDraft(value);
-      setEditing(false);
-    }
-  };
-
-  if (editing) {
-    return (
-      <input
-        ref={inputRef}
-        type="text"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={handleSave}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        className={cn(
-          "rounded-md border border-ring bg-background px-2 py-0.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring",
-          mono && "font-mono text-xs",
-          inputClassName,
-        )}
-      />
-    );
-  }
-
-  return (
-    <span
-      onClick={() => setEditing(true)}
-      className={cn(
-        "group/edit inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-0.5 transition-colors hover:bg-accent",
-        className,
-      )}
-    >
-      <span className={cn(mono && "font-mono text-[10px]")}>{value || placeholder}</span>
-      <HugeiconsIcon
-        icon={PencilEdit02Icon}
-        className="size-3 text-muted-foreground opacity-0 transition-opacity group-hover/edit:opacity-100"
-      />
-    </span>
-  );
-}
-
 export function AgentDetailView({
   agent,
   rules,
@@ -173,6 +89,8 @@ export function AgentDetailView({
   onRuleDelete,
   onAgentUpdated,
   onUpdateAgent,
+  onDeleteAgent,
+  onEditAgent,
 }: {
   agent: AgentProfile;
   rules: Rule[];
@@ -193,34 +111,11 @@ export function AgentDetailView({
       avatarUrl: string;
     }>,
   ) => Promise<void>;
+  onDeleteAgent?: (id: string) => void;
+  onEditAgent?: (id: string) => void;
 }) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
-  const [enabledCapabilities, setEnabledCapabilities] = useState<string[]>(agent.capabilities);
-  const [capsDirty, setCapsDirty] = useState(false);
-
-  useEffect(() => {
-    setEnabledCapabilities(agent.capabilities);
-    setCapsDirty(false);
-  }, [agent.capabilities]);
-
-  const handleFieldSave = (field: string, value: string) => {
-    onUpdateAgent?.(agent.id, { [field]: value });
-  };
-
-  const toggleCapability = (cap: string) => {
-    setEnabledCapabilities((prev) => {
-      const next = prev.includes(cap) ? prev.filter((c) => c !== cap) : [...prev, cap];
-      setCapsDirty(next.sort().join(",") !== [...agent.capabilities].sort().join(","));
-      return next;
-    });
-  };
-
-  const saveCapabilities = () => {
-    if (capsDirty && enabledCapabilities.length > 0) {
-      onUpdateAgent?.(agent.id, { capabilities: enabledCapabilities });
-    }
-  };
 
   const handleDeleteClick = (id: string) => {
     setRuleToDelete(id);
@@ -234,11 +129,21 @@ export function AgentDetailView({
     }
   };
 
+  const handleToggleEnabled = () => {
+    onUpdateAgent?.(agent.id, { enabled: !agent.enabled });
+  };
+
+  const statusColor = agent.status === "active"
+    ? "text-emerald-500"
+    : agent.status === "error"
+      ? "text-red-500"
+      : "text-muted-foreground";
+
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-3xl p-6">
-        <div className="mb-6">
-          <div className="flex items-center gap-4">
+      <div className="p-6 space-y-6 max-w-4xl mx-auto">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
             <AvatarUpload
               agentId={agent.id}
               avatarUrl={agent.avatarUrl}
@@ -247,119 +152,119 @@ export function AgentDetailView({
               size="lg"
               onUploaded={onAgentUpdated}
             />
-            <div className="flex-1">
-              <InlineEditField
-                value={agent.name}
-                onSave={(val) => handleFieldSave("name", val)}
-                className="text-xl font-bold text-foreground"
-                inputClassName="text-xl font-bold"
-                placeholder={m.agent_name()}
-              />
-              <div className="flex items-center gap-2 mt-1">
-                <InlineEditField
-                  value={agent.model}
-                  onSave={(val) => handleFieldSave("model", val)}
-                  className="rounded-full bg-muted text-[10px] font-medium text-muted-foreground"
-                  inputClassName="text-[10px] font-mono"
-                  mono
-                  placeholder={m.agent_model_placeholder()}
-                />
-                <HugeiconsIcon
-                  icon={Circle}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-semibold text-foreground">{agent.name}</h1>
+                <Badge
+                  variant={agent.enabled ? "default" : "outline"}
                   className={cn(
-                    "size-2 fill-current",
-                    agent.status === "active"
-                      ? "text-emerald-500"
-                      : agent.status === "error"
-                        ? "text-red-500"
-                        : "text-muted-foreground",
+                    "text-[10px]",
+                    agent.enabled
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                      : "text-muted-foreground",
                   )}
-                />
-                <span className="text-xs text-muted-foreground">
-                  {statusLabelMap[agent.status] || agent.status}
-                </span>
+                >
+                  {agent.enabled ? "Active" : "Disabled"}
+                </Badge>
               </div>
-              <InlineEditField
-                value={agent.role}
-                onSave={(val) => handleFieldSave("role", val)}
-                className="text-sm text-muted-foreground mt-1"
-                inputClassName="text-sm"
-                placeholder={m.agent_role_placeholder()}
-              />
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <HugeiconsIcon icon={Circle} className={cn("size-2 fill-current", statusColor)} />
+                  <span>{statusLabelMap[agent.status] || agent.status}</span>
+                </div>
+                <span className="text-border">|</span>
+                <div className="flex items-center gap-1.5">
+                  <HugeiconsIcon icon={CpuIcon} className="size-3.5" />
+                  <span className="font-mono text-xs">{agent.model}</span>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground flex items-start gap-1.5">
+                <HugeiconsIcon icon={UserIcon} className="size-3.5 mt-0.5 shrink-0" />
+                {agent.role}
+              </p>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleToggleEnabled}
+            >
+              <HugeiconsIcon
+                icon={agent.enabled ? PauseIcon : PlayIcon}
+                className="size-3.5"
+              />
+              {agent.enabled ? "Disable" : "Enable"}
+            </Button>
+            {onEditAgent && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onEditAgent(agent.id)}
+              >
+                <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                {m.edit()}
+              </Button>
+            )}
+            {onDeleteAgent && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onDeleteAgent(agent.id)}
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                {m.delete()}
+              </Button>
+            )}
           </div>
         </div>
 
-        <section className="mb-6">
-          <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <div className="size-1.5 rounded-full bg-primary" />
+        <div className="space-y-4">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <HugeiconsIcon icon={Settings02Icon} className="size-4" />
             {m.capabilities()}
           </h2>
-          <div className="flex flex-wrap gap-1.5">
-            {CAPABILITY_OPTIONS.map((cap) => {
-              const colors = CAPABILITY_COLORS[cap.value];
-              const isSelected = enabledCapabilities.includes(cap.value);
+          <div className="flex flex-wrap gap-2">
+            {agent.capabilities.map((cap) => {
+              const colors = CAPABILITY_COLORS[cap] || {
+                bg: "bg-muted/50",
+                text: "text-muted-foreground",
+                border: "border-border/50",
+              };
               return (
-                <button
-                  key={cap.value}
-                  type="button"
-                  onClick={() => toggleCapability(cap.value)}
+                <div
+                  key={cap}
                   className={cn(
-                    "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                    isSelected
-                      ? `${colors.bg} ${colors.text} ${colors.border}`
-                      : "border-border bg-muted/30 text-muted-foreground hover:bg-accent",
+                    "rounded-lg border px-3 py-1.5 text-xs font-medium",
+                    colors.bg,
+                    colors.text,
+                    colors.border,
                   )}
                 >
-                  <span className="inline-flex items-center gap-1">
-                    <HugeiconsIcon icon={Wrench01Icon} className="size-3" />
-                    {capLabelMap[cap.value] || cap.value.replace(/_/g, " ")}
-                  </span>
-                </button>
+                  {capLabelMap[cap] || cap.replace(/_/g, " ")}
+                </div>
               );
             })}
+            {agent.capabilities.length === 0 && (
+              <p className="text-sm text-muted-foreground">No capabilities assigned</p>
+            )}
           </div>
-          {capsDirty && (
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                onClick={saveCapabilities}
-                disabled={enabledCapabilities.length === 0}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors",
-                  enabledCapabilities.length > 0
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-muted text-muted-foreground cursor-not-allowed",
-                )}
-              >
-                <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3.5" />
-                {m.save()}
-              </button>
-              <button
-                onClick={() => {
-                  setEnabledCapabilities(agent.capabilities);
-                  setCapsDirty(false);
-                }}
-                className="rounded-md border border-border px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-              >
-                {m.cancel()}
-              </button>
-            </div>
-          )}
-        </section>
+        </div>
 
-        <section>
-          <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <div className="size-1.5 rounded-full bg-primary" />
+        <div className="space-y-4">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <HugeiconsIcon icon={Shield01Icon} className="size-4" />
             {m.automation_rules()}
           </h2>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {rules.map((rule) => (
               <div
                 key={rule.id}
                 className={cn(
                   "flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors",
                   rule.enabled
-                    ? "border-border/50 bg-card"
+                    ? "border-border/50 bg-card hover:bg-muted/30"
                     : "border-border/30 bg-muted/20 opacity-60",
                 )}
               >
@@ -372,19 +277,19 @@ export function AgentDetailView({
                 />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-foreground">{rule.name}</span>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">
+                  <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium">
                       {conditionLabels[rule.condition] || rule.condition}
                     </span>
                     <HugeiconsIcon icon={ArrowRight01Icon} className="size-2.5" />
-                    <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium">
                       {actionLabels[rule.action] || rule.action}
                     </span>
                   </div>
                 </div>
                 <button
                   onClick={() => onRuleToggle(rule.id, !rule.enabled)}
-                  className="shrink-0 text-muted-foreground hover:text-foreground"
+                  className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
                   title={rule.enabled ? m.disable_rule() : m.enable_rule()}
                 >
                   {rule.enabled ? (
@@ -395,7 +300,7 @@ export function AgentDetailView({
                 </button>
                 <button
                   onClick={() => handleDeleteClick(rule.id)}
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                  className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
                   title={m.delete()}
                 >
                   <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
@@ -403,17 +308,17 @@ export function AgentDetailView({
               </div>
             ))}
             {rules.length === 0 && (
-              <div className="rounded-lg border border-dashed border-border/50 py-8 text-center">
+              <div className="rounded-lg border border-dashed border-border/50 py-10 text-center">
                 <HugeiconsIcon
                   icon={Shield01Icon}
-                  className="mx-auto size-6 text-muted-foreground/30 mb-2"
+                  className="mx-auto size-8 text-muted-foreground/30 mb-3"
                 />
                 <p className="text-sm text-muted-foreground">{m.no_rules_yet()}</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">{m.create_rules_desc()}</p>
               </div>
             )}
           </div>
-        </section>
+        </div>
       </div>
 
       <ConfirmDialog

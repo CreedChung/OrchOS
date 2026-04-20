@@ -28,6 +28,7 @@ export interface Problem {
   priority: ProblemPriority;
   source: string | null;
   context: string | null;
+  suggestedGoal: string | null;
   goalId: string | null;
   stateId: string | null;
   status: ProblemStatus;

@@ -145,17 +145,10 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
   const btnRef = useRef<HTMLButtonElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [selectedRuntimeId, setSelectedRuntimeId] = useState<string>("");
+  const [selectedRuntimeId, setSelectedRuntimeId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-
-  // Auto-select first runtime
-  useEffect(() => {
-    if (runtimes.length > 0 && !selectedRuntimeId) {
-      setSelectedRuntimeId(runtimes[0].id);
-    }
-  }, [runtimes, selectedRuntimeId]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -240,13 +233,11 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                 <HugeiconsIcon icon={Robot02Icon} className="size-4 text-primary shrink-0" />
                 {runtimes.length > 0 ? (
                   <Select
-                    value={selectedRuntimeId}
+                    value={selectedRuntimeId ?? ""}
                     onValueChange={(v: string | null) => v && setSelectedRuntimeId(v)}
                   >
                     <SelectTrigger className="h-7 flex-1 min-w-0 text-xs">
-                      <SelectValue>
-                        {runtimes.find((r) => r.id === selectedRuntimeId)?.name || "Select Runtime"}
-                      </SelectValue>
+                      <SelectValue placeholder="Select Runtime" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -268,7 +259,7 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                {selectedRuntime && (
+                {selectedRuntime && modelDisplay && (
                   <span
                     className={cn(
                       "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
@@ -342,7 +333,7 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                   placeholder={
                     selectedRuntime
                       ? `Message ${selectedRuntime.name}...`
-                      : "Select a runtime first"
+                      : "Select a runtime to start"
                   }
                   className="flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-xs outline-0 focus:border-primary/50"
                   rows={2}

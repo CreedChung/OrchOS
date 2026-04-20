@@ -52,6 +52,15 @@ export const conversationController = new Elysia({ prefix: "/api/conversations" 
     },
   )
   .delete(
+    "/deleted",
+    () => {
+      return { success: true, count: ConversationService.clearDeleted() };
+    },
+    {
+      response: t.Object({ success: t.Boolean(), count: t.Number() }),
+    },
+  )
+  .delete(
     "/:id",
     ({ params: { id }, query }) => {
       const success = ConversationService.delete(id, {
@@ -64,15 +73,6 @@ export const conversationController = new Elysia({ prefix: "/api/conversations" 
       params: t.Object({ id: t.String() }),
       query: t.Object({ permanent: t.Optional(t.String()) }),
       response: t.Object({ success: t.Boolean() }),
-    },
-  )
-  .delete(
-    "/deleted",
-    () => {
-      return { success: true, count: ConversationService.clearDeleted() };
-    },
-    {
-      response: t.Object({ success: t.Boolean(), count: t.Number() }),
     },
   )
   .get(

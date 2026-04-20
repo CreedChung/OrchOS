@@ -147,6 +147,7 @@ export const problems = sqliteTable(
     priority: text("priority").notNull().default("warning"),
     source: text("source"),
     context: text("context"),
+    suggestedGoal: text("suggested_goal"),
     goalId: text("goal_id"),
     stateId: text("state_id"),
     status: text("status").notNull().default("open"),
