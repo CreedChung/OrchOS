@@ -136,25 +136,23 @@ export function FeaturesBento() {
 
               <div className="relative pl-6 md:pl-10">
                 <div className="bg-background h-44 overflow-hidden rounded-tl-lg border-l border-t pl-2 pt-2 dark:bg-zinc-950 sm:h-52 md:h-56">
-                  <img
-                    src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop"
-                    className="hidden h-full w-full object-cover object-top dark:block"
-                    alt="Dashboard dark"
-                    width={1207}
-                    height={929}
-                    loading="lazy"
-                    decoding="async"
-                    referrerPolicy="no-referrer"
-                  />
-                  <img
-                    src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop"
+<img
+                    src="/bento1.png"
                     className="shadow h-full w-full object-cover object-top dark:hidden"
                     alt="Dashboard light"
                     width={1207}
                     height={929}
                     loading="lazy"
                     decoding="async"
-                    referrerPolicy="no-referrer"
+                  />
+                  <img
+                    src="/bento1-dark.png"
+                    className="hidden h-full w-full object-cover object-top dark:block"
+                    alt="Dashboard dark"
+                    width={1207}
+                    height={929}
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
               </div>
@@ -169,25 +167,23 @@ export function FeaturesBento() {
               <CardContent className="mt-auto flex-1">
                 <div className="relative h-full">
                   <div className="h-44 overflow-hidden rounded-r-lg border sm:h-52 md:h-56">
-                    <img
-                      src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop"
-                      className="hidden dark:block w-full h-full object-cover"
-                      alt="Analytics dark"
-                      width={1207}
-                      height={929}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                    />
-                    <img
-                      src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop"
+<img
+                      src="/bento2.png"
                       className="shadow dark:hidden w-full h-full object-cover"
                       alt="Analytics light"
                       width={1207}
                       height={929}
                       loading="lazy"
                       decoding="async"
-                      referrerPolicy="no-referrer"
+                    />
+                    <img
+                      src="/bento2-dark.png"
+                      className="hidden dark:block w-full h-full object-cover"
+                      alt="Analytics dark"
+                      width={1207}
+                      height={929}
+                      loading="lazy"
+                      decoding="async"
                     />
                   </div>
                 </div>

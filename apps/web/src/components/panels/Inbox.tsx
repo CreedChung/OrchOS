@@ -204,7 +204,7 @@ export function Inbox({ problems, onConvertToGoal, onDismiss, sourceFilter }: In
 
                       {/* Dismiss */}
                       <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger className="rounded p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent hover:text-foreground">
+                        <DropdownMenuTrigger className="rounded p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-foreground">
                           <HugeiconsIcon icon={MoreHorizontal} className="size-3.5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-36">

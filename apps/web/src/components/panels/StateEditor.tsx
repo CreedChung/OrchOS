@@ -104,7 +104,7 @@ export function StateEditor({ state, onStatusChange }: StateEditorProps) {
       <div className="ml-auto flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
         <button
           onClick={() => setEditing(true)}
-          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           title={m.edit_status()}
         >
           <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />

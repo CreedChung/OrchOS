@@ -113,6 +113,12 @@ export function ProjectsView({
     }
   }, [formData.repositoryUrl, formMode]);
 
+  useEffect(() => {
+    if (!selectedProjectId && projects.length > 0) {
+      setSelectedProjectId(projects[0].id);
+    }
+  }, [projects, selectedProjectId]);
+
   const goalsByProject = new Map<string, Goal[]>();
   const unassignedGoals: Goal[] = [];
 
@@ -297,8 +303,8 @@ export function ProjectsView({
                     <button
                       onClick={() => setSelectedProjectId(project.id)}
                       className={cn(
-                        "group flex flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left transition-colors flex-nowrap",
-                        selectedProjectId === project.id && "bg-accent/50",
+                        "group flex flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left transition-colors flex-nowrap hover:bg-accent/50",
+                        selectedProjectId === project.id && "bg-accent",
                       )}
                     >
                       <HugeiconsIcon
@@ -328,7 +334,7 @@ export function ProjectsView({
                           e.stopPropagation();
                           handleEdit(project);
                         }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
                         title={m.edit()}
                       >
                         <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
@@ -340,7 +346,7 @@ export function ProjectsView({
                           e.stopPropagation();
                           handleDelete(project.id);
                         }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
                         title={m.delete()}
                       >
                         <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />

@@ -31,6 +31,36 @@ export const Route = createRootRoute({
         rel: "stylesheet",
         href: appCss,
       },
+      {
+        rel: "preload",
+        href: "/hero.png",
+        as: "image",
+      },
+      {
+        rel: "preload",
+        href: "/hero-dark.png",
+        as: "image",
+      },
+      {
+        rel: "preload",
+        href: "/bento1.png",
+        as: "image",
+      },
+      {
+        rel: "preload",
+        href: "/bento1-dark.png",
+        as: "image",
+      },
+      {
+        rel: "preload",
+        href: "/bento2.png",
+        as: "image",
+      },
+      {
+        rel: "preload",
+        href: "/bento2-dark.png",
+        as: "image",
+      },
     ],
   }),
   shellComponent: RootDocument,

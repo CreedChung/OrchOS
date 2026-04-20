@@ -100,7 +100,14 @@ function HomePageInner() {
               <img
                 src="/hero.png"
                 alt="OrchOS Hero"
-                className="h-full w-full object-cover object-top"
+                className="h-full w-full object-cover object-top dark:hidden"
+                loading="lazy"
+                decoding="async"
+              />
+              <img
+                src="/hero-dark.png"
+                alt="OrchOS Hero"
+                className="hidden h-full w-full object-cover object-top dark:block"
                 loading="lazy"
                 decoding="async"
               />

@@ -207,7 +207,7 @@ export function RulesPanel({ rules, onCreateRule, onToggleRule, onDeleteRule }: 
               </button>
               <button
                 onClick={() => handleDeleteClick(rule.id)}
-                className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 rounded p-1 hover:bg-destructive/10 hover:text-destructive"
                 title={m.delete()}
               >
                 <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />

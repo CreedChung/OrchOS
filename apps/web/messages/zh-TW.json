@@ -357,7 +357,7 @@
   "rule_name_placeholder": "規則名稱（例如：自動修復測試失敗）",
   "runtime": "執行時",
   "runtimes": "執行時",
-  "runtimes_desc": "偵測系統上的代理 CLI 並註冊為執行時。您可以基於這些執行時建立 Agent 實例。",
+  "runtimes_desc": "偵測並註冊代理 CLI，然後建立 Agent 實例。",
   "save": "儲存",
   "scanning": "掃描中...",
   "scope": "範圍",

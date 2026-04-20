@@ -358,7 +358,7 @@
   "rule_name_placeholder": "Rule name (e.g. Auto-fix test failures)",
   "runtime": "Runtime",
   "runtimes": "Runtimes",
-  "runtimes_desc": "Detect agent CLIs on your system and register them as runtimes. You can then create Agent instances based on these runtimes.",
+  "runtimes_desc": "Detect and register agent CLIs as runtimes to create Agent instances.",
   "save": "Save",
   "scanning": "Scanning...",
   "scope": "Scope",
