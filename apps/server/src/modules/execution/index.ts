@@ -46,6 +46,6 @@ export const settingsController = new Elysia({ prefix: "/api/settings" })
       body: ExecutionModel.settingsUpdateBody,
       response: ExecutionModel.settingsResponse,
     },
-  );
+  );;
 
 export { engine as executionService };

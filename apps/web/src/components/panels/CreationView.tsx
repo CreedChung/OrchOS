@@ -13,6 +13,7 @@ import {
   Folder01Icon,
   Upload04Icon,
   Mic01Icon,
+  Cancel01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { BorderBeam } from "border-beam";
@@ -30,7 +31,8 @@ import { cn } from "@/lib/utils";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 import type { AgentProfile, Project, RuntimeProfile } from "@/lib/types";
 import { m } from "@/paraglide/messages";
-import type { CreationArchiveFilter } from "@/components/layout/Toolbar";
+import { toast } from "sonner";
+import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 
 interface CreationViewProps {
   agents: AgentProfile[];
@@ -350,8 +352,21 @@ function ChatArea({
   const [sending, setSending] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { isListening, transcript, isSupported, start, stop } = useSpeechRecognition();
+
+  const prevTranscriptRef = useRef("");
+  useEffect(() => {
+    if (transcript && transcript !== prevTranscriptRef.current) {
+      setInput((prev) => prev + transcript);
+      prevTranscriptRef.current = transcript;
+      textareaRef.current?.focus();
+    }
+  }, [transcript]);
 
   const selectedRuntime = useMemo(
     () => runtimes.find((r) => r.id === conversation.runtimeId),
@@ -360,6 +375,18 @@ function ChatArea({
 
   const modelDisplay = selectedRuntime?.model.replace(/^(cloud|local)\//, "") || "";
   const isCloudModel = selectedRuntime?.model.startsWith("cloud/");
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    setAttachedFiles((prev) => [...prev, ...newFiles]);
+    e.target.value = "";
+  }, []);
+
+  const handleRemoveFile = useCallback((index: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -372,19 +399,27 @@ function ChatArea({
   }, [conversation.id]);
 
   const handleSend = useCallback(async () => {
-    if (!input.trim() || sending) return;
+    if ((!input.trim() && attachedFiles.length === 0) || sending) return;
+    
     const content = input.trim();
+    const filesToSend = [...attachedFiles];
+    
     setInput("");
+    setAttachedFiles([]);
     setSending(true);
 
     try {
+      if (filesToSend.length > 0) {
+        toast.info(m.multimodal_notice());
+      }
       await onSendMessage(content);
     } catch (err) {
       console.error("Failed to send message:", err);
+      toast.error(m.send_failed());
     } finally {
       setSending(false);
     }
-  }, [input, sending, onSendMessage]);
+  }, [input, attachedFiles, sending, onSendMessage]);
 
   function handleKeys(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -541,8 +576,8 @@ function ChatArea({
       </div>
 
       {/* Input area */}
-      <div className="border-t border-border px-4 py-3">
-        <div className="mx-auto max-w-3xl">
+      <div className="border-t border-border py-3">
+        <div className="px-2">
           <BorderBeam
             size="md"
             theme="auto"
@@ -552,58 +587,97 @@ function ChatArea({
             className="rounded-xl"
           >
             <div className="flex items-end gap-2 rounded-xl border border-border bg-background px-3 py-4">
-              <div className="flex items-center gap-1 mb-1">
+              {attachedFiles.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2 w-full">
+                  {attachedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="relative group rounded-md border border-border bg-muted overflow-hidden"
+                    >
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="h-12 w-12 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(index)}
+                        className="absolute -right-1 -top-1 rounded-full bg-background border border-border p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <HugeiconsIcon icon={Delete02Icon} className="size-3 text-muted-foreground" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-end gap-2 w-full">
+                <div className="flex items-center gap-1 mb-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    title={m.upload()}
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <HugeiconsIcon icon={Upload04Icon} className="size-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    title={isListening ? m.voice_input_stop() : m.voice_input()}
+                    className={cn(
+                      "text-muted-foreground hover:text-foreground",
+                      isListening && "text-red-500 hover:text-red-600",
+                    )}
+                    onClick={isListening ? stop : start}
+                    disabled={!isSupported}
+                  >
+                    <HugeiconsIcon icon={isListening ? Cancel01Icon : Mic01Icon} className="size-4" />
+                  </Button>
+                </div>
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={
+                    selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()
+                  }
+                  className="flex-1 resize-none bg-transparent px-2 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
+                  rows={1}
+                  onKeyDown={handleKeys}
+                  spellCheck={false}
+                  disabled={sending}
+                  style={{ minHeight: "88px", maxHeight: "280px" }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = "auto";
+                    target.style.height = `${Math.min(target.scrollHeight, 280)}px`;
+                  }}
+                />
                 <Button
                   type="button"
-                  variant="ghost"
                   size="icon-sm"
-                  title={m.upload()}
-                  className="text-muted-foreground hover:text-foreground"
+                  disabled={(!input.trim() && attachedFiles.length === 0) || sending}
+                  onClick={handleSend}
+                  className="mb-1 shrink-0"
                 >
-                  <HugeiconsIcon icon={Upload04Icon} className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  title={m.voice_input()}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <HugeiconsIcon icon={Mic01Icon} className="size-4" />
+                  {sending ? (
+                    <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                  ) : (
+                    <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
+                  )}
                 </Button>
               </div>
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={
-                  selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()
-                }
-                className="flex-1 resize-none bg-transparent px-2 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
-                rows={1}
-                onKeyDown={handleKeys}
-                spellCheck={false}
-                disabled={sending}
-                style={{ minHeight: "88px", maxHeight: "280px" }}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement;
-                  target.style.height = "auto";
-                  target.style.height = `${Math.min(target.scrollHeight, 280)}px`;
-                }}
-              />
-              <Button
-                type="button"
-                size="icon-sm"
-                disabled={!input.trim() || sending}
-                onClick={handleSend}
-                className="mb-1 shrink-0"
-              >
-                {sending ? (
-                  <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
-                ) : (
-                  <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
-                )}
-              </Button>
             </div>
           </BorderBeam>
           <p className="text-[10px] text-muted-foreground/50 mt-1.5 text-center">

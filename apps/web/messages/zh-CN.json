@@ -502,5 +502,10 @@
   "assistant": "助手",
   "thinking": "思考中...",
   "untitled_conversation": "新对话",
+  "upload": "上传",
+  "multimodal_notice": "已附加图片。如果模型不支持多模态，图片可能会被忽略。",
+  "send_failed": "发送消息失败",
+  "voice_input": "语音输入",
+  "voice_input_stop": "停止语音输入",
   "workspace": "工作区"
 }

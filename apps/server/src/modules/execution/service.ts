@@ -16,6 +16,14 @@ export class ExecutionService {
     autoCommit: false,
     autoFix: true,
     modelStrategy: "adaptive",
+    locale: "en",
+    timezone: "UTC",
+    notifications: {
+      system: true,
+      sound: true,
+      eventSounds: {},
+      eventSoundFiles: {},
+    },
   };
 
   constructor() {
@@ -29,6 +37,15 @@ export class ExecutionService {
       if (row.key === "autoFix") this.settings.autoFix = row.value === "true";
       if (row.key === "modelStrategy")
         this.settings.modelStrategy = row.value as ControlSettings["modelStrategy"];
+      if (row.key === "locale") this.settings.locale = row.value;
+      if (row.key === "timezone") this.settings.timezone = row.value;
+      if (row.key === "notifications") {
+        try {
+          this.settings.notifications = JSON.parse(row.value);
+        } catch {
+          // ignore parse errors
+        }
+      }
     }
   }
 
@@ -36,27 +53,37 @@ export class ExecutionService {
     return { ...this.settings };
   }
 
+  private saveSetting(key: string, value: string) {
+    db.insert(settings)
+      .values({ key, value })
+      .onConflictDoUpdate({ target: settings.key, set: { value } })
+      .run();
+  }
+
   updateSettings(patch: ExecutionModel["settingsUpdateBody"]): ControlSettings {
     if (patch.autoCommit !== undefined) {
       this.settings.autoCommit = patch.autoCommit;
-      db.insert(settings)
-        .values({ key: "autoCommit", value: String(patch.autoCommit) })
-        .onConflictDoUpdate({ target: settings.key, set: { value: String(patch.autoCommit) } })
-        .run();
+      this.saveSetting("autoCommit", String(patch.autoCommit));
     }
     if (patch.autoFix !== undefined) {
       this.settings.autoFix = patch.autoFix;
-      db.insert(settings)
-        .values({ key: "autoFix", value: String(patch.autoFix) })
-        .onConflictDoUpdate({ target: settings.key, set: { value: String(patch.autoFix) } })
-        .run();
+      this.saveSetting("autoFix", String(patch.autoFix));
     }
     if (patch.modelStrategy !== undefined) {
       this.settings.modelStrategy = patch.modelStrategy;
-      db.insert(settings)
-        .values({ key: "modelStrategy", value: patch.modelStrategy })
-        .onConflictDoUpdate({ target: settings.key, set: { value: patch.modelStrategy } })
-        .run();
+      this.saveSetting("modelStrategy", patch.modelStrategy);
+    }
+    if (patch.locale !== undefined) {
+      this.settings.locale = patch.locale;
+      this.saveSetting("locale", patch.locale);
+    }
+    if (patch.timezone !== undefined) {
+      this.settings.timezone = patch.timezone;
+      this.saveSetting("timezone", patch.timezone);
+    }
+    if (patch.notifications !== undefined) {
+      this.settings.notifications = patch.notifications;
+      this.saveSetting("notifications", JSON.stringify(patch.notifications));
     }
     return { ...this.settings };
   }

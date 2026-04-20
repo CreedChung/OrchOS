@@ -9,6 +9,7 @@ import {
   Edit02Icon,
   Loading01Icon,
   Target01Icon,
+  ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -92,6 +93,7 @@ export function ProjectsView({
   >({});
   const [showDirectoryPicker, setShowDirectoryPicker] = useState(false);
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [goalStatusFilter, setGoalStatusFilter] = useState<GoalStatusFilter>("all");
 
   useEffect(() => {
@@ -291,10 +293,13 @@ export function ProjectsView({
 
               return (
                 <div key={project.id}>
-                  <div className="flex items-center gap-1 group">
+                  <div className="flex items-center">
                     <button
-                      onClick={() => toggleProject(project.id)}
-                      className="flex flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-accent/50"
+                      onClick={() => setSelectedProjectId(project.id)}
+                      className={cn(
+                        "group flex flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left transition-colors flex-nowrap",
+                        selectedProjectId === project.id && "bg-accent/50",
+                      )}
                     >
                       <HugeiconsIcon
                         icon={FolderIcon}
@@ -316,25 +321,45 @@ export function ProjectsView({
                           {totalGoals}
                         </span>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(project);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        title={m.edit()}
+                      >
+                        <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(project.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                        title={m.delete()}
+                      >
+                        <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                      </Button>
                     </button>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleEdit(project)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      title={m.edit()}
-                    >
-                      <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleDelete(project.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                      title={m.delete()}
-                    >
-                      <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                    </Button>
+                    {totalGoals > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => toggleProject(project.id)}
+                        className="shrink-0"
+                        title={isExpanded ? "Collapse" : "Expand"}
+                      >
+                        <HugeiconsIcon
+                          icon={ArrowRight01Icon}
+                          className={cn("size-3.5 transition-transform", isExpanded && "rotate-90")}
+                        />
+                      </Button>
+                    )}
                   </div>
 
                   {isExpanded && (
@@ -571,6 +596,128 @@ export function ProjectsView({
               />
             }
           />
+        ) : selectedProjectId ? (
+          (() => {
+            const selectedProject = projects.find((p) => p.id === selectedProjectId);
+            const projectGoals = goalsByProject.get(selectedProjectId) || [];
+            const isCloning = cloningId === selectedProjectId;
+            const cloneResult = cloneResults[selectedProjectId];
+            if (!selectedProject) return null;
+            return (
+              <div className="flex h-full flex-col overflow-hidden">
+                <div className="flex h-14 items-center justify-between border-b border-border px-6">
+                  <div className="flex items-center gap-3">
+                    <HugeiconsIcon icon={FolderIcon} className="size-5 text-primary/70" />
+                    <h2 className="text-sm font-semibold text-foreground">
+                      {selectedProject.name}
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleEdit(selectedProject)}
+                      title={m.edit()}
+                    >
+                      <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleDelete(selectedProject.id)}
+                      className="text-muted-foreground hover:text-destructive"
+                      title={m.delete()}
+                    >
+                      <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6">
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs text-muted-foreground">{m.env_project_path()}</label>
+                        <p className="mt-1 text-sm font-mono text-foreground">
+                          {selectedProject.path}
+                        </p>
+                      </div>
+                      {selectedProject.repositoryUrl && (
+                        <div>
+                          <label className="text-xs text-muted-foreground">{m.env_project_repo_url()}</label>
+                          <a
+                            href={selectedProject.repositoryUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 flex items-center gap-1.5 text-sm text-primary hover:underline"
+                          >
+                            <HugeiconsIcon icon={Link01Icon} className="size-3.5" />
+                            {selectedProject.repositoryUrl}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                    {selectedProject.repositoryUrl && (
+                      <div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleClone(selectedProject.id, !!cloneResult?.success)}
+                          disabled={isCloning}
+                        >
+                          <HugeiconsIcon
+                            icon={isCloning ? Loading01Icon : Download01Icon}
+                            className={cn("size-3.5", isCloning && "animate-spin")}
+                          />
+                          {isCloning ? "Cloning..." : cloneResult?.success ? "Clone Again" : "Clone Repository"}
+                        </Button>
+                        {cloneResult && !cloneResult.success && cloneResult.error && (
+                          <p className="mt-2 text-xs text-destructive">{cloneResult.error}</p>
+                        )}
+                        {cloneResult?.success && (
+                          <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">
+                            Cloned to: {cloneResult.path}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="mb-3 text-xs font-semibold text-muted-foreground">
+                        {m.goal()} ({projectGoals.length})
+                      </h3>
+                      {projectGoals.length > 0 ? (
+                        <div className="space-y-1">
+                          {projectGoals.map((goal) => (
+                            <button
+                              key={goal.id}
+                              onClick={() => onSelectGoal(goal.id)}
+                              className="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left transition-colors hover:bg-accent/50"
+                            >
+                              <div
+                                className={cn(
+                                  "mt-1.5 size-2 shrink-0 rounded-full",
+                                  goalStatusColor[goal.status],
+                                )}
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-foreground truncate">
+                                  {goal.title}
+                                </p>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 mt-1">
+                                  {goalStatusLabel[goal.status] || goal.status}
+                                </Badge>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{m.env_no_projects_desc()}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()
         ) : (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">

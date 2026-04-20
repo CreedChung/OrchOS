@@ -504,6 +504,9 @@
   "thinking": "Thinking...",
   "untitled_conversation": "New chat",
   "upload": "Upload",
+  "multimodal_notice": "Images attached. If the model doesn't support multimodal, they may be ignored.",
+  "send_failed": "Failed to send message",
   "voice_input": "Voice input",
+  "voice_input_stop": "Stop voice input",
   "workspace": "Workspace"
 }

@@ -24,6 +24,14 @@ export const ExecutionModel = {
       t.Literal("cloud-first"),
       t.Literal("adaptive"),
     ]),
+    locale: t.String(),
+    timezone: t.String(),
+    notifications: t.Object({
+      system: t.Boolean(),
+      sound: t.Boolean(),
+      eventSounds: t.Record(t.String(), t.Boolean()),
+      eventSoundFiles: t.Record(t.String(), t.String()),
+    }),
   }),
   settingsUpdateBody: t.Partial(
     t.Object({
@@ -34,6 +42,14 @@ export const ExecutionModel = {
         t.Literal("cloud-first"),
         t.Literal("adaptive"),
       ]),
+      locale: t.String(),
+      timezone: t.String(),
+      notifications: t.Object({
+        system: t.Boolean(),
+        sound: t.Boolean(),
+        eventSounds: t.Record(t.String(), t.Boolean()),
+        eventSoundFiles: t.Record(t.String(), t.String()),
+      }),
     }),
   ),
   loopResponse: t.Object({ success: t.Literal(true) }),

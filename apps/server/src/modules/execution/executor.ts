@@ -440,9 +440,7 @@ export const executor = {
   },
 
   async detectAgentCLIs(): Promise<DetectedAgentCLI[]> {
-    const results: DetectedAgentCLI[] = [];
-
-    for (const agent of AGENT_CLI_REGISTRY) {
+    const detectOne = async (agent: AgentCLIDefinition): Promise<DetectedAgentCLI> => {
       const detected: DetectedAgentCLI = {
         definition: agent,
         available: false,
@@ -472,10 +470,10 @@ export const executor = {
         // Agent CLI not found
       }
 
-      results.push(detected);
-    }
+      return detected;
+    };
 
-    return results;
+    return Promise.all(AGENT_CLI_REGISTRY.map(detectOne));
   },
 
   async invokeAgentCLI(

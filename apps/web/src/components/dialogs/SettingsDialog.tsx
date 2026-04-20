@@ -25,6 +25,7 @@ import {
 import { cn, getRuntimeIcon } from "@/lib/utils";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { AppDialog } from "@/components/ui/app-dialog";
 import {
   Select,
@@ -199,6 +200,7 @@ function EditAcpDialog({
         <label className="space-y-1">
           <span className="text-[11px] font-medium text-muted-foreground">Transport</span>
           <Select
+            modal={false}
             value={draft.transport}
             onValueChange={(value) =>
               onDraftChange({ transport: value as RuntimeProfile["transport"] })
@@ -217,6 +219,7 @@ function EditAcpDialog({
         <label className="space-y-1">
           <span className="text-[11px] font-medium text-muted-foreground">Mode</span>
           <Select
+            modal={false}
             value={draft.communicationMode}
             onValueChange={(value) =>
               onDraftChange({ communicationMode: value as RuntimeProfile["communicationMode"] })
@@ -341,17 +344,27 @@ export function SettingsDialog({
 
   const handleToggle = async (key: keyof Pick<ControlSettings, "autoCommit" | "autoFix">) => {
     if (!currentSettings) return;
-    const updated = await api.updateSettings({ [key]: !currentSettings[key] });
-    setLocalSettings(updated);
-    onSettingsChange(updated);
+    try {
+      const updated = await api.updateSettings({ [key]: !currentSettings[key] });
+      const merged = { ...currentSettings, ...updated };
+      setLocalSettings(merged);
+      onSettingsChange(merged);
+    } catch (err) {
+      console.error("Failed to update settings:", err);
+    }
   };
 
   const handleLocaleChange = async (value: string) => {
     if (!currentSettings) return;
     setLocaleWithSync(value);
-    const updated = await api.updateSettings({ locale: value });
-    setLocalSettings(updated);
-    onSettingsChange(updated);
+    try {
+      const updated = await api.updateSettings({ locale: value });
+      const merged = { ...currentSettings, ...updated };
+      setLocalSettings(merged);
+      onSettingsChange(merged);
+    } catch (err) {
+      console.error("Failed to update locale:", err);
+    }
   };
 
   const handleNotificationToggle = (key: "system" | "sound") => {
@@ -613,7 +626,7 @@ export function SettingsDialog({
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
         <div className="w-full max-w-2xl rounded-xl border border-border bg-card p-6 shadow-2xl">
           <div className="flex items-center justify-center py-8">
-            <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <Spinner size="lg" />
           </div>
         </div>
       </div>
@@ -1013,7 +1026,7 @@ export function SettingsDialog({
                     >
                       {detecting ? (
                         <span className="flex items-center gap-1">
-                          <span className="size-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                          <Spinner size="sm" className="border-primary-foreground" />
                           {m.scanning()}
                         </span>
                       ) : (
@@ -1116,7 +1129,7 @@ export function SettingsDialog({
                               className="rounded-md px-2.5 py-1 text-xs font-medium border border-border bg-card text-foreground hover:bg-accent disabled:opacity-50 transition-colors"
                             >
                               {registering === agent.id ? (
-                                <span className="size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+<Spinner size="sm" />
                               ) : (
                                 <span className="flex items-center gap-1">
                                   <HugeiconsIcon icon={AddCircleHalfDotIcon} className="size-3" />

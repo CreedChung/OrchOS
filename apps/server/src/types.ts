@@ -120,6 +120,14 @@ export interface ControlSettings {
   autoCommit: boolean;
   autoFix: boolean;
   modelStrategy: "local-first" | "cloud-first" | "adaptive";
+  locale: string;
+  timezone: string;
+  notifications: {
+    system: boolean;
+    sound: boolean;
+    eventSounds: Record<string, boolean>;
+    eventSoundFiles: Record<string, string>;
+  };
 }
 
 export interface McpServerProfile {

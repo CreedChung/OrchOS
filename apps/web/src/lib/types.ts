@@ -109,6 +109,7 @@ export interface RuntimeProfile {
   currentModel?: string;
   status: "idle" | "active" | "error";
   registryId?: string;
+  supportsMultimodal?: boolean;
 }
 
 export interface RuntimeModelsResponse {

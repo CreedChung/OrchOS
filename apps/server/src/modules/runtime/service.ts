@@ -11,6 +11,27 @@ import {
   promptManagedAcpAgent,
 } from "@/modules/runtime/acp";
 
+const MULTIMODAL_MODEL_PATTERNS = [
+  /claude-?3/i,
+  /claude-?sonnet/i,
+  /claude-?opus/i,
+  /claude-?haiku/i,
+  /gpt-4.*vision/i,
+  /gpt-4.*turbo/i,
+  /gpt-4o/i,
+  /gpt-4-turbo/i,
+  /gemini.*pro/i,
+  /gemini.*flash/i,
+  /qwen.*vl/i,
+  /qwen.*vision/i,
+  /llava/i,
+];
+
+function checkMultimodalSupport(model: string): boolean {
+  const modelName = model.replace(/^(cloud|local)\//, "").toLowerCase();
+  return MULTIMODAL_MODEL_PATTERNS.some((pattern) => pattern.test(modelName));
+}
+
 export interface RuntimeProfile {
   id: string;
   name: string;
@@ -30,6 +51,7 @@ export interface RuntimeProfile {
   currentModel?: string;
   status: "idle" | "active" | "error";
   registryId?: string;
+  supportsMultimodal?: boolean;
 }
 
 export abstract class RuntimeService {
@@ -154,6 +176,7 @@ export abstract class RuntimeService {
       acpArgs: string[];
       acpEnv: Record<string, string>;
       communicationMode: "acp-native" | "acp-adapter" | "cli-fallback";
+      supportsMultimodal?: boolean;
       error?: string;
     }[];
     unavailable: {
@@ -171,6 +194,7 @@ export abstract class RuntimeService {
       acpArgs: string[];
       acpEnv: Record<string, string>;
       communicationMode: "acp-native" | "acp-adapter" | "cli-fallback";
+      supportsMultimodal?: boolean;
       error?: string;
     }[];
   }> {
@@ -189,6 +213,7 @@ export abstract class RuntimeService {
         role: detectedRuntime.definition.role,
         capabilities: detectedRuntime.definition.capabilities,
         model: detectedRuntime.definition.model,
+        supportsMultimodal: checkMultimodalSupport(detectedRuntime.definition.model),
       };
       const acpConfig = getAcpAgentConfig(base);
 

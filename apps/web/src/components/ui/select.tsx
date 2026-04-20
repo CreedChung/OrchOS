@@ -11,6 +11,8 @@ import {
 } from "@hugeicons/core-free-icons";
 
 const Select = SelectPrimitive.Root;
+type SelectProps = React.ComponentProps<typeof SelectPrimitive.Root>;
+export type { SelectProps };
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
@@ -86,7 +88,7 @@ function SelectContent({
         align={align}
         alignOffset={alignOffset}
         alignItemWithTrigger={alignItemWithTrigger}
-        className="isolate z-50"
+        className="isolate z-[70]"
       >
         <SelectPrimitive.Popup
           data-slot="select-content"

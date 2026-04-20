@@ -8,352 +8,352 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as SignUpRouteImport } from "./routes/sign-up";
-import { Route as SignInRouteImport } from "./routes/sign-in";
-import { Route as DashboardRouteImport } from "./routes/dashboard";
-import { Route as ChangelogRouteImport } from "./routes/changelog";
-import { Route as AboutRouteImport } from "./routes/about";
-import { Route as IndexRouteImport } from "./routes/index";
-import { Route as DashboardIndexRouteImport } from "./routes/dashboard/index";
-import { Route as DashboardSkillsRouteImport } from "./routes/dashboard/skills";
-import { Route as DashboardProjectsRouteImport } from "./routes/dashboard/projects";
-import { Route as DashboardObservabilityRouteImport } from "./routes/dashboard/observability";
-import { Route as DashboardMcpServersRouteImport } from "./routes/dashboard/mcp-servers";
-import { Route as DashboardInboxRouteImport } from "./routes/dashboard/inbox";
-import { Route as DashboardGoalsRouteImport } from "./routes/dashboard/goals";
-import { Route as DashboardCreationRouteImport } from "./routes/dashboard/creation";
-import { Route as DashboardAgentsRouteImport } from "./routes/dashboard/agents";
-import { Route as ApiSplatRouteImport } from "./routes/api.$";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ChangelogRouteImport } from './routes/changelog'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DashboardSkillsRouteImport } from './routes/dashboard/skills'
+import { Route as DashboardProjectsRouteImport } from './routes/dashboard/projects'
+import { Route as DashboardObservabilityRouteImport } from './routes/dashboard/observability'
+import { Route as DashboardMcpServersRouteImport } from './routes/dashboard/mcp-servers'
+import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
+import { Route as DashboardGoalsRouteImport } from './routes/dashboard/goals'
+import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
+import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
+import { Route as ApiSplatRouteImport } from './routes/api.$'
 
 const SignUpRoute = SignUpRouteImport.update({
-  id: "/sign-up",
-  path: "/sign-up",
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SignInRoute = SignInRouteImport.update({
-  id: "/sign-in",
-  path: "/sign-in",
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
-  id: "/dashboard",
-  path: "/dashboard",
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const ChangelogRoute = ChangelogRouteImport.update({
-  id: "/changelog",
-  path: "/changelog",
+  id: '/changelog',
+  path: '/changelog',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AboutRoute = AboutRouteImport.update({
-  id: "/about",
-  path: "/about",
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => DashboardRoute,
-} as any);
+} as any)
 const DashboardSkillsRoute = DashboardSkillsRouteImport.update({
-  id: "/skills",
-  path: "/skills",
+  id: '/skills',
+  path: '/skills',
   getParentRoute: () => DashboardRoute,
-} as any);
+} as any)
 const DashboardProjectsRoute = DashboardProjectsRouteImport.update({
-  id: "/projects",
-  path: "/projects",
+  id: '/projects',
+  path: '/projects',
   getParentRoute: () => DashboardRoute,
-} as any);
+} as any)
 const DashboardObservabilityRoute = DashboardObservabilityRouteImport.update({
-  id: "/observability",
-  path: "/observability",
+  id: '/observability',
+  path: '/observability',
   getParentRoute: () => DashboardRoute,
-} as any);
+} as any)
 const DashboardMcpServersRoute = DashboardMcpServersRouteImport.update({
-  id: "/mcp-servers",
-  path: "/mcp-servers",
+  id: '/mcp-servers',
+  path: '/mcp-servers',
   getParentRoute: () => DashboardRoute,
-} as any);
+} as any)
 const DashboardInboxRoute = DashboardInboxRouteImport.update({
-  id: "/inbox",
-  path: "/inbox",
+  id: '/inbox',
+  path: '/inbox',
   getParentRoute: () => DashboardRoute,
-} as any);
+} as any)
 const DashboardGoalsRoute = DashboardGoalsRouteImport.update({
-  id: "/goals",
-  path: "/goals",
+  id: '/goals',
+  path: '/goals',
   getParentRoute: () => DashboardRoute,
-} as any);
+} as any)
 const DashboardCreationRoute = DashboardCreationRouteImport.update({
-  id: "/creation",
-  path: "/creation",
+  id: '/creation',
+  path: '/creation',
   getParentRoute: () => DashboardRoute,
-} as any);
+} as any)
 const DashboardAgentsRoute = DashboardAgentsRouteImport.update({
-  id: "/agents",
-  path: "/agents",
+  id: '/agents',
+  path: '/agents',
   getParentRoute: () => DashboardRoute,
-} as any);
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
-  id: "/api/$",
-  path: "/api/$",
+  id: '/api/$',
+  path: '/api/$',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/changelog": typeof ChangelogRoute;
-  "/dashboard": typeof DashboardRouteWithChildren;
-  "/sign-in": typeof SignInRoute;
-  "/sign-up": typeof SignUpRoute;
-  "/api/$": typeof ApiSplatRoute;
-  "/dashboard/agents": typeof DashboardAgentsRoute;
-  "/dashboard/creation": typeof DashboardCreationRoute;
-  "/dashboard/goals": typeof DashboardGoalsRoute;
-  "/dashboard/inbox": typeof DashboardInboxRoute;
-  "/dashboard/mcp-servers": typeof DashboardMcpServersRoute;
-  "/dashboard/observability": typeof DashboardObservabilityRoute;
-  "/dashboard/projects": typeof DashboardProjectsRoute;
-  "/dashboard/skills": typeof DashboardSkillsRoute;
-  "/dashboard/": typeof DashboardIndexRoute;
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/changelog': typeof ChangelogRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/api/$': typeof ApiSplatRoute
+  '/dashboard/agents': typeof DashboardAgentsRoute
+  '/dashboard/creation': typeof DashboardCreationRoute
+  '/dashboard/goals': typeof DashboardGoalsRoute
+  '/dashboard/inbox': typeof DashboardInboxRoute
+  '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
+  '/dashboard/observability': typeof DashboardObservabilityRoute
+  '/dashboard/projects': typeof DashboardProjectsRoute
+  '/dashboard/skills': typeof DashboardSkillsRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/changelog": typeof ChangelogRoute;
-  "/sign-in": typeof SignInRoute;
-  "/sign-up": typeof SignUpRoute;
-  "/api/$": typeof ApiSplatRoute;
-  "/dashboard/agents": typeof DashboardAgentsRoute;
-  "/dashboard/creation": typeof DashboardCreationRoute;
-  "/dashboard/goals": typeof DashboardGoalsRoute;
-  "/dashboard/inbox": typeof DashboardInboxRoute;
-  "/dashboard/mcp-servers": typeof DashboardMcpServersRoute;
-  "/dashboard/observability": typeof DashboardObservabilityRoute;
-  "/dashboard/projects": typeof DashboardProjectsRoute;
-  "/dashboard/skills": typeof DashboardSkillsRoute;
-  "/dashboard": typeof DashboardIndexRoute;
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/changelog': typeof ChangelogRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/api/$': typeof ApiSplatRoute
+  '/dashboard/agents': typeof DashboardAgentsRoute
+  '/dashboard/creation': typeof DashboardCreationRoute
+  '/dashboard/goals': typeof DashboardGoalsRoute
+  '/dashboard/inbox': typeof DashboardInboxRoute
+  '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
+  '/dashboard/observability': typeof DashboardObservabilityRoute
+  '/dashboard/projects': typeof DashboardProjectsRoute
+  '/dashboard/skills': typeof DashboardSkillsRoute
+  '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/changelog": typeof ChangelogRoute;
-  "/dashboard": typeof DashboardRouteWithChildren;
-  "/sign-in": typeof SignInRoute;
-  "/sign-up": typeof SignUpRoute;
-  "/api/$": typeof ApiSplatRoute;
-  "/dashboard/agents": typeof DashboardAgentsRoute;
-  "/dashboard/creation": typeof DashboardCreationRoute;
-  "/dashboard/goals": typeof DashboardGoalsRoute;
-  "/dashboard/inbox": typeof DashboardInboxRoute;
-  "/dashboard/mcp-servers": typeof DashboardMcpServersRoute;
-  "/dashboard/observability": typeof DashboardObservabilityRoute;
-  "/dashboard/projects": typeof DashboardProjectsRoute;
-  "/dashboard/skills": typeof DashboardSkillsRoute;
-  "/dashboard/": typeof DashboardIndexRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/changelog': typeof ChangelogRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/api/$': typeof ApiSplatRoute
+  '/dashboard/agents': typeof DashboardAgentsRoute
+  '/dashboard/creation': typeof DashboardCreationRoute
+  '/dashboard/goals': typeof DashboardGoalsRoute
+  '/dashboard/inbox': typeof DashboardInboxRoute
+  '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
+  '/dashboard/observability': typeof DashboardObservabilityRoute
+  '/dashboard/projects': typeof DashboardProjectsRoute
+  '/dashboard/skills': typeof DashboardSkillsRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/about"
-    | "/changelog"
-    | "/dashboard"
-    | "/sign-in"
-    | "/sign-up"
-    | "/api/$"
-    | "/dashboard/agents"
-    | "/dashboard/creation"
-    | "/dashboard/goals"
-    | "/dashboard/inbox"
-    | "/dashboard/mcp-servers"
-    | "/dashboard/observability"
-    | "/dashboard/projects"
-    | "/dashboard/skills"
-    | "/dashboard/";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/about'
+    | '/changelog'
+    | '/dashboard'
+    | '/sign-in'
+    | '/sign-up'
+    | '/api/$'
+    | '/dashboard/agents'
+    | '/dashboard/creation'
+    | '/dashboard/goals'
+    | '/dashboard/inbox'
+    | '/dashboard/mcp-servers'
+    | '/dashboard/observability'
+    | '/dashboard/projects'
+    | '/dashboard/skills'
+    | '/dashboard/'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/about"
-    | "/changelog"
-    | "/sign-in"
-    | "/sign-up"
-    | "/api/$"
-    | "/dashboard/agents"
-    | "/dashboard/creation"
-    | "/dashboard/goals"
-    | "/dashboard/inbox"
-    | "/dashboard/mcp-servers"
-    | "/dashboard/observability"
-    | "/dashboard/projects"
-    | "/dashboard/skills"
-    | "/dashboard";
+    | '/'
+    | '/about'
+    | '/changelog'
+    | '/sign-in'
+    | '/sign-up'
+    | '/api/$'
+    | '/dashboard/agents'
+    | '/dashboard/creation'
+    | '/dashboard/goals'
+    | '/dashboard/inbox'
+    | '/dashboard/mcp-servers'
+    | '/dashboard/observability'
+    | '/dashboard/projects'
+    | '/dashboard/skills'
+    | '/dashboard'
   id:
-    | "__root__"
-    | "/"
-    | "/about"
-    | "/changelog"
-    | "/dashboard"
-    | "/sign-in"
-    | "/sign-up"
-    | "/api/$"
-    | "/dashboard/agents"
-    | "/dashboard/creation"
-    | "/dashboard/goals"
-    | "/dashboard/inbox"
-    | "/dashboard/mcp-servers"
-    | "/dashboard/observability"
-    | "/dashboard/projects"
-    | "/dashboard/skills"
-    | "/dashboard/";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/changelog'
+    | '/dashboard'
+    | '/sign-in'
+    | '/sign-up'
+    | '/api/$'
+    | '/dashboard/agents'
+    | '/dashboard/creation'
+    | '/dashboard/goals'
+    | '/dashboard/inbox'
+    | '/dashboard/mcp-servers'
+    | '/dashboard/observability'
+    | '/dashboard/projects'
+    | '/dashboard/skills'
+    | '/dashboard/'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AboutRoute: typeof AboutRoute;
-  ChangelogRoute: typeof ChangelogRoute;
-  DashboardRoute: typeof DashboardRouteWithChildren;
-  SignInRoute: typeof SignInRoute;
-  SignUpRoute: typeof SignUpRoute;
-  ApiSplatRoute: typeof ApiSplatRoute;
+  IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  ChangelogRoute: typeof ChangelogRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
+  SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
+  ApiSplatRoute: typeof ApiSplatRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/sign-up": {
-      id: "/sign-up";
-      path: "/sign-up";
-      fullPath: "/sign-up";
-      preLoaderRoute: typeof SignUpRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/sign-in": {
-      id: "/sign-in";
-      path: "/sign-in";
-      fullPath: "/sign-in";
-      preLoaderRoute: typeof SignInRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/dashboard": {
-      id: "/dashboard";
-      path: "/dashboard";
-      fullPath: "/dashboard";
-      preLoaderRoute: typeof DashboardRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/changelog": {
-      id: "/changelog";
-      path: "/changelog";
-      fullPath: "/changelog";
-      preLoaderRoute: typeof ChangelogRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/about": {
-      id: "/about";
-      path: "/about";
-      fullPath: "/about";
-      preLoaderRoute: typeof AboutRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/dashboard/": {
-      id: "/dashboard/";
-      path: "/";
-      fullPath: "/dashboard/";
-      preLoaderRoute: typeof DashboardIndexRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/dashboard/skills": {
-      id: "/dashboard/skills";
-      path: "/skills";
-      fullPath: "/dashboard/skills";
-      preLoaderRoute: typeof DashboardSkillsRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/dashboard/projects": {
-      id: "/dashboard/projects";
-      path: "/projects";
-      fullPath: "/dashboard/projects";
-      preLoaderRoute: typeof DashboardProjectsRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/dashboard/observability": {
-      id: "/dashboard/observability";
-      path: "/observability";
-      fullPath: "/dashboard/observability";
-      preLoaderRoute: typeof DashboardObservabilityRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/dashboard/mcp-servers": {
-      id: "/dashboard/mcp-servers";
-      path: "/mcp-servers";
-      fullPath: "/dashboard/mcp-servers";
-      preLoaderRoute: typeof DashboardMcpServersRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/dashboard/inbox": {
-      id: "/dashboard/inbox";
-      path: "/inbox";
-      fullPath: "/dashboard/inbox";
-      preLoaderRoute: typeof DashboardInboxRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/dashboard/goals": {
-      id: "/dashboard/goals";
-      path: "/goals";
-      fullPath: "/dashboard/goals";
-      preLoaderRoute: typeof DashboardGoalsRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/dashboard/creation": {
-      id: "/dashboard/creation";
-      path: "/creation";
-      fullPath: "/dashboard/creation";
-      preLoaderRoute: typeof DashboardCreationRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/dashboard/agents": {
-      id: "/dashboard/agents";
-      path: "/agents";
-      fullPath: "/dashboard/agents";
-      preLoaderRoute: typeof DashboardAgentsRouteImport;
-      parentRoute: typeof DashboardRoute;
-    };
-    "/api/$": {
-      id: "/api/$";
-      path: "/api/$";
-      fullPath: "/api/$";
-      preLoaderRoute: typeof ApiSplatRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/changelog': {
+      id: '/changelog'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof ChangelogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/skills': {
+      id: '/dashboard/skills'
+      path: '/skills'
+      fullPath: '/dashboard/skills'
+      preLoaderRoute: typeof DashboardSkillsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/projects': {
+      id: '/dashboard/projects'
+      path: '/projects'
+      fullPath: '/dashboard/projects'
+      preLoaderRoute: typeof DashboardProjectsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/observability': {
+      id: '/dashboard/observability'
+      path: '/observability'
+      fullPath: '/dashboard/observability'
+      preLoaderRoute: typeof DashboardObservabilityRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/mcp-servers': {
+      id: '/dashboard/mcp-servers'
+      path: '/mcp-servers'
+      fullPath: '/dashboard/mcp-servers'
+      preLoaderRoute: typeof DashboardMcpServersRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/inbox': {
+      id: '/dashboard/inbox'
+      path: '/inbox'
+      fullPath: '/dashboard/inbox'
+      preLoaderRoute: typeof DashboardInboxRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/goals': {
+      id: '/dashboard/goals'
+      path: '/goals'
+      fullPath: '/dashboard/goals'
+      preLoaderRoute: typeof DashboardGoalsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/creation': {
+      id: '/dashboard/creation'
+      path: '/creation'
+      fullPath: '/dashboard/creation'
+      preLoaderRoute: typeof DashboardCreationRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/agents': {
+      id: '/dashboard/agents'
+      path: '/agents'
+      fullPath: '/dashboard/agents'
+      preLoaderRoute: typeof DashboardAgentsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface DashboardRouteChildren {
-  DashboardAgentsRoute: typeof DashboardAgentsRoute;
-  DashboardCreationRoute: typeof DashboardCreationRoute;
-  DashboardGoalsRoute: typeof DashboardGoalsRoute;
-  DashboardInboxRoute: typeof DashboardInboxRoute;
-  DashboardMcpServersRoute: typeof DashboardMcpServersRoute;
-  DashboardObservabilityRoute: typeof DashboardObservabilityRoute;
-  DashboardProjectsRoute: typeof DashboardProjectsRoute;
-  DashboardSkillsRoute: typeof DashboardSkillsRoute;
-  DashboardIndexRoute: typeof DashboardIndexRoute;
+  DashboardAgentsRoute: typeof DashboardAgentsRoute
+  DashboardCreationRoute: typeof DashboardCreationRoute
+  DashboardGoalsRoute: typeof DashboardGoalsRoute
+  DashboardInboxRoute: typeof DashboardInboxRoute
+  DashboardMcpServersRoute: typeof DashboardMcpServersRoute
+  DashboardObservabilityRoute: typeof DashboardObservabilityRoute
+  DashboardProjectsRoute: typeof DashboardProjectsRoute
+  DashboardSkillsRoute: typeof DashboardSkillsRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
@@ -366,9 +366,11 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardProjectsRoute: DashboardProjectsRoute,
   DashboardSkillsRoute: DashboardSkillsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
-};
+}
 
-const DashboardRouteWithChildren = DashboardRoute._addFileChildren(DashboardRouteChildren);
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -378,16 +380,16 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   ApiSplatRoute: ApiSplatRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
-import type { getRouter } from "./router.tsx";
-import type { createStart } from "@tanstack/react-start";
-declare module "@tanstack/react-start" {
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
   interface Register {
-    ssr: true;
-    router: Awaited<ReturnType<typeof getRouter>>;
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
   }
 }
