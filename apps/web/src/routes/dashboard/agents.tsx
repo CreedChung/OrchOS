@@ -13,6 +13,7 @@ function AgentsPage() {
   const {
     agents,
     rules,
+    loading,
     handleRuleToggle,
     handleRuleDelete,
     handleUpdateAgent,
@@ -50,6 +51,7 @@ function AgentsPage() {
       <AgentList
         agents={agentInstances}
         activeAgentId={activeAgentId}
+        loading={loading}
         onSelectAgent={setActiveAgentId}
         onAgentUpdated={refreshAll}
         onCreateAgent={() => setShowCreateAgentDialog(true)}

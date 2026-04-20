@@ -663,7 +663,7 @@ export function SettingsDialog({
                   <button
                     onClick={() => handleToggle("autoCommit")}
                     className={cn(
-                      "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
+                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
                       currentSettings.autoCommit ? "bg-emerald-500" : "bg-muted",
                     )}
                   >
@@ -685,7 +685,7 @@ export function SettingsDialog({
                   <button
                     onClick={() => handleToggle("autoFix")}
                     className={cn(
-                      "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
+                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
                       currentSettings.autoFix ? "bg-emerald-500" : "bg-muted",
                     )}
                   >
@@ -765,7 +765,7 @@ export function SettingsDialog({
                   <button
                     onClick={() => handleNotificationToggle("system")}
                     className={cn(
-                      "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
+                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
                       currentSettings.notifications?.system ? "bg-emerald-500" : "bg-muted",
                     )}
                   >
@@ -789,7 +789,7 @@ export function SettingsDialog({
                   <button
                     onClick={() => handleNotificationToggle("sound")}
                     className={cn(
-                      "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
+                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
                       currentSettings.notifications?.sound ? "bg-emerald-500" : "bg-muted",
                     )}
                   >
@@ -864,7 +864,7 @@ export function SettingsDialog({
                           <button
                             onClick={() => handleEventSoundToggle(event.id)}
                             className={cn(
-                              "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+                              "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors",
                               isEnabled ? "bg-emerald-500" : "bg-muted",
                             )}
                           >

@@ -174,75 +174,81 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
           </Button>
         </div>
         <ScrollArea className="flex-1">
-            <div className="p-1.5 space-y-0.5">
-            {filteredConversations.map((conv) => (
-              <div
-                key={conv.id}
-                className={cn(
-                  "group flex items-center gap-2 rounded-md px-2.5 py-2 text-sm cursor-pointer transition-colors",
-                  activeConversationId === conv.id
-                    ? "bg-accent text-accent-foreground font-medium"
-                    : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
+          <div className="p-1.5 space-y-0.5">
+            {!hasLoadedConversations ? (
+              <ConversationListSkeleton />
+            ) : (
+              <>
+                {filteredConversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    className={cn(
+                      "group flex items-center gap-2 rounded-md px-2.5 py-2 text-sm cursor-pointer transition-colors",
+                      activeConversationId === conv.id
+                        ? "bg-accent text-accent-foreground font-medium"
+                        : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
+                    )}
+                    onClick={() => setActiveConversationId(conv.id)}
+                  >
+                    <HugeiconsIcon icon={Chat01Icon} className="size-3.5 shrink-0 opacity-50" />
+                    <span className="flex-1 truncate text-left text-xs">
+                      {conv.title || m.untitled_conversation()}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleUpdateConversation(conv.id,
+                          conv.deleted
+                            ? { deleted: false, archived: false }
+                            : { archived: !conv.archived, deleted: false },
+                        );
+                      }}
+                      className={cn(
+                        "shrink-0 text-muted-foreground transition-opacity hover:text-foreground",
+                        conv.archived || conv.deleted ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                      )}
+                      title={conv.deleted || conv.archived ? m.restore_conversation() : m.archive()}
+                      type="button"
+                    >
+                      {conv.archived || conv.deleted ? (
+                        <ArchiveRestore className="size-3" />
+                      ) : (
+                        <ArchiveX className="size-3" />
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (conv.deleted) {
+                          void api
+                            .deleteConversation(conv.id, { permanent: true })
+                            .then(() => loadConversations())
+                            .catch((err) => {
+                              console.error("Failed to permanently delete conversation:", err);
+                            });
+                          return;
+                        }
+                        setConvToDelete(conv.id);
+                        setDeleteConfirmOpen(true);
+                      }}
+                      className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                      title={conv.deleted ? m.delete_forever() : m.delete()}
+                      type="button"
+                    >
+                      <HugeiconsIcon icon={Delete02Icon} className="size-3" />
+                    </button>
+                  </div>
+                ))}
+                {filteredConversations.length === 0 && (
+                  <div className="py-6 text-center">
+                    <HugeiconsIcon
+                      icon={Chat01Icon}
+                      className="mx-auto size-5 text-muted-foreground/30 mb-1.5"
+                    />
+                    <p className="text-xs text-muted-foreground">{m.no_conversations()}</p>
+                  </div>
                 )}
-                onClick={() => setActiveConversationId(conv.id)}
-              >
-                <HugeiconsIcon icon={Chat01Icon} className="size-3.5 shrink-0 opacity-50" />
-                <span className="flex-1 truncate text-left text-xs">
-                  {conv.title || m.untitled_conversation()}
-                </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void handleUpdateConversation(conv.id,
-                      conv.deleted
-                        ? { deleted: false, archived: false }
-                        : { archived: !conv.archived, deleted: false },
-                    );
-                  }}
-                  className={cn(
-                    "shrink-0 text-muted-foreground transition-opacity hover:text-foreground",
-                    conv.archived || conv.deleted ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-                  )}
-                  title={conv.deleted || conv.archived ? m.restore_conversation() : m.archive()}
-                  type="button"
-                >
-                  {conv.archived || conv.deleted ? (
-                    <ArchiveRestore className="size-3" />
-                  ) : (
-                    <ArchiveX className="size-3" />
-                  )}
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (conv.deleted) {
-                      void api
-                        .deleteConversation(conv.id, { permanent: true })
-                        .then(() => loadConversations())
-                        .catch((err) => {
-                          console.error("Failed to permanently delete conversation:", err);
-                        });
-                      return;
-                    }
-                    setConvToDelete(conv.id);
-                    setDeleteConfirmOpen(true);
-                  }}
-                  className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                  title={conv.deleted ? m.delete_forever() : m.delete()}
-                  type="button"
-                >
-                  <HugeiconsIcon icon={Delete02Icon} className="size-3" />
-                </button>
-              </div>
-            ))}
-            {filteredConversations.length === 0 && (
-              <div className="py-6 text-center">
-                <HugeiconsIcon
-                  icon={Chat01Icon}
-                  className="mx-auto size-5 text-muted-foreground/30 mb-1.5"
-                />
-                <p className="text-xs text-muted-foreground">{m.no_conversations()}</p>
-              </div>
+              </>
             )}
           </div>
         </ScrollArea>
@@ -436,57 +442,15 @@ function ChatArea({
             </SelectContent>
           </Select>
 
-          {/* Agent/Runtime selector */}
-          <Select
-            value={conversation.runtimeId || "__none__"}
-              onValueChange={(v) =>
-                onUpdateConversation(conversation.id, {
-                  runtimeId: !v || v === "__none__" ? undefined : v,
-                })
-              }
-          >
-            <SelectTrigger className="h-7 w-40 text-xs">
-              <HugeiconsIcon icon={Robot02Icon} className="size-3 mr-1 shrink-0" />
-              <SelectValue>
-                {(() => {
-                  const runtime = runtimes.find((r) => r.id === conversation.runtimeId);
-                  if (runtime) {
-                    return runtime.name;
-                  }
-                  const agent = agents.find((a) => (a.runtimeId || a.id) === conversation.runtimeId);
-                  if (agent) {
-                    return agent.name;
-                  }
-                  return m.no_agent();
-                })()}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">{m.no_agent()}</SelectItem>
-              {runtimes.map((runtime) => (
-                <SelectItem key={runtime.id} value={runtime.id}>
-                  <span className="flex items-center gap-1.5">
-                    {runtime.name}
-                    <span className="text-muted-foreground">
-                      {runtime.model.replace(/^(cloud|local)\//, "")}
-                    </span>
-                  </span>
-                </SelectItem>
-              ))}
-              {agents
-                .filter((a) => a.enabled)
-                .map((agent) => (
-                  <SelectItem key={agent.id} value={agent.runtimeId || agent.id}>
-                    <span className="flex items-center gap-1.5">
-                      {agent.name}
-                      <span className="text-muted-foreground">
-                        {agent.model.replace(/^(cloud|local)\//, "")}
-                      </span>
-                    </span>
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+          {/* Agent/Runtime selector with hover popover */}
+          <RuntimeSelector
+            runtimes={runtimes}
+            agents={agents.filter((a) => a.enabled)}
+            selectedId={conversation.runtimeId}
+            onSelect={(runtimeId) =>
+              onUpdateConversation(conversation.id, { runtimeId })
+            }
+          />
 
           {/* Model badge */}
           {selectedRuntime && (
@@ -632,5 +596,328 @@ function ChatArea({
         </div>
       </div>
     </div>
+  );
+}
+
+interface RuntimeSelectorProps {
+  runtimes: RuntimeProfile[];
+  agents: AgentProfile[];
+  selectedId?: string;
+  onSelect: (runtimeId?: string) => void;
+}
+
+function RuntimeSelector({ runtimes, agents, selectedId, onSelect }: RuntimeSelectorProps) {
+  const [open, setOpen] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const selectedItem = useMemo(() => {
+    const runtime = runtimes.find((r) => r.id === selectedId);
+    if (runtime) return runtime;
+    const agent = agents.find((a) => (a.runtimeId || a.id) === selectedId);
+    return agent;
+  }, [runtimes, agents, selectedId]);
+
+  const cancelClose = useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleClose = useCallback(() => {
+    cancelClose();
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpen(false);
+      setHoveredItem(null);
+    }, 150);
+  }, [cancelClose]);
+
+  const handleEnter = useCallback(() => {
+    cancelClose();
+    setOpen(true);
+  }, [cancelClose]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      className="relative inline-flex"
+      onMouseEnter={handleEnter}
+      onMouseLeave={scheduleClose}
+    >
+      <button
+        ref={triggerRef}
+        type="button"
+        className="inline-flex h-7 w-40 items-center justify-between gap-1 rounded-md border border-input bg-background px-2.5 text-xs text-foreground hover:bg-accent/50 transition-colors"
+      >
+        <span className="flex items-center gap-1.5 min-w-0">
+          <HugeiconsIcon icon={Robot02Icon} className="size-3 shrink-0" />
+          <span className="truncate">{selectedItem?.name || m.no_agent()}</span>
+        </span>
+      </button>
+
+      {open && (
+        <div
+          ref={popoverRef}
+          className="fixed z-50 flex animate-in fade-in-0 zoom-in-95"
+          style={{
+            left: triggerRef.current?.getBoundingClientRect().left ?? 0,
+            top: (triggerRef.current?.getBoundingClientRect().bottom ?? 0) + 4,
+            width: triggerRef.current?.offsetWidth ?? 160,
+          }}
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
+        >
+          <div className="flex flex-col rounded-lg border border-border bg-popover p-1 shadow-lg min-w-full">
+            <button
+              type="button"
+              className={cn(
+                "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-left transition-colors",
+                !selectedId
+                  ? "bg-accent text-accent-foreground"
+                  : "text-foreground hover:bg-accent/50",
+              )}
+              onClick={() => {
+                onSelect(undefined);
+                setOpen(false);
+              }}
+            >
+              {m.no_agent()}
+            </button>
+
+            {runtimes.map((runtime) => (
+              <RuntimeItem
+                key={runtime.id}
+                runtime={runtime}
+                isSelected={runtime.id === selectedId}
+                isHovered={runtime.id === hoveredItem}
+                onHover={() => setHoveredItem(runtime.id)}
+                onLeave={() => setHoveredItem(null)}
+                onClick={() => {
+                  onSelect(runtime.id);
+                  setOpen(false);
+                }}
+              />
+            ))}
+
+            {agents.map((agent) => (
+              <AgentItem
+                key={agent.id}
+                agent={agent}
+                isSelected={(agent.runtimeId || agent.id) === selectedId}
+                isHovered={agent.id === hoveredItem}
+                onHover={() => setHoveredItem(agent.id)}
+                onLeave={() => setHoveredItem(null)}
+                onClick={() => {
+                  onSelect(agent.runtimeId || agent.id);
+                  setOpen(false);
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface RuntimeItemProps {
+  runtime: RuntimeProfile;
+  isSelected: boolean;
+  isHovered: boolean;
+  onHover: () => void;
+  onLeave: () => void;
+  onClick: () => void;
+}
+
+function RuntimeItem({ runtime, isSelected, isHovered, onHover, onLeave, onClick }: RuntimeItemProps) {
+  const itemRef = useRef<HTMLButtonElement>(null);
+  const isCloudModel = runtime.model.startsWith("cloud/");
+  const modelDisplay = runtime.model.replace(/^(cloud|local)\//, "");
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+    >
+      <button
+        ref={itemRef}
+        type="button"
+        className={cn(
+          "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-left transition-colors",
+          isSelected
+            ? "bg-accent text-accent-foreground"
+            : "text-foreground hover:bg-accent/50",
+        )}
+        onClick={onClick}
+      >
+        <span className="truncate">{runtime.name}</span>
+      </button>
+
+      {isHovered && (
+        <div
+          className="fixed z-[60] animate-in fade-in-0 zoom-in-95"
+          style={{
+            left: (itemRef.current?.getBoundingClientRect().right ?? 0) + 8,
+            top: itemRef.current?.getBoundingClientRect().top ?? 0,
+          }}
+        >
+          <div className="rounded-lg border border-border bg-popover p-3 shadow-lg min-w-[200px]">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm font-medium text-foreground">{runtime.name}</span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                  isCloudModel
+                    ? "bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                )}
+              >
+                <HugeiconsIcon icon={isCloudModel ? CloudIcon : Server} className="size-2.5" />
+                {isCloudModel ? "Cloud" : "Local"}
+              </span>
+            </div>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>Model</span>
+                <span className="text-foreground font-medium">{modelDisplay}</span>
+              </div>
+              {runtime.version && (
+                <div className="flex items-center justify-between">
+                  <span>Version</span>
+                  <span className="text-foreground">{runtime.version}</span>
+                </div>
+              )}
+              {runtime.capabilities.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {runtime.capabilities.slice(0, 3).map((cap) => (
+                    <span
+                      key={cap}
+                      className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                    >
+                      {cap}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface AgentItemProps {
+  agent: AgentProfile;
+  isSelected: boolean;
+  isHovered: boolean;
+  onHover: () => void;
+  onLeave: () => void;
+  onClick: () => void;
+}
+
+function AgentItem({ agent, isSelected, isHovered, onHover, onLeave, onClick }: AgentItemProps) {
+  const itemRef = useRef<HTMLButtonElement>(null);
+  const isCloudModel = agent.model.startsWith("cloud/");
+  const modelDisplay = agent.model.replace(/^(cloud|local)\//, "");
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+    >
+      <button
+        ref={itemRef}
+        type="button"
+        className={cn(
+          "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-left transition-colors",
+          isSelected
+            ? "bg-accent text-accent-foreground"
+            : "text-foreground hover:bg-accent/50",
+        )}
+        onClick={onClick}
+      >
+        <span className="truncate">{agent.name}</span>
+      </button>
+
+      {isHovered && (
+        <div
+          className="fixed z-[60] animate-in fade-in-0 zoom-in-95"
+          style={{
+            left: (itemRef.current?.getBoundingClientRect().right ?? 0) + 8,
+            top: itemRef.current?.getBoundingClientRect().top ?? 0,
+          }}
+        >
+          <div className="rounded-lg border border-border bg-popover p-3 shadow-lg min-w-[200px]">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm font-medium text-foreground">{agent.name}</span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                  isCloudModel
+                    ? "bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                )}
+              >
+                <HugeiconsIcon icon={isCloudModel ? CloudIcon : Server} className="size-2.5" />
+                {isCloudModel ? "Cloud" : "Local"}
+              </span>
+            </div>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span>Model</span>
+                <span className="text-foreground font-medium">{modelDisplay}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Role</span>
+                <span className="text-foreground">{agent.role}</span>
+              </div>
+              {agent.capabilities.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {agent.capabilities.slice(0, 3).map((cap) => (
+                    <span
+                      key={cap}
+                      className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                    >
+                      {cap}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConversationListSkeleton() {
+  return (
+    <>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div
+          key={i}
+          className="flex items-center gap-2 rounded-md px-2.5 py-2"
+        >
+          <div className="size-3.5 rounded bg-muted animate-pulse shrink-0" />
+          <div className="flex-1 space-y-1">
+            <div className="h-3 w-28 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+      ))}
+    </>
   );
 }

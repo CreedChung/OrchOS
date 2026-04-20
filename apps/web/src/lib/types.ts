@@ -168,12 +168,12 @@ export const NOTIFICATION_EVENTS: { id: NotificationEvent; labelKey: string }[] 
 ];
 
 export const AVAILABLE_SOUNDS = [
-  { id: "bell", name: "Bell", file: "/sounds/bell.mp3" },
+  { id: "bell", name: "Bell 1", file: "/sounds/bell.mp3" },
   { id: "bell2", name: "Bell 2", file: "/sounds/bell2.mp3" },
   { id: "bell3", name: "Bell 3", file: "/sounds/bell3.mp3" },
   { id: "error", name: "Error", file: "/sounds/error.mp3" },
   { id: "pong", name: "Pong", file: "/sounds/pong.mp3" },
-  { id: "ring", name: "Ring", file: "/sounds/ring.mp3" },
+  { id: "ring", name: "Ring 1", file: "/sounds/ring.mp3" },
   { id: "ring2", name: "Ring 2", file: "/sounds/ring2.mp3" },
 ] as const;
 

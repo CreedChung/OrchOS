@@ -154,6 +154,7 @@
   "disabled_agents": "已禁用",
   "dismiss": "关闭",
   "edit_status": "编辑状态",
+  "edit": "编辑",
   "enable": "启用",
   "enable_rule": "启用规则",
   "env_delete_project_confirm": "确定删除此项目？",

@@ -154,6 +154,7 @@
   "disabled_agents": "已停用",
   "dismiss": "關閉",
   "edit_status": "編輯狀態",
+  "edit": "編輯",
   "enable": "啟用",
   "enable_rule": "啟用規則",
   "env_delete_project_confirm": "確定刪除此專案？",

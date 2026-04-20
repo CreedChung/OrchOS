@@ -10,6 +10,7 @@ import type { AgentProfile } from "@/lib/types";
 interface AgentListProps {
   agents: AgentProfile[];
   activeAgentId: string | null;
+  loading?: boolean;
   onSelectAgent: (id: string) => void;
   onAgentUpdated?: () => void;
   onCreateAgent?: () => void;
@@ -32,6 +33,7 @@ const agentStatusLabel: Record<AgentProfile["status"], string> = {
 export function AgentList({
   agents,
   activeAgentId,
+  loading,
   onSelectAgent,
   onAgentUpdated,
   onCreateAgent,
@@ -56,60 +58,66 @@ export function AgentList({
       {/* List */}
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-0.5">
-          {enabledAgents.length > 0 && (
+          {loading ? (
+            <AgentListSkeleton />
+          ) : (
             <>
-              {enabledAgents.map((agent) => (
-                <AgentItem
-                  key={agent.id}
-                  agent={agent}
-                  isActive={agent.id === activeAgentId}
-                  onClick={() => onSelectAgent(agent.id)}
-                  onAvatarUploaded={onAgentUpdated}
-                  onEdit={onEditAgent ? () => onEditAgent(agent.id) : undefined}
-                  onDelete={onDeleteAgent ? () => onDeleteAgent(agent.id) : undefined}
-                />
-              ))}
-            </>
-          )}
-
-          {disabledAgents.length > 0 && (
-            <>
-              <div className="flex items-center gap-2 px-2 py-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
-                  {m.disabled_agents()}
-                </span>
-              </div>
-              {disabledAgents.map((agent) => (
-                <AgentItem
-                  key={agent.id}
-                  agent={agent}
-                  isActive={agent.id === activeAgentId}
-                  onClick={() => onSelectAgent(agent.id)}
-                  onAvatarUploaded={onAgentUpdated}
-                  onEdit={onEditAgent ? () => onEditAgent(agent.id) : undefined}
-                  onDelete={onDeleteAgent ? () => onDeleteAgent(agent.id) : undefined}
-                />
-              ))}
-            </>
-          )}
-
-          {agents.length === 0 && (
-            <div className="py-8 text-center">
-              <HugeiconsIcon
-                icon={Robot02Icon}
-                className="mx-auto size-6 text-muted-foreground/30 mb-2"
-              />
-              <p className="text-sm text-muted-foreground">{m.no_agents_available()}</p>
-              <p className="text-xs text-muted-foreground/60 mt-1 px-4">
-                {m.no_agent_instances_desc()}
-              </p>
-              {onCreateAgent && (
-                <Button size="sm" variant="outline" className="mt-3" onClick={onCreateAgent}>
-                  <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
-                  Add Agent
-                </Button>
+              {enabledAgents.length > 0 && (
+                <>
+                  {enabledAgents.map((agent) => (
+                    <AgentItem
+                      key={agent.id}
+                      agent={agent}
+                      isActive={agent.id === activeAgentId}
+                      onClick={() => onSelectAgent(agent.id)}
+                      onAvatarUploaded={onAgentUpdated}
+                      onEdit={onEditAgent ? () => onEditAgent(agent.id) : undefined}
+                      onDelete={onDeleteAgent ? () => onDeleteAgent(agent.id) : undefined}
+                    />
+                  ))}
+                </>
               )}
-            </div>
+
+              {disabledAgents.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 px-2 py-1.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                      {m.disabled_agents()}
+                    </span>
+                  </div>
+                  {disabledAgents.map((agent) => (
+                    <AgentItem
+                      key={agent.id}
+                      agent={agent}
+                      isActive={agent.id === activeAgentId}
+                      onClick={() => onSelectAgent(agent.id)}
+                      onAvatarUploaded={onAgentUpdated}
+                      onEdit={onEditAgent ? () => onEditAgent(agent.id) : undefined}
+                      onDelete={onDeleteAgent ? () => onDeleteAgent(agent.id) : undefined}
+                    />
+                  ))}
+                </>
+              )}
+
+              {agents.length === 0 && (
+                <div className="py-8 text-center">
+                  <HugeiconsIcon
+                    icon={Robot02Icon}
+                    className="mx-auto size-6 text-muted-foreground/30 mb-2"
+                  />
+                  <p className="text-sm text-muted-foreground">{m.no_agents_available()}</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1 px-4">
+                    {m.no_agent_instances_desc()}
+                  </p>
+                  {onCreateAgent && (
+                    <Button size="sm" variant="outline" className="mt-3" onClick={onCreateAgent}>
+                      <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
+                      Add Agent
+                    </Button>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       </ScrollArea>
@@ -175,5 +183,25 @@ function AgentItem({
         </div>
       )}
     </div>
+  );
+}
+
+function AgentListSkeleton() {
+  return (
+    <>
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="flex w-full items-start gap-2.5 rounded-md px-2.5 py-2"
+        >
+          <div className="size-8 rounded-full bg-muted animate-pulse" />
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="h-3.5 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-2.5 w-12 bg-muted animate-pulse rounded" />
+            <div className="h-2.5 w-32 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+      ))}
+    </>
   );
 }

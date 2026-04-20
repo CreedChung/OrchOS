@@ -154,6 +154,7 @@
   "disabled_agents": "Disabled",
   "dismiss": "Dismiss",
   "edit_status": "Edit status",
+  "edit": "Edit",
   "enable": "Enable",
   "enable_rule": "Enable rule",
   "env_delete_project_confirm": "Delete this project?",
