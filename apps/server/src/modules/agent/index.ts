@@ -92,4 +92,19 @@ export const agentController = new Elysia({ prefix: "/api/agents" })
       }),
       response: AgentModel.response,
     },
+  )
+  .delete(
+    "/:id",
+    ({ params: { id } }) => {
+      const deleted = AgentService.remove(id);
+      if (!deleted) throw status(404, "Agent not found");
+      return { success: true };
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      response: {
+        200: t.Object({ success: t.Boolean() }),
+        404: AgentModel.errorNotFound,
+      },
+    },
   );

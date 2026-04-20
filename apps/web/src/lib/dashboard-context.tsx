@@ -171,6 +171,7 @@ interface DashboardContextType {
       avatarUrl: string;
     }>,
   ) => Promise<void>;
+  handleDeleteAgent: (id: string) => Promise<void>;
 
   // Command actions
   handleCommand: (data: {
@@ -814,6 +815,18 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     [refreshAll],
   );
 
+  const handleDeleteAgent = useCallback(
+    async (id: string) => {
+      try {
+        await api.deleteAgent(id);
+        await refreshAll();
+      } catch (err) {
+        console.error("Failed to delete agent:", err);
+      }
+    },
+    [refreshAll],
+  );
+
   const value: DashboardContextType = {
     goals,
     agents,
@@ -858,6 +871,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     handleOrganizationDelete,
     handleCreateAgent,
     handleUpdateAgent,
+    handleDeleteAgent,
     handleCommand,
     showCreateDialog,
     setShowCreateDialog,

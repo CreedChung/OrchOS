@@ -442,6 +442,11 @@ export const api = {
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     return res.json() as Promise<AgentProfile>;
   },
+  deleteAgent: async (id: string) => {
+    const client = createEdenClient();
+    const result = await client.api.agents({ id }).delete();
+    return assertData(result);
+  },
 
   // Runtimes
   listRuntimes: async () => {

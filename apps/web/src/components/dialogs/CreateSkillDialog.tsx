@@ -210,16 +210,12 @@ export function CreateSkillDialog({ open, projects, onClose, onCreated }: Create
         </>
       }
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-          </div>
-          <Tabs value={mode} onValueChange={(v) => setMode(v as DialogMode)}>
-            <TabsList className="max-w-full flex-wrap">
-              <TabsTrigger value="manual">{m.skill_mode_manual()}</TabsTrigger>
-              <TabsTrigger value="repository">{m.skill_mode_repository()}</TabsTrigger>
-            </TabsList>
-          </Tabs>
-      </div>
+      <Tabs value={mode} onValueChange={(v) => setMode(v as DialogMode)}>
+        <TabsList>
+          <TabsTrigger value="manual">{m.skill_mode_manual()}</TabsTrigger>
+          <TabsTrigger value="repository">{m.skill_mode_repository()}</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {mode === "manual" ? (
         <div className="space-y-3">

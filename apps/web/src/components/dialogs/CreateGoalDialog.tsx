@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Add01Icon, Delete02Icon, FolderGitIcon } from "@hugeicons/core-free-icons";
-import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import { Button } from "@/components/ui/button";
 import { AppDialog } from "@/components/ui/app-dialog";

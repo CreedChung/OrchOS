@@ -76,54 +76,53 @@ export function CreateMcpServerDialog({ open, onClose, onCreated }: CreateMcpSer
       }
     >
       <div className="space-y-3">
-          <div>
-            <label className="text-xs text-muted-foreground">{m.field_name()}</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder={m.mcp_name_placeholder()}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">{m.command()}</label>
-            <input
-              type="text"
-              value={formData.command}
-              onChange={(e) => setFormData({ ...formData, command: e.target.value })}
-              placeholder={m.mcp_command_placeholder()}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">{m.mcp_args_label()}</label>
-            <input
-              type="text"
-              value={formData.args}
-              onChange={(e) => setFormData({ ...formData, args: e.target.value })}
-              placeholder={m.mcp_args_placeholder()}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">{m.scope()}</label>
-            <Select
-              value={formData.scope}
-              onValueChange={(v) => setFormData({ ...formData, scope: v as "global" | "project" })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="global">{m.scope_global()}</SelectItem>
-                  <SelectItem value="project">{m.scope_project()}</SelectItem>
-                </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        <div>
+          <label className="text-xs text-muted-foreground">{m.field_name()}</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder={m.mcp_name_placeholder()}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">{m.command()}</label>
+          <input
+            type="text"
+            value={formData.command}
+            onChange={(e) => setFormData({ ...formData, command: e.target.value })}
+            placeholder={m.mcp_command_placeholder()}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">{m.mcp_args_label()}</label>
+          <input
+            type="text"
+            value={formData.args}
+            onChange={(e) => setFormData({ ...formData, args: e.target.value })}
+            placeholder={m.mcp_args_placeholder()}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground">{m.scope()}</label>
+          <Select
+            value={formData.scope}
+            onValueChange={(v) => setFormData({ ...formData, scope: v as "global" | "project" })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="global">{m.scope_global()}</SelectItem>
+                <SelectItem value="project">{m.scope_project()}</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </AppDialog>
   );

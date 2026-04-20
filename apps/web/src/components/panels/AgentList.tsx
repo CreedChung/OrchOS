@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Robot02Icon, Add01Icon } from "@hugeicons/core-free-icons";
+import { Robot02Icon, Add01Icon, Edit02Icon, Delete02Icon } from "@hugeicons/core-free-icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ interface AgentListProps {
   onSelectAgent: (id: string) => void;
   onAgentUpdated?: () => void;
   onCreateAgent?: () => void;
+  onEditAgent?: (id: string) => void;
+  onDeleteAgent?: (id: string) => void;
 }
 
 const agentStatusColor: Record<AgentProfile["status"], string> = {
@@ -33,6 +35,8 @@ export function AgentList({
   onSelectAgent,
   onAgentUpdated,
   onCreateAgent,
+  onEditAgent,
+  onDeleteAgent,
 }: AgentListProps) {
   const enabledAgents = agents.filter((a) => a.enabled);
   const disabledAgents = agents.filter((a) => !a.enabled);
@@ -61,6 +65,8 @@ export function AgentList({
                   isActive={agent.id === activeAgentId}
                   onClick={() => onSelectAgent(agent.id)}
                   onAvatarUploaded={onAgentUpdated}
+                  onEdit={onEditAgent ? () => onEditAgent(agent.id) : undefined}
+                  onDelete={onDeleteAgent ? () => onDeleteAgent(agent.id) : undefined}
                 />
               ))}
             </>
@@ -80,6 +86,8 @@ export function AgentList({
                   isActive={agent.id === activeAgentId}
                   onClick={() => onSelectAgent(agent.id)}
                   onAvatarUploaded={onAgentUpdated}
+                  onEdit={onEditAgent ? () => onEditAgent(agent.id) : undefined}
+                  onDelete={onDeleteAgent ? () => onDeleteAgent(agent.id) : undefined}
                 />
               ))}
             </>
@@ -114,11 +122,15 @@ function AgentItem({
   isActive,
   onClick,
   onAvatarUploaded,
+  onEdit,
+  onDelete,
 }: {
   agent: AgentProfile;
   isActive: boolean;
   onClick: () => void;
   onAvatarUploaded?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) {
   return (
     <div
@@ -148,6 +160,20 @@ function AgentItem({
         </div>
         <p className="text-[10px] text-muted-foreground/60 truncate mt-0.5">{agent.model}</p>
       </button>
+      {(onEdit || onDelete) && (
+        <div className="flex items-center gap-0.5 shrink-0">
+          {onEdit && (
+            <Button variant="ghost" size="icon-sm" onClick={onEdit} title={m.edit_status()}>
+              <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="ghost" size="icon-sm" onClick={onDelete} title={m._delete()}>
+              <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

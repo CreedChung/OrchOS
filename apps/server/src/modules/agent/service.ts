@@ -90,6 +90,11 @@ export abstract class AgentService {
     return AgentService.get(id);
   }
 
+  static remove(id: string): boolean {
+    const result = db.delete(agents).where(eq(agents.id, id)).run();
+    return result.changes > 0;
+  }
+
   static selectAgent(
     action: Action,
     modelStrategy?: ControlSettings["modelStrategy"],

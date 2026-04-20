@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { AgentList } from "@/components/panels/AgentList";
 import { AgentDetailView } from "@/components/panels/AgentDetail";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useUIStore } from "@/lib/store";
 import { m } from "@/paraglide/messages";
@@ -14,15 +16,34 @@ function AgentsPage() {
     handleRuleToggle,
     handleRuleDelete,
     handleUpdateAgent,
+    handleDeleteAgent,
     refreshAll,
   } = useDashboard();
 
   const { activeAgentId, setActiveAgentId } = useUIStore();
   const { setShowCreateAgentDialog } = useDashboard();
 
-  // Show all agents (user-created). Runtimes are managed separately in Environments.
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
+
   const agentInstances = agents;
   const activeAgent = agentInstances.find((a) => a.id === activeAgentId);
+
+  const handleDeleteClick = (id: string) => {
+    setAgentToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (agentToDelete) {
+      await handleDeleteAgent(agentToDelete);
+      if (activeAgentId === agentToDelete) {
+        setActiveAgentId(null);
+      }
+    }
+    setDeleteConfirmOpen(false);
+    setAgentToDelete(null);
+  };
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -32,6 +53,8 @@ function AgentsPage() {
         onSelectAgent={setActiveAgentId}
         onAgentUpdated={refreshAll}
         onCreateAgent={() => setShowCreateAgentDialog(true)}
+        onEditAgent={(id) => setActiveAgentId(id)}
+        onDeleteAgent={handleDeleteClick}
       />
       <div className="flex-1 overflow-hidden">
         {activeAgent ? (
@@ -52,6 +75,15 @@ function AgentsPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title={m._delete()}
+        description={m.delete_agent_confirm()}
+        onConfirm={handleDeleteConfirm}
+        confirmLabel={m._delete()}
+        variant="destructive"
+      />
     </div>
   );
 }
