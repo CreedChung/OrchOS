@@ -246,7 +246,6 @@ function DashboardLayout() {
             settings={settings}
             onSettingsChange={useUIStore.getState().setSettings}
             onRuntimesRefresh={refreshAll}
-            onConversationsRefresh={refreshAll}
             registeredRuntimes={runtimes}
           />
         )}

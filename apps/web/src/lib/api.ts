@@ -998,4 +998,12 @@ export const api = {
     const result = await client.api.commands.dispatch.post(data);
     return assertData(result) as DispatchResult;
   },
+
+  getObservabilityThroughput: async (_timeRange: string): Promise<TimeSeriesPoint[]> => {
+    return [];
+  },
+
+  getObservabilityGoals: async (_timeRange: string): Promise<GoalTimeSeriesPoint[]> => {
+    return [];
+  },
 };

@@ -38,25 +38,6 @@ function HomePageInner() {
     return () => observer.disconnect();
   }, [showFooter]);
 
-  const heroCopy =
-    locale === "zh-CN"
-      ? {
-          line1: "从智能体到",
-          line2: "自动化。",
-          subtitle: "编排、协同并扩展你的 AI 劳动力。",
-        }
-      : locale === "zh-TW"
-        ? {
-            line1: "從智能體到",
-            line2: "自動化。",
-            subtitle: "編排、協調並擴展你的 AI 勞動力。",
-          }
-        : {
-            line1: "From Agents to",
-            line2: "Automation.",
-            subtitle: "Orchestrate, coordinate, and scale your AI workforce.",
-          };
-
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
@@ -79,16 +60,22 @@ function HomePageInner() {
             >
               {locale === "en" ? (
                 <>
-                  From <span className="italic">Agents</span> to
+                  {m.hero_line1()} <span className="italic">{m.hero_line2_word()}</span> {m.hero_line2()}
+                </>
+              ) : locale === "ko" || locale === "ja" ? (
+                <>
+                  <span className="italic">{m.hero_line2_word()}</span>{m.hero_line2()}
                 </>
               ) : (
-                heroCopy.line1
+                <>
+                  {m.hero_line1()} <span className="text-primary italic">{m.hero_line2_word()}</span> {m.hero_line2()}
+                </>
               )}
               <br />
-              <span className="text-primary italic">{heroCopy.line2}</span>
+              <span className="text-primary italic">{m.hero_line3()}</span>
             </p>
             <p className="mb-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
-              {heroCopy.subtitle}
+              {m.hero_subtitle()}
             </p>
             <div className="flex flex-wrap items-center justify-start gap-3">
               <Button asChild className="h-auto rounded-2xl px-6 py-3 shadow-sm">

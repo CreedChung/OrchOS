@@ -46,36 +46,6 @@ const backgroundVariants = {
   },
 };
 
-const footerData = {
-  sections: [
-    {
-      title: m.footer_product(),
-      links: [
-        { label: m.nav_home(), to: "/" },
-        { label: m.open_dashboard(), to: "/dashboard" },
-        { label: m.nav_changelog(), to: "/changelog" },
-      ],
-    },
-    {
-      title: m.footer_company(),
-      links: [
-        { label: m.nav_about(), to: "/about" },
-        { label: m.integration_github(), to: "https://github.com/CreedChung/OrchOS" },
-      ],
-    },
-    {
-      title: m.footer_resources(),
-      links: [
-        { label: m.footer_documentation(), to: "#" },
-        { label: m.footer_community(), to: "#" },
-        { label: m.footer_help_center(), to: "#" },
-      ],
-    },
-  ],
-  title: m.about_orchos(),
-  copyright: `©${new Date().getFullYear()} ${m.about_orchos()}. ${m.footer_rights()}`,
-};
-
 const NavSection = ({
   title,
   links,
@@ -123,6 +93,36 @@ const NavSection = ({
 );
 
 export default function StickyFooter() {
+  const footerData = {
+    sections: [
+      {
+        title: m.footer_product(),
+        links: [
+          { label: m.nav_home(), to: "/" },
+          { label: m.open_dashboard(), to: "/dashboard" },
+          { label: m.nav_changelog(), to: "/changelog" },
+        ],
+      },
+      {
+        title: m.footer_company(),
+        links: [
+          { label: m.nav_about(), to: "/about" },
+          { label: m.integration_github(), to: "https://github.com/CreedChung/OrchOS" },
+        ],
+      },
+      {
+        title: m.footer_resources(),
+        links: [
+          { label: m.footer_documentation(), to: "#" },
+          { label: m.footer_community(), to: "#" },
+          { label: m.footer_help_center(), to: "#" },
+        ],
+      },
+    ],
+    title: m.about_orchos(),
+    copyright: `©${new Date().getFullYear()} ${m.about_orchos()}. ${m.footer_rights()}`,
+  };
+
   return (
     <div
       className="relative h-[45vh]"

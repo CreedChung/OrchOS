@@ -13,6 +13,8 @@ const LOCALE_LABELS: Record<string, string> = {
   en: "English",
   "zh-CN": "简体中文",
   "zh-TW": "繁體中文",
+  ko: "한국어",
+  ja: "日本語",
 };
 
 export default function LocaleToggle() {

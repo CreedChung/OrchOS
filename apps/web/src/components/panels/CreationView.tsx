@@ -373,9 +373,6 @@ function ChatArea({
     [runtimes, conversation.runtimeId],
   );
 
-  const modelDisplay = selectedRuntime?.model.replace(/^(cloud|local)\//, "") || "";
-  const isCloudModel = selectedRuntime?.model.startsWith("cloud/");
-
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -503,21 +500,6 @@ function ChatArea({
             selectedId={conversation.runtimeId}
             onSelect={(runtimeId) => onUpdateConversation(conversation.id, { runtimeId })}
           />
-
-          {/* Model badge */}
-          {selectedRuntime && (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium shrink-0",
-                isCloudModel
-                  ? "bg-violet-500/10 text-violet-600 dark:text-violet-400"
-                  : "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-              )}
-            >
-              <HugeiconsIcon icon={isCloudModel ? CloudIcon : Server} className="size-2.5" />
-              {modelDisplay}
-            </span>
-          )}
         </div>
       </div>
 
@@ -856,9 +838,11 @@ function RuntimeItem({
         <div
           className="fixed z-[60] animate-in fade-in-0 zoom-in-95"
           style={{
-            left: (itemRef.current?.getBoundingClientRect().right ?? 0) + 8,
+            right: (window.innerWidth - (itemRef.current?.getBoundingClientRect().left ?? 0)) + 8,
             top: itemRef.current?.getBoundingClientRect().top ?? 0,
           }}
+          onMouseEnter={onHover}
+          onMouseLeave={onLeave}
         >
           <div className="rounded-lg border border-border bg-popover p-3 shadow-lg min-w-[200px]">
             <div className="flex items-center gap-2 mb-2">
@@ -938,9 +922,11 @@ function AgentItem({ agent, isSelected, isHovered, onHover, onLeave, onClick }: 
         <div
           className="fixed z-[60] animate-in fade-in-0 zoom-in-95"
           style={{
-            left: (itemRef.current?.getBoundingClientRect().right ?? 0) + 8,
+            right: (window.innerWidth - (itemRef.current?.getBoundingClientRect().left ?? 0)) + 8,
             top: itemRef.current?.getBoundingClientRect().top ?? 0,
           }}
+          onMouseEnter={onHover}
+          onMouseLeave={onLeave}
         >
           <div className="rounded-lg border border-border bg-popover p-3 shadow-lg min-w-[200px]">
             <div className="flex items-center gap-2 mb-2">
