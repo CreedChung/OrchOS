@@ -22,6 +22,7 @@ import { filesystemController } from "@/modules/filesystem";
 import { conversationController } from "@/modules/conversation";
 import { integrationController } from "@/modules/integration";
 import { observabilityController } from "@/modules/observability";
+import { inboxController } from "@/modules/inbox";
 import { seedData } from "@/db/seed";
 
 import "@/db";
@@ -52,6 +53,7 @@ export const app = new Elysia()
   .use(sandboxController)
   .use(filesystemController)
   .use(conversationController)
+  .use(inboxController)
   .use(integrationController)
   .use(observabilityController)
   .listen({

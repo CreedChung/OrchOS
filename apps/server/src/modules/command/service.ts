@@ -9,6 +9,7 @@ import { ActivityService } from "@/modules/activity/service";
 import { StateService } from "@/modules/state/service";
 import { PlanningService } from "@/modules/execution/planner";
 import { executionService } from "@/modules/execution/service";
+import { InboxService } from "@/modules/inbox/service";
 import type { Command, CommandStatus } from "@/types";
 
 export interface DispatchResult {
@@ -81,6 +82,16 @@ export abstract class CommandService {
     const createdGoals: DispatchResult["goals"] = [];
     let primaryGoalId: string | null = null;
 
+    const inboxThread = InboxService.createAgentRequestThread({
+      title: command.instruction,
+      body: command.instruction,
+      summary: `Dispatching work to ${resolvedAgentNames.length} agent${resolvedAgentNames.length === 1 ? "" : "s"}.`,
+      projectId,
+      commandId: command.id,
+      recipients: resolvedAgentNames,
+      cc: ["User"],
+    });
+
     for (const planned of plannedGoals) {
       const watchers = planned.assignedAgentName
         ? [planned.assignedAgentName]
@@ -130,7 +141,29 @@ export abstract class CommandService {
 
     if (primaryGoalId) {
       CommandService.update(command.id, { goalId: primaryGoalId });
+      InboxService.updateThread(inboxThread.id, {
+        status: "in_progress",
+        primaryGoalId,
+        summary: `Planned ${createdGoals.length} goal${createdGoals.length === 1 ? "" : "s"} for ${resolvedAgentNames.length} agent${resolvedAgentNames.length === 1 ? "" : "s"}.`,
+      });
     }
+
+    InboxService.addMessage({
+      threadId: inboxThread.id,
+      messageType: "status_update",
+      senderType: "system",
+      senderName: "Planner",
+      subject: "Execution plan created",
+      body: createdGoals
+        .map((goal, index) => `${index + 1}. ${goal.title}${goal.assignedAgentName ? ` -> ${goal.assignedAgentName}` : ""}`)
+        .join("\n"),
+      to: resolvedAgentNames,
+      cc: ["User"],
+      metadata: {
+        commandId: command.id,
+        goalCount: createdGoals.length,
+      },
+    });
 
     for (const goalEntry of createdGoals) {
       eventBus.emit("goal_created", { goalId: goalEntry.id, commandId: command.id }, goalEntry.id);

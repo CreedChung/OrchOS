@@ -5,6 +5,8 @@ import {
   Chat01Icon,
   Delete02Icon,
   Edit02Icon,
+  CheckmarkCircle02Icon,
+  Alert02Icon,
   Loading01Icon,
   Robot02Icon,
   ArrowUp01Icon,
@@ -37,7 +39,6 @@ import { toast } from "sonner";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import type { CreationArchiveFilter } from "@/components/layout/Toolbar";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
-import { ChatMessageShell } from "@/components/chat/ChatMessageShell";
 import { ChatReasoningDrawer } from "@/components/chat/ChatReasoningDrawer";
 import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
 import { ChatToolTimeline } from "@/components/chat/ChatToolTimeline";
@@ -55,49 +56,68 @@ interface CreationViewProps {
 
 function MessageBubble({ msg }: { msg: UIMessage }) {
   const isUser = msg.role === "user";
-  const metadata = (msg.metadata ?? {}) as { responseTime?: number; error?: string };
-  const isError = Boolean(metadata.error);
+  const metadata = (msg.metadata ?? {}) as {
+    responseTime?: number;
+    error?: string;
+    executionMode?: "sandbox" | "local";
+    sandboxStatus?: "created" | "reused" | "fallback" | "required_failed";
+    sandboxVmId?: string;
+    projectId?: string;
+    projectName?: string;
+  };
 
   return (
-    <ChatMessageShell role={msg.role} isError={isError} responseTime={metadata.responseTime}>
-      {msg.parts.map((part, index) => {
-        if (part.type === "text") {
-          return (
-            <div
-              key={`${msg.id}-${index}`}
-              className={cn(
-                "rounded-[1.35rem] border px-4 py-3",
-                isUser ? "border-primary/12 bg-background/60" : "border-border/60 bg-background/72",
-              )}
-            >
-              <ChatMarkdown content={part.text} />
-            </div>
-          );
-        }
+    <div className={cn("flex w-full gap-2", isUser ? "pl-6" : "pr-6")}>
+      <span
+        className={cn(
+          "inline-flex size-[18px] shrink-0 items-center justify-center rounded text-[10px] font-mono font-semibold leading-none mt-[3px]",
+          isUser
+            ? "bg-primary/10 text-primary"
+            : metadata.error
+              ? "bg-destructive/10 text-destructive"
+              : "bg-muted text-muted-foreground",
+        )}
+      >
+        {isUser ? "›" : "◆"}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
+          <span className="font-medium text-foreground/60">{isUser ? m.user() : m.assistant()}</span>
+          {metadata.responseTime != null && <span className="opacity-50">{metadata.responseTime}ms</span>}
+        </div>
+        {msg.parts.map((part, index) => {
+          if (part.type === "text") {
+            return (
+              <div key={`${msg.id}-${index}`} className="text-sm leading-7 text-foreground/90">
+                <ChatMarkdown content={part.text} />
+              </div>
+            );
+          }
 
-        if (part.type === "reasoning") {
-          return (
-            <ChatReasoningDrawer
-              key={`${msg.id}-${index}`}
-              text={part.text}
-              metadata={metadata}
-            />
-          );
-        }
+          if (part.type === "reasoning") {
+            return (
+              <ChatReasoningDrawer
+                key={`${msg.id}-${index}`}
+                text={part.text}
+                metadata={metadata}
+              />
+            );
+          }
 
-        if (part.type.startsWith("tool-")) {
-          return (
-            <ChatToolTimeline
-              key={`${msg.id}-${index}`}
-              part={part as Record<string, unknown> & { type: string }}
-              stepNumber={index + 1}
-            />
-          );
-        }
+          if (part.type.startsWith("tool-")) {
+            return (
+              <ChatToolTimeline
+                key={`${msg.id}-${index}`}
+                part={part as Record<string, unknown> & { type: string }}
+                stepNumber={index + 1}
+              />
+            );
+          }
 
-        return null;
-      })}
-    </ChatMessageShell>
+          return null;
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -108,6 +128,11 @@ function mapConversationMessagesToUiMessages(messages: ConversationMessage[]): U
     metadata: {
       responseTime: message.responseTime,
       error: message.error,
+      executionMode: message.executionMode,
+      sandboxStatus: message.sandboxStatus,
+      sandboxVmId: message.sandboxVmId,
+      projectId: message.projectId,
+      projectName: message.projectName,
       createdAt: message.createdAt,
     },
     parts: message.content
@@ -381,6 +406,7 @@ className={cn(
             agents={agents}
             runtimes={enabledRuntimes}
             projects={projects}
+            settings={settings}
             defaultRuntimeId={settings?.defaultRuntimeId}
             onUpdateConversation={handleUpdateConversation}
             onSetDefaultRuntime={(runtimeId) => {
@@ -472,6 +498,7 @@ function ChatArea({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [isMultiLine, setIsMultiLine] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -492,6 +519,19 @@ function ChatArea({
     () => runtimes.find((r) => r.id === conversation.runtimeId),
     [runtimes, conversation.runtimeId],
   );
+  const selectedProject = useMemo(
+    () => projects.find((p) => p.id === conversation.projectId),
+    [projects, conversation.projectId],
+  );
+  const latestAssistantMessage = useMemo(
+    () => [...messages].reverse().find((msg) => msg.role === "assistant"),
+    [messages],
+  );
+  const latestMetadata = (latestAssistantMessage?.metadata ?? {}) as {
+    executionMode?: "sandbox" | "local";
+    sandboxStatus?: "created" | "reused" | "fallback" | "required_failed";
+    sandboxVmId?: string;
+  };
 
   const syncTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -499,6 +539,7 @@ function ChatArea({
 
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+    setIsMultiLine(textarea.scrollHeight > 40);
   }, []);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -634,20 +675,57 @@ function ChatArea({
         </div>
       </div>
 
+      <div className="border-b border-border/70 bg-muted/20 px-4 py-2">
+        <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-2 py-1">
+            <HugeiconsIcon icon={Folder01Icon} className="size-3" />
+            <span>{selectedProject?.name || m.no_project()}</span>
+          </div>
+          {conversation.projectId && (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/25 bg-sky-500/10 px-2 py-1 text-sky-700 dark:text-sky-300">
+              <span>Project-bound chats require sandbox.</span>
+            </div>
+          )}
+          {latestMetadata.executionMode === "sandbox" && (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-emerald-700 dark:text-emerald-300">
+              <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3" />
+              <span>
+                Sandbox {latestMetadata.sandboxStatus === "created" ? "created" : "active"}
+              </span>
+              {latestMetadata.sandboxVmId && <span className="font-mono">{latestMetadata.sandboxVmId}</span>}
+            </div>
+          )}
+          {latestMetadata.sandboxStatus === "fallback" && (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-amber-700 dark:text-amber-300">
+              <HugeiconsIcon icon={Alert02Icon} className="size-3" />
+              <span>Sandbox unavailable, using local project path</span>
+            </div>
+          )}
+          {latestMetadata.sandboxStatus === "required_failed" && (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-destructive/25 bg-destructive/10 px-2 py-1 text-destructive">
+              <HugeiconsIcon icon={Alert02Icon} className="size-3" />
+              <span>Sandbox required. Message was blocked because sandbox startup failed.</span>
+            </div>
+          )}
+          {!conversation.projectId && (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-2 py-1">
+              <span>Select a project to keep agent execution scoped.</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6">
-        <div className="mx-auto max-w-3xl py-4 space-y-4">
+        <div className="mx-auto max-w-3xl py-6 space-y-3">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3">
-              <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
-                <HugeiconsIcon icon={Robot02Icon} className="size-7 text-primary" />
+            <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-2">
+              <div className="flex size-10 items-center justify-center rounded-lg border border-border/50 bg-muted/30">
+                <HugeiconsIcon icon={Robot02Icon} className="size-5 text-muted-foreground/40" />
               </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">{m.creation_welcome()}</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">{m.creation_welcome_desc()}</p>
-              </div>
+              <p className="text-xs text-muted-foreground/50">{m.creation_welcome()}</p>
               {!conversation.runtimeId && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                <p className="text-[11px] text-amber-600 dark:text-amber-400">
                   {m.creation_no_runtime()}
                 </p>
               )}
@@ -658,8 +736,9 @@ function ChatArea({
           ))}
           {sending && <ChatThinkingState />}
           {chatError && (
-            <div className="mr-10 rounded-[1.5rem] border border-destructive/20 bg-destructive/[0.06] px-4 py-3 text-sm text-destructive shadow-sm">
-              {m.send_failed()}
+            <div className="flex items-center gap-2 pr-6">
+              <span className="inline-flex size-[18px] shrink-0 items-center justify-center rounded bg-destructive/10 text-destructive text-[10px] font-semibold">!</span>
+              <span className="text-xs text-destructive">{m.send_failed()}</span>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -677,7 +756,7 @@ function ChatArea({
             duration={2.6}
             className="rounded-xl"
           >
-            <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-background px-3 py-2">
+            <div className={cn("flex gap-1.5 rounded-xl border border-border bg-background px-3 py-2", isMultiLine ? "flex-col" : "flex-row items-center")}>
               {attachedFiles.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {attachedFiles.map((file, index) => (
@@ -709,6 +788,16 @@ function ChatArea({
                 className="hidden"
                 onChange={handleFileSelect}
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                title={m.upload()}
+                className={cn("text-muted-foreground hover:text-foreground", !isMultiLine && "order-first")}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <HugeiconsIcon icon={Upload04Icon} className="size-4" />
+              </Button>
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -716,7 +805,7 @@ function ChatArea({
                 placeholder={
                   selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()
                 }
-                className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className={cn("resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground", isMultiLine ? "w-full" : "flex-1")}
                 rows={1}
                 onKeyDown={handleKeys}
                 spellCheck={false}
@@ -724,45 +813,33 @@ function ChatArea({
                 style={{ maxHeight: "120px" }}
                 onInput={syncTextareaHeight}
               />
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  title={m.upload()}
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={() => fileInputRef.current?.click()}
+                  title={isListening ? m.voice_input_stop() : m.voice_input()}
+                  className={cn(
+                    "text-muted-foreground hover:text-foreground",
+                    isListening && "text-red-500 hover:text-red-600",
+                  )}
+                  onClick={isListening ? stop : start}
+                  disabled={!isSupported}
                 >
-                  <HugeiconsIcon icon={Upload04Icon} className="size-4" />
+                  <HugeiconsIcon icon={isListening ? Cancel01Icon : Mic01Icon} className="size-4" />
                 </Button>
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    title={isListening ? m.voice_input_stop() : m.voice_input()}
-                    className={cn(
-                      "text-muted-foreground hover:text-foreground",
-                      isListening && "text-red-500 hover:text-red-600",
-                    )}
-                    onClick={isListening ? stop : start}
-                    disabled={!isSupported}
-                  >
-                    <HugeiconsIcon icon={isListening ? Cancel01Icon : Mic01Icon} className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    disabled={(!input.trim() && attachedFiles.length === 0) || sending}
-                    onClick={handleSend}
-                  >
-                    {sending ? (
-                      <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
-                    ) : (
-                      <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
-                    )}
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  disabled={(!input.trim() && attachedFiles.length === 0) || sending}
+                  onClick={handleSend}
+                >
+                  {sending ? (
+                    <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                  ) : (
+                    <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
+                  )}
+                </Button>
               </div>
             </div>
           </BorderBeam>

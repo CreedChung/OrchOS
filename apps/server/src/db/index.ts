@@ -36,6 +36,12 @@ function migrate(sqlite: Database) {
   );
   sqlite.run("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
   sqlite.run(
+    "CREATE TABLE IF NOT EXISTS inbox_threads (id TEXT PRIMARY KEY, kind TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open', priority TEXT NOT NULL DEFAULT 'warning', title TEXT NOT NULL, summary TEXT, project_id TEXT REFERENCES projects(id), conversation_id TEXT REFERENCES conversations(id), command_id TEXT REFERENCES commands(id), primary_goal_id TEXT REFERENCES goals(id), created_by_type TEXT NOT NULL, created_by_id TEXT, created_by_name TEXT NOT NULL, last_message_at TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, archived TEXT NOT NULL DEFAULT 'false')",
+  );
+  sqlite.run(
+    "CREATE TABLE IF NOT EXISTS inbox_messages (id TEXT PRIMARY KEY, thread_id TEXT NOT NULL REFERENCES inbox_threads(id) ON DELETE CASCADE, message_type TEXT NOT NULL, sender_type TEXT NOT NULL, sender_id TEXT, sender_name TEXT NOT NULL, subject TEXT, body TEXT NOT NULL, to_json TEXT NOT NULL DEFAULT '[]', cc_json TEXT NOT NULL DEFAULT '[]', goal_id TEXT REFERENCES goals(id), state_id TEXT REFERENCES states(id), problem_id TEXT REFERENCES problems(id), metadata TEXT, created_at TEXT NOT NULL)",
+  );
+  sqlite.run(
     "CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, type TEXT NOT NULL, goal_id TEXT, payload TEXT NOT NULL DEFAULT '{}', timestamp TEXT NOT NULL)",
   );
   sqlite.run("CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL)");
@@ -52,6 +58,12 @@ function migrate(sqlite: Database) {
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_events_goal_id ON events(goal_id)");
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_problems_status ON problems(status)");
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_problems_goal_id ON problems(goal_id)");
+  sqlite.run("CREATE INDEX IF NOT EXISTS idx_inbox_threads_kind ON inbox_threads(kind)");
+  sqlite.run("CREATE INDEX IF NOT EXISTS idx_inbox_threads_status ON inbox_threads(status)");
+  sqlite.run("CREATE INDEX IF NOT EXISTS idx_inbox_threads_project_id ON inbox_threads(project_id)");
+  sqlite.run("CREATE INDEX IF NOT EXISTS idx_inbox_threads_command_id ON inbox_threads(command_id)");
+  sqlite.run("CREATE INDEX IF NOT EXISTS idx_inbox_messages_thread_id ON inbox_messages(thread_id)");
+  sqlite.run("CREATE INDEX IF NOT EXISTS idx_inbox_messages_goal_id ON inbox_messages(goal_id)");
 
   // Migrations
   try {
@@ -159,6 +171,21 @@ function migrate(sqlite: Database) {
     sqlite.run(
       "CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, conversation_id TEXT NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, error TEXT, response_time TEXT, created_at TEXT NOT NULL, FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE)",
     );
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE messages ADD COLUMN execution_mode TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE messages ADD COLUMN sandbox_status TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE messages ADD COLUMN sandbox_vm_id TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE messages ADD COLUMN project_id TEXT REFERENCES projects(id)");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE messages ADD COLUMN project_name TEXT");
   } catch {}
   try {
     sqlite.run(

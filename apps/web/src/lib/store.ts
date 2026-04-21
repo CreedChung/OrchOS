@@ -52,6 +52,7 @@ const defaultSettings: ControlSettings = {
   modelStrategy: "adaptive",
   locale: "en",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+  projectChatsRequireSandbox: true,
   notifications: { system: true, sound: true, eventSounds: {}, eventSoundFiles: {} },
 };
 

@@ -37,6 +37,18 @@ export const ConversationModel = {
     content: t.String(),
     error: t.Optional(t.String()),
     responseTime: t.Optional(t.Number()),
+    executionMode: t.Optional(t.Union([t.Literal("sandbox"), t.Literal("local")])),
+    sandboxStatus: t.Optional(
+      t.Union([
+        t.Literal("created"),
+        t.Literal("reused"),
+        t.Literal("fallback"),
+        t.Literal("required_failed"),
+      ]),
+    ),
+    sandboxVmId: t.Optional(t.String()),
+    projectId: t.Optional(t.String()),
+    projectName: t.Optional(t.String()),
     createdAt: t.String(),
   }),
   errorNotFound: t.Object({ error: t.Literal("Conversation not found") }),

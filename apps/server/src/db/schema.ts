@@ -122,6 +122,62 @@ export const settings = sqliteTable("settings", {
   value: text("value").notNull(),
 });
 
+export const inboxThreads = sqliteTable(
+  "inbox_threads",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").notNull(),
+    status: text("status").notNull().default("open"),
+    priority: text("priority").notNull().default("warning"),
+    title: text("title").notNull(),
+    summary: text("summary"),
+    projectId: text("project_id").references(() => projects.id),
+    conversationId: text("conversation_id").references(() => conversations.id),
+    commandId: text("command_id").references(() => commands.id),
+    primaryGoalId: text("primary_goal_id").references(() => goals.id),
+    createdByType: text("created_by_type").notNull(),
+    createdById: text("created_by_id"),
+    createdByName: text("created_by_name").notNull(),
+    lastMessageAt: text("last_message_at").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+    archived: text("archived").notNull().default("false"),
+  },
+  (t) => [
+    index("idx_inbox_threads_kind").on(t.kind),
+    index("idx_inbox_threads_status").on(t.status),
+    index("idx_inbox_threads_project_id").on(t.projectId),
+    index("idx_inbox_threads_command_id").on(t.commandId),
+  ],
+);
+
+export const inboxMessages = sqliteTable(
+  "inbox_messages",
+  {
+    id: text("id").primaryKey(),
+    threadId: text("thread_id")
+      .notNull()
+      .references(() => inboxThreads.id, { onDelete: "cascade" }),
+    messageType: text("message_type").notNull(),
+    senderType: text("sender_type").notNull(),
+    senderId: text("sender_id"),
+    senderName: text("sender_name").notNull(),
+    subject: text("subject"),
+    body: text("body").notNull(),
+    to: text("to_json").notNull().default("[]"),
+    cc: text("cc_json").notNull().default("[]"),
+    goalId: text("goal_id").references(() => goals.id),
+    stateId: text("state_id").references(() => states.id),
+    problemId: text("problem_id").references(() => problems.id),
+    metadata: text("metadata"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [
+    index("idx_inbox_messages_thread_id").on(t.threadId),
+    index("idx_inbox_messages_goal_id").on(t.goalId),
+  ],
+);
+
 export const events = sqliteTable(
   "events",
   {
@@ -223,6 +279,11 @@ export const messages = sqliteTable(
     content: text("content").notNull(),
     error: text("error"),
     responseTime: text("response_time"),
+    executionMode: text("execution_mode"),
+    sandboxStatus: text("sandbox_status"),
+    sandboxVmId: text("sandbox_vm_id"),
+    projectId: text("project_id").references(() => projects.id),
+    projectName: text("project_name"),
     createdAt: text("created_at").notNull(),
   },
   (t) => [index("idx_messages_conversation_id").on(t.conversationId)],

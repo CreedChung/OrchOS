@@ -2,7 +2,9 @@ import { db } from "@/db";
 import { conversations, messages } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { generateId } from "@/utils";
+import { ProjectService } from "@/modules/project/service";
 import { RuntimeService } from "@/modules/runtime/service";
+import { SandboxService } from "@/modules/sandbox/service";
 
 export interface Conversation {
   id: string;
@@ -23,7 +25,20 @@ export interface Message {
   content: string;
   error?: string;
   responseTime?: number;
+  executionMode?: "sandbox" | "local";
+  sandboxStatus?: "created" | "reused" | "fallback" | "required_failed";
+  sandboxVmId?: string;
+  projectId?: string;
+  projectName?: string;
   createdAt: string;
+}
+
+interface MessageMetadata {
+  executionMode?: "sandbox" | "local";
+  sandboxStatus?: "created" | "reused" | "fallback" | "required_failed";
+  sandboxVmId?: string;
+  projectId?: string;
+  projectName?: string;
 }
 
 export abstract class ConversationService {
@@ -151,6 +166,7 @@ export abstract class ConversationService {
     content: string,
     error?: string,
     responseTime?: number,
+    metadata?: MessageMetadata,
   ): Message {
     const id = generateId("msg");
     const now = new Date().toISOString();
@@ -163,6 +179,11 @@ export abstract class ConversationService {
         content,
         error: error || null,
         responseTime: responseTime != null ? String(responseTime) : null,
+        executionMode: metadata?.executionMode || null,
+        sandboxStatus: metadata?.sandboxStatus || null,
+        sandboxVmId: metadata?.sandboxVmId || null,
+        projectId: metadata?.projectId || null,
+        projectName: metadata?.projectName || null,
         createdAt: now,
       })
       .run();
@@ -173,7 +194,20 @@ export abstract class ConversationService {
       .where(eq(conversations.id, conversationId))
       .run();
 
-    return { id, conversationId, role, content, error, responseTime, createdAt: now };
+    return {
+      id,
+      conversationId,
+      role,
+      content,
+      error,
+      responseTime,
+      executionMode: metadata?.executionMode,
+      sandboxStatus: metadata?.sandboxStatus,
+      sandboxVmId: metadata?.sandboxVmId,
+      projectId: metadata?.projectId,
+      projectName: metadata?.projectName,
+      createdAt: now,
+    };
   }
 
   static async sendAndReply(conversationId: string, userContent: string): Promise<Message> {
@@ -207,7 +241,108 @@ export abstract class ConversationService {
 
     try {
       const startTime = Date.now();
-      const result = await RuntimeService.chat(runtimeId, prompt, { conversationId });
+      const project = conv.projectId ? ProjectService.get(conv.projectId) : undefined;
+      const projectMetadata = {
+        projectId: project?.id,
+        projectName: project?.name,
+      };
+      let result:
+        | {
+            success: boolean;
+            output: string;
+            error?: string;
+            agentName: string;
+            responseTime: number;
+            metadata?: MessageMetadata;
+          }
+        | undefined;
+
+      if (conv.projectId) {
+        let vm = SandboxService.getRunningVMForProject(conv.projectId);
+        let sandboxStatus: MessageMetadata["sandboxStatus"] = vm ? "reused" : undefined;
+        let sandboxFailureReason: string | undefined;
+
+        if (!vm) {
+          try {
+            vm = await SandboxService.createVM({
+              projectId: conv.projectId,
+              agentType: runtimeId,
+            });
+            sandboxStatus = "created";
+          } catch (err) {
+            sandboxFailureReason =
+              err instanceof Error ? err.message : "Failed to create sandbox for this project.";
+            vm = undefined;
+          }
+        }
+
+        if (vm) {
+          let sessionId: string | undefined;
+
+          try {
+            const session = await SandboxService.createSession(vm.vmId, {
+              agentType: runtimeId,
+            });
+            sessionId = session.sessionId;
+
+            const sandboxResult = await SandboxService.sendPrompt(session.sessionId, prompt);
+            result = {
+              success: sandboxResult.success,
+              output: sandboxResult.text,
+              error: sandboxResult.success ? undefined : sandboxResult.text,
+              agentName: runtimeId,
+              responseTime: Date.now() - startTime,
+              metadata: {
+                executionMode: "sandbox",
+                sandboxStatus,
+                sandboxVmId: vm.vmId,
+                ...projectMetadata,
+              },
+            };
+          } catch (err) {
+            sandboxFailureReason =
+              err instanceof Error ? err.message : "Failed to execute prompt in sandbox.";
+            result = undefined;
+          } finally {
+            if (sessionId) {
+              try {
+                SandboxService.closeSession(sessionId);
+              } catch {}
+            }
+          }
+        }
+
+        if (!result) {
+          const sandboxError =
+            sandboxFailureReason || "Sandbox is required for project-bound chats, but startup failed.";
+          return ConversationService.addMessage(
+            conversationId,
+            "assistant",
+            sandboxError,
+            sandboxError,
+            Date.now() - startTime,
+            {
+              executionMode: "sandbox",
+              sandboxStatus: "required_failed",
+              sandboxVmId: vm?.vmId,
+              ...projectMetadata,
+            },
+          );
+        }
+      }
+
+      if (!result) {
+        result = await RuntimeService.chat(runtimeId, prompt, {
+          conversationId,
+          cwd: project?.path,
+        });
+        result.metadata = {
+          executionMode: "local",
+          sandboxStatus: conv.projectId ? "fallback" : undefined,
+          ...projectMetadata,
+        };
+      }
+
       const responseTime = Date.now() - startTime;
 
       const msg = ConversationService.addMessage(
@@ -216,6 +351,7 @@ export abstract class ConversationService {
         result.output || result.error || "No response",
         result.success ? undefined : result.error,
         responseTime,
+        result.metadata,
       );
       return msg;
     } catch (err) {
@@ -240,14 +376,28 @@ export abstract class ConversationService {
   }
 
   static mapMessageRow(row: typeof messages.$inferSelect): Message {
-    return {
-      id: row.id,
-      conversationId: row.conversationId,
-      role: row.role as "user" | "assistant",
-      content: row.content,
-      error: row.error || undefined,
-      responseTime: row.responseTime ? Number(row.responseTime) : undefined,
-      createdAt: row.createdAt,
-    };
+      return {
+        id: row.id,
+        conversationId: row.conversationId,
+        role: row.role as "user" | "assistant",
+        content: row.content,
+        error: row.error || undefined,
+        responseTime: row.responseTime ? Number(row.responseTime) : undefined,
+        executionMode:
+          row.executionMode === "sandbox" || row.executionMode === "local"
+            ? row.executionMode
+            : undefined,
+        sandboxStatus:
+          row.sandboxStatus === "created" ||
+          row.sandboxStatus === "reused" ||
+          row.sandboxStatus === "fallback" ||
+          row.sandboxStatus === "required_failed"
+            ? row.sandboxStatus
+            : undefined,
+        sandboxVmId: row.sandboxVmId || undefined,
+        projectId: row.projectId || undefined,
+        projectName: row.projectName || undefined,
+        createdAt: row.createdAt,
+      };
   }
 }

@@ -322,7 +322,9 @@ export function SettingsDialog({
 
   const currentSettings = localSettings ?? settings;
 
-  const handleToggle = async (key: keyof Pick<ControlSettings, "autoCommit" | "autoFix">) => {
+  const handleToggle = async (
+    key: keyof Pick<ControlSettings, "autoCommit" | "autoFix" | "projectChatsRequireSandbox">,
+  ) => {
     if (!currentSettings) return;
     try {
       const updated = await api.updateSettings({ [key]: !currentSettings[key] });
@@ -701,6 +703,29 @@ export function SettingsDialog({
                       className={cn(
                         "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
                         currentSettings.autoFix ? "translate-x-6" : "translate-x-1",
+                      )}
+                    />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="max-w-[280px]">
+                    <span className="text-sm font-medium text-foreground">Project Chats Require Sandbox</span>
+                    <p className="text-xs text-muted-foreground">
+                      When a chat is bound to a project, block execution unless that project's sandbox starts successfully.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggle("projectChatsRequireSandbox")}
+                    className={cn(
+                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
+                      currentSettings.projectChatsRequireSandbox ? "bg-emerald-500" : "bg-muted",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                        currentSettings.projectChatsRequireSandbox ? "translate-x-6" : "translate-x-1",
                       )}
                     />
                   </button>

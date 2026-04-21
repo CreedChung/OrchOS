@@ -1,10 +1,44 @@
 import ReactMarkdown from "react-markdown";
+import { Folder01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 import { ChatCodeBlock } from "@/components/chat/ChatCodeBlock";
 
-export function ChatMarkdown({ content }: { content: string }) {
+function preprocessAgentOutput(text: string): string {
+  let result = text;
+
+  result = result.replace(/<path>([^<]+)<\/path>/g, (_, path) => {
+    return `\`${path}\``;
+  });
+
+  result = result.replace(/<type>([^<]+)<\/type>/g, "`$1`");
+  result = result.replace(/<content>([^<]*)<\/content>/g, "$1");
+  result = result.replace(/<result>([^<]*)<\/result>/g, "$1");
+  result = result.replace(/<error>([^<]*)<\/error>/g, "**Error:** $1");
+  result = result.replace(/<tool>([^<]+)<\/tool>/g, "`$1`");
+  result = result.replace(/<command>([^<]+)<\/command>/g, "`$1`");
+  result = result.replace(/<file>([^<]+)<\/file>/g, "`$1`");
+  result = result.replace(/<summary>([^<]*)<\/summary>/g, "$1");
+
+  return result;
+}
+
+function FilePathInline({ path }: { path: string }) {
+  const filename = path.split("/").pop() || path;
+
   return (
-    <div className="prose prose-sm max-w-none text-inherit dark:prose-invert prose-headings:mb-2 prose-headings:mt-5 prose-headings:text-inherit prose-headings:font-semibold prose-p:my-2 prose-p:text-inherit prose-p:leading-7 prose-li:my-1 prose-li:text-inherit prose-strong:text-inherit prose-code:rounded-md prose-code:bg-black/6 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-[0.8rem] prose-code:text-inherit prose-code:before:content-none prose-code:after:content-none prose-pre:bg-transparent prose-pre:p-0 prose-blockquote:border-l-border prose-blockquote:text-inherit prose-hr:border-border/70 prose-a:font-medium prose-a:text-primary prose-a:no-underline hover:prose-a:underline dark:prose-code:bg-white/8">
+    <span className="inline-flex items-center gap-1 rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[0.75rem] text-foreground/80">
+      <HugeiconsIcon icon={Folder01Icon} className="size-3 shrink-0 text-muted-foreground" />
+      <span className="truncate max-w-[280px]" title={path}>{filename}</span>
+    </span>
+  );
+}
+
+export function ChatMarkdown({ content }: { content: string }) {
+  const processed = preprocessAgentOutput(content);
+
+  return (
+    <div className="prose prose-sm max-w-none text-inherit dark:prose-invert prose-headings:mb-1.5 prose-headings:mt-3 prose-headings:text-inherit prose-headings:font-semibold prose-p:my-1.5 prose-p:text-inherit prose-p:leading-6 prose-li:my-0.5 prose-li:text-inherit prose-strong:text-inherit prose-code:rounded prose-code:bg-muted/50 prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-[0.75rem] prose-code:text-inherit prose-code:before:content-none prose-code:after:content-none prose-pre:bg-transparent prose-pre:p-0 prose-blockquote:border-l-border/50 prose-blockquote:text-inherit prose-hr:border-border/40 prose-a:font-medium prose-a:text-primary prose-a:no-underline hover:prose-a:underline dark:prose-code:bg-white/8">
       <ReactMarkdown
         components={{
           a: ({ ...props }) => (
@@ -23,6 +57,10 @@ export function ChatMarkdown({ content }: { content: string }) {
               return <ChatCodeBlock code={code} language={match?.[1]} />;
             }
 
+            if (code.startsWith("/") && code.includes(".")) {
+              return <FilePathInline path={code} />;
+            }
+
             return (
               <code className={className} {...props}>
                 {children}
@@ -31,7 +69,7 @@ export function ChatMarkdown({ content }: { content: string }) {
           },
         }}
       >
-        {content}
+        {processed}
       </ReactMarkdown>
     </div>
   );

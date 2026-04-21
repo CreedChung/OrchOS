@@ -187,6 +187,7 @@ export interface ControlSettings {
   locale: string;
   timezone: string;
   defaultRuntimeId?: string;
+  projectChatsRequireSandbox: boolean;
   notifications: {
     system: boolean;
     sound: boolean;

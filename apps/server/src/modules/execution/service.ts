@@ -18,6 +18,7 @@ export class ExecutionService {
     modelStrategy: "adaptive",
     locale: "en",
     timezone: "UTC",
+    projectChatsRequireSandbox: true,
     notifications: {
       system: true,
       sound: true,
@@ -47,6 +48,9 @@ export class ExecutionService {
         }
       }
       if (row.key === "defaultRuntimeId") this.settings.defaultRuntimeId = row.value;
+      if (row.key === "projectChatsRequireSandbox") {
+        this.settings.projectChatsRequireSandbox = row.value === "true";
+      }
     }
   }
 
@@ -89,6 +93,13 @@ export class ExecutionService {
     if (patch.defaultRuntimeId !== undefined) {
       this.settings.defaultRuntimeId = patch.defaultRuntimeId;
       this.saveSetting("defaultRuntimeId", patch.defaultRuntimeId);
+    }
+    if (patch.projectChatsRequireSandbox !== undefined) {
+      this.settings.projectChatsRequireSandbox = patch.projectChatsRequireSandbox;
+      this.saveSetting(
+        "projectChatsRequireSandbox",
+        String(patch.projectChatsRequireSandbox),
+      );
     }
     return { ...this.settings };
   }

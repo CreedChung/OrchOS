@@ -327,6 +327,11 @@ export interface ConversationMessage {
   content: string;
   error?: string;
   responseTime?: number;
+  executionMode?: "sandbox" | "local";
+  sandboxStatus?: "created" | "reused" | "fallback" | "required_failed";
+  sandboxVmId?: string;
+  projectId?: string;
+  projectName?: string;
   createdAt: string;
 }
 
@@ -344,6 +349,71 @@ export interface ProblemSummary {
     warning: number;
     info: number;
   };
+}
+
+export type InboxThreadKind =
+  | "agent_request"
+  | "pull_request"
+  | "issue"
+  | "mention"
+  | "system_alert";
+
+export type InboxThreadStatus =
+  | "open"
+  | "in_progress"
+  | "blocked"
+  | "waiting_user"
+  | "completed"
+  | "dismissed";
+
+export type InboxPriority = "critical" | "warning" | "info";
+
+export type InboxMessageType =
+  | "request"
+  | "status_update"
+  | "question"
+  | "blocker"
+  | "artifact"
+  | "review_request"
+  | "completion"
+  | "system_note";
+
+export interface InboxThread {
+  id: string;
+  kind: InboxThreadKind;
+  status: InboxThreadStatus;
+  priority: InboxPriority;
+  title: string;
+  summary?: string;
+  projectId?: string;
+  conversationId?: string;
+  commandId?: string;
+  primaryGoalId?: string;
+  createdByType: "user" | "agent" | "system";
+  createdById?: string;
+  createdByName: string;
+  lastMessageAt: string;
+  createdAt: string;
+  updatedAt: string;
+  archived: boolean;
+}
+
+export interface InboxMessage {
+  id: string;
+  threadId: string;
+  messageType: InboxMessageType;
+  senderType: "user" | "agent" | "system";
+  senderId?: string;
+  senderName: string;
+  subject?: string;
+  body: string;
+  to: string[];
+  cc: string[];
+  goalId?: string;
+  stateId?: string;
+  problemId?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
 }
 
 const EMPTY_PROBLEM_SUMMARY: ProblemSummary = {
@@ -738,6 +808,69 @@ export const api = {
   ): Promise<{ updated: number }> => {
     const client = createEdenClient();
     const result = await client.api.problems.bulk.post({ ids, status });
+    return assertData(result);
+  },
+
+  // Inbox
+  listInboxThreads: async (filters?: {
+    kind?: InboxThreadKind;
+    status?: InboxThreadStatus;
+    projectId?: string;
+  }): Promise<InboxThread[]> => {
+    const client = createEdenClient();
+    const result = await client.api.inbox.threads.get({
+      query: {
+        kind: filters?.kind,
+        status: filters?.status,
+        projectId: filters?.projectId,
+      },
+    });
+    return assertData(result);
+  },
+  getInboxThread: async (id: string): Promise<InboxThread> => {
+    const client = createEdenClient();
+    const result = await client.api.inbox.threads({ id }).get();
+    return assertData(result);
+  },
+  updateInboxThread: async (
+    id: string,
+    data: {
+      title?: string;
+      summary?: string;
+      status?: InboxThreadStatus;
+      priority?: InboxPriority;
+      primaryGoalId?: string;
+      archived?: boolean;
+    },
+  ): Promise<InboxThread> => {
+    const client = createEdenClient();
+    const result = await client.api.inbox.threads({ id }).patch(data);
+    return assertData(result);
+  },
+  listInboxMessages: async (threadId: string): Promise<InboxMessage[]> => {
+    const client = createEdenClient();
+    const result = await client.api.inbox.threads({ id: threadId }).messages.get();
+    return assertData(result);
+  },
+  addInboxMessage: async (
+    threadId: string,
+    data: {
+      messageType: InboxMessageType;
+      senderType: "user" | "agent" | "system";
+      senderId?: string;
+      senderName: string;
+      subject?: string;
+      body: string;
+      to?: string[];
+      cc?: string[];
+      goalId?: string;
+      stateId?: string;
+      problemId?: string;
+      metadata?: Record<string, unknown>;
+    },
+  ): Promise<InboxMessage> => {
+    const client = createEdenClient();
+    const result = await client.api.inbox.threads({ id: threadId }).messages.post(data);
     return assertData(result);
   },
 

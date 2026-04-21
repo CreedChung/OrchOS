@@ -50,6 +50,7 @@ interface VMInstance {
   sandboxId: string;
   sessions: Map<string, SessionRecord>;
   createdAt: string;
+  lastUsedAt: number;
 }
 
 const vmInstances = new Map<string, VMInstance>();
@@ -58,8 +59,24 @@ const DEFAULT_AGENT_TYPE = "pi";
 const DEFAULT_SESSION_CWD = "/home/user/workspace";
 const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
 const PROJECT_ROOT = "/home/user/project";
+const IDLE_VM_TTL_MS = 30 * 60 * 1000;
+
+let cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
 export abstract class SandboxService {
+  static getRunningVMForProject(projectId: string):
+    | {
+        vmId: string;
+        projectId: string;
+        status: string;
+        agentType: string;
+        sessions: number;
+        createdAt: string;
+      }
+    | undefined {
+    return this.listVMs().find((inst) => inst.projectId === projectId && inst.status === "running");
+  }
+
   static async createVM(options: {
     projectId: string;
     agentType?: string;
@@ -81,6 +98,7 @@ export abstract class SandboxService {
       sandboxId: "",
       sessions: new Map(),
       createdAt: timestamp(),
+      lastUsedAt: Date.now(),
     };
 
     vmInstances.set(vmId, instance);
@@ -112,6 +130,7 @@ export abstract class SandboxService {
       }
 
       instance.status = "running";
+      this.ensureCleanupLoop();
 
       db.insert(sandboxes)
         .values({
@@ -142,6 +161,7 @@ export abstract class SandboxService {
     agentType: string;
     sessions: number;
     createdAt: string;
+    lastUsedAt: string;
   }> {
     return Array.from(vmInstances.values()).map((inst) => ({
       vmId: inst.vmId,
@@ -150,6 +170,7 @@ export abstract class SandboxService {
       agentType: inst.agentType,
       sessions: inst.sessions.size,
       createdAt: inst.createdAt,
+      lastUsedAt: new Date(inst.lastUsedAt).toISOString(),
     }));
   }
 
@@ -195,6 +216,7 @@ export abstract class SandboxService {
     const agentType = options?.agentType || instance.agentType;
     const project = ProjectService.get(instance.projectId);
     const sessionId = generateId("session");
+    this.touchVM(instance);
     const sessionRecord: SessionRecord = {
       sessionId,
       agentType,
@@ -230,6 +252,7 @@ export abstract class SandboxService {
     if (!instance) throw new Error("Session not found");
     const session = instance.sessions.get(sessionId);
     if (!session) throw new Error("Session not found");
+    this.touchVM(instance);
 
     try {
       const project = ProjectService.get(instance.projectId);
@@ -398,6 +421,7 @@ export abstract class SandboxService {
   static async writeFile(vmId: string, path: string, content: string): Promise<void> {
     const instance = vmInstances.get(vmId);
     if (!instance || instance.status !== "running") throw new Error("VM not found or not running");
+    this.touchVM(instance);
     await instance.sandbox.files.write(path, content);
 
     if (this.isProjectPath(path)) {
@@ -411,6 +435,7 @@ export abstract class SandboxService {
   static async readFile(vmId: string, path: string): Promise<string> {
     const instance = vmInstances.get(vmId);
     if (!instance || instance.status !== "running") throw new Error("VM not found or not running");
+    this.touchVM(instance);
 
     if (this.isProjectPath(path)) {
       const project = ProjectService.get(instance.projectId);
@@ -428,6 +453,7 @@ export abstract class SandboxService {
   ): Promise<{ success: boolean; output: string; exitCode: number }> {
     const instance = vmInstances.get(vmId);
     if (!instance || instance.status !== "running") throw new Error("VM not found or not running");
+    this.touchVM(instance);
 
     const project = ProjectService.get(instance.projectId);
     if (project?.path) {
@@ -476,6 +502,30 @@ export abstract class SandboxService {
       },
       undefined,
     );
+  }
+
+  private static touchVM(instance: VMInstance): void {
+    instance.lastUsedAt = Date.now();
+  }
+
+  private static ensureCleanupLoop(): void {
+    if (cleanupTimer) return;
+
+    cleanupTimer = setInterval(() => {
+      void this.disposeIdleVMs();
+    }, 60_000);
+  }
+
+  static async disposeIdleVMs(): Promise<void> {
+    const now = Date.now();
+    const disposable = Array.from(vmInstances.values()).filter(
+      (instance) =>
+        instance.status === "running" &&
+        instance.sessions.size === 0 &&
+        now - instance.lastUsedAt >= IDLE_VM_TTL_MS,
+    );
+
+    await Promise.allSettled(disposable.map((instance) => this.disposeVM(instance.vmId)));
   }
 
   private static resolveRuntimeTarget(agentType: string): string | undefined {

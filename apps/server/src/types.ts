@@ -17,6 +17,71 @@ export type EventType =
 
 export type CommandStatus = "sent" | "executing" | "completed" | "failed";
 
+export type InboxThreadKind =
+  | "agent_request"
+  | "pull_request"
+  | "issue"
+  | "mention"
+  | "system_alert";
+
+export type InboxThreadStatus =
+  | "open"
+  | "in_progress"
+  | "blocked"
+  | "waiting_user"
+  | "completed"
+  | "dismissed";
+
+export type InboxPriority = "critical" | "warning" | "info";
+
+export type InboxMessageType =
+  | "request"
+  | "status_update"
+  | "question"
+  | "blocker"
+  | "artifact"
+  | "review_request"
+  | "completion"
+  | "system_note";
+
+export interface InboxThread {
+  id: string;
+  kind: InboxThreadKind;
+  status: InboxThreadStatus;
+  priority: InboxPriority;
+  title: string;
+  summary?: string;
+  projectId?: string;
+  conversationId?: string;
+  commandId?: string;
+  primaryGoalId?: string;
+  createdByType: "user" | "agent" | "system";
+  createdById?: string;
+  createdByName: string;
+  lastMessageAt: string;
+  createdAt: string;
+  updatedAt: string;
+  archived: boolean;
+}
+
+export interface InboxMessage {
+  id: string;
+  threadId: string;
+  messageType: InboxMessageType;
+  senderType: "user" | "agent" | "system";
+  senderId?: string;
+  senderName: string;
+  subject?: string;
+  body: string;
+  to: string[];
+  cc: string[];
+  goalId?: string;
+  stateId?: string;
+  problemId?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
 export interface Command {
   id: string;
   instruction: string;
@@ -123,6 +188,7 @@ export interface ControlSettings {
   locale: string;
   timezone: string;
   defaultRuntimeId?: string;
+  projectChatsRequireSandbox: boolean;
   notifications: {
     system: boolean;
     sound: boolean;

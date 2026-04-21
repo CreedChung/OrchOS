@@ -415,7 +415,7 @@ export abstract class RuntimeService {
   static async chat(
     runtimeId: string,
     prompt: string,
-    options?: { conversationId?: string },
+    options?: { conversationId?: string; cwd?: string },
   ): Promise<{
     success: boolean;
     output: string;
@@ -441,7 +441,7 @@ export abstract class RuntimeService {
         const result = await promptManagedAcpAgent(
           acpConfig,
           prompt,
-          undefined,
+          options?.cwd,
           options?.conversationId,
         );
         const responseTime = Date.now() - startTime;
@@ -466,6 +466,7 @@ export abstract class RuntimeService {
       runtime.registryId || runtime.name || runtime.command,
       prompt,
       {
+        cwd: options?.cwd,
         timeout: 120000,
       },
     );

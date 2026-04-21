@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { createHighlighter } from "shiki";
 import { Check, Copy } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
 
 const CHAT_CODE_LANGS = [
@@ -125,61 +124,30 @@ export function ChatCodeBlock({ code, language }: { code: string; language?: str
   }, [code]);
 
   return (
-    <>
-      <style>{`
-        .chat-code-block {
-          overflow: hidden;
-          border: 1px solid var(--border);
-          border-radius: 1rem;
-          background: var(--card);
-        }
-        .chat-code-block pre {
-          margin: 0;
-          padding: 1rem;
-          overflow-x: auto;
-          background: transparent !important;
-          font-size: 0.8125rem;
-          line-height: 1.55;
-          white-space: pre;
-        }
-        .chat-code-block code {
-          background: transparent;
-          padding: 0;
-          border-radius: 0;
-          font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-          font-size: inherit;
-          line-height: inherit;
-          white-space: pre;
-        }
-      `}</style>
-      <div className="my-3 overflow-hidden rounded-2xl border border-border/80 bg-card/90 shadow-sm">
-        <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
-          <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            {language || "text"}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="size-7"
-            onClick={() => {
-              void handleCopy();
-            }}
-            title="Copy code"
-          >
-            {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-          </Button>
-        </div>
-        <div className="chat-code-block">
-          {loading ? (
-            <div className="flex items-center justify-center p-6 text-xs text-muted-foreground">
-              {m.loading()}
-            </div>
-          ) : (
-            <div dangerouslySetInnerHTML={{ __html: html }} />
-          )}
-        </div>
+    <div className="my-2 overflow-hidden rounded-md border border-border/40 bg-muted/20">
+      <div className="flex items-center justify-between border-b border-border/30 px-2.5 py-1">
+        <span className="font-mono text-[10px] text-muted-foreground/60">
+          {language || "text"}
+        </span>
+        <button
+          type="button"
+          className="rounded p-0.5 text-muted-foreground/40 hover:text-foreground transition-colors"
+          onClick={() => void handleCopy()}
+          title="Copy"
+        >
+          {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+        </button>
       </div>
-    </>
+      <div className="overflow-x-auto">
+        {loading ? (
+          <div className="px-3 py-4 text-[11px] text-muted-foreground/50 font-mono">{m.loading()}</div>
+        ) : (
+          <div
+            className="text-[0.8125rem] leading-[1.55] [&_pre]:!bg-transparent [&_pre]:!m-0 [&_pre]:!p-3 [&_pre]:!text-[0.8125rem] [&_pre]:!leading-[1.55] [&_code]:!bg-transparent [&_code]:!p-0 [&_code]:!font-mono [&_code]:!text-[0.8125rem]"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        )}
+      </div>
+    </div>
   );
 }

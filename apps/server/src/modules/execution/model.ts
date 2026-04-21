@@ -27,6 +27,7 @@ export const ExecutionModel = {
     locale: t.String(),
     timezone: t.String(),
     defaultRuntimeId: t.Optional(t.String()),
+    projectChatsRequireSandbox: t.Boolean(),
     notifications: t.Object({
       system: t.Boolean(),
       sound: t.Boolean(),
@@ -42,11 +43,12 @@ export const ExecutionModel = {
         t.Literal("local-first"),
         t.Literal("cloud-first"),
         t.Literal("adaptive"),
-      ]),
-      locale: t.String(),
-      timezone: t.String(),
-      defaultRuntimeId: t.String(),
-      notifications: t.Object({
+       ]),
+       locale: t.String(),
+       timezone: t.String(),
+       defaultRuntimeId: t.String(),
+       projectChatsRequireSandbox: t.Boolean(),
+       notifications: t.Object({
         system: t.Boolean(),
         sound: t.Boolean(),
         eventSounds: t.Record(t.String(), t.Boolean()),
