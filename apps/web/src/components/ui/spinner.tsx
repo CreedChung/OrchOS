@@ -1,24 +1,37 @@
+import { useState, useEffect } from "react";
+import spinners from "unicode-animations";
 import { cn } from "@/lib/utils";
 
 interface SpinnerProps {
   size?: "sm" | "md" | "lg";
+  name?: keyof typeof spinners;
   className?: string;
 }
 
 const sizeClasses = {
-  sm: "size-3 border-2",
-  md: "size-4 border-2",
-  lg: "size-6 border-2",
+  sm: "text-xs",
+  md: "text-sm",
+  lg: "text-base",
 };
 
-export function Spinner({ size = "md", className }: SpinnerProps) {
+export function Spinner({ size = "md", name = "braille", className }: SpinnerProps) {
+  const s = spinners[name];
+  const [frame, setFrame] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(
+      () => setFrame((f) => (f + 1) % s.frames.length),
+      s.interval,
+    );
+    return () => clearInterval(timer);
+  }, [name, s.frames.length, s.interval]);
+
   return (
     <span
-      className={cn(
-        "animate-spin rounded-full border-primary border-t-transparent",
-        sizeClasses[size],
-        className,
-      )}
-    />
+      className={cn("inline-block font-mono leading-none", sizeClasses[size], className)}
+      aria-hidden="true"
+    >
+      {s.frames[frame]}
+    </span>
   );
 }

@@ -958,7 +958,7 @@ export function SettingsDialog({
                       >
                         {registering === "__all__" ? (
                           <span className="flex items-center gap-1">
-                            <span className="size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                            <Spinner size="sm" />
                             {m.registering()}
                           </span>
                         ) : (

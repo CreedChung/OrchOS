@@ -161,14 +161,14 @@ export function Toolbar({
               key={filter.value}
               onClick={() => onCreationArchiveFilterChange(filter.value)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                "inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-2.5",
                 creationArchiveFilter === filter.value
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
               )}
             >
               <HugeiconsIcon icon={filter.icon} className="size-3" />
-              <span>{filter.label}</span>
+              <span className="hidden sm:inline">{filter.label}</span>
             </button>
           ))}
         </div>
@@ -185,14 +185,14 @@ export function Toolbar({
                   key={filter}
                   onClick={() => onSourceFilterChange(filter)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                    "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:gap-1.5 sm:px-2.5",
                     sourceFilter === filter
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                   )}
                 >
                   <HugeiconsIcon icon={config.icon} className="size-3" />
-                  <span className="capitalize">{config.label || filter}</span>
+                  <span className="hidden capitalize sm:inline">{config.label || filter}</span>
                   <span className="tabular-nums text-[10px] opacity-60">
                     {inboxCounts[filter as keyof typeof inboxCounts]}
                   </span>
@@ -213,14 +213,14 @@ export function Toolbar({
                 key={filter}
                 onClick={() => onAgentModelFilterChange(filter)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                  "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:gap-1.5 sm:px-2.5",
                   agentModelFilter === filter
                     ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
                 <HugeiconsIcon icon={config.icon} className="size-3" />
-                <span>{config.label || filter}</span>
+                <span className="hidden sm:inline">{config.label || filter}</span>
                 <span className="tabular-nums text-[10px] opacity-60">
                   {agentModelCounts[filter]}
                 </span>
@@ -240,14 +240,14 @@ export function Toolbar({
                 key={filter}
                 onClick={() => onScopeFilterChange(filter)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                  "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:gap-1.5 sm:px-2.5",
                   scopeFilter === filter
                     ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
                 <HugeiconsIcon icon={config.icon} className="size-3" />
-                <span className="capitalize">{config.label || filter}</span>
+                <span className="hidden capitalize sm:inline">{config.label || filter}</span>
                 <span className="tabular-nums text-[10px] opacity-60">{scopeCounts[filter]}</span>
               </button>
             );
@@ -275,7 +275,7 @@ export function Toolbar({
             <HugeiconsIcon icon={Wrench01Icon} className="size-3.5" />
           </Button>
         )}
-        <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 w-full max-w-xs">
+        <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5 sm:px-2.5 w-full max-w-xs">
           <HugeiconsIcon icon={Search01Icon} className="size-3.5 shrink-0 text-muted-foreground" />
           <input
             ref={searchInputRef}
@@ -285,7 +285,7 @@ export function Toolbar({
             placeholder={m.search()}
             className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
-          <span className="shrink-0 text-[10px] text-muted-foreground/70">
+          <span className="hidden shrink-0 text-[10px] text-muted-foreground/70 sm:inline">
             {isMac ? "Cmd+F" : "Ctrl+F"}
           </span>
           {searchQuery && (

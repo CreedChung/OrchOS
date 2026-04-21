@@ -76,6 +76,11 @@ export function MorphPanel({ runtimes }: MorphPanelProps) {
 
   useEffect(() => {
     function clickOutsideHandler(e: MouseEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('[data-slot="select-content"]')) {
+        return;
+      }
+
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node) && showForm) {
         triggerClose();
       }
@@ -236,8 +241,10 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                     value={selectedRuntimeId ?? ""}
                     onValueChange={(v: string | null) => v && setSelectedRuntimeId(v)}
                   >
-                    <SelectTrigger className="h-7 flex-1 min-w-0 text-xs">
-                      <SelectValue placeholder="Select Runtime" />
+                    <SelectTrigger className="h-7 w-36 min-w-0 text-xs">
+                      <SelectValue placeholder={m.agent_runtime_placeholder()}>
+                        {selectedRuntime ? selectedRuntime.name : m.agent_runtime_placeholder()}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>

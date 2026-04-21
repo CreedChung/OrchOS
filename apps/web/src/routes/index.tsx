@@ -1,48 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import Header from "@/components/layout/Header";
 import { m } from "@/paraglide/messages";
 import { I18nProvider, useLocale } from "@/lib/useI18n";
 import { Button } from "@/components/ui/button";
-
-const FeaturesBento = lazy(() =>
-  import("@/components/ui/features-bento").then((module) => ({
-    default: module.FeaturesBento,
-  })),
-);
-const Footer = lazy(() => import("@/components/layout/Footer"));
+import { FeaturesBento } from "@/components/ui/features-bento";
+import Footer from "@/components/layout/Footer";
 
 export const Route = createFileRoute("/")({ component: HomePage });
 
 function HomePageInner() {
   const { locale } = useLocale();
-  const [showFeatures, setShowFeatures] = useState(false);
-  const [showFooter, setShowFooter] = useState(false);
-  const footerAnchorRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const node = footerAnchorRef.current;
-    if (!node || showFooter || typeof IntersectionObserver === "undefined") return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setShowFooter(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "400px 0px" },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [showFooter]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
-        {/* Hero */}
         <section className="relative flex h-screen -mt-14 items-start justify-center overflow-hidden px-6 pt-14 sm:px-10 lg:px-14">
           <div className="absolute inset-0 z-0">
             <img
@@ -102,29 +74,9 @@ function HomePageInner() {
           </div>
         </section>
 
-        {/* Features */}
-        <section
-          onPointerEnter={() => setShowFeatures(true)}
-          onFocus={() => setShowFeatures(true)}
-          onTouchStart={() => setShowFeatures(true)}
-        >
-          {showFeatures ? (
-            <Suspense fallback={<div className="min-h-screen bg-zinc-50 dark:bg-muted/25" />}>
-              <FeaturesBento />
-            </Suspense>
-          ) : (
-            <div className="min-h-screen bg-zinc-50 dark:bg-muted/25" />
-          )}
-        </section>
-        <div ref={footerAnchorRef} className="h-px w-full" />
+        <FeaturesBento />
       </main>
-      {showFooter ? (
-        <Suspense fallback={<div className="h-[45vh] bg-background" />}>
-          <Footer />
-        </Suspense>
-      ) : (
-        <div className="h-[45vh] bg-background" />
-      )}
+      <Footer />
     </div>
   );
 }

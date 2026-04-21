@@ -54,43 +54,61 @@ const NavSection = ({
   title: string;
   links: { label: string; to: string }[];
   index: number;
-}) => (
-  <motion.div variants={itemVariants} custom={index} className="flex flex-col gap-2">
-    <motion.h3
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
-      className="mb-2 uppercase text-muted-foreground text-xs font-semibold tracking-wider border-b border-border pb-1 hover:text-foreground transition-colors duration-300"
-    >
-      {title}
-    </motion.h3>
-    {links.map((link, linkIndex) => (
+}) => {
+  const renderLink = (link: { label: string; to: string }, linkIndex: number) => {
+    const linkContent = (
+      <motion.span
+        variants={linkVariants}
+        custom={linkIndex}
+        whileHover={{
+          x: 8,
+          transition: { type: "spring", stiffness: 300, damping: 20 },
+        }}
+        className="text-muted-foreground hover:text-foreground transition-colors duration-300 font-sans text-xs md:text-sm group relative inline-block"
+      >
+        {link.label}
+        <motion.span
+          className="absolute bottom-0 left-0 h-0.5 bg-primary"
+          initial={{ width: 0 }}
+          whileHover={{ width: "100%" }}
+          transition={{ duration: 0.3 }}
+        />
+      </motion.span>
+    );
+
+    if (link.to.startsWith("http") || link.to.startsWith("#")) {
+      return (
+        <a key={linkIndex} href={link.to} target={link.to.startsWith("http") ? "_blank" : undefined} rel={link.to.startsWith("http") ? "noreferrer" : undefined}>
+          {linkContent}
+        </a>
+      );
+    }
+
+    return (
       <Link
         key={linkIndex}
         to={link.to}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       >
-        <motion.span
-          variants={linkVariants}
-          custom={linkIndex}
-          whileHover={{
-            x: 8,
-            transition: { type: "spring", stiffness: 300, damping: 20 },
-          }}
-          className="text-muted-foreground hover:text-foreground transition-colors duration-300 font-sans text-xs md:text-sm group relative inline-block"
-        >
-          {link.label}
-          <motion.span
-            className="absolute bottom-0 left-0 h-0.5 bg-primary"
-            initial={{ width: 0 }}
-            whileHover={{ width: "100%" }}
-            transition={{ duration: 0.3 }}
-          />
-        </motion.span>
+        {linkContent}
       </Link>
-    ))}
-  </motion.div>
-);
+    );
+  };
+
+  return (
+    <motion.div variants={itemVariants} custom={index} className="flex flex-col gap-2">
+      <motion.h3
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
+        className="mb-2 uppercase text-muted-foreground text-xs font-semibold tracking-wider border-b border-border pb-1 hover:text-foreground transition-colors duration-300"
+      >
+        {title}
+      </motion.h3>
+      {links.map(renderLink)}
+    </motion.div>
+  );
+};
 
 export default function StickyFooter() {
   const footerData = {

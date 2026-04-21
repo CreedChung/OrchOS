@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CloudIcon, Loading01Icon, Server, CheckmarkCircle02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import { CloudIcon, Server, CheckmarkCircle02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import type { AgentProfile, RuntimeProfile } from "@/lib/types";
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 interface EditAgentDialogProps {
   open: boolean;
@@ -142,7 +143,7 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
             disabled={saving || !name.trim() || !role.trim() || selectedCapabilities.length === 0}
           >
             {saving ? (
-              <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+              <Spinner size="sm" />
             ) : (
               <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3.5" />
             )}
@@ -245,7 +246,7 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
             <SelectTrigger className="w-full">
               {loadingModels ? (
                 <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                  <Spinner size="sm" name="helix" />
                   Models...
                 </span>
               ) : (

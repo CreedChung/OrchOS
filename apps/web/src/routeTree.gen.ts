@@ -24,6 +24,7 @@ import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
 import { Route as DashboardGoalsRouteImport } from './routes/dashboard/goals'
 import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
 import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
+import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
 
 const SignUpRoute = SignUpRouteImport.update({
@@ -101,6 +102,11 @@ const DashboardAgentsRoute = DashboardAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/chat': typeof ApiChatRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/chat': typeof ApiChatRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/chat': typeof ApiChatRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/api/chat'
     | '/dashboard/agents'
     | '/dashboard/creation'
     | '/dashboard/goals'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/api/chat'
     | '/dashboard/agents'
     | '/dashboard/creation'
     | '/dashboard/goals'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/api/chat'
     | '/dashboard/agents'
     | '/dashboard/creation'
     | '/dashboard/goals'
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -334,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAgentsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
@@ -380,6 +400,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   ApiSplatRoute: ApiSplatRoute,
+  ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
