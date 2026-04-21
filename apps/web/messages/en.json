@@ -506,5 +506,6 @@
   "send_failed": "Failed to send message",
   "voice_input": "Voice input",
   "voice_input_stop": "Stop voice input",
+  "set_as_default": "Set as default",
   "workspace": "Workspace"
 }

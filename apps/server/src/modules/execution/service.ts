@@ -46,6 +46,7 @@ export class ExecutionService {
           // ignore parse errors
         }
       }
+      if (row.key === "defaultRuntimeId") this.settings.defaultRuntimeId = row.value;
     }
   }
 
@@ -84,6 +85,10 @@ export class ExecutionService {
     if (patch.notifications !== undefined) {
       this.settings.notifications = patch.notifications;
       this.saveSetting("notifications", JSON.stringify(patch.notifications));
+    }
+    if (patch.defaultRuntimeId !== undefined) {
+      this.settings.defaultRuntimeId = patch.defaultRuntimeId;
+      this.saveSetting("defaultRuntimeId", patch.defaultRuntimeId);
     }
     return { ...this.settings };
   }

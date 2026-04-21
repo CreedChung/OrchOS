@@ -8,6 +8,8 @@ export const Route = createFileRoute("/dashboard/creation")({ component: Creatio
 function CreationPage() {
   const { agents, runtimes, projects } = useDashboard();
   const { creationArchiveFilter } = useUIStore();
+  const settings = useUIStore((s) => s.settings);
+  const setSettings = useUIStore((s) => s.setSettings);
 
   return (
     <CreationView
@@ -15,6 +17,8 @@ function CreationPage() {
       runtimes={runtimes}
       projects={projects}
       archiveFilter={creationArchiveFilter}
+      settings={settings}
+      onSettingsChange={setSettings}
     />
   );
 }

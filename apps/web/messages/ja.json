@@ -506,5 +506,6 @@
   "send_failed": "メッセージの送信に失敗しました",
   "voice_input": "音声入力",
   "voice_input_stop": "音声入力を停止",
+  "set_as_default": "デフォルトに設定",
   "workspace": "ワークスペース"
 }

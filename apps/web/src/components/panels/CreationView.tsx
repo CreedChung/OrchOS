@@ -13,13 +13,11 @@ import {
   Mic01Icon,
   Cancel01Icon,
 } from "@hugeicons/core-free-icons";
-import { createHighlighter } from "shiki";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useChat } from "@ai-sdk/react";
-import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { BorderBeam } from "border-beam";
-import { ArchiveRestore, ArchiveX, Check, Copy } from "lucide-react";
+import { ArchiveRestore, ArchiveX, Star } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -33,363 +31,27 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
-import type { AgentProfile, Project, RuntimeProfile } from "@/lib/types";
+import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
 import { m } from "@/paraglide/messages";
 import { toast } from "sonner";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import type { CreationArchiveFilter } from "@/components/layout/Toolbar";
+import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
+import { ChatMessageShell } from "@/components/chat/ChatMessageShell";
+import { ChatReasoningDrawer } from "@/components/chat/ChatReasoningDrawer";
+import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
+import { ChatToolTimeline } from "@/components/chat/ChatToolTimeline";
 
 interface CreationViewProps {
   agents: AgentProfile[];
   runtimes: RuntimeProfile[];
   projects: Project[];
   archiveFilter: CreationArchiveFilter;
+  settings: ControlSettings | null;
+  onSettingsChange: (settings: ControlSettings) => void;
 }
 
-const CHAT_CODE_LANGS = [
-  "tsx",
-  "typescript",
-  "javascript",
-  "jsx",
-  "json",
-  "css",
-  "scss",
-  "html",
-  "markdown",
-  "md",
-  "bash",
-  "shell",
-  "diff",
-];
 
-let chatHighlighterPromise: ReturnType<typeof createHighlighter> | null = null;
-
-function getChatHighlighter() {
-  if (!chatHighlighterPromise) {
-    chatHighlighterPromise = createHighlighter({
-      langs: CHAT_CODE_LANGS,
-      themes: ["github-dark", "github-light"],
-    });
-  }
-
-  return chatHighlighterPromise;
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function normalizeCodeLanguage(lang: string) {
-  if (lang === "tsx") return "typescript";
-  if (lang === "ts") return "typescript";
-  if (lang === "js") return "javascript";
-  if (lang === "md") return "markdown";
-  if (lang === "sh") return "bash";
-  return lang;
-}
-
-function useResolvedTheme() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    const updateTheme = () => {
-      const isDark = document.documentElement.classList.contains("dark");
-      setTheme(isDark ? "dark" : "light");
-    };
-
-    updateTheme();
-
-    const observer = new MutationObserver(updateTheme);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "data-theme"],
-    });
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    media.addEventListener("change", updateTheme);
-
-    return () => {
-      observer.disconnect();
-      media.removeEventListener("change", updateTheme);
-    };
-  }, []);
-
-  return theme;
-}
-
-function ChatCodeBlock({ code, language }: { code: string; language?: string }) {
-  const [html, setHtml] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
-  const resolvedTheme = useResolvedTheme();
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function highlight() {
-      try {
-        setLoading(true);
-        const highlighter = await getChatHighlighter();
-        const highlightedHtml = highlighter.codeToHtml(code, {
-          lang: normalizeCodeLanguage(language || "text"),
-          theme: resolvedTheme === "dark" ? "github-dark" : "github-light",
-        });
-
-        if (mounted) {
-          setHtml(highlightedHtml);
-          setLoading(false);
-        }
-      } catch {
-        if (mounted) {
-          setHtml(`<pre><code>${escapeHtml(code)}</code></pre>`);
-          setLoading(false);
-        }
-      }
-    }
-
-    void highlight();
-
-    return () => {
-      mounted = false;
-    };
-  }, [code, language, resolvedTheme]);
-
-  const handleCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1200);
-  }, [code]);
-
-  return (
-    <>
-      <style>{`
-        .chat-code-block {
-          overflow: hidden;
-          border: 1px solid var(--border);
-          border-radius: 1rem;
-          background: var(--card);
-        }
-        .chat-code-block pre {
-          margin: 0;
-          padding: 1rem;
-          overflow-x: auto;
-          background: transparent !important;
-          font-size: 0.8125rem;
-          line-height: 1.55;
-          white-space: pre;
-        }
-        .chat-code-block code {
-          background: transparent;
-          padding: 0;
-          border-radius: 0;
-          font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-          font-size: inherit;
-          line-height: inherit;
-          white-space: pre;
-        }
-      `}</style>
-      <div className="my-3 overflow-hidden rounded-2xl border border-border/80 bg-card/90 shadow-sm">
-        <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
-          <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            {language || "text"}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="size-7"
-            onClick={() => {
-              void handleCopy();
-            }}
-            title="Copy code"
-          >
-            {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-          </Button>
-        </div>
-        <div className="chat-code-block">
-          {loading ? (
-            <div className="flex items-center justify-center p-6 text-xs text-muted-foreground">
-              {m.loading()}
-            </div>
-          ) : (
-            <div dangerouslySetInnerHTML={{ __html: html }} />
-          )}
-        </div>
-      </div>
-    </>
-  );
-}
-
-function MessageMarkdown({ content }: { content: string }) {
-  return (
-    <div className="prose prose-sm max-w-none text-inherit dark:prose-invert prose-headings:mb-2 prose-headings:mt-5 prose-headings:text-inherit prose-headings:font-semibold prose-p:my-2 prose-p:text-inherit prose-p:leading-7 prose-li:my-1 prose-li:text-inherit prose-strong:text-inherit prose-code:rounded-md prose-code:bg-black/6 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-mono prose-code:text-[0.8rem] prose-code:text-inherit prose-code:before:content-none prose-code:after:content-none prose-pre:bg-transparent prose-pre:p-0 prose-blockquote:border-l-border prose-blockquote:text-inherit prose-hr:border-border/70 prose-a:font-medium prose-a:text-primary prose-a:no-underline hover:prose-a:underline dark:prose-code:bg-white/8">
-      <ReactMarkdown
-        components={{
-          a: ({ ...props }) => (
-            <a
-              {...props}
-              className="font-medium text-primary underline-offset-4 hover:underline"
-              rel="noopener noreferrer"
-              target="_blank"
-            />
-          ),
-          code: ({ inline, className, children, ...props }: any) => {
-            const match = /language-([\w-]+)/.exec(className || "");
-            const code = String(children).replace(/\n$/, "");
-
-            if (!inline) {
-              return <ChatCodeBlock code={code} language={match?.[1]} />;
-            }
-
-            return (
-              <code className={className} {...props}>
-                {children}
-              </code>
-            );
-          },
-        }}
-      >
-        {content}
-      </ReactMarkdown>
-    </div>
-  );
-}
-
-function ThinkingBubble() {
-  return (
-    <div className="mr-14 w-full max-w-[min(100%,44rem)] rounded-[1.75rem] border border-border/70 bg-linear-to-b from-card to-card/80 px-4 py-4 shadow-[0_12px_40px_-24px_rgba(0,0,0,0.45)]">
-      <div className="mb-3 flex items-center gap-3">
-        <span className="inline-flex size-8 items-center justify-center rounded-full border border-primary/15 bg-primary/10 text-primary">
-          <HugeiconsIcon icon={Robot02Icon} className="size-4" />
-        </span>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-medium tracking-[0.02em] text-foreground">{m.assistant()}</span>
-          <span className="flex items-center gap-1.5 rounded-full bg-primary/8 px-2 py-1 text-[11px] text-primary/90">
-            <span className="size-1.5 animate-pulse rounded-full bg-primary/70" />
-            {m.thinking()}
-          </span>
-        </div>
-      </div>
-      <div className="space-y-2.5">
-        <div className="h-3 w-[72%] animate-pulse rounded-full bg-muted/90" />
-        <div className="h-3 w-[88%] animate-pulse rounded-full bg-muted/80" />
-        <div className="h-3 w-[54%] animate-pulse rounded-full bg-muted/70" />
-      </div>
-    </div>
-  );
-}
-
-function ToolStateLabel({ state }: { state?: string }) {
-  if (!state) return null;
-
-  const label =
-    state === "input-available"
-      ? "Input ready"
-      : state === "output-available"
-        ? "Output ready"
-        : state === "input-streaming"
-          ? "Collecting input"
-          : state === "output-error"
-            ? "Tool error"
-            : state === "output-denied"
-              ? "Denied"
-              : state;
-
-  return (
-    <span className="rounded-full border border-border/70 bg-background/80 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-      {label}
-    </span>
-  );
-}
-
-function ToolPartCard({ part }: { part: Record<string, unknown> & { type: string } }) {
-  const toolName = part.type.startsWith("tool-") ? part.type.replace(/^tool-/, "") : part.type;
-  const state = typeof part.state === "string" ? part.state : undefined;
-  const input = "input" in part ? part.input : undefined;
-  const output = "output" in part ? part.output : undefined;
-  const errorText = typeof part.errorText === "string" ? part.errorText : undefined;
-
-  return (
-    <div className="overflow-hidden rounded-[1.4rem] border border-border/70 bg-linear-to-b from-muted/35 to-background shadow-[0_10px_28px_-22px_rgba(0,0,0,0.5)]">
-      <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex size-8 items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground">
-            <HugeiconsIcon icon={Robot02Icon} className="size-4" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Tool step
-            </p>
-            <p className="truncate text-sm font-medium text-foreground">{toolName}</p>
-          </div>
-        </div>
-        <ToolStateLabel state={state} />
-      </div>
-      <div className="space-y-3 px-4 py-4 text-sm">
-        {input !== undefined && (
-          <div className="space-y-1.5">
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground/90">
-              Input
-            </p>
-            <pre className="overflow-x-auto rounded-2xl border border-border/70 bg-background/90 p-3 text-xs leading-relaxed text-foreground shadow-inner">
-              {JSON.stringify(input, null, 2)}
-            </pre>
-          </div>
-        )}
-        {output !== undefined && (
-          <div className="space-y-1.5">
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground/90">
-              Output
-            </p>
-            <pre className="overflow-x-auto rounded-2xl border border-border/70 bg-background/90 p-3 text-xs leading-relaxed text-foreground shadow-inner">
-              {JSON.stringify(output, null, 2)}
-            </pre>
-          </div>
-        )}
-        {errorText && (
-          <div className="rounded-2xl border border-destructive/20 bg-destructive/[0.06] px-3 py-3 text-xs leading-relaxed text-destructive">
-            {errorText}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ReasoningPartCard({ text }: { text: string }) {
-  return (
-    <details className="group overflow-hidden rounded-[1.4rem] border border-border/70 bg-linear-to-b from-muted/22 to-background">
-      <summary className="cursor-pointer list-none select-none px-4 py-3 text-left transition-colors hover:bg-accent/35">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex size-8 items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground">
-              <HugeiconsIcon icon={Robot02Icon} className="size-4" />
-            </span>
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                Reasoning
-              </p>
-              <p className="text-sm font-medium text-foreground">Model thought process</p>
-            </div>
-          </div>
-          <span className="text-[11px] text-muted-foreground transition-transform group-open:rotate-90">
-            &gt;
-          </span>
-        </div>
-      </summary>
-      <div className="border-t border-border/60 px-4 py-4">
-        <div className="rounded-2xl border border-border/60 bg-background/75 px-4 py-3 whitespace-pre-wrap text-sm leading-7 text-foreground/80">
-          {text}
-        </div>
-      </div>
-    </details>
-  );
-}
 
 function MessageBubble({ msg }: { msg: UIMessage }) {
   const isUser = msg.role === "user";
@@ -397,83 +59,45 @@ function MessageBubble({ msg }: { msg: UIMessage }) {
   const isError = Boolean(metadata.error);
 
   return (
-    <div className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}>
-      <div
-        className={cn(
-          "w-full max-w-[min(100%,48rem)] overflow-hidden rounded-[1.9rem] border shadow-[0_18px_48px_-30px_rgba(0,0,0,0.45)] backdrop-blur-sm",
-          isUser
-            ? "ml-18 border-primary/15 bg-linear-to-br from-primary/[0.085] to-primary/[0.04]"
-            : isError
-              ? "mr-14 border-destructive/20 bg-linear-to-b from-destructive/[0.09] to-destructive/[0.04]"
-              : "mr-14 border-border/70 bg-linear-to-b from-card to-card/85",
-        )}
-      >
-        <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <span
+    <ChatMessageShell role={msg.role} isError={isError} responseTime={metadata.responseTime}>
+      {msg.parts.map((part, index) => {
+        if (part.type === "text") {
+          return (
+            <div
+              key={`${msg.id}-${index}`}
               className={cn(
-                "inline-flex size-8 items-center justify-center rounded-full border",
-                isUser
-                  ? "border-primary/20 bg-primary/12 text-primary"
-                  : isError
-                    ? "border-destructive/20 bg-destructive/10 text-destructive"
-                    : "border-primary/15 bg-primary/10 text-primary",
+                "rounded-[1.35rem] border px-4 py-3",
+                isUser ? "border-primary/12 bg-background/60" : "border-border/60 bg-background/72",
               )}
             >
-              <HugeiconsIcon icon={isUser ? Chat01Icon : Robot02Icon} className="size-4" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-medium tracking-[0.01em] text-foreground">
-                {isUser ? m.user() : m.assistant()}
-              </p>
-              <div className="flex min-w-0 items-center gap-2 text-[11px] text-muted-foreground">
-                <span>
-                  {isUser ? "Prompt" : isError ? "Failed response" : "Generated response"}
-                </span>
-                {metadata.responseTime && <span>{metadata.responseTime}ms</span>}
-              </div>
+              <ChatMarkdown content={part.text} />
             </div>
-          </div>
-          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/80">
-            {isUser ? "Input" : "Output"}
-          </div>
-        </div>
-        <div className="space-y-4 px-4 py-4">
-          {msg.parts.map((part, index) => {
-            if (part.type === "text") {
-              return (
-                <div
-                  key={`${msg.id}-${index}`}
-                  className={cn(
-                    "rounded-[1.35rem] border px-4 py-3",
-                    isUser
-                      ? "border-primary/12 bg-background/60"
-                      : "border-border/60 bg-background/72",
-                  )}
-                >
-                  <MessageMarkdown content={part.text} />
-                </div>
-              );
-            }
+          );
+        }
 
-            if (part.type === "reasoning") {
-              return <ReasoningPartCard key={`${msg.id}-${index}`} text={part.text} />;
-            }
+        if (part.type === "reasoning") {
+          return (
+            <ChatReasoningDrawer
+              key={`${msg.id}-${index}`}
+              text={part.text}
+              metadata={metadata}
+            />
+          );
+        }
 
-            if (part.type.startsWith("tool-")) {
-              return (
-                <ToolPartCard
-                  key={`${msg.id}-${index}`}
-                  part={part as Record<string, unknown> & { type: string }}
-                />
-              );
-            }
+        if (part.type.startsWith("tool-")) {
+          return (
+            <ChatToolTimeline
+              key={`${msg.id}-${index}`}
+              part={part as Record<string, unknown> & { type: string }}
+              stepNumber={index + 1}
+            />
+          );
+        }
 
-            return null;
-          })}
-        </div>
-      </div>
-    </div>
+        return null;
+      })}
+    </ChatMessageShell>
   );
 }
 
@@ -497,7 +121,7 @@ function mapConversationMessagesToUiMessages(messages: ConversationMessage[]): U
   }));
 }
 
-export function CreationView({ agents, runtimes, projects, archiveFilter }: CreationViewProps) {
+export function CreationView({ agents, runtimes, projects, archiveFilter, settings, onSettingsChange }: CreationViewProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
@@ -571,13 +195,15 @@ export function CreationView({ agents, runtimes, projects, archiveFilter }: Crea
 
   const handleNewConversation = useCallback(async () => {
     try {
-      const conv = await api.createConversation({});
+      const conv = await api.createConversation({
+        runtimeId: settings?.defaultRuntimeId || undefined,
+      });
       await loadConversations();
       setActiveConversationId(conv.id);
     } catch (err) {
       console.error("Failed to create conversation:", err);
     }
-  }, [loadConversations]);
+  }, [loadConversations, settings?.defaultRuntimeId]);
 
   useEffect(() => {
     if (!hasLoadedConversations) return;
@@ -755,7 +381,13 @@ className={cn(
             agents={agents}
             runtimes={enabledRuntimes}
             projects={projects}
+            defaultRuntimeId={settings?.defaultRuntimeId}
             onUpdateConversation={handleUpdateConversation}
+            onSetDefaultRuntime={(runtimeId) => {
+              void api.updateSettings({ defaultRuntimeId: runtimeId }).then((updated) => {
+                onSettingsChange(updated);
+              });
+            }}
             onSendMessage={async (content) => {
               await sendMessage(
                 { text: content },
@@ -806,6 +438,7 @@ interface ChatAreaProps {
   agents: AgentProfile[];
   runtimes: RuntimeProfile[];
   projects: Project[];
+  defaultRuntimeId?: string;
   onUpdateConversation: (
     id: string,
     data: {
@@ -817,6 +450,7 @@ interface ChatAreaProps {
       deleted?: boolean;
     },
   ) => Promise<void>;
+  onSetDefaultRuntime: (runtimeId?: string) => void;
   onSendMessage: (content: string) => Promise<void>;
   onReloadMessages?: () => Promise<void>;
 }
@@ -829,7 +463,9 @@ function ChatArea({
   agents,
   runtimes,
   projects,
+  defaultRuntimeId,
   onUpdateConversation,
+  onSetDefaultRuntime,
   onSendMessage,
 }: ChatAreaProps) {
   const [input, setInput] = useState("");
@@ -991,7 +627,9 @@ function ChatArea({
             runtimes={runtimes}
             agents={agents.filter((a) => a.enabled)}
             selectedId={conversation.runtimeId ?? undefined}
+            defaultRuntimeId={defaultRuntimeId}
             onSelect={(runtimeId) => onUpdateConversation(conversation.id, { runtimeId })}
+            onSetDefault={onSetDefaultRuntime}
           />
         </div>
       </div>
@@ -1018,7 +656,7 @@ function ChatArea({
           {messages.map((msg) => (
             <MessageBubble key={msg.id} msg={msg} />
           ))}
-          {sending && <ThinkingBubble />}
+          {sending && <ChatThinkingState />}
           {chatError && (
             <div className="mr-10 rounded-[1.5rem] border border-destructive/20 bg-destructive/[0.06] px-4 py-3 text-sm text-destructive shadow-sm">
               {m.send_failed()}
@@ -1039,9 +677,9 @@ function ChatArea({
             duration={2.6}
             className="rounded-xl"
           >
-            <div className="relative flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2">
+            <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-background px-3 py-2">
               {attachedFiles.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   {attachedFiles.map((file, index) => (
                     <div
                       key={index}
@@ -1071,16 +709,6 @@ function ChatArea({
                 className="hidden"
                 onChange={handleFileSelect}
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                title={m.upload()}
-                className="shrink-0 text-muted-foreground hover:text-foreground"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <HugeiconsIcon icon={Upload04Icon} className="size-4" />
-              </Button>
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -1088,7 +716,7 @@ function ChatArea({
                 placeholder={
                   selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()
                 }
-                className="flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 rows={1}
                 onKeyDown={handleKeys}
                 spellCheck={false}
@@ -1096,33 +724,46 @@ function ChatArea({
                 style={{ maxHeight: "120px" }}
                 onInput={syncTextareaHeight}
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                title={isListening ? m.voice_input_stop() : m.voice_input()}
-                className={cn(
-                  "shrink-0 text-muted-foreground hover:text-foreground",
-                  isListening && "text-red-500 hover:text-red-600",
-                )}
-                onClick={isListening ? stop : start}
-                disabled={!isSupported}
-              >
-                <HugeiconsIcon icon={isListening ? Cancel01Icon : Mic01Icon} className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                size="icon-sm"
-                className="shrink-0"
-                disabled={(!input.trim() && attachedFiles.length === 0) || sending}
-                onClick={handleSend}
-              >
-                {sending ? (
-                  <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
-                ) : (
-                  <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
-                )}
-              </Button>
+              <div className="flex items-center justify-between">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  title={m.upload()}
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <HugeiconsIcon icon={Upload04Icon} className="size-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    title={isListening ? m.voice_input_stop() : m.voice_input()}
+                    className={cn(
+                      "text-muted-foreground hover:text-foreground",
+                      isListening && "text-red-500 hover:text-red-600",
+                    )}
+                    onClick={isListening ? stop : start}
+                    disabled={!isSupported}
+                  >
+                    <HugeiconsIcon icon={isListening ? Cancel01Icon : Mic01Icon} className="size-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    disabled={(!input.trim() && attachedFiles.length === 0) || sending}
+                    onClick={handleSend}
+                  >
+                    {sending ? (
+                      <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                    ) : (
+                      <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
             </div>
           </BorderBeam>
           <p className="mt-1.5 text-center text-[10px] text-muted-foreground/50">
@@ -1139,10 +780,12 @@ interface RuntimeSelectorProps {
   runtimes: RuntimeProfile[];
   agents: AgentProfile[];
   selectedId?: string;
+  defaultRuntimeId?: string;
   onSelect: (runtimeId?: string) => void;
+  onSetDefault: (runtimeId?: string) => void;
 }
 
-function RuntimeSelector({ runtimes, agents, selectedId, onSelect }: RuntimeSelectorProps) {
+function RuntimeSelector({ runtimes, agents, selectedId, defaultRuntimeId, onSelect, onSetDefault }: RuntimeSelectorProps) {
   const [open, setOpen] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [modelsByRuntimeId, setModelsByRuntimeId] = useState<Record<string, string[]>>({});
@@ -1361,26 +1004,49 @@ function RuntimeSelector({ runtimes, agents, selectedId, onSelect }: RuntimeSele
             }}
           >
             <div className={cn(selectContentClassName, "min-w-[160px] w-auto") }>
-              {allItems.map((item) => (
-                <button
-                  key={item.id}
-                  ref={(node) => {
-                    itemRefs.current[item.id] = node;
-                  }}
-                  type="button"
-                  className={cn(
-                    selectItemClassName,
-                    "cursor-pointer whitespace-nowrap transition-colors",
-                    selectedId === item.value
-                      ? "bg-accent text-accent-foreground"
-                      : "text-foreground hover:bg-accent/50",
-                  )}
-                  onMouseEnter={() => handleItemHover(item.id)}
-                  onClick={() => handleSelect(item.value)}
-                >
-                  {item.name}
-                </button>
-              ))}
+              {allItems.map((item) => {
+                const isDefault = item.value !== "__none__" && item.value === defaultRuntimeId;
+                return (
+                  <div
+                    key={item.id}
+                    ref={(node) => {
+                      itemRefs.current[item.id] = node;
+                    }}
+                    className={cn(
+                      selectItemClassName,
+                      "flex items-center justify-between gap-2 whitespace-nowrap transition-colors",
+                      selectedId === item.value
+                        ? "bg-accent text-accent-foreground"
+                        : "text-foreground hover:bg-accent/50",
+                    )}
+                    onMouseEnter={() => handleItemHover(item.id)}
+                  >
+                    <button
+                      type="button"
+                      className="flex-1 text-left"
+                      onClick={() => handleSelect(item.value)}
+                    >
+                      {item.name}
+                    </button>
+                    {isDefault && (
+                      <Star className="size-3 shrink-0 fill-primary text-primary" />
+                    )}
+                    {!isDefault && item.value !== "__none__" && (
+                      <button
+                        type="button"
+                        className="shrink-0 rounded p-0.5 text-muted-foreground/40 hover:text-primary transition-colors"
+                        title={m.set_as_default()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSetDefault(item.value);
+                        }}
+                      >
+                        <Star className="size-3" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </>

@@ -505,5 +505,6 @@
   "send_failed": "發送訊息失敗",
   "voice_input": "語音輸入",
   "voice_input_stop": "停止語音輸入",
+  "set_as_default": "設為預設",
   "workspace": "工作區"
 }

@@ -26,6 +26,7 @@ export const ExecutionModel = {
     ]),
     locale: t.String(),
     timezone: t.String(),
+    defaultRuntimeId: t.Optional(t.String()),
     notifications: t.Object({
       system: t.Boolean(),
       sound: t.Boolean(),
@@ -44,6 +45,7 @@ export const ExecutionModel = {
       ]),
       locale: t.String(),
       timezone: t.String(),
+      defaultRuntimeId: t.String(),
       notifications: t.Object({
         system: t.Boolean(),
         sound: t.Boolean(),
