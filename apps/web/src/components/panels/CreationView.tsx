@@ -12,6 +12,14 @@ import {
   Upload04Icon,
   Mic01Icon,
   Cancel01Icon,
+  Mail01Icon,
+  InformationCircleIcon,
+  Alert01Icon,
+  LinkSquare01Icon,
+  TimeQuarterPassIcon,
+  ArrowTurnBackwardIcon,
+  ArrowRight01Icon,
+  CheckmarkCircle02Icon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
 import { Button } from "@/components/ui/button";
@@ -29,8 +37,9 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { cn, formatDuration } from "@/lib/utils";
-import { api, type ActivityEntry, type Conversation, type ConversationMessage, type Goal, type StateEntry } from "@/lib/api";
+import { api, type ActivityEntry, type Conversation, type ConversationMessage, type Goal, type InboxMessage, type InboxMessageType, type InboxThread, type StateEntry } from "@/lib/api";
 import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { m } from "@/paraglide/messages";
@@ -56,6 +65,65 @@ interface GoalExecutionSnapshot {
   states: StateEntry[];
   activities: ActivityEntry[];
 }
+
+const inboxMessageTypeConfig: Record<
+  InboxMessageType,
+  {
+    icon: typeof Mail01Icon;
+    label: string;
+    accentClass: string;
+    badgeClass: string;
+  }
+> = {
+  request: {
+    icon: Mail01Icon,
+    label: "Request",
+    accentClass: "border-sky-500/20 bg-sky-500/[0.05]",
+    badgeClass: "border-sky-500/25 text-sky-700 dark:text-sky-300",
+  },
+  status_update: {
+    icon: TimeQuarterPassIcon,
+    label: "Status Update",
+    accentClass: "border-border bg-card/60",
+    badgeClass: "border-border text-muted-foreground",
+  },
+  question: {
+    icon: InformationCircleIcon,
+    label: "Question",
+    accentClass: "border-violet-500/20 bg-violet-500/[0.05]",
+    badgeClass: "border-violet-500/25 text-violet-700 dark:text-violet-300",
+  },
+  blocker: {
+    icon: Alert01Icon,
+    label: "Blocker",
+    accentClass: "border-destructive/20 bg-destructive/[0.05]",
+    badgeClass: "border-destructive/25 text-destructive",
+  },
+  artifact: {
+    icon: LinkSquare01Icon,
+    label: "Artifact",
+    accentClass: "border-amber-500/20 bg-amber-500/[0.05]",
+    badgeClass: "border-amber-500/25 text-amber-700 dark:text-amber-300",
+  },
+  review_request: {
+    icon: Mail01Icon,
+    label: "Review Request",
+    accentClass: "border-fuchsia-500/20 bg-fuchsia-500/[0.05]",
+    badgeClass: "border-fuchsia-500/25 text-fuchsia-700 dark:text-fuchsia-300",
+  },
+  completion: {
+    icon: CheckmarkCircle02Icon,
+    label: "Completion",
+    accentClass: "border-emerald-500/20 bg-emerald-500/[0.05]",
+    badgeClass: "border-emerald-500/25 text-emerald-700 dark:text-emerald-300",
+  },
+  system_note: {
+    icon: InformationCircleIcon,
+    label: "System Note",
+    accentClass: "border-border bg-muted/20",
+    badgeClass: "border-border text-muted-foreground",
+  },
+};
 
 const EMPTY_CONVERSATION_MESSAGES: ConversationMessage[] = [];
 
@@ -256,6 +324,185 @@ function getActivityDotTone(activity?: ActivityEntry) {
   }
 
   return "bg-sky-500";
+}
+
+function formatInboxTimestamp(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.toISOString().split("T")[0]} ${date.toISOString().split("T")[1]?.slice(0, 5) ?? ""}`;
+}
+
+function renderInboxMetadata(metadata: Record<string, unknown>) {
+  const entries = Object.entries(metadata);
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+      {entries.map(([key, value]) => (
+        <div key={key} className="rounded border border-border/25 bg-background/70 px-2.5 py-2 text-[11px]">
+          <div className="font-medium uppercase tracking-wide text-muted-foreground/70">
+            {key.replace(/([A-Z])/g, " $1").trim()}
+          </div>
+          <div className="mt-1 break-words text-foreground/80">
+            {typeof value === "string"
+              ? value
+              : typeof value === "number" || typeof value === "boolean"
+                ? String(value)
+                : JSON.stringify(value)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ThreadAttentionCard({
+  thread,
+  messages,
+  projects,
+  onReply,
+}: {
+  thread: InboxThread;
+  messages: InboxMessage[];
+  projects: Project[];
+  onReply: (data: { body: string; subject?: string; to: string[]; cc?: string[] }) => Promise<void>;
+}) {
+  const [replyBody, setReplyBody] = useState("");
+  const [sendingMode, setSendingMode] = useState<"reply" | "reply_all" | null>(null);
+  const latestMessage = messages[messages.length - 1];
+  const projectName = projects.find((project) => project.id === thread.projectId)?.name;
+
+  const submitReply = useCallback(
+    async (mode: "reply" | "reply_all") => {
+      const trimmed = replyBody.trim();
+      if (!trimmed) return;
+
+      const latestTo = latestMessage?.to || [];
+      const latestCc = latestMessage?.cc || [];
+      const to = mode === "reply_all" ? latestTo : latestTo.slice(0, 1);
+      const cc = mode === "reply_all" ? latestCc : [];
+
+      setSendingMode(mode);
+      try {
+        await onReply({
+          body: trimmed,
+          subject: latestMessage?.subject ? `Re: ${latestMessage.subject}` : thread.title,
+          to,
+          cc,
+        });
+        setReplyBody("");
+      } finally {
+        setSendingMode(null);
+      }
+    },
+    [latestMessage, onReply, replyBody, thread.title],
+  );
+
+  return (
+    <details className="group" open>
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-muted/30">
+        <span className="size-1.5 shrink-0 rounded-full bg-amber-500/80" aria-hidden="true" />
+        <span className="font-medium text-foreground/70">待处理协作</span>
+        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground/70">
+          {thread.status.replaceAll("_", " ")}
+        </span>
+        <span className="truncate text-muted-foreground/50">{thread.title}</span>
+        <span className="ml-auto shrink-0 select-none text-[10px] opacity-30 transition-transform group-open:rotate-90">›</span>
+      </summary>
+      <div className="mt-1 space-y-3 rounded border border-border/25 bg-muted/10 px-3 py-3">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground/70">
+          <span>{thread.createdByName}</span>
+          <span>·</span>
+          <span>{projectName || (thread.projectId ? thread.projectId : "临时会话")}</span>
+          <span>·</span>
+          <span>{formatInboxTimestamp(thread.lastMessageAt)}</span>
+        </div>
+
+        {thread.summary ? (
+          <p className="text-sm leading-6 text-foreground/85">{thread.summary}</p>
+        ) : null}
+
+        <div className="space-y-3">
+          {messages.map((message) => {
+            const config = inboxMessageTypeConfig[message.messageType];
+            const senderIcon = message.senderType === "agent" ? Robot02Icon : Mail01Icon;
+
+            return (
+              <article key={message.id} className={cn("rounded border px-3 py-3", config.accentClass)}>
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground/70">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border/40 bg-background/80 px-2 py-0.5 text-foreground/80">
+                    <HugeiconsIcon icon={senderIcon} className="size-3" />
+                    {message.senderName}
+                  </span>
+                  <Badge variant="outline" className={cn("text-[9px] uppercase tracking-[0.16em]", config.badgeClass)}>
+                    {config.label}
+                  </Badge>
+                  <span>{formatInboxTimestamp(message.createdAt)}</span>
+                </div>
+
+                {message.subject ? (
+                  <div className="mt-2 text-sm font-medium text-foreground/85">{message.subject}</div>
+                ) : null}
+
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground/85">{message.body}</p>
+
+                {message.metadata ? renderInboxMetadata(message.metadata) : null}
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="rounded border border-border/25 bg-background/70 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-medium text-foreground/80">直接在当前线程回复</div>
+              <div className="mt-1 text-[11px] text-muted-foreground/70">
+                这里回复后，不需要再跳去 Inbox。
+              </div>
+            </div>
+            {latestMessage ? (
+              <div className="text-[11px] text-muted-foreground/70">
+                回复对象: {latestMessage.to.length > 0 ? latestMessage.to.join(", ") : thread.createdByName}
+              </div>
+            ) : null}
+          </div>
+
+          <textarea
+            value={replyBody}
+            onChange={(event) => setReplyBody(event.target.value)}
+            placeholder="补充需求、回答澄清问题，或直接给 agent 新指令..."
+            className="mt-3 min-h-28 w-full resize-y rounded-xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+          />
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-[11px] text-muted-foreground/70">
+              {latestMessage?.cc?.length ? `Cc: ${latestMessage.cc.join(", ")}` : "无额外抄送对象"}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!replyBody.trim() || sendingMode !== null}
+                onClick={() => void submitReply("reply")}
+              >
+                <HugeiconsIcon icon={ArrowTurnBackwardIcon} className="size-3.5" />
+                {sendingMode === "reply" ? "发送中..." : "回复"}
+              </Button>
+              <Button
+                size="sm"
+                disabled={!replyBody.trim() || sendingMode !== null}
+                onClick={() => void submitReply("reply_all")}
+              >
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+                {sendingMode === "reply_all" ? "发送中..." : "全部回复"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </details>
+  );
 }
 
 function ExecutionProgressCard({ snapshots }: { snapshots: GoalExecutionSnapshot[] }) {
@@ -718,6 +965,8 @@ function ChatArea({
   const [isConversationUpdating, setIsConversationUpdating] = useState(false);
   const [trackedGoalIds, setTrackedGoalIds] = useState<string[]>([]);
   const [goalSnapshots, setGoalSnapshots] = useState<GoalExecutionSnapshot[]>([]);
+  const [threadItems, setThreadItems] = useState<InboxThread[]>([]);
+  const [threadMessagesById, setThreadMessagesById] = useState<Record<string, InboxMessage[]>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -756,6 +1005,10 @@ function ChatArea({
 
     return [];
   }, [messages]);
+  const sortedThreadItems = useMemo(
+    () => [...threadItems].sort((a, b) => Date.parse(b.lastMessageAt) - Date.parse(a.lastMessageAt)),
+    [threadItems],
+  );
   const visibleMessages = useMemo(() => {
     if (!pendingUserMessage) return messages;
 
@@ -801,6 +1054,41 @@ function ChatArea({
     setPendingUserMessage(null);
     setTrackedGoalIds([]);
     setGoalSnapshots([]);
+    setThreadItems([]);
+    setThreadMessagesById({});
+  }, [conversation.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadThreadItems = async () => {
+      try {
+        const threads = await api.listInboxThreads({ conversationId: conversation.id });
+        if (cancelled) return;
+
+        setThreadItems(threads);
+        const messagePairs = await Promise.all(
+          threads.map(async (thread) => [thread.id, await api.listInboxMessages(thread.id)] as const),
+        );
+        if (cancelled) return;
+
+        setThreadMessagesById(Object.fromEntries(messagePairs));
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Failed to load thread inbox items:", err);
+        }
+      }
+    };
+
+    void loadThreadItems();
+    const interval = window.setInterval(() => {
+      void loadThreadItems();
+    }, 4000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, [conversation.id]);
 
   useEffect(() => {
@@ -922,6 +1210,36 @@ function ChatArea({
     textareaRef.current?.focus();
   }, []);
 
+  const handleReplyToThread = useCallback(
+    async (
+      threadId: string,
+      data: { body: string; subject?: string; to: string[]; cc?: string[] },
+    ) => {
+      const message = await api.addInboxMessage(threadId, {
+        messageType: "question",
+        senderType: "user",
+        senderName: user?.fullName || user?.username || m.user(),
+        subject: data.subject,
+        body: data.body,
+        to: data.to,
+        cc: data.cc,
+      });
+
+      setThreadMessagesById((prev) => ({
+        ...prev,
+        [threadId]: [...(prev[threadId] || []), message],
+      }));
+      setThreadItems((prev) =>
+        prev.map((thread) =>
+          thread.id === threadId
+            ? { ...thread, lastMessageAt: message.createdAt, updatedAt: message.createdAt }
+            : thread,
+        ),
+      );
+    },
+    [user?.fullName, user?.username],
+  );
+
   function handleKeys(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
@@ -1029,6 +1347,15 @@ function ChatArea({
           )}
           {visibleMessages.map((msg) => (
             <MessageBubble key={msg.id} msg={msg} userImageUrl={user?.imageUrl} />
+          ))}
+          {sortedThreadItems.map((thread) => (
+            <ThreadAttentionCard
+              key={thread.id}
+              thread={thread}
+              messages={threadMessagesById[thread.id] || []}
+              projects={projects}
+              onReply={(data) => handleReplyToThread(thread.id, data)}
+            />
           ))}
           {(goalSnapshots.length > 0 || hasActiveExecution) && <ExecutionProgressCard snapshots={goalSnapshots} />}
           {sending && <ChatThinkingState />}

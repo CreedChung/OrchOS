@@ -949,6 +949,7 @@ export const api = {
     kind?: InboxThreadKind;
     status?: InboxThreadStatus;
     projectId?: string;
+    conversationId?: string;
   }): Promise<InboxThread[]> => {
     const client = createEdenClient();
     const result = await client.api.inbox.threads.get({
@@ -956,6 +957,7 @@ export const api = {
         kind: filters?.kind,
         status: filters?.status,
         projectId: filters?.projectId,
+        conversationId: filters?.conversationId,
       },
     });
     return assertData(result).map(normalizeInboxThread);

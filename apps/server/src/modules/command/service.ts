@@ -55,6 +55,7 @@ export abstract class CommandService {
   static async dispatchAsync(
     command: Command,
     runtimeId?: string,
+    options?: { conversationId?: string },
   ): Promise<DispatchResult> {
     CommandService.update(command.id, { status: "executing" });
 
@@ -91,6 +92,7 @@ export abstract class CommandService {
         body: command.instruction,
         summary: "Waiting for clarification before goals can be created.",
         projectId,
+        conversationId: options?.conversationId,
         commandId: command.id,
         recipients: resolvedAgentNames,
         cc: ["User"],
@@ -130,6 +132,7 @@ export abstract class CommandService {
       body: command.instruction,
       summary: `Dispatching work to ${resolvedAgentNames.length} agent${resolvedAgentNames.length === 1 ? "" : "s"}.`,
       projectId,
+      conversationId: options?.conversationId,
       commandId: command.id,
       recipients: resolvedAgentNames,
       cc: ["User"],

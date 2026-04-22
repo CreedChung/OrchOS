@@ -17,7 +17,6 @@ import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   Cancel01Icon,
   InformationCircleIcon,
-  InboxIcon,
   KeyboardIcon,
   Key01Icon,
   NotificationIcon,
@@ -116,10 +115,10 @@ export function Sidebar({
       label: m.workspace(),
       items: [
         {
-          id: "inbox",
-          to: "/dashboard/inbox",
-          icon: InboxIcon,
-          label: m.inbox(),
+          id: "projects",
+          to: "/dashboard/projects",
+          icon: Folder01Icon,
+          label: m.project(),
           badge: openInboxCount,
           badgeCritical: criticalCount > 0,
         },
@@ -136,17 +135,6 @@ export function Sidebar({
           label: m.mcp_servers(),
         },
         { id: "skills", to: "/dashboard/skills", icon: Wrench01Icon, label: m.skills() },
-      ],
-    },
-    {
-      label: m.project(),
-      items: [
-        {
-          id: "projects",
-          to: "/dashboard/projects",
-          icon: Folder01Icon,
-          label: m.project(),
-        },
       ],
     },
     {

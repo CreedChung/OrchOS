@@ -450,7 +450,7 @@ export abstract class ConversationService {
       projectIds: conv.projectId ? [conv.projectId] : options?.projectIds,
     });
 
-    const result = await CommandService.dispatchAsync(command, runtimeId);
+    const result = await CommandService.dispatchAsync(command, runtimeId, { conversationId });
 
     if (result.needsClarification) {
       ConversationService.addMessage(

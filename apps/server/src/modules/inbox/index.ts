@@ -14,6 +14,7 @@ export const inboxController = new Elysia({ prefix: "/api/inbox" })
         kind: query.kind as any,
         status: query.status as any,
         projectId: query.projectId,
+        conversationId: query.conversationId,
       });
     },
     {
@@ -38,6 +39,7 @@ export const inboxController = new Elysia({ prefix: "/api/inbox" })
           ]),
         ),
         projectId: t.Optional(t.String()),
+        conversationId: t.Optional(t.String()),
       }),
       response: t.Array(InboxModel.threadResponse),
     },

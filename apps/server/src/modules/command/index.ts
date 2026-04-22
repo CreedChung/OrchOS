@@ -59,7 +59,9 @@ export const commandController = new Elysia({ prefix: "/api/commands" })
         agentNames: body.agentNames,
         projectIds: body.projectIds,
       });
-      return CommandService.dispatchAsync(command, body.runtimeId);
+      return CommandService.dispatchAsync(command, body.runtimeId, {
+        conversationId: body.conversationId,
+      });
     },
     {
       body: t.Object({
@@ -67,6 +69,7 @@ export const commandController = new Elysia({ prefix: "/api/commands" })
         agentNames: t.Optional(t.Array(t.String())),
         projectIds: t.Optional(t.Array(t.String())),
         runtimeId: t.Optional(t.String()),
+        conversationId: t.Optional(t.String()),
       }),
       response: DispatchResponse,
     },

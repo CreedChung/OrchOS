@@ -71,11 +71,13 @@ export abstract class InboxService {
     kind?: InboxThreadKind;
     status?: InboxThreadStatus;
     projectId?: string;
+    conversationId?: string;
   }): InboxThread[] {
     const conditions = [];
     if (filters?.kind) conditions.push(eq(inboxThreads.kind, filters.kind));
     if (filters?.status) conditions.push(eq(inboxThreads.status, filters.status));
     if (filters?.projectId) conditions.push(eq(inboxThreads.projectId, filters.projectId));
+    if (filters?.conversationId) conditions.push(eq(inboxThreads.conversationId, filters.conversationId));
 
     let query = db.select().from(inboxThreads).orderBy(desc(inboxThreads.lastMessageAt));
     if (conditions.length > 0) query = query.where(and(...conditions)) as typeof query;

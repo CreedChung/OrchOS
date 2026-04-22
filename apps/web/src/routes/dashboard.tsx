@@ -210,8 +210,11 @@ function DashboardLayout() {
           </div>
           <ActivityPanel
             activities={activities}
+            goals={goals}
+            projects={projects}
+            problems={problems}
             collapsed={!activityPanelOpen}
-            onToggle={toggleActivityPanel}
+            activeView={activeView}
           />
         </div>
         {showCommandBar && (
