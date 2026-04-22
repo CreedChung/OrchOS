@@ -6,7 +6,6 @@ import {
   Chat01Icon,
   Delete02Icon,
   Edit02Icon,
-  Loading01Icon,
   Robot02Icon,
   ArrowUp01Icon,
   Folder01Icon,
@@ -19,6 +18,7 @@ import { useChat } from "@ai-sdk/react";
 import { Button } from "@/components/ui/button";
 import { BorderBeam } from "border-beam";
 import { ArchiveRestore, ArchiveX, Star } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -51,6 +51,8 @@ interface CreationViewProps {
   settings: ControlSettings | null;
   onSettingsChange: (settings: ControlSettings) => void;
 }
+
+const EMPTY_CONVERSATION_MESSAGES: ConversationMessage[] = [];
 
 
 
@@ -172,7 +174,10 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
     deleteConversation,
   } = useConversationStore();
 
-  const messages = activeConversationId ? (messagesByConversationId[activeConversationId] || []) : [];
+  const messages = activeConversationId
+    ? (messagesByConversationId[activeConversationId] ?? EMPTY_CONVERSATION_MESSAGES)
+    : EMPTY_CONVERSATION_MESSAGES;
+  const uiMessages = useMemo(() => mapConversationMessagesToUiMessages(messages), [messages]);
 
   const transport = useMemo(
     () =>
@@ -213,10 +218,15 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
   }, [activeConversationId, loadMessages]);
 
   useEffect(() => {
-    setChatMessages(mapConversationMessagesToUiMessages(messages));
-  }, [messages, setChatMessages]);
+    setChatMessages(uiMessages);
+  }, [setChatMessages, uiMessages]);
 
   const handleNewConversation = useCallback(async () => {
+    if (activeConversation && !activeConversation.archived && !activeConversation.deleted && messages.length === 0) {
+      setActiveConversationId(activeConversation.id);
+      return;
+    }
+
     try {
       await createConversation({
         runtimeId: settings?.defaultRuntimeId || undefined,
@@ -224,7 +234,7 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
     } catch (err) {
       console.error("Failed to create conversation:", err);
     }
-  }, [createConversation, settings?.defaultRuntimeId]);
+  }, [activeConversation, createConversation, messages.length, setActiveConversationId, settings?.defaultRuntimeId]);
 
   useEffect(() => {
     if (!hasLoadedConversations) return;
@@ -352,12 +362,9 @@ className={cn(
                       onClick={(e) => {
                         e.stopPropagation();
                         if (conv.deleted) {
-                          void api
-                            .deleteConversation(conv.id, { permanent: true })
-                            .then(() => loadConversations())
-                            .catch((err) => {
-                              console.error("Failed to permanently delete conversation:", err);
-                            });
+                          void deleteConversation(conv.id, true).catch((err) => {
+                            console.error("Failed to permanently delete conversation:", err);
+                          });
                           return;
                         }
                         setConvToDelete(conv.id);
@@ -397,7 +404,6 @@ className={cn(
             agents={agents}
             runtimes={enabledRuntimes}
             projects={projects}
-            settings={settings}
             defaultRuntimeId={settings?.defaultRuntimeId}
             onUpdateConversation={handleUpdateConversation}
             onSetDefaultRuntime={(runtimeId) => {
@@ -414,7 +420,7 @@ className={cn(
                   },
                 },
               );
-              await loadMessages(activeConversation.id);
+              await loadMessages(activeConversation.id, { force: true });
               // Update conversation title if first message
               if (!activeConversation.title && messages.length === 0) {
                 await handleUpdateConversation(activeConversation.id, {
@@ -426,10 +432,7 @@ className={cn(
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <HugeiconsIcon
-              icon={Loading01Icon}
-              className="size-5 animate-spin text-muted-foreground/50"
-            />
+            <Spinner className="text-muted-foreground/50" />
           </div>
         )}
       </div>
@@ -771,7 +774,7 @@ function ChatArea({
                   onClick={handleSend}
                 >
                   {sending ? (
-                    <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                    <Spinner size="sm" />
                   ) : (
                     <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
                   )}
@@ -1002,8 +1005,14 @@ function RuntimeSelector({ runtimes, agents, selectedId, defaultRuntimeId, onSel
                   </div>
                 ))}
                 {loadingRuntimeId === hoveredRuntimeId && hoveredModels.length === 0 && (
-                  <div className={cn(selectItemClassName, "whitespace-nowrap text-muted-foreground") }>
-                    {m.loading()}
+                  <div
+                    className={cn(
+                      selectItemClassName,
+                      "flex items-center gap-2 whitespace-nowrap text-muted-foreground",
+                    )}
+                  >
+                    <Spinner size="sm" />
+                    <span>{m.loading()}</span>
                   </div>
                 )}
               </div>

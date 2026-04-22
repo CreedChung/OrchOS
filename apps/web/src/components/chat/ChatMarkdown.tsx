@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 import { Folder01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -34,6 +35,16 @@ function FilePathInline({ path }: { path: string }) {
   );
 }
 
+function getCodeText(children: ReactNode) {
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) return children.map((child) => getCodeText(child)).join("");
+  if (children && typeof children === "object" && "props" in children) {
+    return getCodeText((children as ReactElement<{ children?: ReactNode }>).props.children);
+  }
+
+  return "";
+}
+
 export function ChatMarkdown({ content }: { content: string }) {
   const processed = preprocessAgentOutput(content);
 
@@ -49,13 +60,21 @@ export function ChatMarkdown({ content }: { content: string }) {
               target="_blank"
             />
           ),
-          code: ({ inline, className, children, ...props }: any) => {
-            const match = /language-([\w-]+)/.exec(className || "");
-            const code = String(children).replace(/\n$/, "");
+          pre: ({ children }) => {
+            const child = Array.isArray(children) ? children[0] : children;
 
-            if (!inline) {
-              return <ChatCodeBlock code={code} language={match?.[1]} />;
+            if (!child || typeof child !== "object" || !("props" in child)) {
+              return <pre>{children}</pre>;
             }
+
+            const codeChild = child as ReactElement<{ className?: string; children?: ReactNode }>;
+            const match = /language-([\w-]+)/.exec(codeChild.props.className || "");
+            const code = getCodeText(codeChild.props.children).replace(/\n$/, "");
+
+            return <ChatCodeBlock code={code} language={match?.[1]} />;
+          },
+          code: ({ className, children, ...props }: ComponentPropsWithoutRef<"code">) => {
+            const code = String(children).replace(/\n$/, "");
 
             if (code.startsWith("/") && code.includes(".")) {
               return <FilePathInline path={code} />;

@@ -226,6 +226,8 @@ export abstract class ConversationService {
       return msg;
     }
 
+    const runtime = RuntimeService.get(runtimeId);
+
     // Get all previous messages for context
     const allMessages = ConversationService.getMessages(conversationId);
     const contextMessages = allMessages.slice(0, -1); // Exclude the assistant error message we haven't added yet
@@ -257,7 +259,9 @@ export abstract class ConversationService {
           }
         | undefined;
 
-      if (conv.projectId) {
+      const shouldUseSandbox = !!conv.projectId && runtime?.protocol !== "acp";
+
+      if (shouldUseSandbox) {
         let vm = SandboxService.getRunningVMForProject(conv.projectId);
         let sandboxStatus: MessageMetadata["sandboxStatus"] = vm ? "reused" : undefined;
         let sandboxFailureReason: string | undefined;

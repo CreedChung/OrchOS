@@ -10,7 +10,6 @@ import {
   LinkSquare01Icon,
   TimeQuarterPassIcon,
   ArrowTurnBackwardIcon,
-  ArrowTurnDownRightIcon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -300,7 +299,7 @@ export function InboxDetail({ thread, messages, projects, onOpenGoal, onReply }:
                     disabled={!replyBody.trim() || sendingMode !== null}
                     onClick={() => void submitReply("reply_all")}
                   >
-                    <HugeiconsIcon icon={ArrowTurnDownRightIcon} className="size-3.5" />
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
                     {sendingMode === "reply_all" ? "Sending..." : "Reply All"}
                   </Button>
                 </div>

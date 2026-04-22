@@ -101,12 +101,12 @@ function extractTextContent(value: unknown): string[] {
   if (typeof value === "object") {
     const record = value as Record<string, unknown>;
     const chunks: string[] = [];
+    const hasNestedContent =
+      record.content !== undefined ||
+      record.contents !== undefined ||
+      record.messages !== undefined;
 
-    if (record.type === "text" && typeof record.text === "string") {
-      chunks.push(record.text);
-    }
-
-    if (typeof record.text === "string") {
+    if (typeof record.text === "string" && (!hasNestedContent || record.type === "text")) {
       chunks.push(record.text);
     }
 
@@ -213,7 +213,7 @@ async function withAcpProcess<T>(
       reject: (error: Error) => void;
     }
   >();
-  const outputParts: string[] = [];
+  let latestOutput = "";
   const stderrParts: string[] = [];
 
   const handleStdoutLine = (line: string) => {
@@ -236,7 +236,7 @@ async function withAcpProcess<T>(
 
       if ("method" in message && message.method === "session/update") {
         const text = extractTextContent(message.params?.update).join("");
-        if (text) outputParts.push(text);
+        if (text) latestOutput = text;
       }
     } catch {
       // Ignore non-JSON stdout noise from adapters.
@@ -269,7 +269,7 @@ async function withAcpProcess<T>(
 
     return await fn({
       request,
-      getOutput: () => outputParts.join("").trim(),
+      getOutput: () => latestOutput.trim(),
       getStderr: () => stderrParts.join("\n").trim(),
     });
   } finally {
@@ -458,7 +458,7 @@ async function createManagedSession(
     number,
     { resolve: (value: unknown) => void; reject: (error: Error) => void }
   >();
-  const outputParts: string[] = [];
+  let latestOutput = "";
   const stderrParts: string[] = [];
 
   const stdoutTask = consumeStream(proc.stdout, (line) => {
@@ -477,7 +477,7 @@ async function createManagedSession(
       }
       if ("method" in message && message.method === "session/update") {
         const text = extractTextContent(message.params?.update).join("");
-        if (text) outputParts.push(text);
+        if (text) latestOutput = text;
       }
     } catch {
       // Ignore non-JSON stdout noise from adapters.
@@ -507,9 +507,9 @@ async function createManagedSession(
     key: key || `${Date.now()}`,
     configKey: getConfigKey(config),
     request,
-    getOutput: () => outputParts.join("").trim(),
+    getOutput: () => latestOutput.trim(),
     clearOutput: () => {
-      outputParts.length = 0;
+      latestOutput = "";
       stderrParts.length = 0;
     },
     startedAt: Date.now(),

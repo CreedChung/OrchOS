@@ -1,6 +1,29 @@
 import { create } from "zustand";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 
+let loadConversationsPromise: Promise<void> | null = null;
+const loadMessagesPromises = new Map<string, Promise<void>>();
+let activeMessageLoads = 0;
+
+function sortConversationsByUpdatedAt(conversations: Conversation[]) {
+  return [...conversations].sort((a, b) => {
+    const aTime = typeof a.updatedAt === "string" ? Date.parse(a.updatedAt) : Number.NaN;
+    const bTime = typeof b.updatedAt === "string" ? Date.parse(b.updatedAt) : Number.NaN;
+
+    if (Number.isNaN(aTime) && Number.isNaN(bTime)) return 0;
+    if (Number.isNaN(aTime)) return 1;
+    if (Number.isNaN(bTime)) return -1;
+
+    return bTime - aTime;
+  });
+}
+
+function upsertConversation(conversations: Conversation[], conversation: Conversation) {
+  const next = conversations.filter((item) => item.id !== conversation.id);
+  next.push(conversation);
+  return sortConversationsByUpdatedAt(next);
+}
+
 interface ConversationState {
   conversations: Conversation[];
   activeConversationId: string | null;
@@ -11,9 +34,9 @@ interface ConversationState {
 }
 
 interface ConversationActions {
-  loadConversations: () => Promise<void>;
+  loadConversations: (options?: { force?: boolean }) => Promise<void>;
   setActiveConversationId: (id: string | null) => void;
-  loadMessages: (conversationId: string) => Promise<void>;
+  loadMessages: (conversationId: string, options?: { force?: boolean }) => Promise<void>;
   createConversation: (data: { runtimeId?: string }) => Promise<Conversation>;
   updateConversation: (
     id: string,
@@ -40,60 +63,101 @@ export const useConversationStore = create<ConversationState & ConversationActio
   isLoadingConversations: false,
   isLoadingMessages: false,
 
-  loadConversations: async () => {
+  loadConversations: async (options) => {
+    const state = get();
+    if (state.hasLoadedConversations && !options?.force) return;
+    if (loadConversationsPromise) return loadConversationsPromise;
+
     set({ isLoadingConversations: true });
-    try {
-      const list = await api.listConversations();
-      set({ conversations: list, hasLoadedConversations: true });
-    } catch (err) {
-      console.error("Failed to load conversations:", err);
-    } finally {
-      set({ isLoadingConversations: false });
-    }
+    loadConversationsPromise = (async () => {
+      try {
+        const list = await api.listConversations();
+        set({ conversations: list, hasLoadedConversations: true });
+      } catch (err) {
+        console.error("Failed to load conversations:", err);
+      } finally {
+        loadConversationsPromise = null;
+        set({ isLoadingConversations: false });
+      }
+    })();
+
+    return loadConversationsPromise;
   },
 
   setActiveConversationId: (id) => {
     set({ activeConversationId: id });
   },
 
-  loadMessages: async (conversationId) => {
+  loadMessages: async (conversationId, options) => {
+    const cachedMessages = get().messagesByConversationId[conversationId];
+    if (cachedMessages && !options?.force) return;
+    const inFlightRequest = loadMessagesPromises.get(conversationId);
+    if (inFlightRequest) return inFlightRequest;
+
+    activeMessageLoads += 1;
     set({ isLoadingMessages: true });
-    try {
-      const msgs = await api.getConversationMessages(conversationId);
-      set((state) => ({
-        messagesByConversationId: {
-          ...state.messagesByConversationId,
-          [conversationId]: msgs,
-        },
-      }));
-    } catch (err) {
-      console.error("Failed to load messages:", err);
-    } finally {
-      set({ isLoadingMessages: false });
-    }
+    const request = (async () => {
+      try {
+        const msgs = await api.getConversationMessages(conversationId);
+        set((state) => ({
+          messagesByConversationId: {
+            ...state.messagesByConversationId,
+            [conversationId]: msgs,
+          },
+        }));
+      } catch (err) {
+        console.error("Failed to load messages:", err);
+      } finally {
+        loadMessagesPromises.delete(conversationId);
+        activeMessageLoads = Math.max(0, activeMessageLoads - 1);
+        set({ isLoadingMessages: activeMessageLoads > 0 });
+      }
+    })();
+
+    loadMessagesPromises.set(conversationId, request);
+    return request;
   },
 
   createConversation: async (data) => {
     const conv = await api.createConversation(data);
-    const list = await api.listConversations();
-    set({ conversations: list, activeConversationId: conv.id });
+    set((state) => ({
+      conversations: upsertConversation(state.conversations, conv),
+      activeConversationId: conv.id,
+      messagesByConversationId: {
+        ...state.messagesByConversationId,
+        [conv.id]: state.messagesByConversationId[conv.id] ?? [],
+      },
+    }));
     return conv;
   },
 
   updateConversation: async (id, data) => {
-    await api.updateConversation(id, data);
-    const list = await api.listConversations();
-    set({ conversations: list });
+    const conversation = await api.updateConversation(id, data);
+    set((state) => ({
+      conversations: upsertConversation(state.conversations, conversation),
+    }));
   },
 
   deleteConversation: async (id, permanent = false) => {
     await api.deleteConversation(id, permanent ? { permanent: true } : undefined);
-    const list = await api.listConversations();
     const { activeConversationId } = get();
-    set({
-      conversations: list,
+    set((state) => ({
+      conversations: permanent
+        ? state.conversations.filter((conversation) => conversation.id !== id)
+        : sortConversationsByUpdatedAt(
+            state.conversations.map((conversation) =>
+              conversation.id === id
+                ? {
+                    ...conversation,
+                    deleted: true,
+                    archived: false,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : conversation,
+            ),
+          ),
       activeConversationId: activeConversationId === id ? null : activeConversationId,
-    });
+    }));
   },
 
   addMessage: (conversationId, message) => {

@@ -305,10 +305,18 @@ export function ProjectsView({
               return (
                 <div key={project.id}>
                   <div className="flex items-center">
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setSelectedProjectId(project.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedProjectId(project.id);
+                        }
+                      }}
                       className={cn(
-                        "group flex flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left transition-colors flex-nowrap hover:bg-accent/50",
+                        "group flex flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left transition-colors flex-nowrap hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         selectedProjectId === project.id && "bg-accent",
                       )}
                     >
@@ -356,7 +364,7 @@ export function ProjectsView({
                       >
                         <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                       </Button>
-                    </button>
+                    </div>
                     {totalGoals > 0 && (
                       <Button
                         variant="ghost"

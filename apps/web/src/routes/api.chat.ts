@@ -79,15 +79,24 @@ export const Route = createFileRoute("/api/chat")({
               },
             });
 
+            const headers = new Headers();
+            headers.set("Content-Type", "application/json");
+
+            const cookieHeader = request.headers.get("cookie");
+            if (cookieHeader) {
+              headers.set("cookie", cookieHeader);
+            }
+
+            const authorizationHeader = request.headers.get("authorization");
+            if (authorizationHeader) {
+              headers.set("authorization", authorizationHeader);
+            }
+
             const upstream = await fetch(
               resolveApiUrl(`/api/conversations/${body.conversationId}/messages`),
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  cookie: request.headers.get("cookie") || "",
-                  authorization: request.headers.get("authorization") || "",
-                },
+                headers,
                 body: JSON.stringify({ content }),
               },
             );
