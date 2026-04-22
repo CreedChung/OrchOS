@@ -15,9 +15,7 @@ export function getServerBaseUrl() {
     return "http://127.0.0.1:5173";
   }
 
-  const url = new URL(window.location.origin);
-  url.port = "5173";
-  return url.origin;
+  return window.location.origin;
 }
 
 export function createEdenClient() {

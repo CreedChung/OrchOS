@@ -1,4 +1,5 @@
 import { spawn } from "bun";
+import path from "node:path";
 
 export interface ExecutionResult {
   success: boolean;
@@ -15,6 +16,15 @@ export interface ExecutorConfig {
 }
 
 const DEFAULT_TIMEOUT = 60000;
+const WORKSPACE_ROOT = process.cwd();
+
+function shouldRetryAtWorkspaceRoot(result: ExecutionResult, cwd?: string) {
+  if (!cwd) return false;
+  if (path.resolve(cwd) === path.resolve(WORKSPACE_ROOT)) return false;
+
+  const failureText = `${result.error ?? ""}\n${result.output}`.toLowerCase();
+  return failureText.includes("script not found") || failureText.includes("missing script");
+}
 
 export interface AgentCLIDefinition {
   id: string;
@@ -773,6 +783,10 @@ export const executor = {
     ];
     for (const cmd of commands) {
       const result = await this.run(cmd, { cwd, timeout: 120000 });
+      if (shouldRetryAtWorkspaceRoot(result, cwd)) {
+        const retry = await this.run(cmd, { cwd: WORKSPACE_ROOT, timeout: 120000 });
+        if (retry.exitCode !== 127) return retry;
+      }
       if (result.exitCode !== 127) return result;
     }
     return { success: false, output: "", error: "No test runner found", exitCode: 127 };
@@ -782,6 +796,10 @@ export const executor = {
     const commands = ["bun run build", "npm run build", "pnpm run build", "yarn run build"];
     for (const cmd of commands) {
       const result = await this.run(cmd, { cwd, timeout: 180000 });
+      if (shouldRetryAtWorkspaceRoot(result, cwd)) {
+        const retry = await this.run(cmd, { cwd: WORKSPACE_ROOT, timeout: 180000 });
+        if (retry.exitCode !== 127) return retry;
+      }
       if (result.exitCode !== 127) return result;
     }
     return { success: false, output: "", error: "No build script found", exitCode: 127 };
@@ -791,6 +809,10 @@ export const executor = {
     const commands = ["bun run lint", "npm run lint", "pnpm run lint", "yarn run lint"];
     for (const cmd of commands) {
       const result = await this.run(cmd, { cwd, timeout: 120000 });
+      if (shouldRetryAtWorkspaceRoot(result, cwd)) {
+        const retry = await this.run(cmd, { cwd: WORKSPACE_ROOT, timeout: 120000 });
+        if (retry.exitCode !== 127) return retry;
+      }
       if (result.exitCode !== 127) return result;
     }
     return { success: false, output: "", error: "No lint script found", exitCode: 127 };

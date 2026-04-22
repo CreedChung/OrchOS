@@ -10,12 +10,14 @@ import { StateService } from "@/modules/state/service";
 import { PlanningService } from "@/modules/execution/planner";
 import { executionService } from "@/modules/execution/service";
 import { InboxService } from "@/modules/inbox/service";
+import type { AcpTraceEvent } from "@/modules/runtime/acp";
 import type { Command, CommandStatus } from "@/types";
 
 export interface DispatchResult {
   needsClarification: boolean;
   questions: string[];
   command: Command;
+  trace?: AcpTraceEvent[];
   goals: Array<{
     id: string;
     title: string;
@@ -113,6 +115,7 @@ export abstract class CommandService {
         needsClarification: true,
         questions: planningResult.questions,
         command: CommandService.get(command.id)!,
+        trace: planningResult.trace,
         goals: [],
       };
     }
@@ -219,6 +222,7 @@ export abstract class CommandService {
       needsClarification: false,
       questions: [],
       command: CommandService.get(command.id)!,
+      trace: planningResult.trace,
       goals: createdGoals,
     };
   }

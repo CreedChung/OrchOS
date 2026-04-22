@@ -47,6 +47,16 @@ export const Route = createRootRoute({
       </div>
     </div>
   ),
+  errorComponent: ({ error }) => (
+    <div className="flex h-screen items-center justify-center px-6">
+      <div className="max-w-lg rounded-xl border border-border bg-background p-6 text-left shadow-sm">
+        <h1 className="text-lg font-semibold text-foreground">Application Error</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : "An unexpected error occurred."}
+        </p>
+      </div>
+    </div>
+  ),
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {

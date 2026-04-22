@@ -1,6 +1,14 @@
 import { API_BASE, createEdenClient, getServerBaseUrl } from "./eden";
 import type { ControlSettings as ControlSettingsType } from "./types";
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readString(value: unknown) {
+  return typeof value === "string" ? value : undefined;
+}
+
 export function resolveApiUrl(path: string) {
   if (API_BASE) {
     return `${API_BASE}${path}`;
@@ -15,6 +23,115 @@ function assertData<T>(result: { data: T | null; error: unknown; status: number 
   }
 
   throw new Error(`API error: ${result.status}`);
+}
+
+function normalizeTrace(trace: unknown): ConversationMessage["trace"] {
+  if (!Array.isArray(trace)) return undefined;
+
+  return trace
+    .filter((item) => isRecord(item) && typeof item.kind === "string")
+    .map((item) => {
+      if (item.kind === "message" || item.kind === "thought") {
+        return {
+          kind: item.kind,
+          text: readString(item.text) ?? "",
+        };
+      }
+
+      if (item.kind === "tool") {
+        return {
+          kind: "tool" as const,
+          toolName: readString(item.toolName),
+          toolCallId: readString(item.toolCallId),
+          state: readString(item.state),
+          input: item.input,
+          output: item.output,
+          errorText: readString(item.errorText),
+        };
+      }
+
+      return null;
+    })
+    .filter((item): item is NonNullable<ConversationMessage["trace"]>[number] => item !== null);
+}
+
+function normalizeConversationMessage(message: unknown): ConversationMessage {
+  const record = isRecord(message) ? message : {};
+
+  return {
+    id: readString(record.id) ?? "",
+    conversationId: readString(record.conversationId) ?? "",
+    role: record.role === "user" ? "user" : "assistant",
+    content: readString(record.content) ?? "",
+    trace: normalizeTrace(record.trace),
+    error: readString(record.error),
+    responseTime: typeof record.responseTime === "number" ? record.responseTime : undefined,
+    executionMode: record.executionMode === "sandbox" || record.executionMode === "local" ? record.executionMode : undefined,
+    sandboxStatus:
+      record.sandboxStatus === "created" ||
+      record.sandboxStatus === "reused" ||
+      record.sandboxStatus === "fallback" ||
+      record.sandboxStatus === "required_failed"
+        ? record.sandboxStatus
+        : undefined,
+    sandboxVmId: readString(record.sandboxVmId),
+    projectId: readString(record.projectId),
+    projectName: readString(record.projectName),
+    clarificationQuestions: Array.isArray(record.clarificationQuestions)
+      ? record.clarificationQuestions.map((item) => String(item))
+      : undefined,
+    createdAt: readString(record.createdAt) ?? new Date(0).toISOString(),
+  };
+}
+
+function normalizeInboxThread(thread: unknown): InboxThread {
+  const record = isRecord(thread) ? thread : {};
+
+  return {
+    id: readString(record.id) ?? "",
+    kind:
+      record.kind === "agent_request" ||
+      record.kind === "pull_request" ||
+      record.kind === "issue" ||
+      record.kind === "mention" ||
+      record.kind === "system_alert"
+        ? record.kind
+        : "agent_request",
+    status:
+      record.status === "open" ||
+      record.status === "in_progress" ||
+      record.status === "blocked" ||
+      record.status === "waiting_user" ||
+      record.status === "completed" ||
+      record.status === "dismissed"
+        ? record.status
+        : "open",
+    priority:
+      record.priority === "critical" || record.priority === "warning" || record.priority === "info"
+        ? record.priority
+        : "warning",
+    title: readString(record.title) ?? "Untitled",
+    summary: readString(record.summary),
+    projectId: readString(record.projectId),
+    conversationId: readString(record.conversationId),
+    commandId: readString(record.commandId),
+    primaryGoalId: readString(record.primaryGoalId),
+    createdByType:
+      record.createdByType === "user" || record.createdByType === "agent" || record.createdByType === "system"
+        ? record.createdByType
+        : "system",
+    createdById: readString(record.createdById),
+    createdByName: readString(record.createdByName) ?? "System",
+    lastMessageAt:
+      typeof record.lastMessageAt === "string"
+        ? record.lastMessageAt
+        : typeof record.updatedAt === "string"
+          ? record.updatedAt
+          : new Date(0).toISOString(),
+    createdAt: readString(record.createdAt) ?? new Date(0).toISOString(),
+    updatedAt: readString(record.updatedAt) ?? new Date(0).toISOString(),
+    archived: record.archived === true,
+  };
 }
 
 // Types aligned with server
@@ -841,12 +958,12 @@ export const api = {
         projectId: filters?.projectId,
       },
     });
-    return assertData(result);
+    return assertData(result).map(normalizeInboxThread);
   },
   getInboxThread: async (id: string): Promise<InboxThread> => {
     const client = createEdenClient();
     const result = await client.api.inbox.threads({ id }).get();
-    return assertData(result);
+    return normalizeInboxThread(assertData(result));
   },
   updateInboxThread: async (
     id: string,
@@ -861,7 +978,7 @@ export const api = {
   ): Promise<InboxThread> => {
     const client = createEdenClient();
     const result = await client.api.inbox.threads({ id }).patch(data);
-    return assertData(result);
+    return normalizeInboxThread(assertData(result));
   },
   listInboxMessages: async (threadId: string): Promise<InboxMessage[]> => {
     const client = createEdenClient();
@@ -1115,12 +1232,12 @@ export const api = {
   getConversationMessages: async (id: string): Promise<ConversationMessage[]> => {
     const client = createEdenClient();
     const result = await client.api.conversations({ id }).messages.get();
-    return assertData(result);
+    return assertData(result).map(normalizeConversationMessage);
   },
   sendConversationMessage: async (id: string, content: string): Promise<ConversationMessage> => {
     const client = createEdenClient();
     const result = await client.api.conversations({ id }).messages.post({ content });
-    return assertData(result);
+    return normalizeConversationMessage(assertData(result));
   },
 
   createGoalsFromConversation: async (

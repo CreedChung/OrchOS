@@ -61,6 +61,7 @@ export interface CreationDispatchResult {
     status: string;
     createdAt: string;
   };
+  trace?: MessageTraceEvent[];
   goals: Array<{
     id: string;
     title: string;
@@ -76,6 +77,16 @@ interface MessageMetadata {
   projectName?: string;
   clarificationQuestions?: string[];
   trace?: MessageTraceEvent[];
+}
+
+function parseJsonSafely<T>(value: string | null | undefined): T | undefined {
+  if (!value) return undefined;
+
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return undefined;
+  }
 }
 
 export abstract class ConversationService {
@@ -450,6 +461,7 @@ export abstract class ConversationService {
         undefined,
         {
           clarificationQuestions: result.questions,
+          trace: result.trace,
         },
       );
       return result;
@@ -462,6 +474,11 @@ export abstract class ConversationService {
         `Created ${result.goals.length} task${result.goals.length === 1 ? "" : "s"}.`,
         ...result.goals.map((goal, index) => `${index + 1}. ${goal.title}${goal.assignedAgentName ? ` -> ${goal.assignedAgentName}` : ""}`),
       ].join("\n"),
+      undefined,
+      undefined,
+      {
+        trace: result.trace,
+      },
     );
 
     return result;
@@ -482,32 +499,30 @@ export abstract class ConversationService {
   }
 
   static mapMessageRow(row: typeof messages.$inferSelect): Message {
-      return {
-        id: row.id,
-        conversationId: row.conversationId,
-        role: row.role as "user" | "assistant",
-        content: row.content,
-        error: row.error || undefined,
-        responseTime: row.responseTime ? Number(row.responseTime) : undefined,
-        executionMode:
-          row.executionMode === "sandbox" || row.executionMode === "local"
-            ? row.executionMode
-            : undefined,
-        sandboxStatus:
-          row.sandboxStatus === "created" ||
-          row.sandboxStatus === "reused" ||
-          row.sandboxStatus === "fallback" ||
-          row.sandboxStatus === "required_failed"
-            ? row.sandboxStatus
-            : undefined,
-        sandboxVmId: row.sandboxVmId || undefined,
-        projectId: row.projectId || undefined,
-        projectName: row.projectName || undefined,
-        clarificationQuestions: row.clarificationQuestions
-          ? JSON.parse(row.clarificationQuestions)
+    return {
+      id: row.id,
+      conversationId: row.conversationId,
+      role: row.role as "user" | "assistant",
+      content: row.content,
+      error: row.error || undefined,
+      responseTime: row.responseTime ? Number(row.responseTime) : undefined,
+      executionMode:
+        row.executionMode === "sandbox" || row.executionMode === "local"
+          ? row.executionMode
           : undefined,
-        trace: row.trace ? JSON.parse(row.trace) : undefined,
-        createdAt: row.createdAt,
-      };
+      sandboxStatus:
+        row.sandboxStatus === "created" ||
+        row.sandboxStatus === "reused" ||
+        row.sandboxStatus === "fallback" ||
+        row.sandboxStatus === "required_failed"
+          ? row.sandboxStatus
+          : undefined,
+      sandboxVmId: row.sandboxVmId || undefined,
+      projectId: row.projectId || undefined,
+      projectName: row.projectName || undefined,
+      clarificationQuestions: parseJsonSafely<string[]>(row.clarificationQuestions),
+      trace: parseJsonSafely<MessageTraceEvent[]>(row.trace),
+      createdAt: row.createdAt,
+    };
   }
 }

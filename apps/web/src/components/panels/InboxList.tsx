@@ -13,6 +13,16 @@ import { Badge } from "@/components/ui/badge";
 import { m } from "@/paraglide/messages";
 import type { InboxThread, InboxThreadKind } from "@/lib/api";
 
+function formatThreadTime(value: unknown) {
+  const timestamp = typeof value === "string" ? value : undefined;
+  if (!timestamp) return "";
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toISOString().split("T")[1]?.slice(0, 5) ?? "";
+}
+
 const kindConfig: Record<
   InboxThreadKind,
   { icon: typeof Robot02Icon; label: string; colorClass: string; bgClass: string }
@@ -102,7 +112,7 @@ export function InboxList({ threads, activeInboxId, projectNameById, onSelectIte
                   )}
                   {thread.summary && <p className="mt-1 line-clamp-2 text-[10px] text-muted-foreground/70">{thread.summary}</p>}
                   <p className="mt-1 text-[10px] text-muted-foreground/60">
-                    {thread.createdByName} · {thread.lastMessageAt.split("T")[1]?.slice(0, 5) || ""}
+                    {thread.createdByName} · {formatThreadTime(thread.lastMessageAt)}
                   </p>
                 </div>
               </button>

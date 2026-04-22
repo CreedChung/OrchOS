@@ -244,126 +244,134 @@ function getActivityTone(activity?: ActivityEntry) {
   return "border-sky-500/20 bg-sky-500/5 text-sky-700 dark:text-sky-300";
 }
 
+function getActivityDotTone(activity?: ActivityEntry) {
+  const detail = `${activity?.detail ?? ""} ${activity?.action ?? ""}`.toLowerCase();
+
+  if (/fail|error|reject|blocked|阻塞|失败|错误/.test(detail)) {
+    return "bg-destructive";
+  }
+
+  if (/success|complete|created|pass|完成|成功|已完成/.test(detail)) {
+    return "bg-emerald-500";
+  }
+
+  return "bg-sky-500";
+}
+
 function ExecutionProgressCard({ snapshots }: { snapshots: GoalExecutionSnapshot[] }) {
   const activeGoalIndex = snapshots.findIndex(
     (snapshot) => snapshot.goal.status !== "completed",
   );
   const currentGoalNumber = activeGoalIndex >= 0 ? activeGoalIndex + 1 : snapshots.length;
+  const completedCount = snapshots.filter((snapshot) => snapshot.goal.status === "completed").length;
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-sm font-medium text-foreground">任务执行进度</div>
-          <div className="text-xs text-muted-foreground">
+    <div className="space-y-1">
+      <details className="group" open>
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-muted/30">
+          <span className="size-1.5 shrink-0 rounded-full bg-violet-500/80" aria-hidden="true" />
+          <span className="font-medium text-foreground/70">任务执行进度</span>
+          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground/70">
+            {completedCount}/{snapshots.length} 完成
+          </span>
+          <span className="text-muted-foreground/40">
             {snapshots.length > 0
-              ? `当前进度：第 ${currentGoalNumber} / ${snapshots.length} 个任务`
+              ? `第 ${currentGoalNumber} / ${snapshots.length} 个任务`
               : "等待任务开始"}
-          </div>
-        </div>
-        <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground">
-          {snapshots.filter((snapshot) => snapshot.goal.status === "completed").length}/{snapshots.length} 完成
-        </span>
-      </div>
-
-        <div className="mt-4 space-y-3">
+          </span>
+          <span className="ml-auto shrink-0 select-none text-[10px] opacity-30 transition-transform group-open:rotate-90">›</span>
+        </summary>
+        <div className="mt-1 space-y-2">
           {snapshots.map((snapshot, index) => {
             const latestActivity = snapshot.activities[0];
             const recentActivities = snapshot.activities.slice(0, 3);
 
             return (
-              <div key={snapshot.goal.id} className="rounded-xl border border-border/50 bg-background/80 p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                  <div className="text-sm font-medium text-foreground">
-                    {index + 1}. {snapshot.goal.title}
+              <details key={snapshot.goal.id} className="group rounded border border-border/25 bg-muted/10" open={index === activeGoalIndex || (activeGoalIndex === -1 && index === snapshots.length - 1)}>
+                <summary className="flex cursor-pointer list-none items-start gap-2 rounded px-2.5 py-2 text-xs transition-colors hover:bg-muted/20">
+                  <span className={cn("mt-1 size-1.5 shrink-0 rounded-full", latestActivity ? getActivityDotTone(latestActivity) : "bg-muted-foreground/40")} />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-foreground/75">
+                      {index + 1}. {snapshot.goal.title}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground/70">
+                      {getGoalStatusLabel(snapshot.goal, snapshot.states)}
+                      {latestActivity?.action ? ` · 最近动作：${latestActivity.action}` : ""}
+                    </div>
                   </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {getGoalStatusLabel(snapshot.goal, snapshot.states)}
-                    {latestActivity?.action ? ` · 最近动作：${latestActivity.action}` : ""}
-                  </div>
-                  </div>
-                </div>
+                  <span className="ml-auto shrink-0 select-none pt-0.5 text-[10px] opacity-30 transition-transform group-open:rotate-90">›</span>
+                </summary>
+                <div className="space-y-2 px-2.5 pb-2">
+                  {recentActivities.length > 0 ? (
+                    <div className="space-y-2">
+                      {recentActivities.map((activity, activityIndex) => (
+                        <div key={activity.id} className="rounded border border-border/25 bg-background/70 px-2.5 py-2">
+                          <div className="flex items-start gap-2">
+                            <span className={cn("mt-1 size-1.5 shrink-0 rounded-full", getActivityDotTone(activity))} />
+                            <div className="min-w-0 flex-1 space-y-1.5">
+                              <div className="flex items-center gap-2 text-[11px]">
+                                <span className="font-medium text-foreground/70">{activity.action}</span>
+                                {activityIndex === 0 ? (
+                                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground/70">
+                                    最新
+                                  </span>
+                                ) : null}
+                                <span className="text-muted-foreground/50">{activity.timestamp}</span>
+                              </div>
 
-                {recentActivities.length > 0 ? (
-                  <div className="mt-3 space-y-2">
-                    {recentActivities.map((activity, activityIndex) => (
-                      <div
-                        key={activity.id}
-                        className="rounded-lg border border-border/50 bg-muted/15 px-3 py-2"
-                      >
-                        <div className="flex items-start gap-2">
-                          <span
-                            className={cn(
-                              "mt-1 size-2 shrink-0 rounded-full border",
-                              getActivityTone(activity),
-                            )}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="font-medium text-foreground/85">{activity.action}</span>
-                              <span className="text-muted-foreground">{activity.timestamp}</span>
-                              {activityIndex === 0 ? (
-                                <span className="rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                                  最新
-                                </span>
+                              {activity.detail ? (
+                                <p className={cn("text-[11px] leading-5", getActivityTone(activity))}>
+                                  {activity.detail}
+                                </p>
+                              ) : null}
+
+                              {activity.reasoning ? (
+                                <ChatReasoningDrawer text={activity.reasoning} />
+                              ) : null}
+
+                              {activity.diff ? (
+                                <details className="group">
+                                  <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-muted/30">
+                                    <span className="size-1.5 shrink-0 rounded-full bg-sky-500" aria-hidden="true" />
+                                    <span className="font-medium text-foreground/70">执行产物</span>
+                                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground/70">
+                                      输出
+                                    </span>
+                                    <span className="ml-auto shrink-0 select-none text-[10px] opacity-30 transition-transform group-open:rotate-90">›</span>
+                                  </summary>
+                                  <pre className="mt-1 overflow-x-auto rounded border border-border/25 bg-muted/10 px-2.5 py-2 text-[11px] leading-5 text-foreground/65">
+                                    <code>{activity.diff}</code>
+                                  </pre>
+                                </details>
                               ) : null}
                             </div>
-
-                            {activity.detail ? (
-                              <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
-                                {activity.detail}
-                              </p>
-                            ) : null}
-
-                            {activity.reasoning ? (
-                              <div className="mt-2 rounded-md border border-border/50 bg-background/80 px-2.5 py-2">
-                                <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-foreground/55">
-                                  推理
-                                </div>
-                                <p className="whitespace-pre-wrap break-words text-[11px] leading-5 text-foreground/70">
-                                  {activity.reasoning}
-                                </p>
-                              </div>
-                            ) : null}
-
-                            {activity.diff ? (
-                              <details className="mt-2 group">
-                                <summary className="flex cursor-pointer list-none items-center gap-2 text-[11px] text-foreground/65">
-                                  <span className="rounded border border-border bg-background px-1.5 py-0.5 text-[10px]">
-                                    执行产物
-                                  </span>
-                                  <span className="truncate">查看本次变更 / 输出</span>
-                                  <span className="ml-auto text-[10px] text-muted-foreground/60 transition-transform group-open:rotate-90">
-                                    ›
-                                  </span>
-                                </summary>
-                                <pre className="mt-2 overflow-x-auto rounded-md border border-border/50 bg-background p-2 text-[11px] leading-5 text-foreground/70">
-                                  <code>{activity.diff}</code>
-                                </pre>
-                              </details>
-                            ) : null}
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-
-                {snapshot.states.length > 0 ? (
-                  <div className="mt-3 space-y-2">
-                    {snapshot.states.map((state) => (
-                      <div key={state.id} className="flex items-center justify-between gap-3 text-xs">
-                      <span className="truncate text-foreground/85">{state.label}</span>
-                      <span className={cn("shrink-0 font-medium", getStateTone(state.status))}>{state.status}</span>
+                      ))}
                     </div>
-                  ))}
+                  ) : null}
+
+                  {snapshot.states.length > 0 ? (
+                    <div className="rounded border border-border/25 bg-background/70 px-2.5 py-2">
+                      <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-foreground/50">
+                        状态
+                      </div>
+                      <div className="space-y-1.5">
+                        {snapshot.states.map((state) => (
+                          <div key={state.id} className="flex items-center justify-between gap-3 text-[11px]">
+                            <span className="truncate text-foreground/75">{state.label}</span>
+                            <span className={cn("shrink-0 font-medium", getStateTone(state.status))}>{state.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
+              </details>
+            );
+          })}
+        </div>
+      </details>
     </div>
   );
 }
@@ -1172,12 +1180,13 @@ function RuntimeSelector({
   onSelect,
   onSetDefault,
 }: RuntimeSelectorProps) {
+  const safeAgents = Array.isArray(agents) ? agents : [];
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const selectedAgent = agents.find((a) => a.id === selectedAgentId);
+  const selectedAgent = safeAgents.find((a) => a.id === selectedAgentId);
 
   const allItems = [
     {
@@ -1187,7 +1196,7 @@ function RuntimeSelector({
       agentId: undefined,
       type: "none" as const,
     },
-    ...agents.map((a) => ({
+    ...safeAgents.map((a) => ({
       id: `agent::${a.id}`,
       name: a.name,
       runtimeId: a.runtimeId,

@@ -11,6 +11,20 @@ import type {
   InboxThreadStatus,
 } from "@/types";
 
+function parseJsonSafely<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback;
+
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeTimestamp(value: unknown) {
+  return typeof value === "string" ? value : new Date(0).toISOString();
+}
+
 export abstract class InboxService {
   static createThread(data: {
     kind: InboxThreadKind;
@@ -209,9 +223,9 @@ export abstract class InboxService {
       createdByType: row.createdByType as InboxThread["createdByType"],
       createdById: row.createdById || undefined,
       createdByName: row.createdByName,
-      lastMessageAt: row.lastMessageAt,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+      lastMessageAt: normalizeTimestamp(row.lastMessageAt),
+      createdAt: normalizeTimestamp(row.createdAt),
+      updatedAt: normalizeTimestamp(row.updatedAt),
       archived: row.archived === "true",
     };
   }
@@ -226,13 +240,13 @@ export abstract class InboxService {
       senderName: row.senderName,
       subject: row.subject || undefined,
       body: row.body,
-      to: JSON.parse(row.to || "[]"),
-      cc: JSON.parse(row.cc || "[]"),
+      to: parseJsonSafely<string[]>(row.to, []),
+      cc: parseJsonSafely<string[]>(row.cc, []),
       goalId: row.goalId || undefined,
       stateId: row.stateId || undefined,
       problemId: row.problemId || undefined,
-      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
-      createdAt: row.createdAt,
+      metadata: parseJsonSafely<Record<string, unknown> | undefined>(row.metadata, undefined),
+      createdAt: normalizeTimestamp(row.createdAt),
     };
   }
 }

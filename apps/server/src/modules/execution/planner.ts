@@ -1,5 +1,6 @@
 import { RuntimeService } from "@/modules/runtime/service";
 import { AgentService } from "@/modules/agent/service";
+import type { AcpTraceEvent } from "@/modules/runtime/acp";
 import type { Action } from "@/types";
 
 export interface PlannedGoal {
@@ -10,10 +11,23 @@ export interface PlannedGoal {
   assignedAgentName?: string;
 }
 
+function inferActionsForGoal(goal: Pick<PlannedGoal, "title" | "description">): Action[] {
+  const text = `${goal.title} ${goal.description}`.toLowerCase();
+  const isAnalysisTask = /\banaly[sz]e\b|analysis|architecture|overview|investigate|audit|document|report|summary|summarize|explain|了解|分析|架构|文档|报告|总结|说明/.test(text);
+  const isImplementationTask = /implement|build|create|add|fix|refactor|update|write code|develop|修改|修复|实现|开发|重构/.test(text);
+
+  if (isAnalysisTask && !isImplementationTask) {
+    return [];
+  }
+
+  return ["write_code", "run_tests"];
+}
+
 export interface PlanningResult {
   needsClarification: boolean;
   questions: string[];
   goals: PlannedGoal[];
+  trace?: AcpTraceEvent[];
 }
 
 const PLANNING_PROMPT = `You are a project planner for an AI agent orchestration system.
@@ -93,6 +107,7 @@ export abstract class PlanningService {
       return {
         ...parsed,
         goals: parsed.needsClarification ? [] : PlanningService.assignAgents(parsed.goals, availableAgents),
+        trace: result.trace,
       };
     } catch {
       return PlanningService.fallbackPlan(instruction, agentNames);
@@ -161,7 +176,10 @@ export abstract class PlanningService {
           ? (item.actions as string[]).filter((a: string) =>
               ["write_code", "run_tests", "fix_bug", "commit", "review"].includes(a),
             )
-          : ["write_code"],
+          : inferActionsForGoal({
+              title: String(item.title),
+              description: String(item.description || item.title),
+            }),
         assignedAgentName: undefined,
       }));
   }
@@ -202,7 +220,13 @@ export abstract class PlanningService {
               : instruction,
           description: instruction,
           successCriteria: ["Code implements the instruction", "Tests pass", "Build succeeds"],
-          actions: ["write_code", "run_tests"],
+          actions: inferActionsForGoal({
+            title:
+              instruction.length > 80
+                ? instruction.slice(0, 77) + "..."
+                : instruction,
+            description: instruction,
+          }),
           assignedAgentName: agents[0],
         },
       ],
