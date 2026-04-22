@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
+import remarkGfm from "remark-gfm";
 import { Folder01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -20,6 +21,12 @@ function preprocessAgentOutput(text: string): string {
   result = result.replace(/<command>([^<]+)<\/command>/g, "`$1`");
   result = result.replace(/<file>([^<]+)<\/file>/g, "`$1`");
   result = result.replace(/<summary>([^<]*)<\/summary>/g, "$1");
+
+  // Some model outputs omit the blank line before markdown blocks.
+  result = result.replace(/([。！？.!?])\s*(#{1,6}\s)/g, "$1\n\n$2");
+  result = result.replace(/([^\n])\n(#{1,6}\s)/g, "$1\n\n$2");
+  result = result.replace(/([。！？.!?])\s*(\|[^\n]+\|\s*\n\|[-:|\s]+\|)/g, "$1\n\n$2");
+  result = result.replace(/([^\n])\n(\|[^\n]+\|\s*\n\|[-:|\s]+\|)/g, "$1\n\n$2");
 
   return result;
 }
@@ -49,8 +56,9 @@ export function ChatMarkdown({ content }: { content: string }) {
   const processed = preprocessAgentOutput(content);
 
   return (
-    <div className="prose prose-sm max-w-none text-inherit dark:prose-invert prose-headings:mb-1.5 prose-headings:mt-3 prose-headings:text-inherit prose-headings:font-semibold prose-p:my-1.5 prose-p:text-inherit prose-p:leading-6 prose-li:my-0.5 prose-li:text-inherit prose-strong:text-inherit prose-code:rounded prose-code:bg-muted/50 prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-[0.75rem] prose-code:text-inherit prose-code:before:content-none prose-code:after:content-none prose-pre:bg-transparent prose-pre:p-0 prose-blockquote:border-l-border/50 prose-blockquote:text-inherit prose-hr:border-border/40 prose-a:font-medium prose-a:text-primary prose-a:no-underline hover:prose-a:underline dark:prose-code:bg-white/8">
+    <div className="prose prose-sm max-w-none text-inherit dark:prose-invert prose-headings:mb-1.5 prose-headings:mt-3 prose-headings:text-inherit prose-headings:font-semibold prose-p:my-1.5 prose-p:text-inherit prose-p:leading-6 prose-li:my-0.5 prose-li:text-inherit prose-strong:text-inherit prose-code:rounded prose-code:bg-muted/50 prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-[0.75rem] prose-code:text-inherit prose-code:before:content-none prose-code:after:content-none prose-pre:bg-transparent prose-pre:p-0 prose-blockquote:border-l-border/50 prose-blockquote:text-inherit prose-hr:border-border/40 prose-a:font-medium prose-a:text-primary prose-a:no-underline hover:prose-a:underline dark:prose-code:bg-white/8 prose-table:block prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-thead:border-b prose-th:border prose-th:border-border/40 prose-th:bg-muted/40 prose-th:px-3 prose-th:py-2 prose-th:text-left prose-th:font-medium prose-td:border prose-td:border-border/30 prose-td:px-3 prose-td:py-2">
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
           a: ({ ...props }) => (
             <a

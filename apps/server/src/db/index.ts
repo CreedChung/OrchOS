@@ -188,6 +188,9 @@ function migrate(sqlite: Database) {
     sqlite.run("ALTER TABLE messages ADD COLUMN project_name TEXT");
   } catch {}
   try {
+    sqlite.run("ALTER TABLE messages ADD COLUMN trace TEXT");
+  } catch {}
+  try {
     sqlite.run(
       "CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id)",
     );

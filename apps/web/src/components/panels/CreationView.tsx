@@ -145,14 +145,42 @@ function mapConversationMessagesToUiMessages(messages: ConversationMessage[]): U
       projectName: message.projectName,
       createdAt: message.createdAt,
     },
-    parts: message.content
-      ? [
-          {
-            type: "text",
-            text: message.content,
-          },
-        ]
-      : [],
+    parts: [
+      ...(message.trace ?? []).flatMap((event, index) => {
+        if (event.kind === "thought" && event.text) {
+          return [
+            {
+              type: "reasoning",
+              text: event.text,
+            },
+          ];
+        }
+
+        if (event.kind === "tool" && event.toolName) {
+          return [
+            {
+              type: `tool-${event.toolName}`,
+              toolCallId: event.toolCallId,
+              state: event.state,
+              input: event.input,
+              output: event.output,
+              errorText: event.errorText,
+              id: `${message.id}-tool-${index}`,
+            },
+          ];
+        }
+
+        return [];
+      }),
+      ...(message.content
+        ? [
+            {
+              type: "text",
+              text: message.content,
+            },
+          ]
+        : []),
+    ],
   }));
 }
 

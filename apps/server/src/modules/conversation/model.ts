@@ -35,6 +35,7 @@ export const ConversationModel = {
     conversationId: t.String(),
     role: t.Union([t.Literal("user"), t.Literal("assistant")]),
     content: t.String(),
+    trace: t.Optional(t.Array(t.Any())),
     error: t.Optional(t.String()),
     responseTime: t.Optional(t.Number()),
     executionMode: t.Optional(t.Union([t.Literal("sandbox"), t.Literal("local")])),

@@ -3,6 +3,19 @@ import { createUIMessageStream, createUIMessageStreamResponse, type UIMessage } 
 
 import { resolveApiUrl } from "@/lib/api";
 
+type RuntimeTraceEvent =
+  | { kind: "message"; text: string }
+  | { kind: "thought"; text: string }
+  | {
+      kind: "tool";
+      toolName?: string;
+      toolCallId?: string;
+      state?: string;
+      input?: unknown;
+      output?: unknown;
+      errorText?: string;
+    };
+
 function readTextPart(message: unknown) {
   if (!message || typeof message !== "object") return "";
 
@@ -117,6 +130,7 @@ export const Route = createFileRoute("/api/chat")({
               error?: string;
               responseTime?: number;
               createdAt?: string;
+              trace?: RuntimeTraceEvent[];
             };
 
             const textPartId = `${message.id || "assistant"}-text`;
@@ -141,6 +155,55 @@ export const Route = createFileRoute("/api/chat")({
               type: "start",
               messageId: message.id,
             });
+
+            for (const [index, event] of (message.trace || []).entries()) {
+              if (event.kind === "thought" && event.text) {
+                const reasoningPartId = `${message.id || "assistant"}-reasoning-${index}`;
+                writer.write({
+                  type: "reasoning-start",
+                  id: reasoningPartId,
+                });
+                writer.write({
+                  type: "reasoning-delta",
+                  id: reasoningPartId,
+                  delta: event.text,
+                });
+                writer.write({
+                  type: "reasoning-end",
+                  id: reasoningPartId,
+                });
+                continue;
+              }
+
+              if (event.kind === "tool" && event.toolCallId && event.toolName) {
+                if (event.input !== undefined) {
+                  writer.write({
+                    type: "tool-input-available",
+                    toolCallId: event.toolCallId,
+                    toolName: event.toolName,
+                    input: event.input,
+                  });
+                }
+
+                if (event.errorText) {
+                  writer.write({
+                    type: "tool-output-error",
+                    toolCallId: event.toolCallId,
+                    errorText: event.errorText,
+                  });
+                  continue;
+                }
+
+                if (event.output !== undefined) {
+                  writer.write({
+                    type: "tool-output-available",
+                    toolCallId: event.toolCallId,
+                    output: event.output,
+                  });
+                }
+              }
+            }
+
             writer.write({
               type: "text-start",
               id: textPartId,

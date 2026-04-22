@@ -39,6 +39,19 @@ type JsonRpcNotification = {
   params?: Record<string, unknown>;
 };
 
+export type AcpTraceEvent =
+  | { kind: "message"; text: string }
+  | { kind: "thought"; text: string }
+  | {
+      kind: "tool";
+      toolName?: string;
+      toolCallId?: string;
+      state?: string;
+      input?: unknown;
+      output?: unknown;
+      errorText?: string;
+    };
+
 const ACP_AGENT_CONFIGS: Record<string, AcpAgentConfig> = {
   "claude-code": {
     command: "npx",
@@ -128,6 +141,64 @@ function extractTextContent(value: unknown): string[] {
   return [];
 }
 
+function readSessionUpdateText(update: unknown): { kind: "message" | "thought" | "other"; text: string } {
+  if (!update || typeof update !== "object") {
+    return { kind: "other", text: "" };
+  }
+
+  const record = update as Record<string, unknown>;
+  const sessionUpdate = typeof record.sessionUpdate === "string" ? record.sessionUpdate : "";
+
+  if (sessionUpdate === "agent_message_chunk") {
+    return {
+      kind: "message",
+      text: extractTextContent(record.content).join(""),
+    };
+  }
+
+  if (sessionUpdate === "agent_thought_chunk") {
+    return {
+      kind: "thought",
+      text: extractTextContent(record.content).join(""),
+    };
+  }
+
+  return { kind: "other", text: "" };
+}
+
+function readSessionTraceEvent(update: unknown): AcpTraceEvent | null {
+  if (!update || typeof update !== "object") {
+    return null;
+  }
+
+  const record = update as Record<string, unknown>;
+  const sessionUpdate = typeof record.sessionUpdate === "string" ? record.sessionUpdate : "";
+
+  if (sessionUpdate === "agent_message_chunk") {
+    const text = extractTextContent(record.content).join("");
+    return text ? { kind: "message", text } : null;
+  }
+
+  if (sessionUpdate === "agent_thought_chunk") {
+    const text = extractTextContent(record.content).join("");
+    return text ? { kind: "thought", text } : null;
+  }
+
+  if (sessionUpdate === "tool_call" || sessionUpdate === "tool_call_update") {
+    return {
+      kind: "tool",
+      toolName: typeof record.title === "string" ? record.title : undefined,
+      toolCallId: typeof record.toolCallId === "string" ? record.toolCallId : undefined,
+      state: typeof record.status === "string" ? record.status : undefined,
+      input: record.rawInput,
+      output: record.rawOutput ?? record.content,
+      errorText: typeof record.error === "string" ? record.error : undefined,
+    };
+  }
+
+  return null;
+}
+
 function extractSessionModels(result: unknown): {
   currentModel?: string;
   availableModels: string[];
@@ -192,6 +263,7 @@ async function withAcpProcess<T>(
     request: (method: string, params?: unknown) => Promise<unknown>;
     getOutput: () => string;
     getStderr: () => string;
+    getTrace: () => AcpTraceEvent[];
   }) => Promise<T>,
   cwd?: string,
 ) {
@@ -214,6 +286,7 @@ async function withAcpProcess<T>(
     }
   >();
   let latestOutput = "";
+  const traceEvents: AcpTraceEvent[] = [];
   const stderrParts: string[] = [];
 
   const handleStdoutLine = (line: string) => {
@@ -235,8 +308,16 @@ async function withAcpProcess<T>(
       }
 
       if ("method" in message && message.method === "session/update") {
-        const text = extractTextContent(message.params?.update).join("");
-        if (text) latestOutput = text;
+        const update = message.params?.update;
+        const updateText = readSessionUpdateText(update);
+        if (updateText.kind === "message" && updateText.text) {
+          latestOutput += updateText.text;
+        }
+
+        const traceEvent = readSessionTraceEvent(update);
+        if (traceEvent) {
+          traceEvents.push(traceEvent);
+        }
       }
     } catch {
       // Ignore non-JSON stdout noise from adapters.
@@ -271,6 +352,7 @@ async function withAcpProcess<T>(
       request,
       getOutput: () => latestOutput.trim(),
       getStderr: () => stderrParts.join("\n").trim(),
+      getTrace: () => [...traceEvents],
     });
   } finally {
     proc.kill();
@@ -337,7 +419,7 @@ export async function probeAcpAgent(config: AcpAgentConfig, cwd?: string) {
 export async function promptAcpAgent(config: AcpAgentConfig, prompt: string, cwd?: string) {
   return withAcpProcess(
     config,
-    async ({ request, getOutput, getStderr }) => {
+    async ({ request, getOutput, getStderr, getTrace }) => {
       const session = (await request("session/new", {
         cwd: cwd || process.cwd(),
         mcpServers: [],
@@ -354,6 +436,7 @@ export async function promptAcpAgent(config: AcpAgentConfig, prompt: string, cwd
 
       return {
         output: getOutput(),
+        trace: getTrace(),
         rawOutput: getStderr() || undefined,
       };
     },
@@ -366,6 +449,7 @@ type ManagedSession = {
   configKey: string;
   request: (method: string, params?: unknown) => Promise<unknown>;
   getOutput: () => string;
+  getTrace: () => AcpTraceEvent[];
   clearOutput: () => void;
   sessionId?: string;
   startedAt: number;
@@ -459,6 +543,7 @@ async function createManagedSession(
     { resolve: (value: unknown) => void; reject: (error: Error) => void }
   >();
   let latestOutput = "";
+  const traceEvents: AcpTraceEvent[] = [];
   const stderrParts: string[] = [];
 
   const stdoutTask = consumeStream(proc.stdout, (line) => {
@@ -476,8 +561,16 @@ async function createManagedSession(
         return;
       }
       if ("method" in message && message.method === "session/update") {
-        const text = extractTextContent(message.params?.update).join("");
-        if (text) latestOutput = text;
+        const update = message.params?.update;
+        const updateText = readSessionUpdateText(update);
+        if (updateText.kind === "message" && updateText.text) {
+          latestOutput += updateText.text;
+        }
+
+        const traceEvent = readSessionTraceEvent(update);
+        if (traceEvent) {
+          traceEvents.push(traceEvent);
+        }
       }
     } catch {
       // Ignore non-JSON stdout noise from adapters.
@@ -508,8 +601,10 @@ async function createManagedSession(
     configKey: getConfigKey(config),
     request,
     getOutput: () => latestOutput.trim(),
+    getTrace: () => [...traceEvents],
     clearOutput: () => {
       latestOutput = "";
+      traceEvents.length = 0;
       stderrParts.length = 0;
     },
     startedAt: Date.now(),
@@ -566,6 +661,7 @@ export async function promptManagedAcpAgent(
 
   return {
     output: session.getOutput(),
+    trace: session.getTrace(),
     rawOutput: undefined,
     sessionId: session.sessionId,
   };

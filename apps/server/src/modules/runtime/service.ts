@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { generateId } from "@/utils";
 import { executor } from "@/modules/execution/executor";
 import {
+  type AcpTraceEvent,
   getAcpAgentConfig,
   getAcpAvailableModels,
   getAcpCurrentModel,
@@ -422,6 +423,7 @@ export abstract class RuntimeService {
     error?: string;
     agentName: string;
     responseTime: number;
+    trace?: AcpTraceEvent[];
   }> {
     const runtime = RuntimeService.get(runtimeId);
     if (!runtime) {
@@ -455,8 +457,22 @@ export abstract class RuntimeService {
               : result.rawOutput || "ACP agent returned no output",
           agentName: runtime.name,
           responseTime,
+          trace: result.trace,
         };
-      } catch {
+      } catch (error) {
+        const message = error instanceof Error ? error.message.trim() : "ACP agent request failed";
+        const responseTime = 0;
+
+        if (message.toLowerCase().includes("authentication required")) {
+          return {
+            success: false,
+            output: "",
+            error: `${runtime.name} ACP requires authentication. Please sign in or configure the required API key before using this runtime.`,
+            agentName: runtime.name,
+            responseTime,
+          };
+        }
+
         // Fall back to legacy CLI invocation for agents without a working ACP adapter.
       }
     }

@@ -277,6 +277,7 @@ export const messages = sqliteTable(
       .references(() => conversations.id, { onDelete: "cascade" }),
     role: text("role").notNull(),
     content: text("content").notNull(),
+    trace: text("trace"),
     error: text("error"),
     responseTime: text("response_time"),
     executionMode: text("execution_mode"),

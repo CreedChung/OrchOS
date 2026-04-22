@@ -6,6 +6,19 @@ import { ProjectService } from "@/modules/project/service";
 import { RuntimeService } from "@/modules/runtime/service";
 import { SandboxService } from "@/modules/sandbox/service";
 
+type MessageTraceEvent =
+  | { kind: "message"; text: string }
+  | { kind: "thought"; text: string }
+  | {
+      kind: "tool";
+      toolName?: string;
+      toolCallId?: string;
+      state?: string;
+      input?: unknown;
+      output?: unknown;
+      errorText?: string;
+    };
+
 export interface Conversation {
   id: string;
   title?: string;
@@ -30,6 +43,7 @@ export interface Message {
   sandboxVmId?: string;
   projectId?: string;
   projectName?: string;
+  trace?: MessageTraceEvent[];
   createdAt: string;
 }
 
@@ -39,6 +53,7 @@ interface MessageMetadata {
   sandboxVmId?: string;
   projectId?: string;
   projectName?: string;
+  trace?: MessageTraceEvent[];
 }
 
 export abstract class ConversationService {
@@ -177,6 +192,7 @@ export abstract class ConversationService {
         conversationId,
         role,
         content,
+        trace: metadata?.trace ? JSON.stringify(metadata.trace) : null,
         error: error || null,
         responseTime: responseTime != null ? String(responseTime) : null,
         executionMode: metadata?.executionMode || null,
@@ -206,6 +222,7 @@ export abstract class ConversationService {
       sandboxVmId: metadata?.sandboxVmId,
       projectId: metadata?.projectId,
       projectName: metadata?.projectName,
+      trace: metadata?.trace,
       createdAt: now,
     };
   }
@@ -343,6 +360,7 @@ export abstract class ConversationService {
         result.metadata = {
           executionMode: "local",
           sandboxStatus: conv.projectId ? "fallback" : undefined,
+          trace: result.trace,
           ...projectMetadata,
         };
       }
@@ -401,6 +419,7 @@ export abstract class ConversationService {
         sandboxVmId: row.sandboxVmId || undefined,
         projectId: row.projectId || undefined,
         projectName: row.projectName || undefined,
+        trace: row.trace ? JSON.parse(row.trace) : undefined,
         createdAt: row.createdAt,
       };
   }

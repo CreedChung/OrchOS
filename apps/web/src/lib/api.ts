@@ -325,6 +325,19 @@ export interface ConversationMessage {
   conversationId: string;
   role: "user" | "assistant";
   content: string;
+  trace?: Array<
+    | { kind: "message"; text: string }
+    | { kind: "thought"; text: string }
+    | {
+        kind: "tool";
+        toolName?: string;
+        toolCallId?: string;
+        state?: string;
+        input?: unknown;
+        output?: unknown;
+        errorText?: string;
+      }
+  >;
   error?: string;
   responseTime?: number;
   executionMode?: "sandbox" | "local";
