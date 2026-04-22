@@ -347,6 +347,7 @@ export interface ConversationMessage {
   sandboxVmId?: string;
   projectId?: string;
   projectName?: string;
+  clarificationQuestions?: string[];
   createdAt: string;
 }
 

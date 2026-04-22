@@ -210,7 +210,7 @@ export abstract class CommandService {
     }
 
     for (const goalEntry of createdGoals) {
-      executionService.executeAction(goalEntry.id, "write_code").catch((err) => {
+      executionService.runGoalLoop(goalEntry.id).catch((err) => {
         console.error(`Auto-execute failed for goal ${goalEntry.id}:`, err);
       });
     }

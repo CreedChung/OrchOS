@@ -50,6 +50,7 @@ export const ConversationModel = {
     sandboxVmId: t.Optional(t.String()),
     projectId: t.Optional(t.String()),
     projectName: t.Optional(t.String()),
+    clarificationQuestions: t.Optional(t.Array(t.String())),
     createdAt: t.String(),
   }),
   errorNotFound: t.Object({ error: t.Literal("Conversation not found") }),

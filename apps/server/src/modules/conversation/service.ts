@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { conversations, messages } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc } from "drizzle-orm";
 import { generateId } from "@/utils";
 import { ProjectService } from "@/modules/project/service";
 import { RuntimeService } from "@/modules/runtime/service";
@@ -44,6 +44,7 @@ export interface Message {
   sandboxVmId?: string;
   projectId?: string;
   projectName?: string;
+  clarificationQuestions?: string[];
   trace?: MessageTraceEvent[];
   createdAt: string;
 }
@@ -73,6 +74,7 @@ interface MessageMetadata {
   sandboxVmId?: string;
   projectId?: string;
   projectName?: string;
+  clarificationQuestions?: string[];
   trace?: MessageTraceEvent[];
 }
 
@@ -191,6 +193,7 @@ export abstract class ConversationService {
       .select()
       .from(messages)
       .where(eq(messages.conversationId, conversationId))
+      .orderBy(asc(messages.createdAt), asc(messages.id))
       .all()
       .map(ConversationService.mapMessageRow);
   }
@@ -220,6 +223,9 @@ export abstract class ConversationService {
         sandboxVmId: metadata?.sandboxVmId || null,
         projectId: metadata?.projectId || null,
         projectName: metadata?.projectName || null,
+        clarificationQuestions: metadata?.clarificationQuestions
+          ? JSON.stringify(metadata.clarificationQuestions)
+          : null,
         createdAt: now,
       })
       .run();
@@ -242,6 +248,7 @@ export abstract class ConversationService {
       sandboxVmId: metadata?.sandboxVmId,
       projectId: metadata?.projectId,
       projectName: metadata?.projectName,
+      clarificationQuestions: metadata?.clarificationQuestions,
       trace: metadata?.trace,
       createdAt: now,
     };
@@ -418,13 +425,13 @@ export abstract class ConversationService {
     const runtimeId = options?.runtimeId || conv.runtimeId;
     if (!runtimeId) throw new Error("No runtime configured for this conversation");
 
+    ConversationService.addMessage(conversationId, "user", instruction);
+
     const history = ConversationService.getMessages(conversationId)
       .map((message) => `${message.role === "user" ? "User" : "Assistant"}: ${message.content}`)
       .join("\n\n");
 
-    const planningInstruction = history
-      ? `Conversation context:\n${history}\n\nLatest user request:\n${instruction}`
-      : instruction;
+    const planningInstruction = history ? `Conversation context:\n${history}` : instruction;
 
     const command = CommandService.create({
       instruction: planningInstruction,
@@ -439,6 +446,11 @@ export abstract class ConversationService {
         conversationId,
         "assistant",
         ["I need a bit more detail before I can create the tasks.", ...result.questions.map((question, index) => `${index + 1}. ${question}`)].join("\n"),
+        undefined,
+        undefined,
+        {
+          clarificationQuestions: result.questions,
+        },
       );
       return result;
     }
@@ -491,6 +503,9 @@ export abstract class ConversationService {
         sandboxVmId: row.sandboxVmId || undefined,
         projectId: row.projectId || undefined,
         projectName: row.projectName || undefined,
+        clarificationQuestions: row.clarificationQuestions
+          ? JSON.parse(row.clarificationQuestions)
+          : undefined,
         trace: row.trace ? JSON.parse(row.trace) : undefined,
         createdAt: row.createdAt,
       };

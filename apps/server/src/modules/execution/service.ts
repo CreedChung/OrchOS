@@ -1,6 +1,6 @@
 import type { ControlSettings, Action } from "@/types";
 import { db } from "@/db";
-import { settings, projects } from "@/db/schema";
+import { settings } from "@/db/schema";
 import { GoalService } from "@/modules/goal/service";
 import { StateService } from "@/modules/state/service";
 import { AgentService } from "@/modules/agent/service";
@@ -10,6 +10,7 @@ import { executor } from "@/modules/execution/executor";
 import { SandboxService } from "@/modules/sandbox/service";
 import { generateId } from "@/utils";
 import type { ExecutionModel } from "@/modules/execution/model";
+import { ProjectService } from "@/modules/project/service";
 
 export class ExecutionService {
   private settings: ControlSettings = {
@@ -151,8 +152,9 @@ export class ExecutionService {
     stateId?: string,
     agentId?: string,
   ): Promise<{ success: boolean; message: string; detail?: string; reasoning?: string }> {
-    const projectRow = db.select({ path: projects.path }).from(projects).limit(1).get();
-    const projectPath = projectRow?.path || process.cwd();
+    const goal = GoalService.get(goalId);
+    const project = goal?.projectId ? ProjectService.get(goal.projectId) : undefined;
+    const projectPath = project?.path || process.cwd();
 
     if (stateId) StateService.updateState(stateId, "running");
 
@@ -199,7 +201,6 @@ export class ExecutionService {
       }
 
       case "write_code": {
-        const goal = GoalService.get(goalId);
         const agent = agentId ? AgentService.get(agentId) : undefined;
         const prompt = `Implement the following goal: ${goal?.title}${goal?.description ? `\nDescription: ${goal.description}` : ""}${goal?.successCriteria?.length ? `\nSuccess criteria: ${goal.successCriteria.join(", ")}` : ""}`;
 
@@ -207,9 +208,10 @@ export class ExecutionService {
         let output = "";
         let fileName = "";
 
-        // Try sandbox session first if a running VM exists for this project's agent
-        const sandboxVMs = SandboxService.listVMs();
-        const activeVM = sandboxVMs.find((v) => v.status === "running");
+        // Only use the sandbox bound to this goal's project.
+        const activeVM = goal?.projectId
+          ? SandboxService.getRunningVMForProject(goal.projectId)
+          : undefined;
         let usedSandbox = false;
 
         if (activeVM) {
@@ -339,22 +341,51 @@ export class ExecutionService {
     return labels[action];
   }
 
+  private actionFromStateLabel(label: string): Action | undefined {
+    const prefix = label.split(" — ")[0]?.trim();
+    if (prefix === "write_code") return "write_code";
+    if (prefix === "run_tests") return "run_tests";
+    if (prefix === "fix_bug") return "fix_bug";
+    if (prefix === "commit") return "commit";
+    if (prefix === "review") return "review";
+    return undefined;
+  }
+
   async runGoalLoop(goalId: string): Promise<void> {
     const goal = GoalService.get(goalId);
     if (!goal || goal.status !== "active") return;
 
-    const goalStates = StateService.getStatesByGoal(goalId);
-    const fixableState = goalStates.find(
-      (s) => (s.status === "failed" || s.status === "error") && s.actions?.includes("Fix"),
-    );
+    while (true) {
+      const goalStates = StateService.getStatesByGoal(goalId);
+      const fixableState = goalStates.find(
+        (s) => (s.status === "failed" || s.status === "error") && s.actions?.includes("Fix"),
+      );
 
-    if (fixableState && this.settings.autoFix) {
-      await this.executeAction(goalId, "fix_bug", fixableState.id);
-    }
+      if (fixableState && this.settings.autoFix) {
+        await this.executeAction(goalId, "fix_bug", fixableState.id);
+        continue;
+      }
 
-    if (GoalService.checkCompletion(goalId)) {
-      GoalService.update(goalId, { status: "completed" });
-      eventBus.emit("goal_completed", { goalId }, goalId);
+      if (GoalService.checkCompletion(goalId)) {
+        GoalService.update(goalId, { status: "completed" });
+        eventBus.emit("goal_completed", { goalId }, goalId);
+        return;
+      }
+
+      const nextPendingState = goalStates.find((state) => state.status === "pending");
+      if (!nextPendingState) {
+        return;
+      }
+
+      const nextAction = this.actionFromStateLabel(nextPendingState.label);
+      if (!nextAction) {
+        return;
+      }
+
+      const result = await this.executeAction(goalId, nextAction, nextPendingState.id);
+      if (!result.success) {
+        return;
+      }
     }
   }
 }
