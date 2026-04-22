@@ -6,18 +6,24 @@ import type { Project } from "@/types";
 import type { ProjectModel } from "@/modules/project/model";
 import { executor } from "@/modules/execution/executor";
 import { existsSync, mkdirSync } from "fs";
+import { homedir } from "os";
 import { join } from "path";
 
 export abstract class ProjectService {
+  private static normalizePath(path: string) {
+    return path.startsWith("~/") ? join(homedir(), path.slice(2)) : path;
+  }
+
   static create(name: string, path: string, repositoryUrl?: string): Project {
     const id = generateId("proj");
     const now = timestamp();
+    const normalizedPath = ProjectService.normalizePath(path);
 
     db.insert(projects)
-      .values({ id, name, path, repositoryUrl: repositoryUrl || null, createdAt: now })
+      .values({ id, name, path: normalizedPath, repositoryUrl: repositoryUrl || null, createdAt: now })
       .run();
 
-    return { id, name, path, repositoryUrl, createdAt: now };
+    return { id, name, path: normalizedPath, repositoryUrl, createdAt: now };
   }
 
   static get(id: string): Project | undefined {
@@ -27,7 +33,7 @@ export abstract class ProjectService {
   }
 
   static getByPath(path: string): Project | undefined {
-    const row = db.select().from(projects).where(eq(projects.path, path)).get();
+    const row = db.select().from(projects).where(eq(projects.path, ProjectService.normalizePath(path))).get();
     if (!row) return undefined;
     return ProjectService.mapRow(row);
   }
@@ -44,7 +50,7 @@ export abstract class ProjectService {
   static update(id: string, patch: ProjectModel["updateBody"]): Project | undefined {
     const updates: Partial<typeof projects.$inferInsert> = {};
     if (patch.name !== undefined) updates.name = patch.name;
-    if (patch.path !== undefined) updates.path = patch.path;
+    if (patch.path !== undefined) updates.path = ProjectService.normalizePath(patch.path);
     if (patch.repositoryUrl !== undefined) updates.repositoryUrl = patch.repositoryUrl || null;
 
     if (Object.keys(updates).length === 0) return ProjectService.get(id);
@@ -134,7 +140,7 @@ export abstract class ProjectService {
     return {
       id: row.id,
       name: row.name,
-      path: row.path,
+      path: ProjectService.normalizePath(row.path),
       repositoryUrl: row.repositoryUrl || undefined,
       createdAt: row.createdAt,
     };

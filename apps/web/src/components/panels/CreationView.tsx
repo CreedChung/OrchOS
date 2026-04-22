@@ -13,8 +13,7 @@ import {
   Mic01Icon,
   Cancel01Icon,
 } from "@hugeicons/core-free-icons";
-import { DefaultChatTransport, type UIMessage } from "ai";
-import { useChat } from "@ai-sdk/react";
+import { type UIMessage } from "ai";
 import { Button } from "@/components/ui/button";
 import { BorderBeam } from "border-beam";
 import { ArchiveRestore, ArchiveX, Star } from "lucide-react";
@@ -53,6 +52,69 @@ interface CreationViewProps {
 }
 
 const EMPTY_CONVERSATION_MESSAGES: ConversationMessage[] = [];
+
+function prettifyToolName(name: string) {
+  return name
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function buildMessageParts(message: ConversationMessage): Array<Record<string, unknown>> {
+  const parts: Array<Record<string, unknown>> = [];
+  let reasoningBuffer = "";
+  const toolPartsByCallId = new Map<string, Record<string, unknown>>();
+
+  const flushReasoning = () => {
+    const text = reasoningBuffer.trim();
+    if (!text) return;
+    parts.push({ type: "reasoning", text });
+    reasoningBuffer = "";
+  };
+
+  for (const [index, event] of (message.trace ?? []).entries()) {
+    if (event.kind === "thought" && event.text) {
+      reasoningBuffer += event.text;
+      continue;
+    }
+
+    flushReasoning();
+
+    if (event.kind === "tool" && event.toolName) {
+      const toolCallId = event.toolCallId || `${message.id}-tool-${index}`;
+      const existing = toolPartsByCallId.get(toolCallId);
+
+      if (existing) {
+        if (event.state !== undefined) existing.state = event.state;
+        if (event.input !== undefined) existing.input = event.input;
+        if (event.output !== undefined) existing.output = event.output;
+        if (event.errorText !== undefined) existing.errorText = event.errorText;
+        continue;
+      }
+
+      const toolPart: Record<string, unknown> = {
+        id: toolCallId,
+        type: `tool-${event.toolName}`,
+        toolCallId,
+        toolDisplayName: prettifyToolName(event.toolName),
+        state: event.state,
+        input: event.input,
+        output: event.output,
+        errorText: event.errorText,
+      };
+
+      toolPartsByCallId.set(toolCallId, toolPart);
+      parts.push(toolPart);
+    }
+  }
+
+  flushReasoning();
+
+  if (message.content) {
+    parts.push({ type: "text", text: message.content });
+  }
+
+  return parts;
+}
 
 
 
@@ -119,7 +181,6 @@ function MessageBubble({ msg, userImageUrl }: { msg: UIMessage; userImageUrl?: s
               <ChatToolTimeline
                 key={`${msg.id}-${index}`}
                 part={part as Record<string, unknown> & { type: string }}
-                stepNumber={index + 1}
               />
             );
           }
@@ -145,42 +206,7 @@ function mapConversationMessagesToUiMessages(messages: ConversationMessage[]): U
       projectName: message.projectName,
       createdAt: message.createdAt,
     },
-    parts: [
-      ...(message.trace ?? []).flatMap((event, index) => {
-        if (event.kind === "thought" && event.text) {
-          return [
-            {
-              type: "reasoning",
-              text: event.text,
-            },
-          ];
-        }
-
-        if (event.kind === "tool" && event.toolName) {
-          return [
-            {
-              type: `tool-${event.toolName}`,
-              toolCallId: event.toolCallId,
-              state: event.state,
-              input: event.input,
-              output: event.output,
-              errorText: event.errorText,
-              id: `${message.id}-tool-${index}`,
-            },
-          ];
-        }
-
-        return [];
-      }),
-      ...(message.content
-        ? [
-            {
-              type: "text",
-              text: message.content,
-            },
-          ]
-        : []),
-    ],
+    parts: buildMessageParts(message),
   }));
 }
 
@@ -207,20 +233,8 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
     : EMPTY_CONVERSATION_MESSAGES;
   const uiMessages = useMemo(() => mapConversationMessagesToUiMessages(messages), [messages]);
 
-  const transport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        api: "/api/chat",
-      }),
-    [],
-  );
-  const {
-    messages: chatMessages,
-    setMessages: setChatMessages,
-    sendMessage,
-    status: chatStatus,
-    error: chatError,
-  } = useChat({ transport });
+  const [sending, setSending] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   const enabledRuntimes = useMemo(() => runtimes.filter((r) => r.enabled), [runtimes]);
 
@@ -244,10 +258,6 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
       loadMessages(activeConversationId);
     }
   }, [activeConversationId, loadMessages]);
-
-  useEffect(() => {
-    setChatMessages(uiMessages);
-  }, [setChatMessages, uiMessages]);
 
   const handleNewConversation = useCallback(async () => {
     if (activeConversation && !activeConversation.archived && !activeConversation.deleted && messages.length === 0) {
@@ -426,8 +436,8 @@ className={cn(
         {activeConversation ? (
           <ChatArea
             conversation={activeConversation}
-            messages={chatMessages}
-            status={chatStatus}
+            messages={uiMessages}
+            sending={sending}
             chatError={chatError}
             agents={agents}
             runtimes={enabledRuntimes}
@@ -440,20 +450,21 @@ className={cn(
               });
             }}
             onSendMessage={async (content) => {
-              await sendMessage(
-                { text: content },
-                {
-                  body: {
-                    conversationId: activeConversation.id,
-                  },
-                },
-              );
-              await loadMessages(activeConversation.id, { force: true });
-              // Update conversation title if first message
-              if (!activeConversation.title && messages.length === 0) {
-                await handleUpdateConversation(activeConversation.id, {
-                  title: content.slice(0, 60),
-                });
+              setSending(true);
+              setChatError(null);
+              try {
+                await api.sendConversationMessage(activeConversation.id, content);
+                await loadMessages(activeConversation.id, { force: true });
+                if (!activeConversation.title && messages.length === 0) {
+                  await handleUpdateConversation(activeConversation.id, {
+                    title: content.slice(0, 60),
+                  });
+                }
+              } catch (err) {
+                console.error("Failed to send message:", err);
+                setChatError(err instanceof Error ? err.message : "Failed to send message");
+              } finally {
+                setSending(false);
               }
             }}
             onReloadMessages={() => loadMessages(activeConversation.id)}
@@ -481,8 +492,8 @@ className={cn(
 interface ChatAreaProps {
   conversation: Conversation;
   messages: UIMessage[];
-  status: "submitted" | "streaming" | "ready" | "error";
-  chatError?: Error;
+  sending: boolean;
+  chatError: string | null;
   agents: AgentProfile[];
   runtimes: RuntimeProfile[];
   projects: Project[];
@@ -506,7 +517,7 @@ interface ChatAreaProps {
 function ChatArea({
   conversation,
   messages,
-  status,
+  sending,
   chatError,
   agents,
   runtimes,
@@ -522,12 +533,13 @@ function ChatArea({
   const [titleValue, setTitleValue] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isMultiLine, setIsMultiLine] = useState(false);
+  const [isConversationUpdating, setIsConversationUpdating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingConversationUpdateRef = useRef<Promise<void> | null>(null);
 
   const { isListening, transcript, isSupported, start, stop } = useSpeechRecognition();
-  const sending = status === "submitted" || status === "streaming";
 
   const prevTranscriptRef = useRef("");
   useEffect(() => {
@@ -541,6 +553,10 @@ function ChatArea({
   const selectedRuntime = useMemo(
     () => runtimes.find((r) => r.id === conversation.runtimeId),
     [runtimes, conversation.runtimeId],
+  );
+  const selectedProject = useMemo(
+    () => projects.find((p) => p.id === conversation.projectId),
+    [projects, conversation.projectId],
   );
 
   const syncTextareaHeight = useCallback(() => {
@@ -578,8 +594,37 @@ function ChatArea({
     syncTextareaHeight();
   }, [attachedFiles.length, conversation.id, input, syncTextareaHeight]);
 
+  const queueConversationUpdate = useCallback(
+    (data: {
+      title?: string;
+      projectId?: string;
+      agentId?: string;
+      runtimeId?: string;
+      archived?: boolean;
+      deleted?: boolean;
+    }) => {
+      setIsConversationUpdating(true);
+      const request = onUpdateConversation(conversation.id, data);
+      pendingConversationUpdateRef.current = request;
+
+      void request.finally(() => {
+        if (pendingConversationUpdateRef.current === request) {
+          pendingConversationUpdateRef.current = null;
+          setIsConversationUpdating(false);
+        }
+      });
+
+      return request;
+    },
+    [conversation.id, onUpdateConversation],
+  );
+
   const handleSend = useCallback(async () => {
     if ((!input.trim() && attachedFiles.length === 0) || sending) return;
+
+    if (pendingConversationUpdateRef.current) {
+      await pendingConversationUpdateRef.current;
+    }
 
     const content = input.trim();
     const filesToSend = [...attachedFiles];
@@ -612,10 +657,10 @@ function ChatArea({
 
   const handleTitleSubmit = useCallback(async () => {
     if (titleValue.trim()) {
-      await onUpdateConversation(conversation.id, { title: titleValue.trim() });
+      await queueConversationUpdate({ title: titleValue.trim() });
     }
     setEditingTitle(false);
-  }, [titleValue, conversation.id, onUpdateConversation]);
+  }, [queueConversationUpdate, titleValue]);
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
@@ -650,19 +695,23 @@ function ChatArea({
           <Select
             value={conversation.projectId || "__none__"}
             onValueChange={(v) =>
-              onUpdateConversation(conversation.id, {
+              queueConversationUpdate({
                 projectId: !v || v === "__none__" ? undefined : v,
               })
             }
           >
-            <SelectTrigger className="h-7 w-32 text-xs">
-              <HugeiconsIcon icon={Folder01Icon} className="size-3 mr-1 shrink-0" />
+            <SelectTrigger className="h-7 w-32 cursor-default text-xs">
+              {isConversationUpdating ? (
+                <Spinner size="sm" name="braille" className="mr-1 shrink-0 text-muted-foreground" />
+              ) : (
+                <HugeiconsIcon icon={Folder01Icon} className="size-3 mr-1 shrink-0" />
+              )}
               <SelectValue>
-                {projects.find((p) => p.id === conversation.projectId)?.name || m.no_project()}
+                {selectedProject?.name || "临时会话"}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__">{m.no_project()}</SelectItem>
+              <SelectItem value="__none__">临时会话</SelectItem>
               {projects.map((project) => (
                 <SelectItem key={project.id} value={project.id}>
                   {project.name}
@@ -676,14 +725,14 @@ function ChatArea({
             agents={agents.filter((a) => a.enabled)}
             selectedId={conversation.runtimeId ?? undefined}
             defaultRuntimeId={defaultRuntimeId}
-            onSelect={(runtimeId) => onUpdateConversation(conversation.id, { runtimeId })}
+            onSelect={(runtimeId) => queueConversationUpdate({ runtimeId })}
             onSetDefault={onSetDefaultRuntime}
           />
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6">
+      <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 md:px-6">
         <div className="mx-auto max-w-3xl py-6 space-y-3">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-2">
@@ -798,7 +847,7 @@ function ChatArea({
                 <Button
                   type="button"
                   size="icon-sm"
-                  disabled={(!input.trim() && attachedFiles.length === 0) || sending}
+                  disabled={(!input.trim() && attachedFiles.length === 0) || sending || isConversationUpdating}
                   onClick={handleSend}
                 >
                   {sending ? (
@@ -816,6 +865,7 @@ function ChatArea({
           </p>
         </div>
       </div>
+
     </div>
   );
 }

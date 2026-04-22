@@ -6,8 +6,20 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 import { ChatCodeBlock } from "@/components/chat/ChatCodeBlock";
 
+function stripNumberedLines(text: string): string {
+  const lines = text.split("\n");
+  const numberedLines = lines.filter((line) => /^\s*\d+:\s/.test(line)).length;
+
+  if (numberedLines === 0) return text;
+  if (numberedLines < Math.max(2, Math.ceil(lines.length * 0.6))) return text;
+
+  return lines.map((line) => line.replace(/^\s*\d+:\s?/, "")).join("\n");
+}
+
 function preprocessAgentOutput(text: string): string {
   let result = text;
+
+  result = stripNumberedLines(result);
 
   result = result.replace(/<path>([^<]+)<\/path>/g, (_, path) => {
     return `\`${path}\``;
@@ -21,6 +33,7 @@ function preprocessAgentOutput(text: string): string {
   result = result.replace(/<command>([^<]+)<\/command>/g, "`$1`");
   result = result.replace(/<file>([^<]+)<\/file>/g, "`$1`");
   result = result.replace(/<summary>([^<]*)<\/summary>/g, "$1");
+  result = result.replace(/<\/?(?:path|type|content|result|error|tool|command|file|summary)>/g, "");
 
   // Some model outputs omit the blank line before markdown blocks.
   result = result.replace(/([。！？.!?])\s*(#{1,6}\s)/g, "$1\n\n$2");

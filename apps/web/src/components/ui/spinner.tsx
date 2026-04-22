@@ -15,7 +15,7 @@ const sizeClasses = {
 };
 
 export function Spinner({ size = "md", name = "braille", className }: SpinnerProps) {
-  const s = spinners[name];
+  const s = spinners[name] ?? spinners.braille;
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {

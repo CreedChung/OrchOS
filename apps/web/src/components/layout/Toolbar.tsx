@@ -265,7 +265,7 @@ export function Toolbar({
             <HugeiconsIcon icon={ArrowReloadHorizontalIcon} className="size-3.5" />
           </Button>
         )}
-        {onOpenCapabilityMarket && (
+        {activeView === "skills" && onOpenCapabilityMarket && (
           <Button
             variant="outline"
             size="icon-sm"
