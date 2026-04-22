@@ -13,6 +13,8 @@ import { InboxService } from "@/modules/inbox/service";
 import type { Command, CommandStatus } from "@/types";
 
 export interface DispatchResult {
+  needsClarification: boolean;
+  questions: string[];
   command: Command;
   goals: Array<{
     id: string;
@@ -63,21 +65,59 @@ export abstract class CommandService {
 
     const projectId = command.projectIds.length > 0 ? command.projectIds[0] : undefined;
 
-    let plannedGoals;
+    let planningResult;
 
     if (runtimeId) {
       try {
-        plannedGoals = await PlanningService.plan(
+        planningResult = await PlanningService.plan(
           command.instruction,
           runtimeId,
           resolvedAgentNames,
         );
       } catch {
-        plannedGoals = PlanningService.fallbackPlan(command.instruction, resolvedAgentNames);
+        planningResult = PlanningService.fallbackPlan(command.instruction, resolvedAgentNames);
       }
     } else {
-      plannedGoals = PlanningService.fallbackPlan(command.instruction, resolvedAgentNames);
+      planningResult = PlanningService.fallbackPlan(command.instruction, resolvedAgentNames);
     }
+
+    if (planningResult.needsClarification) {
+      CommandService.update(command.id, { status: "failed" });
+
+      const inboxThread = InboxService.createAgentRequestThread({
+        title: command.instruction,
+        body: command.instruction,
+        summary: "Waiting for clarification before goals can be created.",
+        projectId,
+        commandId: command.id,
+        recipients: resolvedAgentNames,
+        cc: ["User"],
+      });
+
+      InboxService.addMessage({
+        threadId: inboxThread.id,
+        messageType: "question",
+        senderType: "system",
+        senderName: "Planner",
+        subject: "Clarification needed",
+        body: planningResult.questions.map((question, index) => `${index + 1}. ${question}`).join("\n"),
+        to: ["User"],
+        cc: resolvedAgentNames,
+        metadata: {
+          commandId: command.id,
+          needsClarification: true,
+        },
+      });
+
+      return {
+        needsClarification: true,
+        questions: planningResult.questions,
+        command: CommandService.get(command.id)!,
+        goals: [],
+      };
+    }
+
+    const plannedGoals = planningResult.goals;
 
     const createdGoals: DispatchResult["goals"] = [];
     let primaryGoalId: string | null = null;
@@ -175,7 +215,12 @@ export abstract class CommandService {
       });
     }
 
-    return { command: CommandService.get(command.id)!, goals: createdGoals };
+    return {
+      needsClarification: false,
+      questions: [],
+      command: CommandService.get(command.id)!,
+      goals: createdGoals,
+    };
   }
 
   private static dispatch(command: Command): void {

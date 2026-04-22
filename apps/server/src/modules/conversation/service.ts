@@ -5,6 +5,7 @@ import { generateId } from "@/utils";
 import { ProjectService } from "@/modules/project/service";
 import { RuntimeService } from "@/modules/runtime/service";
 import { SandboxService } from "@/modules/sandbox/service";
+import { CommandService } from "@/modules/command/service";
 
 type MessageTraceEvent =
   | { kind: "message"; text: string }
@@ -45,6 +46,25 @@ export interface Message {
   projectName?: string;
   trace?: MessageTraceEvent[];
   createdAt: string;
+}
+
+export interface CreationDispatchResult {
+  needsClarification: boolean;
+  questions: string[];
+  command: {
+    id: string;
+    instruction: string;
+    agentNames: string[];
+    projectIds: string[];
+    goalId: string | null;
+    status: string;
+    createdAt: string;
+  };
+  goals: Array<{
+    id: string;
+    title: string;
+    assignedAgentName?: string;
+  }>;
 }
 
 interface MessageMetadata {
@@ -381,6 +401,58 @@ export abstract class ConversationService {
       const msg = ConversationService.addMessage(conversationId, "assistant", errorMsg, errorMsg);
       return msg;
     }
+  }
+
+  static async createGoalsFromConversation(
+    conversationId: string,
+    instruction: string,
+    options?: {
+      runtimeId?: string;
+      agentNames?: string[];
+      projectIds?: string[];
+    },
+  ): Promise<CreationDispatchResult> {
+    const conv = ConversationService.get(conversationId);
+    if (!conv) throw new Error("Conversation not found");
+
+    const runtimeId = options?.runtimeId || conv.runtimeId;
+    if (!runtimeId) throw new Error("No runtime configured for this conversation");
+
+    const history = ConversationService.getMessages(conversationId)
+      .map((message) => `${message.role === "user" ? "User" : "Assistant"}: ${message.content}`)
+      .join("\n\n");
+
+    const planningInstruction = history
+      ? `Conversation context:\n${history}\n\nLatest user request:\n${instruction}`
+      : instruction;
+
+    const command = CommandService.create({
+      instruction: planningInstruction,
+      agentNames: options?.agentNames,
+      projectIds: conv.projectId ? [conv.projectId] : options?.projectIds,
+    });
+
+    const result = await CommandService.dispatchAsync(command, runtimeId);
+
+    if (result.needsClarification) {
+      ConversationService.addMessage(
+        conversationId,
+        "assistant",
+        ["I need a bit more detail before I can create the tasks.", ...result.questions.map((question, index) => `${index + 1}. ${question}`)].join("\n"),
+      );
+      return result;
+    }
+
+    ConversationService.addMessage(
+      conversationId,
+      "assistant",
+      [
+        `Created ${result.goals.length} task${result.goals.length === 1 ? "" : "s"}.`,
+        ...result.goals.map((goal, index) => `${index + 1}. ${goal.title}${goal.assignedAgentName ? ` -> ${goal.assignedAgentName}` : ""}`),
+      ].join("\n"),
+    );
+
+    return result;
   }
 
   static mapRow(row: typeof conversations.$inferSelect): Conversation {

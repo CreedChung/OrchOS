@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CloudIcon, Loading01Icon, Server } from "@hugeicons/core-free-icons";
+import { CloudIcon, Server } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import type { RuntimeProfile } from "@/lib/types";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AppDialog } from "@/components/ui/app-dialog";
 import { api, type SkillProfile } from "@/lib/api";
 import { CAPABILITY_COLORS, getCapabilityOptions } from "@/components/agents/capability-options";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -319,7 +320,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
             <SelectTrigger className="w-full">
               {loadingModels ? (
                 <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                  <Spinner size="sm" name="helix" />
                   Models...
                 </span>
               ) : (

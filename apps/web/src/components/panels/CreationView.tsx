@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { cn, formatDuration } from "@/lib/utils";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
@@ -155,7 +155,7 @@ function MessageBubble({ msg, userImageUrl }: { msg: UIMessage; userImageUrl?: s
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
           <span className="font-medium text-foreground/60">{isUser ? m.user() : m.assistant()}</span>
-          {metadata.responseTime != null && <span className="opacity-50">{metadata.responseTime}ms</span>}
+          {metadata.responseTime != null && <span className="opacity-50">{formatDuration(metadata.responseTime)}</span>}
         </div>
         {msg.parts.map((part, index) => {
           if (part.type === "text") {
@@ -206,7 +206,7 @@ function mapConversationMessagesToUiMessages(messages: ConversationMessage[]): U
       projectName: message.projectName,
       createdAt: message.createdAt,
     },
-    parts: buildMessageParts(message),
+    parts: buildMessageParts(message) as UIMessage["parts"],
   }));
 }
 
@@ -237,6 +237,11 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
   const [chatError, setChatError] = useState<string | null>(null);
 
   const enabledRuntimes = useMemo(() => runtimes.filter((r) => r.enabled), [runtimes]);
+  const enabledAgents = useMemo(() => agents.filter((agent) => agent.enabled), [agents]);
+  const defaultAgent = useMemo(
+    () => enabledAgents.find((agent) => agent.id === settings?.defaultAgentId),
+    [enabledAgents, settings?.defaultAgentId],
+  );
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
@@ -267,12 +272,13 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
 
     try {
       await createConversation({
-        runtimeId: settings?.defaultRuntimeId || undefined,
+        agentId: defaultAgent?.id,
+        runtimeId: defaultAgent?.runtimeId || settings?.defaultRuntimeId || undefined,
       });
     } catch (err) {
       console.error("Failed to create conversation:", err);
     }
-  }, [activeConversation, createConversation, messages.length, setActiveConversationId, settings?.defaultRuntimeId]);
+  }, [activeConversation, createConversation, defaultAgent?.id, defaultAgent?.runtimeId, messages.length, setActiveConversationId, settings?.defaultRuntimeId]);
 
   useEffect(() => {
     if (!hasLoadedConversations) return;
@@ -442,10 +448,14 @@ className={cn(
             agents={agents}
             runtimes={enabledRuntimes}
             projects={projects}
-            defaultRuntimeId={settings?.defaultRuntimeId}
+            defaultAgentId={settings?.defaultAgentId}
             onUpdateConversation={handleUpdateConversation}
-            onSetDefaultRuntime={(runtimeId) => {
-              void api.updateSettings({ defaultRuntimeId: runtimeId }).then((updated) => {
+            onSetDefaultAgent={(agentId) => {
+              const selectedAgent = agents.find((agent) => agent.id === agentId);
+              void api.updateSettings({
+                defaultAgentId: agentId,
+                defaultRuntimeId: selectedAgent?.runtimeId,
+              }).then((updated) => {
                 onSettingsChange(updated);
               });
             }}
@@ -453,7 +463,10 @@ className={cn(
               setSending(true);
               setChatError(null);
               try {
-                await api.sendConversationMessage(activeConversation.id, content);
+                await api.createGoalsFromConversation(activeConversation.id, {
+                  instruction: content,
+                  runtimeId: activeConversation.runtimeId,
+                });
                 await loadMessages(activeConversation.id, { force: true });
                 if (!activeConversation.title && messages.length === 0) {
                   await handleUpdateConversation(activeConversation.id, {
@@ -497,7 +510,7 @@ interface ChatAreaProps {
   agents: AgentProfile[];
   runtimes: RuntimeProfile[];
   projects: Project[];
-  defaultRuntimeId?: string;
+  defaultAgentId?: string;
   onUpdateConversation: (
     id: string,
     data: {
@@ -509,7 +522,7 @@ interface ChatAreaProps {
       deleted?: boolean;
     },
   ) => Promise<void>;
-  onSetDefaultRuntime: (runtimeId?: string) => void;
+  onSetDefaultAgent: (agentId?: string) => void;
   onSendMessage: (content: string) => Promise<void>;
   onReloadMessages?: () => Promise<void>;
 }
@@ -522,13 +535,14 @@ function ChatArea({
   agents,
   runtimes,
   projects,
-  defaultRuntimeId,
+  defaultAgentId,
   onUpdateConversation,
-  onSetDefaultRuntime,
+  onSetDefaultAgent,
   onSendMessage,
 }: ChatAreaProps) {
   const { user } = useUser();
   const [input, setInput] = useState("");
+  const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -558,6 +572,18 @@ function ChatArea({
     () => projects.find((p) => p.id === conversation.projectId),
     [projects, conversation.projectId],
   );
+  const visibleMessages = useMemo(() => {
+    if (!pendingUserMessage) return messages;
+
+    return [
+      ...messages,
+      {
+        id: `pending-user-${conversation.id}`,
+        role: "user",
+        parts: [{ type: "text", text: pendingUserMessage }],
+      } as UIMessage,
+    ];
+  }, [conversation.id, messages, pendingUserMessage]);
 
   const syncTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -583,12 +609,24 @@ function ChatArea({
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [visibleMessages, sending]);
 
   // Focus textarea on mount
   useEffect(() => {
     textareaRef.current?.focus();
+    setPendingUserMessage(null);
   }, [conversation.id]);
+
+  useEffect(() => {
+    if (!pendingUserMessage) return;
+    const hasMatchedUserMessage = messages.some(
+      (message) => message.role === "user" && message.parts.some((part) => part.type === "text" && part.text === pendingUserMessage),
+    );
+
+    if (hasMatchedUserMessage) {
+      setPendingUserMessage(null);
+    }
+  }, [messages, pendingUserMessage]);
 
   useEffect(() => {
     syncTextareaHeight();
@@ -631,6 +669,7 @@ function ChatArea({
 
     setInput("");
     setAttachedFiles([]);
+    setPendingUserMessage(content);
 
     try {
       if (filesToSend.length > 0) {
@@ -638,6 +677,7 @@ function ChatArea({
       }
       await onSendMessage(content);
     } catch (err) {
+      setPendingUserMessage(null);
       console.error("Failed to send message:", err);
       toast.error(m.send_failed());
     }
@@ -661,6 +701,8 @@ function ChatArea({
     }
     setEditingTitle(false);
   }, [queueConversationUpdate, titleValue]);
+
+  const showWelcomeState = visibleMessages.length === 0 && !sending && !input.trim() && attachedFiles.length === 0;
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
@@ -721,12 +763,11 @@ function ChatArea({
           </Select>
 
           <RuntimeSelector
-            runtimes={runtimes}
             agents={agents.filter((a) => a.enabled)}
-            selectedId={conversation.runtimeId ?? undefined}
-            defaultRuntimeId={defaultRuntimeId}
-            onSelect={(runtimeId) => queueConversationUpdate({ runtimeId })}
-            onSetDefault={onSetDefaultRuntime}
+            selectedAgentId={conversation.agentId ?? undefined}
+            defaultAgentId={defaultAgentId}
+            onSelect={({ runtimeId, agentId }) => queueConversationUpdate({ runtimeId, agentId })}
+            onSetDefault={onSetDefaultAgent}
           />
         </div>
       </div>
@@ -734,7 +775,7 @@ function ChatArea({
       {/* Messages */}
       <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 md:px-6">
         <div className="mx-auto max-w-3xl py-6 space-y-3">
-          {messages.length === 0 && (
+          {showWelcomeState && (
             <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-2">
               <div className="flex size-10 items-center justify-center rounded-lg border border-border/50 bg-muted/30">
                 <HugeiconsIcon icon={Robot02Icon} className="size-5 text-muted-foreground/40" />
@@ -747,7 +788,7 @@ function ChatArea({
               )}
             </div>
           )}
-          {messages.map((msg) => (
+          {visibleMessages.map((msg) => (
             <MessageBubble key={msg.id} msg={msg} userImageUrl={user?.imageUrl} />
           ))}
           {sending && <ChatThinkingState />}
@@ -871,78 +912,46 @@ function ChatArea({
 }
 
 interface RuntimeSelectorProps {
-  runtimes: RuntimeProfile[];
   agents: AgentProfile[];
-  selectedId?: string;
-  defaultRuntimeId?: string;
-  onSelect: (runtimeId?: string) => void;
-  onSetDefault: (runtimeId?: string) => void;
+  selectedAgentId?: string;
+  defaultAgentId?: string;
+  onSelect: (selection: { runtimeId?: string; agentId?: string }) => void;
+  onSetDefault: (agentId?: string) => void;
 }
 
-function RuntimeSelector({ runtimes, agents, selectedId, defaultRuntimeId, onSelect, onSetDefault }: RuntimeSelectorProps) {
+function RuntimeSelector({
+  agents,
+  selectedAgentId,
+  defaultAgentId,
+  onSelect,
+  onSetDefault,
+}: RuntimeSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [modelsByRuntimeId, setModelsByRuntimeId] = useState<Record<string, string[]>>({});
-  const [loadingRuntimeId, setLoadingRuntimeId] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  const selectedRuntime = runtimes.find((r) => r.id === selectedId);
-  const selectedAgent = agents.find((a) => (a.runtimeId || a.id) === selectedId);
-  const selectedModel = selectedRuntime?.model || selectedAgent?.model;
+  const selectedAgent = agents.find((a) => a.id === selectedAgentId);
 
   const allItems = [
     {
       id: "none::__none__",
-      value: "__none__",
       name: m.no_agent(),
-      model: null,
       runtimeId: undefined,
+      agentId: undefined,
       type: "none" as const,
     },
-    ...runtimes.map((r) => ({
-      id: `runtime::${r.id}`,
-      value: r.id,
-      name: r.name,
-      model: r.model,
-      runtimeId: r.id,
-      type: "runtime" as const,
-    })),
     ...agents.map((a) => ({
       id: `agent::${a.id}`,
-      value: a.runtimeId || a.id,
       name: a.name,
-      model: a.model,
       runtimeId: a.runtimeId,
+      agentId: a.id,
       type: "agent" as const,
     })),
   ];
-
-  const hoveredItem = allItems.find((item) => item.id === hoveredId);
-  const hoveredRuntimeId =
-    hoveredItem?.type === "runtime"
-      ? hoveredItem.runtimeId
-      : hoveredItem?.type === "agent"
-        ? hoveredItem.runtimeId
-        : undefined;
-  const hoveredRuntime = hoveredRuntimeId ? runtimes.find((item) => item.id === hoveredRuntimeId) : undefined;
-  const activeHoveredModel = hoveredRuntime?.currentModel || hoveredRuntime?.model || hoveredItem?.model;
-  const fallbackHoveredModels = hoveredItem?.model ? [hoveredItem.model] : [];
-  const hoveredModels = hoveredRuntimeId
-    ? (modelsByRuntimeId[hoveredRuntimeId]?.length
-        ? modelsByRuntimeId[hoveredRuntimeId]
-        : fallbackHoveredModels)
-    : fallbackHoveredModels;
   const triggerRect = triggerRef.current?.getBoundingClientRect();
-  const hoveredItemRect = hoveredId ? itemRefs.current[hoveredId]?.getBoundingClientRect() : undefined;
   const menuLeft = triggerRect?.left ?? 0;
   const menuTop = (triggerRect?.bottom ?? 0) + 4;
-  const submenuGap = 8;
-  const submenuPanelPadding = 4;
-  const submenuTop = (hoveredItemRect?.top ?? menuTop) - submenuPanelPadding;
-  const submenuLeft = (hoveredItemRect?.left ?? menuLeft) - submenuGap;
 
   const cancelClose = useCallback(() => {
     if (closeTimerRef.current) {
@@ -955,52 +964,10 @@ function RuntimeSelector({ runtimes, agents, selectedId, defaultRuntimeId, onSel
     cancelClose();
     closeTimerRef.current = setTimeout(() => {
       setOpen(false);
-      setHoveredId(null);
     }, 150);
   }, [cancelClose]);
 
   useEffect(() => () => cancelClose(), [cancelClose]);
-
-  useEffect(() => {
-    if (!open || !hoveredRuntimeId || modelsByRuntimeId[hoveredRuntimeId]) {
-      return;
-    }
-
-    let cancelled = false;
-    const runtime = runtimes.find((item) => item.id === hoveredRuntimeId);
-    const fallbackModel = runtime?.currentModel || runtime?.model || hoveredItem?.model;
-
-    setLoadingRuntimeId(hoveredRuntimeId);
-
-    void api
-      .listRuntimeModels(hoveredRuntimeId)
-      .then((result) => {
-        if (cancelled) return;
-
-        const models = result.models.length > 0 ? result.models : fallbackModel ? [fallbackModel] : [];
-        setModelsByRuntimeId((current) => ({
-          ...current,
-          [hoveredRuntimeId]: models,
-        }));
-      })
-      .catch(() => {
-        if (cancelled) return;
-
-        setModelsByRuntimeId((current) => ({
-          ...current,
-          [hoveredRuntimeId]: fallbackModel ? [fallbackModel] : [],
-        }));
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoadingRuntimeId((current) => (current === hoveredRuntimeId ? null : current));
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hoveredItem?.model, hoveredRuntimeId, modelsByRuntimeId, open, runtimes]);
 
   useEffect(() => {
     if (!open) return;
@@ -1008,7 +975,6 @@ function RuntimeSelector({ runtimes, agents, selectedId, defaultRuntimeId, onSel
     const handlePointerDown = (event: PointerEvent) => {
       if (!wrapperRef.current?.contains(event.target as Node)) {
         setOpen(false);
-        setHoveredId(null);
       }
     };
 
@@ -1016,16 +982,14 @@ function RuntimeSelector({ runtimes, agents, selectedId, defaultRuntimeId, onSel
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [open]);
 
-  const handleSelect = useCallback((value: string) => {
-    onSelect(value === "__none__" ? undefined : value);
+  const handleSelect = useCallback((item: (typeof allItems)[number]) => {
+    if (item.type === "none") {
+      onSelect({ runtimeId: undefined, agentId: undefined });
+    } else {
+      onSelect({ runtimeId: item.runtimeId, agentId: item.agentId });
+    }
     setOpen(false);
-    setHoveredId(null);
   }, [onSelect]);
-
-  const handleItemHover = useCallback((id: string | null) => {
-    cancelClose();
-    setHoveredId(id);
-  }, [cancelClose]);
 
   return (
     <div
@@ -1052,50 +1016,12 @@ function RuntimeSelector({ runtimes, agents, selectedId, defaultRuntimeId, onSel
       >
         <span className="flex min-w-0 items-center gap-1.5">
           <HugeiconsIcon icon={Robot02Icon} className="size-3 shrink-0" />
-          <span className="truncate">{selectedModel?.replace(/^(cloud|local)\//, "") || m.no_agent()}</span>
+          <span className="truncate">{selectedAgent?.name || m.no_agent()}</span>
         </span>
       </button>
 
       {open && (
         <>
-          {hoveredItem && (hoveredModels.length > 0 || loadingRuntimeId === hoveredRuntimeId) && (
-            <div
-              className="fixed z-50 animate-in fade-in-0 zoom-in-95"
-              style={{
-                left: submenuLeft,
-                top: submenuTop,
-                transform: "translateX(-100%)",
-              }}
-            >
-              <div className={cn(selectContentClassName, "min-w-[160px] w-auto") }>
-                {hoveredModels.map((model) => (
-                  <div
-                    key={model}
-                    className={cn(
-                      selectItemClassName,
-                      "whitespace-nowrap transition-colors",
-                      model === activeHoveredModel
-                        ? "bg-accent text-accent-foreground"
-                        : "hover:bg-accent/50",
-                    )}
-                  >
-                    {model.replace(/^(cloud|local)\//, "")}
-                  </div>
-                ))}
-                {loadingRuntimeId === hoveredRuntimeId && hoveredModels.length === 0 && (
-                  <div
-                    className={cn(
-                      selectItemClassName,
-                      "flex items-center gap-2 whitespace-nowrap text-muted-foreground",
-                    )}
-                  >
-                    <Spinner size="sm" />
-                    <span>{m.loading()}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
           <div
             className="fixed z-50 animate-in fade-in-0 zoom-in-95"
             style={{
@@ -1105,40 +1031,36 @@ function RuntimeSelector({ runtimes, agents, selectedId, defaultRuntimeId, onSel
           >
             <div className={cn(selectContentClassName, "min-w-[160px] w-auto") }>
               {allItems.map((item) => {
-                const isDefault = item.value !== "__none__" && item.value === defaultRuntimeId;
+                const isDefault = item.agentId !== undefined && item.agentId === defaultAgentId;
                 return (
                   <div
                     key={item.id}
-                    ref={(node) => {
-                      itemRefs.current[item.id] = node;
-                    }}
                     className={cn(
                       selectItemClassName,
                       "flex items-center justify-between gap-2 whitespace-nowrap transition-colors",
-                      selectedId === item.value
+                      selectedAgentId === item.agentId
                         ? "bg-accent text-accent-foreground"
                         : "text-foreground hover:bg-accent/50",
                     )}
-                    onMouseEnter={() => handleItemHover(item.id)}
                   >
                     <button
                       type="button"
                       className="flex-1 text-left"
-                      onClick={() => handleSelect(item.value)}
+                      onClick={() => handleSelect(item)}
                     >
                       {item.name}
                     </button>
                     {isDefault && (
                       <Star className="size-3 shrink-0 fill-primary text-primary" />
                     )}
-                    {!isDefault && item.value !== "__none__" && (
+                    {!isDefault && item.agentId !== undefined && (
                       <button
                         type="button"
                         className="shrink-0 rounded p-0.5 text-muted-foreground/40 hover:text-primary transition-colors"
                         title={m.set_as_default()}
                         onClick={(e) => {
                           e.stopPropagation();
-                          onSetDefault(item.value);
+                          onSetDefault(item.agentId);
                         }}
                       >
                         <Star className="size-3" />

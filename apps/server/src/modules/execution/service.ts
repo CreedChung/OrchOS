@@ -47,6 +47,7 @@ export class ExecutionService {
           // ignore parse errors
         }
       }
+      if (row.key === "defaultAgentId") this.settings.defaultAgentId = row.value;
       if (row.key === "defaultRuntimeId") this.settings.defaultRuntimeId = row.value;
       if (row.key === "projectChatsRequireSandbox") {
         this.settings.projectChatsRequireSandbox = row.value === "true";
@@ -89,6 +90,10 @@ export class ExecutionService {
     if (patch.notifications !== undefined) {
       this.settings.notifications = patch.notifications;
       this.saveSetting("notifications", JSON.stringify(patch.notifications));
+    }
+    if (patch.defaultAgentId !== undefined) {
+      this.settings.defaultAgentId = patch.defaultAgentId;
+      this.saveSetting("defaultAgentId", patch.defaultAgentId);
     }
     if (patch.defaultRuntimeId !== undefined) {
       this.settings.defaultRuntimeId = patch.defaultRuntimeId;

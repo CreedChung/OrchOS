@@ -292,6 +292,8 @@ export interface SkillRepositoryInstallResponse {
 }
 
 export interface DispatchResult {
+  needsClarification: boolean;
+  questions: string[];
   command: {
     id: string;
     instruction: string;

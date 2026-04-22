@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
+import { formatDuration } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowUp01Icon,
@@ -338,7 +339,7 @@ export function FeaturesBento() {
                     </p>
                     {message.responseTime ? (
                       <p className="mt-1 text-[10px] text-muted-foreground/60">
-                        {message.responseTime}ms
+                        {formatDuration(message.responseTime)}
                       </p>
                     ) : null}
                   </div>

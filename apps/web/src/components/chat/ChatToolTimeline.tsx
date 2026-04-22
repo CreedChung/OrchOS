@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, formatDuration } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 
@@ -311,7 +311,7 @@ export function ChatToolTimeline({
             {stateLabel}
           </span>
           {completedIn != null && (
-            <span className="text-muted-foreground/40">{completedIn}ms</span>
+            <span className="text-muted-foreground/40">{formatDuration(completedIn)}</span>
           )}
           <span className="ml-auto shrink-0 select-none text-[10px] opacity-30 transition-transform group-open:rotate-90">›</span>
         </summary>

@@ -26,6 +26,7 @@ export const ExecutionModel = {
     ]),
     locale: t.String(),
     timezone: t.String(),
+    defaultAgentId: t.Optional(t.String()),
     defaultRuntimeId: t.Optional(t.String()),
     projectChatsRequireSandbox: t.Boolean(),
     notifications: t.Object({
@@ -44,10 +45,11 @@ export const ExecutionModel = {
         t.Literal("cloud-first"),
         t.Literal("adaptive"),
        ]),
-       locale: t.String(),
-       timezone: t.String(),
-       defaultRuntimeId: t.String(),
-       projectChatsRequireSandbox: t.Boolean(),
+        locale: t.String(),
+        timezone: t.String(),
+        defaultAgentId: t.String(),
+        defaultRuntimeId: t.String(),
+        projectChatsRequireSandbox: t.Boolean(),
        notifications: t.Object({
         system: t.Boolean(),
         sound: t.Boolean(),

@@ -25,6 +25,8 @@ const DispatchGoalResponse = t.Object({
 });
 
 const DispatchResponse = t.Object({
+  needsClarification: t.Boolean(),
+  questions: t.Array(t.String()),
   command: CommandResponse,
   goals: t.Array(DispatchGoalResponse),
 });

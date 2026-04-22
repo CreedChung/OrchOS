@@ -1,3 +1,5 @@
+import { formatDuration } from "@/lib/utils";
+
 export function ChatReasoningDrawer({
   text,
   metadata,
@@ -14,7 +16,7 @@ export function ChatReasoningDrawer({
           <span className="size-1.5 rounded-full bg-emerald-500/80 shrink-0" aria-hidden="true" />
           <span className="font-medium text-foreground/70">Reasoning</span>
           {metadata?.responseTime != null && (
-            <span className="text-muted-foreground/40">{metadata.responseTime}ms</span>
+            <span className="text-muted-foreground/40">{formatDuration(metadata.responseTime)}</span>
           )}
           <span className="ml-auto shrink-0 opacity-30 group-open:rotate-90 transition-transform text-[10px]">›</span>
         </summary>

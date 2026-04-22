@@ -3,7 +3,6 @@ import { status } from "elysia";
 import { authPlugin, requireAuth } from "@/modules/auth";
 import { ConversationService } from "@/modules/conversation/service";
 import { ConversationModel } from "@/modules/conversation/model";
-import { CommandService } from "@/modules/command/service";
 
 export const conversationController = new Elysia({ prefix: "/api/conversations" })
   .use(authPlugin)
@@ -107,16 +106,11 @@ export const conversationController = new Elysia({ prefix: "/api/conversations" 
       const conv = ConversationService.get(id);
       if (!conv) throw status(404, "Conversation not found");
 
-      const runtimeId = body.runtimeId || conv.runtimeId;
-      if (!runtimeId) throw status(400, "No runtime configured for this conversation");
-
-      const command = CommandService.create({
-        instruction: body.instruction,
+      return ConversationService.createGoalsFromConversation(id, body.instruction, {
+        runtimeId: body.runtimeId,
         agentNames: body.agentNames,
-        projectIds: conv.projectId ? [conv.projectId] : body.projectIds,
+        projectIds: body.projectIds,
       });
-
-      return CommandService.dispatchAsync(command, runtimeId);
     },
     {
       params: t.Object({ id: t.String() }),
@@ -127,6 +121,8 @@ export const conversationController = new Elysia({ prefix: "/api/conversations" 
         projectIds: t.Optional(t.Array(t.String())),
       }),
       response: t.Object({
+        needsClarification: t.Boolean(),
+        questions: t.Array(t.String()),
         command: t.Object({
           id: t.String(),
           instruction: t.String(),

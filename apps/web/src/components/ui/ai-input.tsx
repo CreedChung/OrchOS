@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { m } from "@/paraglide/messages";
+import { formatDuration } from "@/lib/utils";
 import type { RuntimeProfile } from "@/lib/types";
 
 const SPEED_FACTOR = 1;
@@ -315,7 +316,7 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                   <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                   {msg.responseTime && (
                     <p className="text-[10px] text-muted-foreground/60 mt-1">
-                      {msg.responseTime}ms
+                      {formatDuration(msg.responseTime)}
                     </p>
                   )}
                 </div>

@@ -186,6 +186,7 @@ export interface ControlSettings {
   modelStrategy: "local-first" | "cloud-first" | "adaptive";
   locale: string;
   timezone: string;
+  defaultAgentId?: string;
   defaultRuntimeId?: string;
   projectChatsRequireSandbox: boolean;
   notifications: {
