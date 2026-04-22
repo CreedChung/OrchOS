@@ -3,6 +3,7 @@ import { states, artifacts } from "@/db/schema";
 import { eq, asc, desc } from "drizzle-orm";
 import { generateId, timestamp } from "@/utils";
 import { eventBus } from "@/modules/event/event-bus";
+import { InboxProjectionService } from "@/modules/inbox/projection";
 import type { StateEntry, Artifact, Status } from "@/types";
 import type { StateModel } from "@/modules/state/model";
 
@@ -28,7 +29,9 @@ export abstract class StateService {
       })
       .run();
 
-    return { id, goalId, label, status, actions, updatedAt: now };
+    const created = { id, goalId, label, status, actions, updatedAt: now };
+    InboxProjectionService.projectStateCreated(goalId, label, status);
+    return created;
   }
 
   static getState(id: string): StateEntry | undefined {
@@ -60,6 +63,9 @@ export abstract class StateService {
     const mapped = StateService.mapRowToState(updated);
 
     eventBus.emit("state_changed", { stateId: id, oldStatus, newStatus: status }, mapped.goalId);
+    InboxProjectionService.projectStateUpdated(mapped.goalId, mapped.label, status);
+    if (status === "running") InboxProjectionService.updateThreadStatusForGoal(mapped.goalId, "in_progress");
+    if (status === "failed" || status === "error") InboxProjectionService.updateThreadStatusForGoal(mapped.goalId, "blocked");
     return mapped;
   }
 
@@ -92,7 +98,9 @@ export abstract class StateService {
       })
       .run();
 
-    return { id, goalId, name, type, status, detail, updatedAt: now };
+    const artifact = { id, goalId, name, type, status, detail, updatedAt: now };
+    InboxProjectionService.projectArtifactCreated(artifact);
+    return artifact;
   }
 
   static getArtifactsByGoal(goalId: string): Artifact[] {
@@ -119,7 +127,9 @@ export abstract class StateService {
     db.update(artifacts).set(updates).where(eq(artifacts.id, id)).run();
 
     const updated = db.select().from(artifacts).where(eq(artifacts.id, id)).get()!;
-    return StateService.mapRowToArtifact(updated);
+    const mapped = StateService.mapRowToArtifact(updated);
+    InboxProjectionService.projectArtifactUpdated(mapped);
+    return mapped;
   }
 
   static deleteArtifact(id: string): boolean {

@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { problems } from "@/db/schema";
 import { eq, desc, and, inArray } from "drizzle-orm";
 import { generateId } from "@/utils";
+import { InboxProjectionService } from "@/modules/inbox/projection";
 
 export type ProblemPriority = "critical" | "warning" | "info";
 export type ProblemStatus = "open" | "fixed" | "ignored" | "assigned";
@@ -94,7 +95,16 @@ export const ProblemService = {
     db.insert(problems)
       .values(problem as any)
       .run();
-    return { ...problem, actions: data.actions || [], status: "open" } as Problem;
+    const created = { ...problem, actions: data.actions || [], status: "open" } as Problem;
+    InboxProjectionService.projectProblemCreated({
+      goalId: created.goalId || undefined,
+      title: created.title,
+      priority: created.priority,
+      context: created.context || undefined,
+      stateId: created.stateId || undefined,
+      problemId: created.id,
+    });
+    return created;
   },
 
   update(
@@ -109,7 +119,17 @@ export const ProblemService = {
     if (data.source !== undefined) updates.source = data.source;
     if (data.context !== undefined) updates.context = data.context;
     db.update(problems).set(updates).where(eq(problems.id, id)).run();
-    return ProblemService.get(id);
+    const updated = ProblemService.get(id);
+    if (updated) {
+      InboxProjectionService.projectProblemUpdated({
+        goalId: updated.goalId || undefined,
+        title: updated.title,
+        status: updated.status,
+        context: updated.context || undefined,
+        problemId: updated.id,
+      });
+    }
+    return updated;
   },
 
   delete(id: string): boolean {

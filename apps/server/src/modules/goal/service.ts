@@ -3,6 +3,7 @@ import { goals, states } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { generateId, timestamp } from "@/utils";
 import { eventBus } from "@/modules/event/event-bus";
+import { InboxProjectionService } from "@/modules/inbox/projection";
 import type { Goal, Status } from "@/types";
 import type { GoalModel } from "@/modules/goal/model";
 
@@ -29,6 +30,7 @@ export abstract class GoalService {
 
     const goal = GoalService.get(id);
     eventBus.emit("goal_created", { goalId: goal!.id, title: goal!.title }, goal!.id);
+    InboxProjectionService.projectGoalCreated(goal!.id);
     return goal!;
   }
 
@@ -65,6 +67,8 @@ export abstract class GoalService {
     const updated = GoalService.get(id)!;
     if (patch.status === "completed") {
       eventBus.emit("goal_completed", { goalId: id }, id);
+      InboxProjectionService.projectGoalCompleted(id);
+      InboxProjectionService.updateThreadStatusForGoal(id, "completed");
     }
     return updated;
   }

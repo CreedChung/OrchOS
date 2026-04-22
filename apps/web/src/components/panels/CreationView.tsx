@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useUser } from "@clerk/clerk-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Add01Icon,
   Chat01Icon,
   Delete02Icon,
   Edit02Icon,
-  CheckmarkCircle02Icon,
-  Alert02Icon,
   Loading01Icon,
   Robot02Icon,
   ArrowUp01Icon,
@@ -34,6 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
+import { useConversationStore } from "@/lib/stores/conversation";
 import { m } from "@/paraglide/messages";
 import { toast } from "sonner";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
@@ -54,7 +54,7 @@ interface CreationViewProps {
 
 
 
-function MessageBubble({ msg }: { msg: UIMessage }) {
+function MessageBubble({ msg, userImageUrl }: { msg: UIMessage; userImageUrl?: string }) {
   const isUser = msg.role === "user";
   const metadata = (msg.metadata ?? {}) as {
     responseTime?: number;
@@ -67,18 +67,26 @@ function MessageBubble({ msg }: { msg: UIMessage }) {
   };
 
   return (
-    <div className={cn("flex w-full gap-2", isUser ? "pl-6" : "pr-6")}>
+    <div className="flex w-full gap-2">
       <span
         className={cn(
-          "inline-flex size-[18px] shrink-0 items-center justify-center rounded text-[10px] font-mono font-semibold leading-none mt-[3px]",
+          "inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium leading-none mt-[3px] overflow-hidden",
           isUser
             ? "bg-primary/10 text-primary"
             : metadata.error
               ? "bg-destructive/10 text-destructive"
-              : "bg-muted text-muted-foreground",
+              : "bg-muted",
         )}
       >
-        {isUser ? "›" : "◆"}
+        {isUser ? (
+          userImageUrl ? (
+            <img src={userImageUrl} alt="" className="size-full object-cover" />
+          ) : (
+            "U"
+          )
+        ) : (
+          <img src="/logo.svg" alt="" className="size-4" />
+        )}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-0.5">
@@ -147,13 +155,25 @@ function mapConversationMessagesToUiMessages(messages: ConversationMessage[]): U
 }
 
 export function CreationView({ agents, runtimes, projects, archiveFilter, settings, onSettingsChange }: CreationViewProps) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [convToDelete, setConvToDelete] = useState<string | null>(null);
-  const [hasLoadedConversations, setHasLoadedConversations] = useState(false);
   const autoCreatingConversationRef = useRef(false);
+
+  const {
+    conversations,
+    activeConversationId,
+    messagesByConversationId,
+    hasLoadedConversations,
+    loadConversations,
+    setActiveConversationId,
+    loadMessages,
+    createConversation,
+    updateConversation,
+    deleteConversation,
+  } = useConversationStore();
+
+  const messages = activeConversationId ? (messagesByConversationId[activeConversationId] || []) : [];
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -182,26 +202,6 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
     return conversations.filter((c) => !c.deleted);
   }, [archiveFilter, conversations]);
 
-  const loadConversations = useCallback(async () => {
-    try {
-      const list = await api.listConversations();
-      setConversations(list);
-    } catch (err) {
-      console.error("Failed to load conversations:", err);
-    } finally {
-      setHasLoadedConversations(true);
-    }
-  }, []);
-
-  const loadMessages = useCallback(async (convId: string) => {
-    try {
-      const msgs = await api.getConversationMessages(convId);
-      setMessages(msgs);
-    } catch (err) {
-      console.error("Failed to load messages:", err);
-    }
-  }, []);
-
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
@@ -209,8 +209,6 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
   useEffect(() => {
     if (activeConversationId) {
       loadMessages(activeConversationId);
-    } else {
-      setMessages([]);
     }
   }, [activeConversationId, loadMessages]);
 
@@ -220,15 +218,13 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
 
   const handleNewConversation = useCallback(async () => {
     try {
-      const conv = await api.createConversation({
+      await createConversation({
         runtimeId: settings?.defaultRuntimeId || undefined,
       });
-      await loadConversations();
-      setActiveConversationId(conv.id);
     } catch (err) {
       console.error("Failed to create conversation:", err);
     }
-  }, [loadConversations, settings?.defaultRuntimeId]);
+  }, [createConversation, settings?.defaultRuntimeId]);
 
   useEffect(() => {
     if (!hasLoadedConversations) return;
@@ -262,22 +258,18 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
     filteredConversations,
     handleNewConversation,
     hasLoadedConversations,
+    setActiveConversationId,
   ]);
 
   const handleDeleteConversation = useCallback(async () => {
     if (!convToDelete) return;
     try {
-      await api.deleteConversation(convToDelete);
-      if (activeConversationId === convToDelete) {
-        setActiveConversationId(null);
-        setMessages([]);
-      }
+      await deleteConversation(convToDelete);
       setConvToDelete(null);
-      await loadConversations();
     } catch (err) {
       console.error("Failed to delete conversation:", err);
     }
-  }, [convToDelete, activeConversationId, loadConversations]);
+  }, [convToDelete, deleteConversation]);
 
   const handleUpdateConversation = useCallback(
     async (
@@ -292,13 +284,12 @@ export function CreationView({ agents, runtimes, projects, archiveFilter, settin
       },
     ) => {
       try {
-        await api.updateConversation(id, data);
-        await loadConversations();
+        await updateConversation(id, data);
       } catch (err) {
         console.error("Failed to update conversation:", err);
       }
     },
-    [loadConversations],
+    [updateConversation],
   );
 
   return (
@@ -494,6 +485,7 @@ function ChatArea({
   onSetDefaultRuntime,
   onSendMessage,
 }: ChatAreaProps) {
+  const { user } = useUser();
   const [input, setInput] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
@@ -519,19 +511,6 @@ function ChatArea({
     () => runtimes.find((r) => r.id === conversation.runtimeId),
     [runtimes, conversation.runtimeId],
   );
-  const selectedProject = useMemo(
-    () => projects.find((p) => p.id === conversation.projectId),
-    [projects, conversation.projectId],
-  );
-  const latestAssistantMessage = useMemo(
-    () => [...messages].reverse().find((msg) => msg.role === "assistant"),
-    [messages],
-  );
-  const latestMetadata = (latestAssistantMessage?.metadata ?? {}) as {
-    executionMode?: "sandbox" | "local";
-    sandboxStatus?: "created" | "reused" | "fallback" | "required_failed";
-    sandboxVmId?: string;
-  };
 
   const syncTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -611,7 +590,6 @@ function ChatArea({
     <div className="relative flex flex-1 flex-col overflow-hidden">
       {/* Header */}
       <div className="flex h-14 items-center justify-between gap-3 border-b border-border px-4">
-        {/* Title */}
         {editingTitle ? (
           <input
             autoFocus
@@ -638,7 +616,6 @@ function ChatArea({
         )}
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Project selector */}
           <Select
             value={conversation.projectId || "__none__"}
             onValueChange={(v) =>
@@ -663,7 +640,6 @@ function ChatArea({
             </SelectContent>
           </Select>
 
-          {/* Agent/Runtime selector with hover popover */}
           <RuntimeSelector
             runtimes={runtimes}
             agents={agents.filter((a) => a.enabled)}
@@ -672,46 +648,6 @@ function ChatArea({
             onSelect={(runtimeId) => onUpdateConversation(conversation.id, { runtimeId })}
             onSetDefault={onSetDefaultRuntime}
           />
-        </div>
-      </div>
-
-      <div className="border-b border-border/70 bg-muted/20 px-4 py-2">
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-2 py-1">
-            <HugeiconsIcon icon={Folder01Icon} className="size-3" />
-            <span>{selectedProject?.name || m.no_project()}</span>
-          </div>
-          {conversation.projectId && (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/25 bg-sky-500/10 px-2 py-1 text-sky-700 dark:text-sky-300">
-              <span>Project-bound chats require sandbox.</span>
-            </div>
-          )}
-          {latestMetadata.executionMode === "sandbox" && (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-emerald-700 dark:text-emerald-300">
-              <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3" />
-              <span>
-                Sandbox {latestMetadata.sandboxStatus === "created" ? "created" : "active"}
-              </span>
-              {latestMetadata.sandboxVmId && <span className="font-mono">{latestMetadata.sandboxVmId}</span>}
-            </div>
-          )}
-          {latestMetadata.sandboxStatus === "fallback" && (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-1 text-amber-700 dark:text-amber-300">
-              <HugeiconsIcon icon={Alert02Icon} className="size-3" />
-              <span>Sandbox unavailable, using local project path</span>
-            </div>
-          )}
-          {latestMetadata.sandboxStatus === "required_failed" && (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-destructive/25 bg-destructive/10 px-2 py-1 text-destructive">
-              <HugeiconsIcon icon={Alert02Icon} className="size-3" />
-              <span>Sandbox required. Message was blocked because sandbox startup failed.</span>
-            </div>
-          )}
-          {!conversation.projectId && (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-2 py-1">
-              <span>Select a project to keep agent execution scoped.</span>
-            </div>
-          )}
         </div>
       </div>
 
@@ -732,7 +668,7 @@ function ChatArea({
             </div>
           )}
           {messages.map((msg) => (
-            <MessageBubble key={msg.id} msg={msg} />
+            <MessageBubble key={msg.id} msg={msg} userImageUrl={user?.imageUrl} />
           ))}
           {sending && <ChatThinkingState />}
           {chatError && (
