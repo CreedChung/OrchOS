@@ -1,923 +1,459 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  FolderIcon,
   Add01Icon,
-  Delete02Icon,
+  Alert01Icon,
+  CheckmarkCircle02Icon,
   Download01Icon,
+  Folder01Icon,
+  FolderIcon,
+  InformationCircleIcon,
+  Loading03Icon,
+  PlayCircleIcon,
   Link01Icon,
-  Edit02Icon,
-  Loading01Icon,
-  Target01Icon,
-  ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppDialog } from "@/components/ui/app-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { DirectoryPickerDialog } from "@/components/ui/directory-picker-dialog";
-import { StateBoard } from "@/components/panels/StateBoard";
-import { GoalActions } from "@/components/panels/GoalActions";
-import { api } from "@/lib/api";
+import { api, type InboxThread } from "@/lib/api";
+import { useConversationStore } from "@/lib/stores/conversation";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
-import { isSystemProblem } from "@/lib/types";
-import type {
-  Project,
-  Goal,
-  StateItem,
-  Artifact,
-  ActivityEntry,
-  Problem,
-  Command,
-  AgentProfile,
-} from "@/lib/types";
+import type { Command, Goal, Problem, Project } from "@/lib/types";
 
-type GoalStatusFilter = "all" | "active" | "completed" | "paused";
-
-const goalStatusColor: Record<Goal["status"], string> = {
-  active: "bg-blue-500",
-  completed: "bg-emerald-500",
-  paused: "bg-amber-500",
-};
-
-const goalStatusLabel: Record<string, string> = {
-  active: m.goal_active(),
-  completed: m.goal_completed(),
-  paused: m.goal_paused(),
-};
+type BoardColumnId = "waiting_user" | "blocked" | "in_progress" | "completed";
 
 interface ProjectsViewProps {
   projects: Project[];
   goals: Goal[];
-  states: StateItem[];
-  artifacts: Artifact[];
-  activities: ActivityEntry[];
   problems: Problem[];
-  activeGoalId: string | null;
-  activeGoal: Goal | null;
-  activeCommand: Command | undefined;
-  agents: AgentProfile[];
-  onSelectGoal: (id: string) => void;
-  onStateAction: (stateId: string, action: string) => void;
-  onProblemAction: (problemId: string, action: string) => void;
-  onPauseGoal: () => void;
-  onResumeGoal: () => void;
-  onDeleteGoal: (goalId?: string) => void;
-  onRefresh: () => void;
+  commands: Command[];
 }
 
-export function ProjectsView({
-  projects,
-  goals,
-  states,
-  artifacts,
-  activities,
-  problems,
-  activeGoalId,
-  activeGoal,
-  activeCommand,
-  agents,
-  onSelectGoal,
-  onStateAction,
-  onProblemAction,
-  onPauseGoal,
-  onResumeGoal,
-  onDeleteGoal,
-  onRefresh,
-}: ProjectsViewProps) {
-  const [showForm, setShowForm] = useState(false);
-  const [formMode, setFormMode] = useState<"clone" | "local">("clone");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: "", path: "", repositoryUrl: "" });
-  const [loading, setLoading] = useState(false);
-  const [cloningId, setCloningId] = useState<string | null>(null);
-  const [cloneResults, setCloneResults] = useState<
-    Record<string, { success: boolean; output?: string; error?: string; path: string }>
-  >({});
-  const [showDirectoryPicker, setShowDirectoryPicker] = useState(false);
-  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [goalStatusFilter, setGoalStatusFilter] = useState<GoalStatusFilter>("all");
+interface BoardCard {
+  goal: Goal;
+  command?: Command;
+  problems: Problem[];
+  column: BoardColumnId;
+}
 
-  useEffect(() => {
-    if (formData.repositoryUrl && formMode === "clone") {
-      const repoName =
-        formData.repositoryUrl
-          .split("/")
-          .pop()
-          ?.replace(/\.git$/, "") || "";
-      if (repoName && !formData.name) {
-        setFormData((prev) => ({
-          ...prev,
-          name: repoName.charAt(0).toUpperCase() + repoName.slice(1),
-          path: `~/Projects/${repoName}`,
-        }));
-      }
-    }
-  }, [formData.repositoryUrl, formMode]);
+const boardColumns: Array<{
+  id: BoardColumnId;
+  label: string;
+  icon: typeof PlayCircleIcon;
+  tone: string;
+}> = [
+  { id: "waiting_user", label: "Waiting User", icon: InformationCircleIcon, tone: "text-violet-600 dark:text-violet-400" },
+  { id: "blocked", label: "Blocked", icon: Alert01Icon, tone: "text-destructive" },
+  { id: "in_progress", label: "In Progress", icon: PlayCircleIcon, tone: "text-sky-600 dark:text-sky-400" },
+  { id: "completed", label: "Completed", icon: CheckmarkCircle02Icon, tone: "text-emerald-600 dark:text-emerald-400" },
+];
 
-  useEffect(() => {
-    if (!selectedProjectId && projects.length > 0) {
-      setSelectedProjectId(projects[0].id);
-    }
-  }, [projects, selectedProjectId]);
+function formatTime(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return `${date.toISOString().split("T")[0]} ${date.toISOString().split("T")[1]?.slice(0, 5) ?? ""}`;
+}
 
-  const goalsByProject = new Map<string, Goal[]>();
-  const unassignedGoals: Goal[] = [];
+function resolveBoardColumn(goal: Goal, relatedProblems: Problem[]): BoardColumnId {
+  if (goal.status === "completed") return "completed";
 
-  for (const goal of goals) {
-    if (goal.projectId) {
-      const list = goalsByProject.get(goal.projectId) || [];
-      list.push(goal);
-      goalsByProject.set(goal.projectId, list);
-    } else {
-      unassignedGoals.push(goal);
+  const openProblems = relatedProblems.filter((problem) => problem.status === "open");
+  const waitingUser = openProblems.some((problem) => (problem.source || "").includes("agent_request"));
+  if (waitingUser) return "waiting_user";
+
+  if (goal.status === "paused" || openProblems.length > 0) return "blocked";
+
+  return "in_progress";
+}
+
+function buildConversationLookup(threads: InboxThread[]) {
+  const byCommandId = new Map<string, string>();
+
+  for (const thread of threads) {
+    if (thread.commandId && thread.conversationId && !byCommandId.has(thread.commandId)) {
+      byCommandId.set(thread.commandId, thread.conversationId);
     }
   }
 
-  const handleCreate = async () => {
-    if (!formData.name || !formData.path) return;
-    setLoading(true);
+  return byCommandId;
+}
+
+export function ProjectsView({ projects, goals, problems, commands }: ProjectsViewProps) {
+  const navigate = useNavigate();
+  const {
+    conversations,
+    loadConversations,
+    loadMessages,
+    setActiveConversationId,
+  } = useConversationStore();
+  const [threads, setThreads] = useState<InboxThread[]>([]);
+  const [loadingThreads, setLoadingThreads] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | "__all__">("__all__");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showDirectoryPicker, setShowDirectoryPicker] = useState(false);
+  const [creatingProject, setCreatingProject] = useState(false);
+  const [formData, setFormData] = useState({ name: "", path: "", repositoryUrl: "" });
+
+  useEffect(() => {
+    void loadConversations();
+  }, [loadConversations]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadThreads = async () => {
+      setLoadingThreads(true);
+      try {
+        const result = await api.listInboxThreads();
+        if (!cancelled) setThreads(result);
+      } catch (err) {
+        if (!cancelled) console.error("Failed to load board thread mapping:", err);
+      } finally {
+        if (!cancelled) setLoadingThreads(false);
+      }
+    };
+
+    void loadThreads();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const commandById = useMemo(() => new Map(commands.map((command) => [command.id, command])), [commands]);
+  const projectById = useMemo(() => new Map(projects.map((project) => [project.id, project])), [projects]);
+  const conversationByCommandId = useMemo(() => buildConversationLookup(threads), [threads]);
+
+  const boardByProject = useMemo(() => {
+    const grouped = new Map<string, { project?: Project; cards: BoardCard[] }>();
+
+    for (const goal of goals) {
+      const relatedProblems = problems.filter((problem) => problem.goalId === goal.id);
+      const projectKey = goal.projectId ?? "__unassigned__";
+      const entry = grouped.get(projectKey) ?? {
+        project: goal.projectId ? projectById.get(goal.projectId) : undefined,
+        cards: [],
+      };
+
+      entry.cards.push({
+        goal,
+        command: goal.commandId ? commandById.get(goal.commandId) : undefined,
+        problems: relatedProblems,
+        column: resolveBoardColumn(goal, relatedProblems),
+      });
+      grouped.set(projectKey, entry);
+    }
+
+    return Array.from(grouped.entries())
+      .map(([projectId, value]) => ({
+        projectId,
+        project: value.project,
+        cards: value.cards.sort((a, b) => Date.parse(b.goal.updatedAt) - Date.parse(a.goal.updatedAt)),
+      }))
+      .sort((a, b) => {
+        if (a.projectId === "__unassigned__") return 1;
+        if (b.projectId === "__unassigned__") return -1;
+        return (a.project?.name || "").localeCompare(b.project?.name || "");
+      });
+  }, [commandById, goals, problems, projectById]);
+
+  const visibleBoardProjects = useMemo(
+    () =>
+      selectedProjectId === "__all__"
+        ? boardByProject
+        : boardByProject.filter((entry) => entry.projectId === selectedProjectId),
+    [boardByProject, selectedProjectId],
+  );
+
+  const projectCounts = useMemo(
+    () =>
+      new Map(
+        boardByProject.map((entry) => [
+          entry.projectId,
+          entry.cards.filter((card) => card.column === "in_progress" || card.column === "waiting_user" || card.column === "blocked").length,
+        ]),
+      ),
+    [boardByProject],
+  );
+
+  const openGoal = async (card: BoardCard) => {
+    const directConversationId = card.goal.commandId ? conversationByCommandId.get(card.goal.commandId) : undefined;
+    const fallbackConversation = conversations.find((conversation) => conversation.projectId === card.goal.projectId);
+    const targetConversationId = directConversationId || fallbackConversation?.id;
+
+    if (targetConversationId) {
+      setActiveConversationId(targetConversationId);
+      await loadMessages(targetConversationId);
+    }
+
+    await navigate({ to: "/dashboard/creation" });
+  };
+
+  const handleCreateProject = async () => {
+    if (!formData.name.trim() || !formData.path.trim()) return;
+
+    setCreatingProject(true);
     try {
       await api.createProject({
-        name: formData.name,
-        path: formData.path,
-        repositoryUrl:
-          formMode === "clone" ? formData.repositoryUrl.trim() || undefined : undefined,
+        name: formData.name.trim(),
+        path: formData.path.trim(),
+        repositoryUrl: formData.repositoryUrl.trim() || undefined,
       });
-      const currentRepoUrl = formData.repositoryUrl;
+      setShowCreateDialog(false);
       setFormData({ name: "", path: "", repositoryUrl: "" });
-      setShowForm(false);
-      onRefresh();
-
-      if (formMode === "clone" && currentRepoUrl) {
-        setTimeout(async () => {
-          const newProjects = await api.listProjects();
-          const newProject = newProjects.find(
-            (p) => p.name === formData.name && p.repositoryUrl === currentRepoUrl,
-          );
-          if (newProject) {
-            handleClone(newProject.id);
-          }
-        }, 500);
+      const nextProjects = await api.listProjects();
+      const nextProject = nextProjects.find((project) => project.name === formData.name.trim());
+      if (nextProject) {
+        setSelectedProjectId(nextProject.id);
       }
+      window.location.reload();
     } catch (err) {
       console.error("Failed to create project:", err);
     } finally {
-      setLoading(false);
+      setCreatingProject(false);
     }
-  };
-
-  const handleEdit = (project: Project) => {
-    setEditingId(project.id);
-    setFormData({
-      name: project.name,
-      path: project.path,
-      repositoryUrl: project.repositoryUrl || "",
-    });
-    setFormMode(project.repositoryUrl ? "clone" : "local");
-    setShowForm(true);
-  };
-
-  const handleUpdate = async () => {
-    if (!editingId || !formData.name || !formData.path) return;
-    setLoading(true);
-    try {
-      await api.updateProject(editingId, {
-        name: formData.name,
-        path: formData.path,
-        repositoryUrl: formData.repositoryUrl.trim() || undefined,
-      });
-      setFormData({ name: "", path: "", repositoryUrl: "" });
-      setEditingId(null);
-      setShowForm(false);
-      onRefresh();
-    } catch (err) {
-      console.error("Failed to update project:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm(m.env_delete_project_confirm())) return;
-    try {
-      await api.deleteProject(id);
-      if (expandedProjectId === id) setExpandedProjectId(null);
-      onRefresh();
-    } catch (err) {
-      console.error("Failed to delete project:", err);
-    }
-  };
-
-  const handleClone = async (id: string, force: boolean = false) => {
-    setCloningId(id);
-    try {
-      const result = await api.cloneProject(id, { force });
-      setCloneResults((prev) => ({ ...prev, [id]: result }));
-    } catch (err) {
-      console.error("Failed to clone:", err);
-      setCloneResults((prev) => ({
-        ...prev,
-        [id]: {
-          success: false,
-          output: "",
-          error: err instanceof Error ? err.message : "Clone failed",
-          path: "",
-        },
-      }));
-    } finally {
-      setCloningId(null);
-    }
-  };
-
-  const handleCancel = () => {
-    setShowForm(false);
-    setEditingId(null);
-    setFormData({ name: "", path: "", repositoryUrl: "" });
-  };
-
-  const toggleProject = (projectId: string) => {
-    setExpandedProjectId((prev) => (prev === projectId ? null : projectId));
-  };
-
-  const filteredGoalsForProject = (projectId: string) => {
-    const projectGoals = goalsByProject.get(projectId) || [];
-    if (goalStatusFilter === "all") return projectGoals;
-    return projectGoals.filter((g) => g.status === goalStatusFilter);
   };
 
   return (
-    <div className="flex flex-1 overflow-hidden">
+    <div className="flex flex-1 overflow-hidden bg-background">
       <div className="flex h-full w-72 flex-col border-r border-border bg-background">
         <div className="flex h-14 items-center justify-between border-b border-border px-4">
           <h2 className="text-sm font-semibold text-foreground">{m.project()}</h2>
           <Button
             size="icon-sm"
             variant="ghost"
-            onClick={() => {
-              setEditingId(null);
-              setFormData({ name: "", path: "", repositoryUrl: "" });
-              setFormMode("clone");
-              setShowForm(true);
-            }}
+            onClick={() => setShowCreateDialog(true)}
+            title={m.add()}
           >
             <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
           </Button>
         </div>
 
-        {goals.length > 0 && (
-          <div className="flex items-center gap-1 border-b border-border px-3 py-1.5">
-            {(["all", "active", "completed", "paused"] as GoalStatusFilter[]).map((filter) => {
-              const count =
-                filter === "all" ? goals.length : goals.filter((g) => g.status === filter).length;
-              return (
-                <button
-                  key={filter}
-                  onClick={() => setGoalStatusFilter(filter)}
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors",
-                    goalStatusFilter === filter
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                  )}
-                >
-                  {filter === "all" ? m.all() : goalStatusLabel[filter] || filter}
-                  <span className="tabular-nums opacity-60">{count}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto">
+        <ScrollArea className="flex-1">
           <div className="p-2 space-y-0.5">
-            {projects.map((project) => {
-              const isExpanded = expandedProjectId === project.id;
-              const projectGoals = filteredGoalsForProject(project.id);
-              const totalGoals = goalsByProject.get(project.id)?.length || 0;
-              const isCloning = cloningId === project.id;
-              const cloneResult = cloneResults[project.id];
-              const hasRepo = cloneResult?.success;
+            <button
+              type="button"
+              onClick={() => setSelectedProjectId("__all__")}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
+                selectedProjectId === "__all__"
+                  ? "bg-accent text-accent-foreground font-medium"
+                  : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
+              )}
+            >
+              <HugeiconsIcon icon={Folder01Icon} className="size-3.5 shrink-0 opacity-70" />
+              <span className="flex-1 truncate text-xs">全部项目</span>
+              <span className="text-[10px] tabular-nums text-muted-foreground">{goals.length}</span>
+            </button>
 
-              return (
-                <div key={project.id}>
-                  <div className="flex items-center">
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setSelectedProjectId(project.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          setSelectedProjectId(project.id);
-                        }
-                      }}
-                      className={cn(
-                        "group flex flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left transition-colors flex-nowrap hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        selectedProjectId === project.id && "bg-accent",
-                      )}
-                    >
-                      <HugeiconsIcon
-                        icon={FolderIcon}
-                        className="size-3.5 shrink-0 text-primary/70"
-                      />
-                      <span className="flex-1 truncate text-xs font-medium text-foreground">
-                        {project.name}
-                      </span>
-                      {hasRepo && (
-                        <Badge
-                          variant="outline"
-                          className="text-[8px] text-emerald-500 border-emerald-500/30 px-1 py-0 h-3.5"
-                        >
-                          Cloned
-                        </Badge>
-                      )}
-                      {totalGoals > 0 && (
-                        <span className="text-[10px] tabular-nums text-muted-foreground">
-                          {totalGoals}
-                        </span>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(project);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
-                        title={m.edit()}
-                      >
-                        <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(project.id);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
-                        title={m.delete()}
-                      >
-                        <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                      </Button>
-                    </div>
-                    {totalGoals > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => toggleProject(project.id)}
-                        className="shrink-0"
-                        title={isExpanded ? "Collapse" : "Expand"}
-                      >
-                        <HugeiconsIcon
-                          icon={ArrowRight01Icon}
-                          className={cn("size-3.5 transition-transform", isExpanded && "rotate-90")}
-                        />
-                      </Button>
-                    )}
-                  </div>
+            {projects.map((project) => (
+              <button
+                key={project.id}
+                type="button"
+                onClick={() => setSelectedProjectId(project.id)}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
+                  selectedProjectId === project.id
+                    ? "bg-accent text-accent-foreground font-medium"
+                    : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
+                )}
+              >
+                <HugeiconsIcon icon={FolderIcon} className="size-3.5 shrink-0 opacity-70" />
+                <span className="flex-1 truncate text-xs">{project.name}</span>
+                <span className="text-[10px] tabular-nums text-muted-foreground">{projectCounts.get(project.id) || 0}</span>
+              </button>
+            ))}
 
-                  {isExpanded && (
-                    <div className="ml-5 space-y-0.5 border-l border-border/50 pl-2 pb-1">
-                      <div className="flex items-center gap-1.5 px-2 py-1">
-                        {project.repositoryUrl && (
-                          <a
-                            href={project.repositoryUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[10px] text-primary/70 hover:text-primary transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <HugeiconsIcon icon={Link01Icon} className="size-2.5" />
-                            {m.env_repo_link()}
-                          </a>
-                        )}
-                        <span className="text-[10px] text-muted-foreground/50 truncate font-mono">
-                          {project.path}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1 px-2 py-0.5">
-                        {project.repositoryUrl && (
-                          <button
-                            onClick={() => handleClone(project.id, !!cloneResult?.success)}
-                            disabled={isCloning}
-                            className={cn(
-                              "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-medium transition-colors",
-                              isCloning
-                                ? "bg-muted text-muted-foreground cursor-wait"
-                                : "bg-primary/10 text-primary hover:bg-primary/20",
-                            )}
-                          >
-                            <HugeiconsIcon
-                              icon={isCloning ? Loading01Icon : Download01Icon}
-                              className={cn("size-2.5", isCloning && "animate-spin")}
-                            />
-                            {isCloning ? "Cloning..." : "Clone"}
-                          </button>
-                        )}
-                      </div>
-
-                      {cloneResult && !cloneResult.success && cloneResult.error && (
-                        <div className="mx-2 rounded bg-destructive/10 px-2 py-1 text-[9px] text-destructive">
-                          {cloneResult.error}
-                        </div>
-                      )}
-                      {cloneResult?.success && (
-                        <div className="mx-2 rounded bg-emerald-500/10 px-2 py-1 text-[9px] text-emerald-600 dark:text-emerald-400">
-                          Cloned to: {cloneResult.path}
-                        </div>
-                      )}
-
-                      {projectGoals.map((goal) => (
-                        <button
-                          key={goal.id}
-                          onClick={() => onSelectGoal(goal.id)}
-                          className={cn(
-                            "flex w-full items-start gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors",
-                            goal.id === activeGoalId
-                              ? "bg-accent text-accent-foreground"
-                              : "text-foreground/80 hover:bg-accent/50",
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              "mt-1 size-1.5 shrink-0 rounded-full",
-                              goalStatusColor[goal.status],
-                            )}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p
-                              className={cn(
-                                "text-xs font-medium truncate",
-                                goal.id === activeGoalId && "text-accent-foreground",
-                              )}
-                            >
-                              {goal.title}
-                            </p>
-                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  "text-[9px] px-1 py-0 h-4",
-                                  goal.id === activeGoalId && "border-accent-foreground/20",
-                                )}
-                              >
-                                {goalStatusLabel[goal.status] || goal.status}
-                              </Badge>
-                              {goal.watchers.length > 0 && (
-                                <span className="text-[9px] text-muted-foreground">
-                                  {goal.watchers.map((w) => {
-                                    const agent = agents.find((a) => a.name === w);
-                                    return agent ? agent.name : w;
-                                  }).join(", ")}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                      {projectGoals.length === 0 &&
-                        goalStatusFilter !== "all" &&
-                        totalGoals > 0 && (
-                          <p className="px-2.5 py-1 text-[10px] text-muted-foreground/60">
-                            No {goalStatusFilter} goals
-                          </p>
-                        )}
-                      {totalGoals === 0 && (
-                        <p className="px-2.5 py-1 text-[10px] text-muted-foreground/60">
-                          No goals yet
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {unassignedGoals.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 px-2.5 py-1.5">
-                  <HugeiconsIcon
-                    icon={Target01Icon}
-                    className="size-3.5 text-muted-foreground/50"
-                  />
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {m.no_project()}
-                  </span>
-                  <span className="ml-auto text-[10px] tabular-nums text-muted-foreground">
-                    {unassignedGoals.length}
-                  </span>
-                </div>
-                {unassignedGoals
-                  .filter((g) => goalStatusFilter === "all" || g.status === goalStatusFilter)
-                  .map((goal) => (
-                    <button
-                      key={goal.id}
-                      onClick={() => onSelectGoal(goal.id)}
-                      className={cn(
-                        "flex w-full items-start gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors",
-                        goal.id === activeGoalId
-                          ? "bg-accent text-accent-foreground"
-                          : "text-foreground/80 hover:bg-accent/50",
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "mt-1 size-1.5 shrink-0 rounded-full",
-                          goalStatusColor[goal.status],
-                        )}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={cn(
-                            "text-xs font-medium truncate",
-                            goal.id === activeGoalId && "text-accent-foreground",
-                          )}
-                        >
-                          {goal.title}
-                        </p>
-                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 mt-0.5">
-                          {goalStatusLabel[goal.status] || goal.status}
-                        </Badge>
-                      </div>
-                    </button>
-                  ))}
-              </div>
-            )}
-
-            {projects.length === 0 && (
-              <div className="py-8 text-center">
-                <HugeiconsIcon
-                  icon={FolderIcon}
-                  className="mx-auto size-6 text-muted-foreground/30 mb-2"
-                />
+            {projects.length === 0 ? (
+              <div className="px-3 py-8 text-center">
+                <HugeiconsIcon icon={FolderIcon} className="mx-auto mb-2 size-5 text-muted-foreground/30" />
                 <p className="text-sm text-muted-foreground">{m.env_no_projects()}</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">{m.env_no_projects_desc()}</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-3"
-                  onClick={() => {
-                    setEditingId(null);
-                    setFormData({ name: "", path: "", repositoryUrl: "" });
-                    setFormMode("clone");
-                    setShowForm(true);
-                  }}
-                >
-                  <HugeiconsIcon icon={Add01Icon} className="size-3.5 mr-1.5" />
+                <Button size="sm" variant="outline" className="mt-3" onClick={() => setShowCreateDialog(true)}>
+                  <HugeiconsIcon icon={Add01Icon} className="mr-1.5 size-3.5" />
                   {m.add()} {m.project()}
                 </Button>
               </div>
-            )}
+            ) : null}
           </div>
-        </div>
+        </ScrollArea>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        {activeGoal ? (
-          <StateBoard
-            goal={activeGoal}
-            states={states}
-            artifacts={artifacts}
-            activities={activities}
-            projects={projects}
-            command={activeCommand}
-            problems={{
-              critical: problems.filter(
-                (p) =>
-                  p.status === "open" &&
-                  p.priority === "critical" &&
-                  isSystemProblem(p) &&
-                  p.goalId === activeGoalId,
-              ).length,
-              warning: problems.filter(
-                (p) =>
-                  p.status === "open" &&
-                  p.priority === "warning" &&
-                  isSystemProblem(p) &&
-                  p.goalId === activeGoalId,
-              ).length,
-              info: problems.filter(
-                (p) =>
-                  p.status === "open" &&
-                  p.priority === "info" &&
-                  isSystemProblem(p) &&
-                  p.goalId === activeGoalId,
-              ).length,
-            }}
-            systemProblems={problems.filter(
-              (p) => p.status === "open" && isSystemProblem(p) && p.goalId === activeGoalId,
-            )}
-            onStateAction={onStateAction}
-            onProblemAction={onProblemAction}
-            onAutoModeToggle={activeGoal.status === "active" ? onPauseGoal : onResumeGoal}
-            goalActions={
-              <GoalActions
-                goal={activeGoal}
-                onPause={onPauseGoal}
-                onResume={onResumeGoal}
-                onDelete={onDeleteGoal}
-              />
-            }
-          />
-        ) : selectedProjectId ? (
-          (() => {
-            const selectedProject = projects.find((p) => p.id === selectedProjectId);
-            const projectGoals = goalsByProject.get(selectedProjectId) || [];
-            const isCloning = cloningId === selectedProjectId;
-            const cloneResult = cloneResults[selectedProjectId];
-            if (!selectedProject) return null;
+      <ScrollArea className="flex-1">
+        <div className="space-y-6 px-6 py-6">
+          {loadingThreads ? (
+            <div className="flex justify-end">
+              <div className="inline-flex items-center gap-2 rounded-full bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+                <HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
+                正在同步线程映射...
+              </div>
+            </div>
+          ) : null}
+
+          {visibleBoardProjects.map(({ projectId, project, cards }) => {
+            const cardsByColumn = new Map<BoardColumnId, BoardCard[]>();
+            for (const column of boardColumns) cardsByColumn.set(column.id, []);
+            for (const card of cards) cardsByColumn.get(card.column)?.push(card);
+
             return (
-              <div className="flex h-full flex-col overflow-hidden">
-                <div className="flex h-14 items-center justify-between border-b border-border px-6">
-                  <div className="flex items-center gap-3">
-                    <HugeiconsIcon icon={FolderIcon} className="size-5 text-primary/70" />
-                    <h2 className="text-sm font-semibold text-foreground">
-                      {selectedProject.name}
-                    </h2>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleEdit(selectedProject)}
-                      title={m.edit()}
-                    >
-                      <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleDelete(selectedProject.id)}
-                      className="text-muted-foreground hover:text-destructive"
-                      title={m.delete()}
-                    >
-                      <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex-1 overflow-y-auto p-6">
-                  <div className="space-y-6">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-xs text-muted-foreground">{m.env_project_path()}</label>
-                        <p className="mt-1 text-sm font-mono text-foreground">
-                          {selectedProject.path}
-                        </p>
-                      </div>
-                      {selectedProject.repositoryUrl && (
-                        <div>
-                          <label className="text-xs text-muted-foreground">{m.env_project_repo_url()}</label>
-                          <a
-                            href={selectedProject.repositoryUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1 flex items-center gap-1.5 text-sm text-primary hover:underline"
-                          >
-                            <HugeiconsIcon icon={Link01Icon} className="size-3.5" />
-                            {selectedProject.repositoryUrl}
-                          </a>
+              <section key={projectId} className="space-y-4">
+                <div className="grid gap-4 xl:grid-cols-4">
+                  {boardColumns.map((column) => {
+                    const columnCards = cardsByColumn.get(column.id) || [];
+
+                    return (
+                      <div key={column.id} className="rounded-xl border border-border/50 bg-background/70 p-3">
+                        <div className="mb-3 flex items-center gap-2">
+                          <HugeiconsIcon icon={column.icon} className={cn("size-4", column.tone)} />
+                          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground/70">
+                            {column.label}
+                          </div>
+                          <div className="ml-auto text-[11px] tabular-nums text-muted-foreground">
+                            {columnCards.length}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    {selectedProject.repositoryUrl && (
-                      <div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleClone(selectedProject.id, !!cloneResult?.success)}
-                          disabled={isCloning}
-                        >
-                          <HugeiconsIcon
-                            icon={isCloning ? Loading01Icon : Download01Icon}
-                            className={cn("size-3.5", isCloning && "animate-spin")}
-                          />
-                          {isCloning ? "Cloning..." : cloneResult?.success ? "Clone Again" : "Clone Repository"}
-                        </Button>
-                        {cloneResult && !cloneResult.success && cloneResult.error && (
-                          <p className="mt-2 text-xs text-destructive">{cloneResult.error}</p>
-                        )}
-                        {cloneResult?.success && (
-                          <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">
-                            Cloned to: {cloneResult.path}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="mb-3 text-xs font-semibold text-muted-foreground">
-                        {m.goal()} ({projectGoals.length})
-                      </h3>
-                      {projectGoals.length > 0 ? (
-                        <div className="space-y-1">
-                          {projectGoals.map((goal) => (
+
+                        <div className="space-y-2">
+                          {columnCards.map((card) => (
                             <button
-                              key={goal.id}
-                              onClick={() => onSelectGoal(goal.id)}
-                              className="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left transition-colors hover:bg-accent/50"
+                              key={card.goal.id}
+                              type="button"
+                              onClick={() => void openGoal(card)}
+                              className="w-full rounded-lg border border-border/50 bg-background px-3 py-3 text-left transition-colors hover:border-primary/30 hover:bg-primary/5"
                             >
-                              <div
-                                className={cn(
-                                  "mt-1.5 size-2 shrink-0 rounded-full",
-                                  goalStatusColor[goal.status],
-                                )}
-                              />
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-foreground truncate">
-                                  {goal.title}
-                                </p>
-                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-                                    {goalStatusLabel[goal.status] || goal.status}
-                                  </Badge>
-                                  {goal.watchers.length > 0 && (
-                                    <span className="text-[10px] text-muted-foreground">
-                                      → {goal.watchers.map((w) => {
-                                        const agent = agents.find((a) => a.name === w);
-                                        return agent ? agent.name : w;
-                                      }).join(", ")}
-                                    </span>
-                                  )}
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-sm font-medium text-foreground/85">{card.goal.title}</div>
+                                  <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-muted/30 px-2 py-0.5 text-[10px] text-muted-foreground/80">
+                                    <HugeiconsIcon icon={FolderIcon} className="size-2.5 text-amber-500" />
+                                    {project?.name || m.no_project()}
+                                  </div>
+                                  {card.command?.instruction ? (
+                                    <div className="mt-1 line-clamp-2 text-[11px] text-muted-foreground/75">
+                                      {card.command.instruction}
+                                    </div>
+                                  ) : null}
                                 </div>
+                                <Badge variant="outline" className="text-[9px] uppercase tracking-[0.16em]">
+                                  {card.goal.status}
+                                </Badge>
                               </div>
+
+                              <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground/70">
+                                <span>{formatTime(card.goal.updatedAt)}</span>
+                                {card.goal.watchers.length > 0 ? (
+                                  <>
+                                    <span>·</span>
+                                    <span>{card.goal.watchers.join(", ")}</span>
+                                  </>
+                                ) : null}
+                              </div>
+
+                              {card.problems.length > 0 ? (
+                                <div className="mt-3 rounded-md border border-border/40 bg-muted/20 px-2.5 py-2 text-[11px] text-foreground/75">
+                                  {card.problems[0]?.title}
+                                </div>
+                              ) : null}
                             </button>
                           ))}
+
+                          {columnCards.length === 0 ? (
+                            <div className="rounded-lg border border-dashed border-border/60 px-3 py-6 text-center text-xs text-muted-foreground/70">
+                              暂无任务
+                            </div>
+                          ) : null}
                         </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">{m.env_no_projects_desc()}</p>
-                      )}
-                    </div>
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
+              </section>
             );
-          })()
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center">
-              <HugeiconsIcon
-                icon={Target01Icon}
-                className="mx-auto size-8 text-muted-foreground/30 mb-3"
-              />
-              <p className="text-sm text-muted-foreground">{m.no_goal_selected()}</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">{m.no_goal_selected_desc()}</p>
+          })}
+
+          {visibleBoardProjects.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border/60 px-6 py-12 text-center">
+              <p className="text-sm text-muted-foreground">当前还没有可展示的项目任务。</p>
             </div>
-          </div>
-        )}
-      </div>
+          ) : null}
+        </div>
+      </ScrollArea>
 
       <AppDialog
-        open={showForm}
-        onOpenChange={(open) => {
-          if (!open) handleCancel();
-        }}
-        title={`${editingId ? m.edit_status() : m.add()} ${m.project()}`}
-        size="lg"
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        title={`${m.add()} ${m.project()}`}
+        description="Create a local project or connect a repository path for board tracking."
         footer={
           <>
-            <Button size="sm" variant="outline" onClick={handleCancel}>
-              {m.cancel()}
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Cancel
             </Button>
-            <Button
-              size="sm"
-              onClick={editingId ? handleUpdate : handleCreate}
-              disabled={loading || !formData.name || !formData.path}
-            >
-              {loading
-                ? m.creating()
-                : editingId
-                  ? m.save()
-                  : formMode === "clone"
-                    ? "Clone & Create"
-                    : "Import Project"}
+            <Button onClick={() => void handleCreateProject()} disabled={creatingProject || !formData.name.trim() || !formData.path.trim()}>
+              {creatingProject ? "Creating..." : "Create Project"}
             </Button>
           </>
         }
       >
-        {!editingId && (
-          <Tabs value={formMode} onValueChange={(v) => setFormMode(v as "clone" | "local")} className="mb-4">
-            <TabsList>
-              <TabsTrigger value="clone">
-                <HugeiconsIcon icon={Download01Icon} className="size-4" />
-                Clone Remote
-              </TabsTrigger>
-              <TabsTrigger value="local">
-                <HugeiconsIcon icon={FolderIcon} className="size-4" />
-                Import Local
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        )}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-foreground/80">Project Name</label>
+            <Input
+              value={formData.name}
+              onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
+              placeholder="TermoraX"
+            />
+          </div>
 
-        {formMode === "clone" ? (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">
-                {m.env_project_repo_url()}
-              </label>
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-foreground/80">Project Path</label>
+            <div className="flex gap-2">
               <Input
-                type="text"
+                value={formData.path}
+                onChange={(event) => setFormData((prev) => ({ ...prev, path: event.target.value }))}
+                placeholder="/root/Projects/TermoraX"
+              />
+              <Button type="button" variant="outline" onClick={() => setShowDirectoryPicker(true)}>
+                <HugeiconsIcon icon={Folder01Icon} className="size-3.5" />
+                Browse
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-foreground/80">Repository URL</label>
+            <div className="relative">
+              <HugeiconsIcon icon={Link01Icon} className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
                 value={formData.repositoryUrl}
-                onChange={(e) => setFormData({ ...formData, repositoryUrl: e.target.value })}
-                placeholder={m.env_project_repo_placeholder()}
-                className="font-mono"
+                onChange={(event) => setFormData((prev) => ({ ...prev, repositoryUrl: event.target.value }))}
+                placeholder="https://github.com/owner/repo.git"
+                className="pl-9"
               />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">{m.env_project_name()}</label>
-              <Input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder={m.env_project_name_placeholder()}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">{m.env_project_path()}</label>
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={formData.path}
-                  onChange={(e) => setFormData({ ...formData, path: e.target.value })}
-                  placeholder={m.env_project_path_placeholder()}
-                  className="flex-1 font-mono"
-                  readOnly
-                />
-                <Button
-                  size="icon-sm"
-                  variant="outline"
-                  onClick={() => setShowDirectoryPicker(true)}
-                  title="Browse for directory"
-                  aria-label="Browse for directory"
-                >
-                  <HugeiconsIcon icon={FolderIcon} className="size-3.5" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground/60">
-                Auto-generated from repo name. Click Browse to choose a different location.
-              </p>
             </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">{m.env_project_name()}</label>
-              <Input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder={m.env_project_name_placeholder()}
-              />
+
+          <div className="rounded-xl bg-muted/20 px-3 py-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 font-medium text-foreground/80">
+              <HugeiconsIcon icon={Download01Icon} className="size-3.5 text-sky-500" />
+              Project board entry
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Local Directory</label>
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={formData.path}
-                  onChange={(e) => setFormData({ ...formData, path: e.target.value })}
-                  placeholder="/Users/username/Projects/my-project"
-                  className="flex-1 font-mono"
-                  readOnly
-                />
-                <Button
-                  size="icon-sm"
-                  variant="outline"
-                  onClick={() => setShowDirectoryPicker(true)}
-                  title="Browse for directory"
-                  aria-label="Browse for directory"
-                >
-                  <HugeiconsIcon icon={FolderIcon} className="size-3.5" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground/60">
-                Click Browse to select your local project directory
-              </p>
-            </div>
+            <p className="mt-2 leading-6">
+              创建后该项目会直接出现在左侧列表和全局看板里。后续所有与该项目关联的任务都会自动聚合到这里。
+            </p>
           </div>
-        )}
+        </div>
       </AppDialog>
 
       <DirectoryPickerDialog
         open={showDirectoryPicker}
         onOpenChange={setShowDirectoryPicker}
         currentPath={formData.path || undefined}
-        onSelect={(selectedPath) => {
-          setFormData((prev) => {
-            const dirName = selectedPath.split("/").pop() || selectedPath;
-            const displayName = dirName.charAt(0).toUpperCase() + dirName.slice(1);
-            return {
-              ...prev,
-              path: selectedPath,
-              name: prev.name || displayName,
-            };
-          });
-        }}
+        onSelect={(path) => setFormData((prev) => ({ ...prev, path }))}
       />
     </div>
   );

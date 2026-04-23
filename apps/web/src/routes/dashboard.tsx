@@ -83,6 +83,7 @@ function DashboardLayout() {
   const [showMorphPanel, setShowMorphPanel] = useState(false);
 
   const {
+    goals,
     runtimes,
     projects,
     organizations,
@@ -114,6 +115,7 @@ function DashboardLayout() {
     setAgentModelFilter,
     inboxCounts,
     agentModelCounts,
+    boardCounts,
     mcpScopeCounts,
     skillsScopeCounts,
     loading,
@@ -203,6 +205,7 @@ function DashboardLayout() {
               agentModelFilter={agentModelFilter}
               onAgentModelFilterChange={setAgentModelFilter}
               agentModelCounts={agentModelCounts}
+              boardCounts={boardCounts}
               onRefresh={refreshAll}
               onOpenCapabilityMarket={() => navigate({ to: "/dashboard/skills" })}
             />

@@ -90,6 +90,13 @@ interface AgentModelCounts {
   cloud: number;
 }
 
+interface BoardCounts {
+  waiting_user: number;
+  blocked: number;
+  in_progress: number;
+  completed: number;
+}
+
 interface DashboardContextType {
   // Server data
   goals: Goal[];
@@ -117,6 +124,7 @@ interface DashboardContextType {
   mcpScopeCounts: ScopeCounts;
   skillsScopeCounts: ScopeCounts;
   agentModelCounts: AgentModelCounts;
+  boardCounts: BoardCounts;
 
   // Refresh
   refreshAll: () => Promise<void>;
@@ -325,6 +333,38 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }),
     [runtimes],
   );
+
+  const boardCounts = useMemo<BoardCounts>(() => {
+    const counts: BoardCounts = {
+      waiting_user: 0,
+      blocked: 0,
+      in_progress: 0,
+      completed: 0,
+    };
+
+    for (const goal of goals) {
+      const relatedProblems = problems.filter((problem) => problem.goalId === goal.id && problem.status === "open");
+
+      if (goal.status === "completed") {
+        counts.completed += 1;
+        continue;
+      }
+
+      if (relatedProblems.some((problem) => (problem.source || "").includes("agent_request"))) {
+        counts.waiting_user += 1;
+        continue;
+      }
+
+      if (goal.status === "paused" || relatedProblems.length > 0) {
+        counts.blocked += 1;
+        continue;
+      }
+
+      counts.in_progress += 1;
+    }
+
+    return counts;
+  }, [goals, problems]);
 
   const shouldLoadGoals = activeView === "projects" || activeView === "observability";
   const shouldLoadProjects =
@@ -859,6 +899,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     mcpScopeCounts,
     skillsScopeCounts,
     agentModelCounts,
+    boardCounts,
     refreshAll,
     refreshGoalData,
     handleProblemAction,

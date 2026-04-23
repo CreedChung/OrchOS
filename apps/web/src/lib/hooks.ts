@@ -77,6 +77,7 @@ export function useHistory(goalId?: string, limit?: number) {
 export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) {
   const onEventRef = useRef(onEvent);
   onEventRef.current = onEvent;
+  const hasOpenedRef = useRef(false);
 
   useEffect(() => {
     if (!shouldEnableWebSocket()) {
@@ -97,6 +98,7 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
       ws = client.ws.subscribe();
 
       ws.on("open", () => {
+        hasOpenedRef.current = true;
         reconnectAttempts = 0;
       });
 
@@ -115,6 +117,10 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
 
       ws.on("close", () => {
         if (isShuttingDown) {
+          return;
+        }
+
+        if (!hasOpenedRef.current) {
           return;
         }
 
@@ -140,7 +146,11 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
       }
-      ws?.close();
+      try {
+        ws?.close();
+      } catch {
+        // Ignore websocket shutdown noise during route teardown.
+      }
     };
   }, []);
 }

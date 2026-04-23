@@ -20,6 +20,7 @@ import {
   Archive01Icon,
   ArrowReloadHorizontalIcon,
   Wrench01Icon,
+  PlayCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
 import type { SidebarView, InboxSource } from "@/lib/types";
@@ -31,32 +32,49 @@ export type CreationArchiveFilter = "all" | "active" | "archived";
 
 const scopeFilterConfig: Record<
   Exclude<ScopeFilter, "all">,
-  { icon: typeof Globe02Icon; label: string }
+  { icon: typeof Globe02Icon; label: string; iconClassName: string }
 > = {
-  global: { icon: Globe02Icon, label: m.global() },
-  project: { icon: Folder01Icon, label: m.project() },
+  global: { icon: Globe02Icon, label: m.global(), iconClassName: "text-sky-500" },
+  project: { icon: Folder01Icon, label: m.project(), iconClassName: "text-amber-500" },
 };
 
-const sourceFilterConfig: Record<InboxSource, { icon: typeof GitPullRequestIcon; label: string }> =
+const sourceFilterConfig: Record<
+  InboxSource,
+  { icon: typeof GitPullRequestIcon; label: string; iconClassName: string }
+> =
   {
-    github_pr: { icon: GitPullRequestIcon, label: m.prs() },
-    github_issue: { icon: SquareIcon, label: m.issues() },
-    mention: { icon: InformationCircleIcon, label: m.mentions() },
-    agent_request: { icon: Robot02Icon, label: m.agents() },
+    github_pr: { icon: GitPullRequestIcon, label: m.prs(), iconClassName: "text-violet-500" },
+    github_issue: { icon: SquareIcon, label: m.issues(), iconClassName: "text-emerald-500" },
+    mention: { icon: InformationCircleIcon, label: m.mentions(), iconClassName: "text-sky-500" },
+    agent_request: { icon: Robot02Icon, label: m.agents(), iconClassName: "text-amber-500" },
   };
 
 const agentModelFilterConfig: Record<
   Exclude<AgentModelFilter, "all">,
-  { icon: typeof CodeIcon; label: string }
+  { icon: typeof CodeIcon; label: string; iconClassName: string }
 > = {
-  local: { icon: CodeIcon, label: m.model_local() },
-  cloud: { icon: CloudIcon, label: m.model_cloud() },
+  local: { icon: CodeIcon, label: m.model_local(), iconClassName: "text-emerald-500" },
+  cloud: { icon: CloudIcon, label: m.model_cloud(), iconClassName: "text-sky-500" },
 };
 
 const allFilterConfig = {
   icon: Menu01Icon,
   label: m.all(),
+  iconClassName: "text-muted-foreground/80",
 };
+
+const creationFilterConfig = {
+  all: { icon: Menu01Icon, iconClassName: "text-muted-foreground/80" },
+  active: { icon: Clock01Icon, iconClassName: "text-sky-500" },
+  archived: { icon: Archive01Icon, iconClassName: "text-amber-500" },
+} as const;
+
+const boardFilterConfig = {
+  waiting_user: { icon: InformationCircleIcon, iconClassName: "text-violet-500" },
+  blocked: { icon: SquareIcon, iconClassName: "text-destructive" },
+  in_progress: { icon: PlayCircleIcon, iconClassName: "text-sky-500" },
+  completed: { icon: Robot02Icon, iconClassName: "text-emerald-500" },
+} as const;
 
 interface ToolbarProps {
   activeView: SidebarView;
@@ -76,6 +94,12 @@ interface ToolbarProps {
   agentModelFilter: AgentModelFilter;
   onAgentModelFilterChange: (filter: AgentModelFilter) => void;
   agentModelCounts: { all: number; local: number; cloud: number };
+  boardCounts: {
+    waiting_user: number;
+    blocked: number;
+    in_progress: number;
+    completed: number;
+  };
   scopeFilter: ScopeFilter;
   onScopeFilterChange: (filter: ScopeFilter) => void;
   scopeCounts: { all: number; global: number; project: number };
@@ -97,6 +121,7 @@ export function Toolbar({
   agentModelFilter,
   onAgentModelFilterChange,
   agentModelCounts,
+  boardCounts,
   scopeFilter,
   onScopeFilterChange,
   scopeCounts,
@@ -167,7 +192,10 @@ export function Toolbar({
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
               )}
             >
-              <HugeiconsIcon icon={filter.icon} className="size-3" />
+              <HugeiconsIcon
+                icon={filter.icon}
+                className={cn("size-3", creationFilterConfig[filter.value].iconClassName)}
+              />
               <span className="hidden sm:inline">{filter.label}</span>
             </button>
           ))}
@@ -191,7 +219,7 @@ export function Toolbar({
                       : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                   )}
                 >
-                  <HugeiconsIcon icon={config.icon} className="size-3" />
+                  <HugeiconsIcon icon={config.icon} className={cn("size-3", config.iconClassName)} />
                   <span className="hidden capitalize sm:inline">{config.label || filter}</span>
                   <span className="tabular-nums text-[10px] opacity-60">
                     {inboxCounts[filter as keyof typeof inboxCounts]}
@@ -219,7 +247,7 @@ export function Toolbar({
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
-                <HugeiconsIcon icon={config.icon} className="size-3" />
+                <HugeiconsIcon icon={config.icon} className={cn("size-3", config.iconClassName)} />
                 <span className="hidden sm:inline">{config.label || filter}</span>
                 <span className="tabular-nums text-[10px] opacity-60">
                   {agentModelCounts[filter]}
@@ -227,6 +255,28 @@ export function Toolbar({
               </button>
             );
           })}
+        </div>
+      )}
+
+      {activeView === "projects" && (
+        <div className="flex items-center gap-1.5">
+          {(
+            [
+              { key: "waiting_user", label: "Waiting User", icon: InformationCircleIcon },
+              { key: "blocked", label: "Blocked", icon: SquareIcon },
+              { key: "in_progress", label: "In Progress", icon: PlayCircleIcon },
+              { key: "completed", label: "Completed", icon: Robot02Icon },
+            ] as const
+          ).map((item) => (
+            <div
+              key={item.key}
+              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-muted-foreground sm:gap-1.5 sm:px-2.5"
+            >
+              <HugeiconsIcon icon={item.icon} className={cn("size-3", boardFilterConfig[item.key].iconClassName)} />
+              <span className="hidden sm:inline">{item.label}</span>
+              <span className="tabular-nums text-[10px] opacity-60">{boardCounts[item.key]}</span>
+            </div>
+          ))}
         </div>
       )}
 
@@ -246,7 +296,7 @@ export function Toolbar({
                     : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                 )}
               >
-                <HugeiconsIcon icon={config.icon} className="size-3" />
+                <HugeiconsIcon icon={config.icon} className={cn("size-3", config.iconClassName)} />
                 <span className="hidden capitalize sm:inline">{config.label || filter}</span>
                 <span className="tabular-nums text-[10px] opacity-60">{scopeCounts[filter]}</span>
               </button>
