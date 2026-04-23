@@ -6,7 +6,7 @@ import { useUIStore } from "@/lib/store";
 export const Route = createFileRoute("/dashboard/creation")({ component: CreationPage });
 
 function CreationPage() {
-  const { agents, runtimes, projects, goals } = useDashboard();
+  const { agents, runtimes, projects } = useDashboard();
   const {
     creationArchiveFilter,
     creationSidebarCollapsed,
@@ -23,7 +23,6 @@ function CreationPage() {
       agents={agents}
       runtimes={runtimes}
       projects={projects}
-      goals={goals}
       archiveFilter={creationArchiveFilter}
       onArchiveFilterChange={setCreationArchiveFilter}
       settings={settings}

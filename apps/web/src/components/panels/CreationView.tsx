@@ -33,16 +33,14 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { api, type ActivityEntry, type Conversation, type ConversationMessage, type Goal, type StateEntry } from "@/lib/api";
+import { api, type Conversation, type ConversationMessage, type Goal } from "@/lib/api";
 import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { m } from "@/paraglide/messages";
 import { toast } from "sonner";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import type { CreationArchiveFilter } from "@/components/layout/Toolbar";
-import { ChatReasoningDrawer } from "@/components/chat/ChatReasoningDrawer";
 import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
 import { mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
 
@@ -50,7 +48,6 @@ interface CreationViewProps {
   agents: AgentProfile[];
   runtimes: RuntimeProfile[];
   projects: Project[];
-  goals: Goal[];
   archiveFilter: CreationArchiveFilter;
   onArchiveFilterChange: (filter: CreationArchiveFilter) => void;
   settings: ControlSettings | null;
@@ -59,12 +56,6 @@ interface CreationViewProps {
   onToggleSidebar: () => void;
   sidebarWidth: number;
   onSidebarWidthChange: (width: number) => void;
-}
-
-interface GoalExecutionSnapshot {
-  goal: Goal;
-  states: StateEntry[];
-  activities: ActivityEntry[];
 }
 
 const EMPTY_CONVERSATION_MESSAGES: ConversationMessage[] = [];
@@ -80,216 +71,10 @@ const creationFilterButtons = [
   iconClassName: string;
 }>;
 
-function getStateTone(status: StateEntry["status"]) {
-  if (status === "success") return "text-emerald-600 dark:text-emerald-400";
-  if (status === "running") return "text-blue-600 dark:text-blue-400";
-  if (status === "failed" || status === "error") return "text-destructive";
-  return "text-muted-foreground";
-}
-
-function getGoalStatusLabel(goal: Goal, states: StateEntry[]) {
-  if (goal.status === "completed") return "已完成";
-  if (states.some((state) => state.status === "running")) return "执行中";
-  if (states.some((state) => state.status === "failed" || state.status === "error")) return "已阻塞";
-  if (states.some((state) => state.status === "success")) return "处理中";
-  return "排队中";
-}
-
-function getActivityTone(activity?: ActivityEntry) {
-  const detail = `${activity?.detail ?? ""} ${activity?.action ?? ""}`.toLowerCase();
-
-  if (/fail|error|reject|blocked|阻塞|失败|错误/.test(detail)) {
-    return "border-destructive/30 bg-destructive/5 text-destructive";
-  }
-
-  if (/success|complete|created|pass|完成|成功|已完成/.test(detail)) {
-    return "border-emerald-500/25 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300";
-  }
-
-  return "border-sky-500/20 bg-sky-500/5 text-sky-700 dark:text-sky-300";
-}
-
-function getActivityDotTone(activity?: ActivityEntry) {
-  const detail = `${activity?.detail ?? ""} ${activity?.action ?? ""}`.toLowerCase();
-
-  if (/fail|error|reject|blocked|阻塞|失败|错误/.test(detail)) {
-    return "bg-destructive";
-  }
-
-  if (/success|complete|created|pass|完成|成功|已完成/.test(detail)) {
-    return "bg-emerald-500";
-  }
-
-  return "bg-sky-500";
-}
-
-
-function CurrentProjectTasksCard({ goals, project }: { goals: Goal[]; project?: Project }) {
-  const formatGoalTime = (value: string) => {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return `${date.toISOString().split("T")[0]} ${date.toISOString().split("T")[1]?.slice(0, 5) ?? ""}`;
-  };
-
-  return (
-    <details className="group" open>
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-muted/30">
-        <span className="size-1.5 shrink-0 rounded-full bg-sky-500/80" aria-hidden="true" />
-        <span className="font-medium text-foreground/70">当前任务</span>
-        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground/70">{goals.length}</span>
-        <span className="truncate text-muted-foreground/50">{project?.name || "当前会话"}</span>
-        <span className="ml-auto shrink-0 select-none text-[10px] opacity-30 transition-transform group-open:rotate-90">›</span>
-      </summary>
-      <div className="mt-1 space-y-2 rounded border border-border/25 bg-muted/10 px-3 py-3">
-        {goals.map((goal, index) => (
-          <div key={goal.id} className="rounded border border-border/25 bg-background/70 px-3 py-2.5">
-            <div className="flex items-start gap-2">
-              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-sky-500" />
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-foreground/85">
-                  {index + 1}. {goal.title}
-                </div>
-                {goal.description ? (
-                  <div className="mt-1 line-clamp-3 text-[11px] leading-5 text-muted-foreground/75">{goal.description}</div>
-                ) : null}
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground/70">
-                  <Badge variant="outline" className="text-[9px] uppercase tracking-[0.16em]">
-                    {goal.status}
-                  </Badge>
-                  <span>{formatGoalTime(goal.updatedAt)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </details>
-  );
-}
-
-function ExecutionProgressCard({ snapshots }: { snapshots: GoalExecutionSnapshot[] }) {
-  const activeGoalIndex = snapshots.findIndex(
-    (snapshot) => snapshot.goal.status !== "completed",
-  );
-  const currentGoalNumber = activeGoalIndex >= 0 ? activeGoalIndex + 1 : snapshots.length;
-  const completedCount = snapshots.filter((snapshot) => snapshot.goal.status === "completed").length;
-
-  return (
-    <div className="space-y-1">
-      <details className="group" open>
-        <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-muted/30">
-          <span className="size-1.5 shrink-0 rounded-full bg-violet-500/80" aria-hidden="true" />
-          <span className="font-medium text-foreground/70">任务执行进度</span>
-          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground/70">
-            {completedCount}/{snapshots.length} 完成
-          </span>
-          <span className="text-muted-foreground/40">
-            {snapshots.length > 0
-              ? `第 ${currentGoalNumber} / ${snapshots.length} 个任务`
-              : "等待任务开始"}
-          </span>
-          <span className="ml-auto shrink-0 select-none text-[10px] opacity-30 transition-transform group-open:rotate-90">›</span>
-        </summary>
-        <div className="mt-1 space-y-2">
-          {snapshots.map((snapshot, index) => {
-            const latestActivity = snapshot.activities[0];
-            const recentActivities = snapshot.activities.slice(0, 3);
-
-            return (
-              <details key={snapshot.goal.id} className="group rounded border border-border/25 bg-muted/10" open={index === activeGoalIndex || (activeGoalIndex === -1 && index === snapshots.length - 1)}>
-                <summary className="flex cursor-pointer list-none items-start gap-2 rounded px-2.5 py-2 text-xs transition-colors hover:bg-muted/20">
-                  <span className={cn("mt-1 size-1.5 shrink-0 rounded-full", latestActivity ? getActivityDotTone(latestActivity) : "bg-muted-foreground/40")} />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-foreground/75">
-                      {index + 1}. {snapshot.goal.title}
-                    </div>
-                    <div className="mt-0.5 text-[11px] text-muted-foreground/70">
-                      {getGoalStatusLabel(snapshot.goal, snapshot.states)}
-                      {latestActivity?.action ? ` · 最近动作：${latestActivity.action}` : ""}
-                    </div>
-                  </div>
-                  <span className="ml-auto shrink-0 select-none pt-0.5 text-[10px] opacity-30 transition-transform group-open:rotate-90">›</span>
-                </summary>
-                <div className="space-y-2 px-2.5 pb-2">
-                  {recentActivities.length > 0 ? (
-                    <div className="space-y-2">
-                      {recentActivities.map((activity, activityIndex) => (
-                        <div key={activity.id} className="rounded border border-border/25 bg-background/70 px-2.5 py-2">
-                          <div className="flex items-start gap-2">
-                            <span className={cn("mt-1 size-1.5 shrink-0 rounded-full", getActivityDotTone(activity))} />
-                            <div className="min-w-0 flex-1 space-y-1.5">
-                              <div className="flex items-center gap-2 text-[11px]">
-                                <span className="font-medium text-foreground/70">{activity.action}</span>
-                                {activityIndex === 0 ? (
-                                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground/70">
-                                    最新
-                                  </span>
-                                ) : null}
-                                <span className="text-muted-foreground/50">{activity.timestamp}</span>
-                              </div>
-
-                              {activity.detail ? (
-                                <p className={cn("text-[11px] leading-5", getActivityTone(activity))}>
-                                  {activity.detail}
-                                </p>
-                              ) : null}
-
-                              {activity.reasoning ? (
-                                <ChatReasoningDrawer text={activity.reasoning} />
-                              ) : null}
-
-                              {activity.diff ? (
-                                <details className="group">
-                                  <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-muted/30">
-                                    <span className="size-1.5 shrink-0 rounded-full bg-sky-500" aria-hidden="true" />
-                                    <span className="font-medium text-foreground/70">执行产物</span>
-                                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground/70">
-                                      输出
-                                    </span>
-                                    <span className="ml-auto shrink-0 select-none text-[10px] opacity-30 transition-transform group-open:rotate-90">›</span>
-                                  </summary>
-                                  <pre className="mt-1 overflow-x-auto rounded border border-border/25 bg-muted/10 px-2.5 py-2 text-[11px] leading-5 text-foreground/65">
-                                    <code>{activity.diff}</code>
-                                  </pre>
-                                </details>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {snapshot.states.length > 0 ? (
-                    <div className="rounded border border-border/25 bg-background/70 px-2.5 py-2">
-                      <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-foreground/50">
-                        状态
-                      </div>
-                      <div className="space-y-1.5">
-                        {snapshot.states.map((state) => (
-                          <div key={state.id} className="flex items-center justify-between gap-3 text-[11px]">
-                            <span className="truncate text-foreground/75">{state.label}</span>
-                            <span className={cn("shrink-0 font-medium", getStateTone(state.status))}>{state.status}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </details>
-            );
-          })}
-        </div>
-      </details>
-    </div>
-  );
-}
-
 export function CreationView({
   agents,
   runtimes,
   projects,
-  goals,
   archiveFilter,
   onArchiveFilterChange,
   settings,
@@ -302,7 +87,6 @@ export function CreationView({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [convToDelete, setConvToDelete] = useState<string | null>(null);
   const autoCreatingConversationRef = useRef(false);
-  const resizingSidebarRef = useRef(false);
 
   const {
     conversations,
@@ -435,36 +219,35 @@ export function CreationView({
     [updateConversation],
   );
 
-  useEffect(() => {
-    if (!resizingSidebarRef.current) return;
+  const handleSidebarResizeStart = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const sidebarEl = event.currentTarget.parentElement;
+    const sidebarLeft = sidebarEl?.getBoundingClientRect().left ?? 0;
 
-    const handlePointerMove = (event: PointerEvent) => {
-      const nextWidth = Math.min(Math.max(event.clientX, 220), 480);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 480);
       onSidebarWidthChange(nextWidth);
     };
 
     const handlePointerUp = () => {
-      resizingSidebarRef.current = false;
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
     };
 
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
+  }, [onSidebarWidthChange]);
 
+  useEffect(() => {
     return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
-  }, [onSidebarWidthChange, resizingSidebarRef.current]);
-
-  const handleSidebarResizeStart = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    resizingSidebarRef.current = true;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
   }, []);
 
   return (
@@ -619,7 +402,7 @@ export function CreationView({
                     title: content.slice(0, 60),
                   });
                 }
-                return { goalIds: result.goals.map((goal) => goal.id) };
+                return { goals: result.goals };
               } catch (err) {
                 console.error("Failed to send message:", err);
                 setChatError(err instanceof Error ? err.message : "Failed to send message");
@@ -674,7 +457,7 @@ interface ChatAreaProps {
     },
   ) => Promise<void>;
   onSetDefaultAgent: (agentId?: string) => void;
-  onSendMessage: (content: string) => Promise<{ goalIds: string[] }>;
+  onSendMessage: (content: string) => Promise<{ goals: Goal[] }>;
   onReloadMessages?: () => Promise<void>;
 }
 
@@ -699,9 +482,8 @@ function ChatArea({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [createdGoals, setCreatedGoals] = useState<Goal[]>([]);
   const [isConversationUpdating, setIsConversationUpdating] = useState(false);
-  const [trackedGoalIds, setTrackedGoalIds] = useState<string[]>([]);
-  const [goalSnapshots, setGoalSnapshots] = useState<GoalExecutionSnapshot[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -726,10 +508,6 @@ function ChatArea({
     () => projects.find((p) => p.id === conversation.projectId),
     [projects, conversation.projectId],
   );
-  const hasActiveExecution = useMemo(
-    () => goalSnapshots.some((snapshot) => snapshot.goal.status !== "completed"),
-    [goalSnapshots],
-  );
   const latestClarificationQuestions = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const questions = messages[index].clarificationQuestions ?? [];
@@ -740,10 +518,9 @@ function ChatArea({
 
     return [];
   }, [messages]);
-  const visibleProjectGoals = useMemo(() => {
-    const trackedGoals = goalSnapshots.map((snapshot) => snapshot.goal);
-    if (trackedGoals.length > 0) {
-      return trackedGoals;
+  const visibleGoalCards = useMemo(() => {
+    if (createdGoals.length > 0) {
+      return createdGoals;
     }
 
     if (!conversation.projectId) {
@@ -752,8 +529,9 @@ function ChatArea({
 
     return goals
       .filter((goal) => goal.projectId === conversation.projectId && goal.status === "active")
-      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
-  }, [conversation.projectId, goalSnapshots, goals]);
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+      .slice(0, 6);
+  }, [conversation.projectId, createdGoals, goals]);
   const visibleMessages = useMemo(() => {
     if (!pendingUserMessage) return messages;
 
@@ -796,53 +574,8 @@ function ChatArea({
   useEffect(() => {
     textareaRef.current?.focus();
     setPendingUserMessage(null);
-    setTrackedGoalIds([]);
-    setGoalSnapshots([]);
+    setCreatedGoals([]);
   }, [conversation.id]);
-
-  useEffect(() => {
-    if (trackedGoalIds.length === 0) return;
-
-    let cancelled = false;
-
-    const loadSnapshots = async () => {
-      try {
-        const snapshots = await Promise.all(
-          trackedGoalIds.map(async (goalId) => {
-            const [goal, states, activities] = await Promise.all([
-              api.getGoal(goalId),
-              api.getStates(goalId),
-              api.getActivities(goalId),
-            ]);
-
-            return {
-              goal,
-              states,
-              activities,
-            } satisfies GoalExecutionSnapshot;
-          }),
-        );
-
-        if (!cancelled) {
-          setGoalSnapshots(snapshots);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          console.error("Failed to load execution progress:", err);
-        }
-      }
-    };
-
-    void loadSnapshots();
-    const interval = window.setInterval(() => {
-      void loadSnapshots();
-    }, 2000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, [trackedGoalIds]);
 
   useEffect(() => {
     if (!pendingUserMessage) return;
@@ -903,10 +636,7 @@ function ChatArea({
         toast.info(m.multimodal_notice());
       }
       const result = await onSendMessage(content);
-      setTrackedGoalIds(result.goalIds);
-      if (result.goalIds.length === 0) {
-        setGoalSnapshots([]);
-      }
+      setCreatedGoals(result.goals);
     } catch (err) {
       setPendingUserMessage(null);
       console.error("Failed to send message:", err);
@@ -1126,10 +856,50 @@ function ChatArea({
       {/* Messages */}
       <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 md:px-6">
         <div className="mx-auto max-w-3xl py-6 space-y-3">
-          {visibleProjectGoals.length > 0 ? (
-            <CurrentProjectTasksCard goals={visibleProjectGoals} project={selectedProject} />
+          {visibleGoalCards.length > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                  当前任务
+                </div>
+                <div className="h-px flex-1 bg-border/50" />
+                <div className="text-[10px] text-muted-foreground/50">{visibleGoalCards.length} items</div>
+              </div>
+              <div className="grid gap-3">
+                {visibleGoalCards.map((goal, index) => (
+                  <div key={goal.id} className="rounded-xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-[11px] font-semibold text-sky-600 dark:text-sky-400">
+                        {index + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className="truncate text-sm font-medium text-foreground">{goal.title}</div>
+                          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                            {goal.status}
+                          </span>
+                        </div>
+                        {goal.description ? (
+                          <div className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
+                            {goal.description}
+                          </div>
+                        ) : null}
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground/70">
+                          {goal.projectId ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+                              <HugeiconsIcon icon={Folder01Icon} className="size-3" />
+                              {selectedProject?.name || "项目任务"}
+                            </span>
+                          ) : null}
+                          <span>{new Date(goal.updatedAt).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : null}
-          {(goalSnapshots.length > 0 || hasActiveExecution) && <ExecutionProgressCard snapshots={goalSnapshots} />}
           {sending && <ChatThinkingState />}
           {chatError && (
             <div className="flex items-center gap-2 pr-6">

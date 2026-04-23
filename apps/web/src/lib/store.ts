@@ -111,7 +111,14 @@ export const useUIStore = create<UIState & UIActions>()(
     }),
     {
       name: "orchos-ui",
-      version: 1,
+      version: 2,
+      migrate: (persisted, version) => {
+        if (version < 2) {
+          const state = persisted as Record<string, unknown>;
+          state.creationSidebarWidth = 288;
+        }
+        return persisted;
+      },
     },
   ),
 );
