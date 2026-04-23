@@ -12,12 +12,10 @@ import {
   SquareIcon,
   InformationCircleIcon,
   Robot02Icon,
-  Clock01Icon,
   Globe02Icon,
   Folder01Icon,
   CodeIcon,
   CloudIcon,
-  Archive01Icon,
   ArrowReloadHorizontalIcon,
   Wrench01Icon,
   PlayCircleIcon,
@@ -28,7 +26,6 @@ import type { SidebarView, InboxSource } from "@/lib/types";
 type SourceFilter = "all" | InboxSource;
 export type ScopeFilter = "all" | "global" | "project";
 export type AgentModelFilter = "all" | "local" | "cloud";
-export type CreationArchiveFilter = "all" | "active" | "archived";
 
 const scopeFilterConfig: Record<
   Exclude<ScopeFilter, "all">,
@@ -62,12 +59,6 @@ const allFilterConfig = {
   label: m.all(),
   iconClassName: "text-muted-foreground/80",
 };
-
-const creationFilterConfig = {
-  all: { icon: Menu01Icon, iconClassName: "text-muted-foreground/80" },
-  active: { icon: Clock01Icon, iconClassName: "text-sky-500" },
-  archived: { icon: Archive01Icon, iconClassName: "text-amber-500" },
-} as const;
 
 const boardFilterConfig = {
   waiting_user: { icon: InformationCircleIcon, iconClassName: "text-violet-500" },
@@ -103,8 +94,6 @@ interface ToolbarProps {
   scopeFilter: ScopeFilter;
   onScopeFilterChange: (filter: ScopeFilter) => void;
   scopeCounts: { all: number; global: number; project: number };
-  creationArchiveFilter: CreationArchiveFilter;
-  onCreationArchiveFilterChange: (filter: CreationArchiveFilter) => void;
   onRefresh?: () => void;
   onOpenCapabilityMarket?: () => void;
 }
@@ -125,8 +114,6 @@ export function Toolbar({
   scopeFilter,
   onScopeFilterChange,
   scopeCounts,
-  creationArchiveFilter,
-  onCreationArchiveFilterChange,
   onRefresh,
   onOpenCapabilityMarket,
 }: ToolbarProps) {
@@ -173,35 +160,6 @@ export function Toolbar({
 
   return (
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
-      {activeView === "creation" && (
-        <div className="flex items-center gap-1.5">
-          {(
-            [
-              { value: "all", label: m.all(), icon: Menu01Icon },
-              { value: "active", label: m.creation_active(), icon: Clock01Icon },
-              { value: "archived", label: m.creation_archived(), icon: Archive01Icon },
-            ] as const
-          ).map((filter) => (
-            <button
-              key={filter.value}
-              onClick={() => onCreationArchiveFilterChange(filter.value)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:px-2.5",
-                creationArchiveFilter === filter.value
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-              )}
-            >
-              <HugeiconsIcon
-                icon={filter.icon}
-                className={cn("size-3", creationFilterConfig[filter.value].iconClassName)}
-              />
-              <span className="hidden sm:inline">{filter.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Inbox: source-based filter tabs */}
       {activeView === "inbox" && (
         <div className="flex items-center gap-1.5">

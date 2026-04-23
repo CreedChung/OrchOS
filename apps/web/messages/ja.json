@@ -507,5 +507,7 @@
   "voice_input": "音声入力",
   "voice_input_stop": "音声入力を停止",
   "set_as_default": "デフォルトに設定",
-  "workspace": "ワークスペース"
+  "workspace": "ワークスペース",
+  "collapse_sidebar": "サイドバーを折りたたむ",
+  "expand_sidebar": "サイドバーを展開"
 }

@@ -1,19 +1,19 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useUser } from "@clerk/clerk-react";
+import { type UIMessage } from "ai";
 import {
-  AiBrain01Icon,
   Alert01Icon,
   ArrowRight01Icon,
-  CheckmarkCircle02Icon,
   InformationCircleIcon,
-  Message01Icon,
   Robot02Icon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import type { ActivityEntry, Goal, Problem, Project } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
+import { MessageBubble, mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
 
 interface ActivityPanelProps {
   activities: ActivityEntry[];
@@ -70,17 +70,9 @@ function SectionHeader({ title, meta }: { title: string; meta?: string }) {
   );
 }
 
-function EmptyState({ icon, label }: { icon: typeof Message01Icon; label: string }) {
-  return (
-    <div className="px-3 py-6 text-center">
-      <HugeiconsIcon icon={icon} className="mx-auto mb-2 size-5 text-muted-foreground/30" />
-      <p className="text-xs text-muted-foreground">{label}</p>
-    </div>
-  );
-}
-
 export function ActivityPanel({ activities, goals, projects, problems, collapsed, activeView }: ActivityPanelProps) {
-  const { conversations, activeConversationId } = useConversationStore();
+  const { user } = useUser();
+  const { conversations, activeConversationId, messagesByConversationId } = useConversationStore();
 
   if (collapsed) {
     return null;
@@ -89,29 +81,45 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
   const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) ?? null;
   const activeProjectId = activeConversation?.projectId;
   const activeProject = projects.find((project) => project.id === activeProjectId);
+  const conversationMessages = activeConversationId ? (messagesByConversationId[activeConversationId] ?? []) : [];
+  const flowMessages = mapConversationMessagesToUiMessages(conversationMessages);
   const threadGoals = activeConversationId
     ? goals.filter((goal) => goal.commandId && goal.projectId === activeProjectId).slice(0, 6)
     : [];
   const projectGroups = getProjectTaskGroups(goals, activeProjectId);
   const attentionItems = getAttentionItems(problems, goals, activeProjectId);
   const recentActivities = activities.slice(0, 8);
+  const hasProjectTasks =
+    projectGroups.current.length > 0 || projectGroups.paused.length > 0 || projectGroups.completed.length > 0;
+  const panelContext = activeProject
+    ? `${activeProject.name} · ${m.project()}`
+    : activeView === "creation"
+      ? "当前线程与项目态势"
+      : "当前页面上下文态势";
 
   return (
     <aside className="flex h-full w-80 flex-col border-l border-border bg-sidebar">
-      <div className="border-b border-border px-4 py-3">
-        <div className="text-sm font-semibold text-foreground">工作面板</div>
-        <div className="mt-1 text-[11px] text-muted-foreground">
-          {activeProject ? `${activeProject.name} · ${m.project()}` : activeView === "creation" ? "当前线程与项目态势" : "当前页面上下文态势"}
-        </div>
+      <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
+        <div className="truncate text-sm font-medium text-foreground">工作面板</div>
+        <div className="truncate text-xs text-muted-foreground">{panelContext}</div>
       </div>
 
       <ScrollArea className="flex-1">
         <div className="space-y-4 py-3">
-          <section>
-            <SectionHeader title="Current Thread" meta={threadGoals.length > 0 ? `${threadGoals.length} goals` : undefined} />
-            {threadGoals.length === 0 ? (
-              <EmptyState icon={AiBrain01Icon} label="当前线程还没有关联任务。" />
-            ) : (
+          {activeView === "creation" && flowMessages.length > 0 ? (
+            <section>
+              <SectionHeader title="Conversation Flow" meta={`${flowMessages.length} messages`} />
+              <div className="space-y-4 px-3">
+                {flowMessages.map((message) => (
+                  <MessageBubble key={message.id} msg={message as UIMessage} userImageUrl={user?.imageUrl} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {threadGoals.length > 0 ? (
+            <section>
+              <SectionHeader title="Current Thread" meta={`${threadGoals.length} goals`} />
               <div className="space-y-2 px-3">
                 {threadGoals.map((goal) => (
                   <div key={goal.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
@@ -126,17 +134,15 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
                   </div>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          ) : null}
 
-          <section>
-            <SectionHeader
-              title="Project Tasks"
-              meta={activeProject ? activeProject.name : projects.length > 0 ? `${projects.length} projects` : undefined}
-            />
-            {projectGroups.current.length === 0 && projectGroups.paused.length === 0 && projectGroups.completed.length === 0 ? (
-              <EmptyState icon={Robot02Icon} label="当前项目还没有任务。" />
-            ) : (
+          {hasProjectTasks ? (
+            <section>
+              <SectionHeader
+                title="Project Tasks"
+                meta={activeProject ? activeProject.name : projects.length > 0 ? `${projects.length} projects` : undefined}
+              />
               <div className="space-y-3 px-3">
                 {projectGroups.current.length > 0 ? (
                   <div>
@@ -180,14 +186,12 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
                   </div>
                 ) : null}
               </div>
-            )}
-          </section>
+            </section>
+          ) : null}
 
-          <section>
-            <SectionHeader title="Needs Attention" meta={attentionItems.length > 0 ? `${attentionItems.length} open` : undefined} />
-            {attentionItems.length === 0 ? (
-              <EmptyState icon={CheckmarkCircle02Icon} label="当前没有待你处理的事项。" />
-            ) : (
+          {attentionItems.length > 0 ? (
+            <section>
+              <SectionHeader title="Needs Attention" meta={`${attentionItems.length} open`} />
               <div className="space-y-2 px-3">
                 {attentionItems.map((problem) => (
                   <div key={problem.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
@@ -209,14 +213,12 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
                   </div>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          ) : null}
 
-          <section>
-            <SectionHeader title="Recent Activity" meta={recentActivities.length > 0 ? `${recentActivities.length} items` : undefined} />
-            {recentActivities.length === 0 ? (
-              <EmptyState icon={Message01Icon} label={m.no_activity_yet()} />
-            ) : (
+          {recentActivities.length > 0 ? (
+            <section>
+              <SectionHeader title="Recent Activity" meta={`${recentActivities.length} items`} />
               <div className="space-y-2 px-3">
                 {recentActivities.map((activity) => (
                   <div key={activity.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
@@ -237,8 +239,8 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
                   </div>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          ) : null}
         </div>
       </ScrollArea>
     </aside>

@@ -506,5 +506,7 @@
   "voice_input": "語音輸入",
   "voice_input_stop": "停止語音輸入",
   "set_as_default": "設為預設",
-  "workspace": "工作區"
+  "workspace": "工作區",
+  "collapse_sidebar": "收起側邊欄",
+  "expand_sidebar": "展開側邊欄"
 }

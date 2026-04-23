@@ -23,6 +23,9 @@ interface UIState {
 
   // Panel states
   activityPanelOpen: boolean;
+  sidebarCollapsed: boolean;
+  creationSidebarCollapsed: boolean;
+  creationSidebarWidth: number;
 
   // Theme
   theme: ThemeMode;
@@ -42,6 +45,11 @@ interface UIActions {
   setCreationArchiveFilter: (filter: CreationArchiveFilter) => void;
   setActivityPanelOpen: (open: boolean) => void;
   toggleActivityPanel: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebar: () => void;
+  setCreationSidebarCollapsed: (collapsed: boolean) => void;
+  toggleCreationSidebar: () => void;
+  setCreationSidebarWidth: (width: number) => void;
   setTheme: (mode: ThemeMode) => void;
   setSettings: (settings: ControlSettings) => void;
 }
@@ -73,6 +81,9 @@ export const useUIStore = create<UIState & UIActions>()(
 
       // Panel states
       activityPanelOpen: false,
+      sidebarCollapsed: false,
+      creationSidebarCollapsed: false,
+      creationSidebarWidth: 288,
 
       // Theme
       theme: "auto" as ThemeMode,
@@ -90,6 +101,11 @@ export const useUIStore = create<UIState & UIActions>()(
       setCreationArchiveFilter: (filter) => set({ creationArchiveFilter: filter }),
       setActivityPanelOpen: (open) => set({ activityPanelOpen: open }),
       toggleActivityPanel: () => set((s) => ({ activityPanelOpen: !s.activityPanelOpen })),
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      setCreationSidebarCollapsed: (collapsed) => set({ creationSidebarCollapsed: collapsed }),
+      toggleCreationSidebar: () => set((s) => ({ creationSidebarCollapsed: !s.creationSidebarCollapsed })),
+      setCreationSidebarWidth: (width) => set({ creationSidebarWidth: width }),
       setTheme: (mode) => set({ theme: mode }),
       setSettings: (settings) => set({ settings }),
     }),

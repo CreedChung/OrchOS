@@ -128,10 +128,10 @@ function DashboardLayout() {
     setSourceFilter,
     scopeFilter,
     setScopeFilter,
-    creationArchiveFilter,
-    setCreationArchiveFilter,
     activityPanelOpen,
     toggleActivityPanel,
+    sidebarCollapsed,
+    toggleSidebar,
   } = useUIStore();
 
   useEffect(() => {
@@ -182,10 +182,12 @@ function DashboardLayout() {
             problems={problems}
             activeOrganizationId={activeOrganizationId}
             activeView={activeView}
+            collapsed={sidebarCollapsed}
             onOpenSettings={() => setShowSettingsDialog(true)}
             onOrganizationChange={setActiveOrganizationId}
             onOrganizationRename={handleOrganizationRename}
             onOrganizationDelete={handleOrganizationDelete}
+            onToggleCollapse={toggleSidebar}
           />
           <div className="flex flex-1 flex-col overflow-hidden">
             <Toolbar
@@ -200,8 +202,6 @@ function DashboardLayout() {
               scopeFilter={scopeFilter}
               onScopeFilterChange={setScopeFilter}
               scopeCounts={scopeCounts}
-              creationArchiveFilter={creationArchiveFilter}
-              onCreationArchiveFilterChange={setCreationArchiveFilter}
               agentModelFilter={agentModelFilter}
               onAgentModelFilterChange={setAgentModelFilter}
               agentModelCounts={agentModelCounts}
