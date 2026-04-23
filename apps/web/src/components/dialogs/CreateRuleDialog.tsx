@@ -18,7 +18,13 @@ interface CreateRuleDialogProps {
   open: boolean;
   onClose: () => void;
   problem: Problem | null;
-  onSubmit: (data: { name: string; condition: string; action: string }) => void;
+  onSubmit: (data: {
+    name: string;
+    condition: string;
+    action: string;
+    instruction?: string;
+    priority?: "low" | "normal" | "high";
+  }) => void;
 }
 
 const conditionLabels: Record<string, string> = {
@@ -74,7 +80,13 @@ export function CreateRuleDialog({ open, onClose, problem, onSubmit }: CreateRul
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name: currentName, condition: currentCondition, action: currentAction });
+    onSubmit({
+      name: currentName,
+      condition: currentCondition,
+      action: currentAction,
+      instruction: `When this rule matches, handle the issue based on problem context: ${problem.title}`,
+      priority: "normal",
+    });
     setName("");
     setCondition("test_failed");
     setAction("auto_fix");

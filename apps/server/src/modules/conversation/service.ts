@@ -6,6 +6,8 @@ import { ProjectService } from "@/modules/project/service";
 import { RuntimeService } from "@/modules/runtime/service";
 import { SandboxService } from "@/modules/sandbox/service";
 import { CommandService } from "@/modules/command/service";
+import { RuleService } from "@/modules/rule/service";
+import { FilesystemService } from "@/modules/filesystem/service";
 
 type MessageTraceEvent =
   | { kind: "message"; text: string }
@@ -87,6 +89,52 @@ function parseJsonSafely<T>(value: string | null | undefined): T | undefined {
   } catch {
     return undefined;
   }
+}
+
+function buildProjectInstructionPrompt(options: {
+  projectName?: string;
+  projectPath?: string;
+  agentsContent?: string;
+  activeRules?: Array<{ name: string; condition: string; action: string; instruction: string; priority: string }>;
+}) {
+  const sections: string[] = [];
+
+  if (options.projectName || options.projectPath) {
+    sections.push(
+      [
+        "Project Context:",
+        options.projectName ? `- Name: ${options.projectName}` : null,
+        options.projectPath ? `- Path: ${options.projectPath}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+  }
+
+  if (options.agentsContent?.trim()) {
+    sections.push(["Project Instructions (AGENTS.md):", options.agentsContent.trim()].join("\n"));
+  }
+
+  if (options.activeRules && options.activeRules.length > 0) {
+    sections.push(
+      [
+        "Active Rules:",
+        ...options.activeRules.map(
+          (rule, index) => `${index + 1}. ${rule.name} [when: ${rule.condition}] [action: ${rule.action}] [priority: ${rule.priority}]\n${rule.instruction}`,
+        ),
+      ].join("\n"),
+    );
+  }
+
+  if (sections.length === 0) {
+    return "";
+  }
+
+  return [
+    "System Instructions:",
+    "Use the following project instructions and active rules while responding.",
+    ...sections,
+  ].join("\n\n");
 }
 
 export abstract class ConversationService {
@@ -287,18 +335,46 @@ export abstract class ConversationService {
     const allMessages = ConversationService.getMessages(conversationId);
     const contextMessages = allMessages.slice(0, -1); // Exclude the assistant error message we haven't added yet
 
+    const project = conv.projectId ? ProjectService.get(conv.projectId) : undefined;
+    const projectInstructionsPath = project?.path ? `${project.path.replace(/\/$/, "")}/AGENTS.md` : undefined;
+    const agentsFile = projectInstructionsPath
+      ? FilesystemService.readFile(projectInstructionsPath).content ?? undefined
+      : undefined;
+    const activeRules = RuleService.matchInstructions({
+      projectId: project?.id,
+      projectPath: project?.path,
+      agentId: conv.agentId,
+      taskType: "chat",
+    })
+      .map((rule) => ({
+        name: rule.name,
+        condition: rule.condition,
+        action: rule.action,
+        instruction: rule.instruction,
+        priority: rule.priority,
+      }));
+    const compiledInstructions = buildProjectInstructionPrompt({
+      projectName: project?.name,
+      projectPath: project?.path,
+      agentsContent: agentsFile,
+      activeRules,
+    });
+
     // Build prompt with conversation context
     const contextPrompt = contextMessages
       .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
       .join("\n\n");
 
-    const prompt = contextPrompt
+    const conversationPrompt = contextPrompt
       ? `${contextPrompt}\n\nUser: ${userContent}\n\nAssistant:`
       : userContent;
 
+    const prompt = compiledInstructions
+      ? `${compiledInstructions}\n\n${conversationPrompt}`
+      : conversationPrompt;
+
     try {
       const startTime = Date.now();
-      const project = conv.projectId ? ProjectService.get(conv.projectId) : undefined;
       const projectMetadata = {
         projectId: project?.id,
         projectName: project?.name,
@@ -456,7 +532,7 @@ export abstract class ConversationService {
       ConversationService.addMessage(
         conversationId,
         "assistant",
-        ["I need a bit more detail before I can create the tasks.", ...result.questions.map((question, index) => `${index + 1}. ${question}`)].join("\n"),
+        ["I identified a few ambiguities while planning and resolved them internally.", ...result.questions.map((question, index) => `${index + 1}. ${question}`)].join("\n"),
         undefined,
         undefined,
         {

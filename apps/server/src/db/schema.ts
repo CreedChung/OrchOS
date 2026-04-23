@@ -219,6 +219,13 @@ export const rules = sqliteTable("rules", {
   name: text("name").notNull(),
   condition: text("condition").notNull(),
   action: text("action").notNull(),
+  scope: text("scope").notNull().default("global"),
+  projectId: text("project_id").references(() => projects.id),
+  targetAgentIds: text("target_agent_ids").notNull().default("[]"),
+  pathPatterns: text("path_patterns").notNull().default("[]"),
+  taskTypes: text("task_types").notNull().default("[]"),
+  instruction: text("instruction").notNull().default(""),
+  priority: text("priority").notNull().default("normal"),
   enabled: text("enabled").notNull().default("true"),
   createdAt: text("created_at").notNull(),
 });

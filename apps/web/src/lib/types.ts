@@ -232,6 +232,13 @@ export interface Rule {
   name: string;
   condition: string;
   action: string;
+  scope: "global" | "project";
+  projectId?: string;
+  targetAgentIds: string[];
+  pathPatterns: string[];
+  taskTypes: string[];
+  instruction: string;
+  priority: "low" | "normal" | "high";
   enabled: boolean;
   createdAt: string;
 }
@@ -240,6 +247,7 @@ export type SidebarView =
   | "inbox"
   | "creation"
   | "agents"
+  | "rules"
   | "mcp-servers"
   | "skills"
   | "projects"

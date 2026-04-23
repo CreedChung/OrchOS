@@ -3,21 +3,27 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Add01Icon,
   Archive01Icon,
+  CheckmarkCircle02Icon,
   Chat01Icon,
   Clock01Icon,
   Delete02Icon,
   Edit02Icon,
   Menu01Icon,
+  InformationCircleIcon,
   Robot02Icon,
   ArrowUp01Icon,
+  File02Icon,
   Folder01Icon,
   Upload04Icon,
   Mic01Icon,
   Cancel01Icon,
+  Alert01Icon,
+  PlayCircleIcon,
   SidebarLeft01Icon,
   SidebarRight01Icon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
+import { AppDialog } from "@/components/ui/app-dialog";
 import { Button } from "@/components/ui/button";
 import { BorderBeam } from "border-beam";
 import { ArchiveRestore, ArchiveX, Star } from "lucide-react";
@@ -34,14 +40,13 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { api, type Conversation, type ConversationMessage, type Goal } from "@/lib/api";
+import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { m } from "@/paraglide/messages";
 import { toast } from "sonner";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import type { CreationArchiveFilter } from "@/components/layout/Toolbar";
-import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
 import { mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
 
 interface CreationViewProps {
@@ -59,6 +64,12 @@ interface CreationViewProps {
 }
 
 const EMPTY_CONVERSATION_MESSAGES: ConversationMessage[] = [];
+const PROJECT_SPEC_FILE_ACCEPT = ".md,.txt,.spec,text/plain,text/markdown";
+
+function getProjectAgentsFilePath(project?: Project | null) {
+  if (!project?.path) return null;
+  return `${project.path.replace(/\/$/, "")}/AGENTS.md`;
+}
 
 const creationFilterButtons = [
   { value: "all", label: m.all(), icon: Menu01Icon, iconClassName: "text-muted-foreground/80" },
@@ -70,6 +81,111 @@ const creationFilterButtons = [
   icon: typeof Menu01Icon;
   iconClassName: string;
 }>;
+
+type ConversationBoardColumnId = "in_progress" | "waiting_user" | "completed" | "error";
+
+interface ConversationBoardCard {
+  conversation: Conversation;
+  title: string;
+  summary: string;
+  projectName?: string;
+  updatedAt: string;
+  column: ConversationBoardColumnId;
+}
+
+const conversationBoardColumns: Array<{
+  id: ConversationBoardColumnId;
+  label: string;
+  icon: typeof PlayCircleIcon;
+  tone: string;
+  bgAccent: string;
+  borderAccent: string;
+  dotColor: string;
+}> = [
+  {
+    id: "in_progress",
+    label: "进行中",
+    icon: PlayCircleIcon,
+    tone: "text-sky-600 dark:text-sky-400",
+    bgAccent: "bg-sky-500/5 dark:bg-sky-500/10",
+    borderAccent: "border-l-sky-500",
+    dotColor: "bg-sky-500",
+  },
+  {
+    id: "waiting_user",
+    label: "需要干预",
+    icon: InformationCircleIcon,
+    tone: "text-violet-600 dark:text-violet-400",
+    bgAccent: "bg-violet-500/5 dark:bg-violet-500/10",
+    borderAccent: "border-l-violet-500",
+    dotColor: "bg-violet-500",
+  },
+  {
+    id: "completed",
+    label: "已完成",
+    icon: CheckmarkCircle02Icon,
+    tone: "text-emerald-600 dark:text-emerald-400",
+    bgAccent: "bg-emerald-500/5 dark:bg-emerald-500/10",
+    borderAccent: "border-l-emerald-500",
+    dotColor: "bg-emerald-500",
+  },
+  {
+    id: "error",
+    label: "错误",
+    icon: Alert01Icon,
+    tone: "text-red-500 dark:text-red-400",
+    bgAccent: "bg-red-500/5 dark:bg-red-500/10",
+    borderAccent: "border-l-red-500",
+    dotColor: "bg-red-500",
+  },
+];
+
+function formatConversationTime(value?: string) {
+  if (!value) return "";
+
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) return "";
+
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
+}
+
+function resolveConversationBoardColumn(
+  conversation: Conversation,
+  messages: ConversationMessage[],
+  pendingConversationId: string | null,
+): ConversationBoardColumnId {
+  if (pendingConversationId === conversation.id) return "in_progress";
+
+  const lastAssistantMessage = [...messages].reverse().find((message) => message.role === "assistant");
+  const hasUserMessage = messages.some((message) => message.role === "user");
+
+  if (lastAssistantMessage?.error || lastAssistantMessage?.trace?.some((item) => item.kind === "tool" && !!item.errorText)) {
+    return "error";
+  }
+
+  if ((lastAssistantMessage?.clarificationQuestions?.length ?? 0) > 0) {
+    return "waiting_user";
+  }
+
+  if (conversation.archived) {
+    return "completed";
+  }
+
+  if (!hasUserMessage) {
+    return "in_progress";
+  }
+
+  if (lastAssistantMessage) {
+    return "completed";
+  }
+
+  return "in_progress";
+}
 
 export function CreationView({
   agents,
@@ -99,6 +215,8 @@ export function CreationView({
     createConversation,
     updateConversation,
     deleteConversation,
+    setConversationPending,
+    setConversationFlowDraft,
   } = useConversationStore();
 
   const messages = activeConversationId
@@ -228,7 +346,7 @@ export function CreationView({
     document.body.style.userSelect = "none";
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
-      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 480);
+      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 288);
       onSidebarWidthChange(nextWidth);
     };
 
@@ -253,7 +371,10 @@ export function CreationView({
   return (
     <div className="flex flex-1 overflow-hidden">
       {!sidebarCollapsed && (
-        <div className="relative flex h-full shrink-0 border-r border-border bg-background" style={{ width: sidebarWidth }}>
+        <div
+          className="relative flex h-full shrink-0 border-r border-border bg-background"
+          style={{ width: Math.min(sidebarWidth, 288), maxWidth: "18rem" }}
+        >
           <div className="flex h-full min-w-0 flex-1 flex-col">
             <div className="flex h-14 items-center justify-between border-b border-border px-4">
               <h2 className="text-sm font-semibold text-foreground">{m.creation()}</h2>
@@ -264,7 +385,7 @@ export function CreationView({
               </div>
             </div>
             <ScrollArea className="flex-1">
-              <div className="space-y-0.5 p-1.5">
+              <div className="w-full space-y-0.5 p-1.5">
                 {!hasLoadedConversations ? (
                   <ConversationListSkeleton />
                 ) : (
@@ -374,7 +495,6 @@ export function CreationView({
             agents={agents}
             runtimes={enabledRuntimes}
             projects={projects}
-            goals={goals}
             defaultAgentId={settings?.defaultAgentId}
             sidebarCollapsed={sidebarCollapsed}
             onToggleSidebar={onToggleSidebar}
@@ -391,10 +511,65 @@ export function CreationView({
             onSendMessage={async (content) => {
               setSending(true);
               setChatError(null);
+              setConversationPending(activeConversation.id);
+              setConversationFlowDraft(activeConversation.id, {
+                id: `draft-${activeConversation.id}`,
+                role: "assistant",
+                content: "",
+                trace: [
+                  {
+                    kind: "thought",
+                    text: "正在分析当前项目上下文并拆解执行任务。",
+                  },
+                  {
+                    kind: "tool",
+                    toolName: "dispatch_command",
+                    toolCallId: `dispatch-${activeConversation.id}`,
+                    state: "input-streaming",
+                    input: {
+                      instruction: content,
+                      runtimeId: activeConversation.runtimeId,
+                    },
+                  },
+                ],
+              });
               try {
                 const result = await api.createGoalsFromConversation(activeConversation.id, {
                   instruction: content,
                   runtimeId: activeConversation.runtimeId,
+                });
+                setConversationFlowDraft(activeConversation.id, {
+                  id: `draft-${activeConversation.id}`,
+                  role: "assistant",
+                  content: result.needsClarification
+                    ? "需要更多信息后才能继续执行。"
+                    : result.goals.length > 0
+                      ? `已创建 ${result.goals.length} 个任务，右侧 Current Thread 将继续跟踪执行进度。`
+                      : "命令已提交，等待后续执行结果。",
+                  trace: [
+                    {
+                      kind: "thought",
+                      text: result.needsClarification
+                        ? "当前信息不足，先向用户澄清缺失上下文。"
+                        : "已完成需求解析，并生成可执行任务。",
+                    },
+                    {
+                      kind: "tool",
+                      toolName: "dispatch_command",
+                      toolCallId: `dispatch-${activeConversation.id}`,
+                      state: "output-available",
+                      input: {
+                        instruction: content,
+                        runtimeId: activeConversation.runtimeId,
+                      },
+                      output: {
+                        commandId: result.command.id,
+                        status: result.command.status,
+                        goalsCreated: result.goals.length,
+                        clarificationQuestions: result.questions,
+                      },
+                    },
+                  ],
                 });
                 await loadMessages(activeConversation.id, { force: true });
                 if (!activeConversation.title && messages.length === 0) {
@@ -402,12 +577,35 @@ export function CreationView({
                     title: content.slice(0, 60),
                   });
                 }
-                return { goals: result.goals };
+                return;
               } catch (err) {
+                setConversationFlowDraft(activeConversation.id, {
+                  id: `draft-${activeConversation.id}`,
+                  role: "assistant",
+                  content: err instanceof Error ? err.message : "Failed to send message",
+                  trace: [
+                    {
+                      kind: "thought",
+                      text: "执行过程中出现错误，未能完成任务分派。",
+                    },
+                    {
+                      kind: "tool",
+                      toolName: "dispatch_command",
+                      toolCallId: `dispatch-${activeConversation.id}`,
+                      state: "output-error",
+                      input: {
+                        instruction: content,
+                        runtimeId: activeConversation.runtimeId,
+                      },
+                      errorText: err instanceof Error ? err.message : "Failed to send message",
+                    },
+                  ],
+                });
                 console.error("Failed to send message:", err);
                 setChatError(err instanceof Error ? err.message : "Failed to send message");
                 throw err;
               } finally {
+                setConversationPending(null);
                 setSending(false);
               }
             }}
@@ -441,7 +639,6 @@ interface ChatAreaProps {
   agents: AgentProfile[];
   runtimes: RuntimeProfile[];
   projects: Project[];
-  goals: Goal[];
   defaultAgentId?: string;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
@@ -457,7 +654,7 @@ interface ChatAreaProps {
     },
   ) => Promise<void>;
   onSetDefaultAgent: (agentId?: string) => void;
-  onSendMessage: (content: string) => Promise<{ goals: Goal[] }>;
+  onSendMessage: (content: string) => Promise<void>;
   onReloadMessages?: () => Promise<void>;
 }
 
@@ -469,7 +666,6 @@ function ChatArea({
   agents,
   runtimes,
   projects,
-  goals,
   defaultAgentId,
   sidebarCollapsed,
   onToggleSidebar,
@@ -482,11 +678,16 @@ function ChatArea({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [createdGoals, setCreatedGoals] = useState<Goal[]>([]);
   const [isConversationUpdating, setIsConversationUpdating] = useState(false);
+  const [specDialogOpen, setSpecDialogOpen] = useState(false);
+  const [projectSpec, setProjectSpec] = useState("");
+  const [projectSpecDraft, setProjectSpecDraft] = useState("");
+  const [projectSpecLoading, setProjectSpecLoading] = useState(false);
+  const [projectSpecSaving, setProjectSpecSaving] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const specFileInputRef = useRef<HTMLInputElement>(null);
   const pendingConversationUpdateRef = useRef<Promise<void> | null>(null);
 
   const { isListening, transcript, isSupported, start, stop } = useSpeechRecognition();
@@ -508,30 +709,29 @@ function ChatArea({
     () => projects.find((p) => p.id === conversation.projectId),
     [projects, conversation.projectId],
   );
-  const latestClarificationQuestions = useMemo(() => {
-    for (let index = messages.length - 1; index >= 0; index -= 1) {
-      const questions = messages[index].clarificationQuestions ?? [];
-      if (questions.length > 0) {
-        return questions;
-      }
-    }
+  const { conversations, activeConversationId, pendingConversationId, messagesByConversationId, setActiveConversationId } =
+    useConversationStore();
+  const projectAgentsFilePath = useMemo(() => getProjectAgentsFilePath(selectedProject), [selectedProject]);
+  const hasProjectSpec = projectSpec.trim().length > 0;
+  const boardCards = useMemo<ConversationBoardCard[]>(() => {
+    return conversations
+      .filter((item) => !item.deleted && !item.archived)
+      .map((item) => {
+        const itemMessages = messagesByConversationId[item.id] ?? EMPTY_CONVERSATION_MESSAGES;
+        const firstUserMessage = itemMessages.find((message) => message.role === "user")?.content?.trim() ?? "";
+        const projectName = projects.find((project) => project.id === item.projectId)?.name;
 
-    return [];
-  }, [messages]);
-  const visibleGoalCards = useMemo(() => {
-    if (createdGoals.length > 0) {
-      return createdGoals;
-    }
-
-    if (!conversation.projectId) {
-      return [];
-    }
-
-    return goals
-      .filter((goal) => goal.projectId === conversation.projectId && goal.status === "active")
-      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
-      .slice(0, 6);
-  }, [conversation.projectId, createdGoals, goals]);
+        return {
+          conversation: item,
+          title: item.title || firstUserMessage || m.untitled_conversation(),
+          summary: firstUserMessage || "等待输入需求后开始执行",
+          projectName,
+          updatedAt: item.updatedAt,
+          column: resolveConversationBoardColumn(item, itemMessages, pendingConversationId),
+        };
+      })
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+  }, [conversations, messagesByConversationId, pendingConversationId, projects]);
   const visibleMessages = useMemo(() => {
     if (!pendingUserMessage) return messages;
 
@@ -574,8 +774,46 @@ function ChatArea({
   useEffect(() => {
     textareaRef.current?.focus();
     setPendingUserMessage(null);
-    setCreatedGoals([]);
   }, [conversation.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!projectAgentsFilePath) {
+      setProjectSpec("");
+      setProjectSpecDraft("");
+      setProjectSpecLoading(false);
+      return;
+    }
+
+    const loadProjectAgentsFile = async () => {
+      setProjectSpecLoading(true);
+
+      try {
+        const file = await api.readWorkspaceFile(projectAgentsFilePath);
+        if (cancelled) return;
+
+        const content = file.content ?? "";
+        setProjectSpec(content);
+        setProjectSpecDraft(content);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("Failed to load AGENTS.md:", err);
+        setProjectSpec("");
+        setProjectSpecDraft("");
+      } finally {
+        if (!cancelled) {
+          setProjectSpecLoading(false);
+        }
+      }
+    };
+
+    void loadProjectAgentsFile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectAgentsFilePath]);
 
   useEffect(() => {
     if (!pendingUserMessage) return;
@@ -626,7 +864,6 @@ function ChatArea({
 
     const content = input.trim();
     const filesToSend = [...attachedFiles];
-
     setInput("");
     setAttachedFiles([]);
     setPendingUserMessage(content);
@@ -635,8 +872,7 @@ function ChatArea({
       if (filesToSend.length > 0) {
         toast.info(m.multimodal_notice());
       }
-      const result = await onSendMessage(content);
-      setCreatedGoals(result.goals);
+      await onSendMessage(content);
     } catch (err) {
       setPendingUserMessage(null);
       console.error("Failed to send message:", err);
@@ -644,9 +880,48 @@ function ChatArea({
     }
   }, [input, attachedFiles, sending, onSendMessage]);
 
-  const handleSelectClarification = useCallback((question: string) => {
-    setInput(question);
-    textareaRef.current?.focus();
+  const handleOpenSpecDialog = useCallback(() => {
+    if (!selectedProject || !projectAgentsFilePath) {
+      toast.info("请先给当前会话选择一个项目，再编辑项目指令。");
+      return;
+    }
+
+    setProjectSpecDraft(projectSpec);
+    setSpecDialogOpen(true);
+  }, [projectAgentsFilePath, projectSpec, selectedProject]);
+
+  const handleSaveSpec = useCallback(async () => {
+    if (!projectAgentsFilePath) return;
+
+    setProjectSpecSaving(true);
+
+    try {
+      await api.writeWorkspaceFile(projectAgentsFilePath, projectSpecDraft);
+      setProjectSpec(projectSpecDraft);
+      setSpecDialogOpen(false);
+      toast.success("项目指令已保存到 AGENTS.md");
+    } catch (err) {
+      console.error("Failed to save AGENTS.md:", err);
+      toast.error("项目指令保存失败");
+    } finally {
+      setProjectSpecSaving(false);
+    }
+  }, [projectAgentsFilePath, projectSpecDraft]);
+
+  const handleImportSpecFile = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const content = await file.text();
+      setProjectSpecDraft(content);
+      toast.success(`已导入 ${file.name}，保存后会覆盖项目 AGENTS.md`);
+    } catch (err) {
+      console.error("Failed to import AGENTS.md source file:", err);
+      toast.error("AGENTS.md 源文件导入失败");
+    } finally {
+      event.target.value = "";
+    }
   }, []);
 
   function handleKeys(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -701,6 +976,26 @@ function ChatArea({
         )}
 
         <div className="flex items-center gap-2 shrink-0">
+          <input
+            ref={specFileInputRef}
+            type="file"
+            accept={PROJECT_SPEC_FILE_ACCEPT}
+            className="hidden"
+            onChange={handleImportSpecFile}
+          />
+          <Button
+            type="button"
+            variant={hasProjectSpec ? "outline" : "ghost"}
+            size="icon-sm"
+            title={selectedProject ? `${selectedProject.name} Project Instructions` : "Project Instructions"}
+            className={cn(
+              "shrink-0",
+              hasProjectSpec && "border-sky-500/30 bg-sky-500/5 text-sky-700 hover:bg-sky-500/10 dark:text-sky-300",
+            )}
+            onClick={handleOpenSpecDialog}
+          >
+            <HugeiconsIcon icon={File02Icon} className="size-4" />
+          </Button>
           <Select
             value={conversation.projectId || "__none__"}
             onValueChange={(v) =>
@@ -741,20 +1036,6 @@ function ChatArea({
 
       <div className="shrink-0 bg-background px-4 py-4 md:px-6">
         <div className="mx-auto max-w-3xl">
-          {latestClarificationQuestions.length > 0 ? (
-            <div className="mb-3 flex flex-wrap gap-2 rounded-xl border border-border/60 bg-muted/20 p-3">
-              {latestClarificationQuestions.map((question) => (
-                <button
-                  key={question}
-                  type="button"
-                  onClick={() => handleSelectClarification(question)}
-                  className="rounded-full border border-border bg-background px-3 py-1.5 text-left text-xs text-foreground/80 transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-foreground"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          ) : null}
           <BorderBeam
             size="md"
             theme="auto"
@@ -855,61 +1136,178 @@ function ChatArea({
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 md:px-6">
-        <div className="mx-auto max-w-3xl py-6 space-y-3">
-          {visibleGoalCards.length > 0 ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 px-1">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
-                  当前任务
+        <div className="mx-auto max-w-6xl py-6 space-y-6">
+          <div className="max-w-3xl space-y-3">
+          {selectedProject && hasProjectSpec ? (
+            <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 px-4 py-3 text-xs text-sky-900 dark:text-sky-100">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-medium">{selectedProject.name} 的项目指令已启用</div>
+                  <div className="mt-1 line-clamp-2 text-sky-800/80 dark:text-sky-100/70">{projectSpec}</div>
                 </div>
-                <div className="h-px flex-1 bg-border/50" />
-                <div className="text-[10px] text-muted-foreground/50">{visibleGoalCards.length} items</div>
-              </div>
-              <div className="grid gap-3">
-                {visibleGoalCards.map((goal, index) => (
-                  <div key={goal.id} className="rounded-xl border border-border/60 bg-card px-4 py-3 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-[11px] font-semibold text-sky-600 dark:text-sky-400">
-                        {index + 1}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className="truncate text-sm font-medium text-foreground">{goal.title}</div>
-                          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                            {goal.status}
-                          </span>
-                        </div>
-                        {goal.description ? (
-                          <div className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
-                            {goal.description}
-                          </div>
-                        ) : null}
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground/70">
-                          {goal.projectId ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
-                              <HugeiconsIcon icon={Folder01Icon} className="size-3" />
-                              {selectedProject?.name || "项目任务"}
-                            </span>
-                          ) : null}
-                          <span>{new Date(goal.updatedAt).toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={handleOpenSpecDialog}>
+                  编辑
+                </Button>
               </div>
             </div>
           ) : null}
-          {sending && <ChatThinkingState />}
           {chatError && (
             <div className="flex items-center gap-2 pr-6">
               <span className="inline-flex size-[18px] shrink-0 items-center justify-center rounded bg-destructive/10 text-destructive text-[10px] font-semibold">!</span>
               <span className="text-xs text-destructive">{m.send_failed()}</span>
             </div>
           )}
+          </div>
+
+          <section className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                当前看板
+              </div>
+              <div className="h-px flex-1 bg-border/50" />
+              <div className="text-[10px] text-muted-foreground/50">{boardCards.length} items</div>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-5">
+              {conversationBoardColumns.map((column) => {
+                const columnCards = boardCards.filter((card) => card.column === column.id);
+
+                return (
+                  <div
+                    key={column.id}
+                    className={cn(
+                      "flex min-h-[280px] flex-col rounded-xl border border-border/40 bg-muted/20",
+                      column.bgAccent,
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 border-b border-border/30 px-4 py-3">
+                      <div className={cn("size-1.5 rounded-full", column.dotColor)} />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-foreground/60">
+                        {column.label}
+                      </span>
+                      <span
+                        className={cn(
+                          "ml-auto inline-flex size-5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
+                          columnCards.length > 0 ? cn(column.tone, "bg-foreground/5") : "bg-foreground/3 text-muted-foreground/50",
+                        )}
+                      >
+                        {columnCards.length}
+                      </span>
+                    </div>
+
+                    <div className="flex-1 space-y-2.5 p-3">
+                      {columnCards.map((card) => (
+                        <button
+                          key={card.conversation.id}
+                          type="button"
+                          onClick={() => setActiveConversationId(card.conversation.id)}
+                          className={cn(
+                            "group/card w-full rounded-lg border border-border/30 bg-background/80 px-3.5 py-3 text-left shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] transition-all",
+                            "hover:border-border hover:bg-background hover:shadow-[0_2px_8px_0_rgba(0,0,0,0.06)] border-l-2",
+                            column.borderAccent,
+                            activeConversationId === card.conversation.id && "ring-1 ring-primary/30",
+                          )}
+                        >
+                          <div className="mb-1.5 text-sm font-medium leading-snug text-foreground/90 group-hover/card:text-foreground">
+                            {card.title}
+                          </div>
+
+                          <div className="mb-2 inline-flex items-center gap-1 rounded-md bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            <HugeiconsIcon icon={Folder01Icon} className="size-2.5 text-amber-500/70" />
+                            {card.projectName || "临时会话"}
+                          </div>
+
+                          <p className="mb-2 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground/70">
+                            {card.summary}
+                          </p>
+
+                          <div className="flex items-center justify-between gap-2 border-t border-border/20 pt-2 mt-1">
+                            <span className="text-[10px] tabular-nums text-muted-foreground/50">
+                              {formatConversationTime(card.updatedAt)}
+                            </span>
+                            {activeConversationId === card.conversation.id ? (
+                              <span className="text-[10px] text-primary/70">当前查看</span>
+                            ) : null}
+                          </div>
+                        </button>
+                      ))}
+
+                      {columnCards.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/40 bg-background/30 px-3 py-8">
+                          <HugeiconsIcon icon={column.icon} className="mb-1.5 size-4 text-muted-foreground/20" />
+                          <span className="text-[11px] text-muted-foreground/40">暂无任务</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
           <div ref={messagesEndRef} />
         </div>
       </div>
+
+      <AppDialog
+        open={specDialogOpen}
+        onOpenChange={setSpecDialogOpen}
+        title={selectedProject ? `${selectedProject.name} / Project Instructions` : "Project Instructions"}
+        description="直接编辑当前项目目录下的 AGENTS.md。这份文件作为项目长期说明和对外兼容指令，不再等同于动态 Rules。"
+        size="xl"
+        bodyClassName="space-y-4"
+        footer={(
+          <>
+            <Button type="button" variant="outline" onClick={() => setSpecDialogOpen(false)}>
+              取消
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setProjectSpecDraft("")}>
+              清空
+            </Button>
+            <Button type="button" onClick={() => void handleSaveSpec()} disabled={!projectAgentsFilePath || projectSpecSaving}>
+              {projectSpecSaving ? "保存中..." : "保存项目指令"}
+            </Button>
+          </>
+        )}
+      >
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2">
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-foreground">Project Instructions</div>
+            <div className="text-xs text-muted-foreground">支持导入 `.md`、`.txt`、`.spec` 文档，保存时会直接覆盖项目目录里的 `AGENTS.md`。</div>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={() => specFileInputRef.current?.click()} disabled={!projectAgentsFilePath}>
+            导入文件
+          </Button>
+        </div>
+
+        {projectAgentsFilePath ? (
+          <div className="rounded-lg border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+            文件路径: {projectAgentsFilePath}
+          </div>
+        ) : null}
+
+        {projectSpecLoading ? (
+          <div className="rounded-lg border border-border bg-background px-3 py-8 text-center text-sm text-muted-foreground">
+            正在加载 AGENTS.md...
+          </div>
+        ) : null}
+
+        <textarea
+          value={projectSpecDraft}
+          onChange={(event) => setProjectSpecDraft(event.target.value)}
+          placeholder={[
+            "在这里写项目长期指令，例如：",
+            "- 技术栈和目录约束",
+            "- 代码风格和命名规范",
+            "- 哪些文件不能改",
+            "- 提交、测试、验证要求",
+            "- Agent 处理该项目时必须遵守的规则",
+          ].join("\n")}
+          className="min-h-[420px] w-full resize-none rounded-xl border border-border bg-background px-4 py-3 font-mono text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          spellCheck={false}
+          disabled={projectSpecLoading}
+        />
+      </AppDialog>
 
     </div>
   );

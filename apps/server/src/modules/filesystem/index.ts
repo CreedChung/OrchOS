@@ -25,4 +25,35 @@ export const filesystemController = new Elysia({ prefix: "/api/filesystem" })
         ),
       }),
     },
+  )
+  .get(
+    "/file",
+    ({ query }) => {
+      return FilesystemService.readFile(query.path);
+    },
+    {
+      query: t.Object({
+        path: t.String(),
+      }),
+      response: t.Object({
+        path: t.String(),
+        content: t.Union([t.String(), t.Null()]),
+      }),
+    },
+  )
+  .put(
+    "/file",
+    ({ body }) => {
+      return FilesystemService.writeFile(body.path, body.content);
+    },
+    {
+      body: t.Object({
+        path: t.String(),
+        content: t.String(),
+      }),
+      response: t.Object({
+        path: t.String(),
+        content: t.String(),
+      }),
+    },
   );

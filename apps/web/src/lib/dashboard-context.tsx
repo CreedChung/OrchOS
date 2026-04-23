@@ -36,6 +36,7 @@ type DashboardView =
   | "inbox"
   | "creation"
   | "agents"
+  | "rules"
   | "mcp-servers"
   | "skills"
   | "projects"
@@ -47,6 +48,7 @@ function getViewFromPath(pathname: string): DashboardView {
     "inbox",
     "creation",
     "agents",
+    "rules",
     "mcp-servers",
     "skills",
     "projects",
@@ -138,7 +140,18 @@ interface DashboardContextType {
   handleCreateRuleFromProblem: (problem: Problem) => void;
 
   // Rule actions
-  handleCreateRule: (data: { name: string; condition: string; action: string }) => Promise<void>;
+  handleCreateRule: (data: {
+    name: string;
+    condition: string;
+    action: string;
+    scope?: Rule["scope"];
+    projectId?: string;
+    targetAgentIds?: string[];
+    pathPatterns?: string[];
+    taskTypes?: string[];
+    instruction?: string;
+    priority?: Rule["priority"];
+  }) => Promise<void>;
   handleRuleToggle: (id: string, enabled: boolean) => Promise<void>;
   handleRuleDelete: (id: string) => Promise<void>;
 
@@ -373,7 +386,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     activeView === "inbox" || activeView === "projects" || activeView === "observability";
   const shouldLoadAgents =
     activeView === "agents" || activeView === "creation" || activeView === "observability";
-  const shouldLoadRules = activeView === "agents";
+  const shouldLoadRules = activeView === "agents" || activeView === "rules";
   const shouldLoadCommands = activeView === "projects";
   const shouldLoadMcpServers = activeView === "mcp-servers";
   const shouldLoadSkills = activeView === "skills" || activeView === "agents";
@@ -632,7 +645,18 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   // Rule actions
   const handleCreateRule = useCallback(
-    async (data: { name: string; condition: string; action: string }) => {
+    async (data: {
+      name: string;
+      condition: string;
+      action: string;
+      scope?: Rule["scope"];
+      projectId?: string;
+      targetAgentIds?: string[];
+      pathPatterns?: string[];
+      taskTypes?: string[];
+      instruction?: string;
+      priority?: Rule["priority"];
+    }) => {
       try {
         await api.createRule(data);
         setShowCreateRuleDialog(false);

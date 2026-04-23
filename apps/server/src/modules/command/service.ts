@@ -10,6 +10,9 @@ import { StateService } from "@/modules/state/service";
 import { PlanningService } from "@/modules/execution/planner";
 import { executionService } from "@/modules/execution/service";
 import { InboxService } from "@/modules/inbox/service";
+import { ProjectService } from "@/modules/project/service";
+import { FilesystemService } from "@/modules/filesystem/service";
+import { RuleService } from "@/modules/rule/service";
 import type { AcpTraceEvent } from "@/modules/runtime/acp";
 import type { Command, CommandStatus } from "@/types";
 
@@ -26,6 +29,49 @@ export interface DispatchResult {
 }
 
 export abstract class CommandService {
+  private static buildPlanningInstruction(command: Command) {
+    const projectId = command.projectIds.length > 0 ? command.projectIds[0] : undefined;
+    const project = projectId ? ProjectService.get(projectId) : undefined;
+    const projectInstructionsPath = project?.path ? `${project.path.replace(/\/$/, "")}/AGENTS.md` : undefined;
+    const agentsFile = projectInstructionsPath
+      ? FilesystemService.readFile(projectInstructionsPath).content ?? undefined
+      : undefined;
+    const activeRules = RuleService.matchInstructions({
+      projectId: project?.id,
+      projectPath: project?.path,
+      taskType: "plan",
+    });
+
+    const sections = [command.instruction];
+
+    if (project?.name || project?.path) {
+      sections.unshift(
+        [
+          "Project Context:",
+          project?.name ? `- Name: ${project.name}` : null,
+          project?.path ? `- Path: ${project.path}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      );
+    }
+
+    if (agentsFile?.trim()) {
+      sections.unshift(["Project Instructions (AGENTS.md):", agentsFile.trim()].join("\n"));
+    }
+
+    if (activeRules.length > 0) {
+      sections.unshift(
+        [
+          "Active Planning Rules:",
+          ...activeRules.map((rule, index) => `${index + 1}. ${rule.name} [priority: ${rule.priority}]\n${rule.instruction}`),
+        ].join("\n"),
+      );
+    }
+
+    return sections.join("\n\n");
+  }
+
   static create(data: {
     instruction: string;
     agentNames?: string[];
@@ -70,57 +116,32 @@ export abstract class CommandService {
 
     let planningResult;
 
-    if (runtimeId) {
-      try {
-        planningResult = await PlanningService.plan(
-          command.instruction,
-          runtimeId,
-          resolvedAgentNames,
-        );
-      } catch {
-        planningResult = PlanningService.fallbackPlan(command.instruction, resolvedAgentNames);
-      }
-    } else {
-      planningResult = PlanningService.fallbackPlan(command.instruction, resolvedAgentNames);
-    }
+     const planningInstruction = CommandService.buildPlanningInstruction(command);
 
-    if (planningResult.needsClarification) {
-      CommandService.update(command.id, { status: "failed" });
+     if (runtimeId) {
+       try {
+         planningResult = await PlanningService.plan(
+           planningInstruction,
+           runtimeId,
+           resolvedAgentNames,
+         );
+       } catch {
+         planningResult = PlanningService.fallbackPlan(planningInstruction, resolvedAgentNames);
+       }
+     } else {
+       planningResult = PlanningService.fallbackPlan(planningInstruction, resolvedAgentNames);
+     }
 
-      const inboxThread = InboxService.createAgentRequestThread({
-        title: command.instruction,
-        body: command.instruction,
-        summary: "Waiting for clarification before goals can be created.",
-        projectId,
-        conversationId: options?.conversationId,
-        commandId: command.id,
-        recipients: resolvedAgentNames,
-        cc: ["User"],
-      });
-
-      InboxService.addMessage({
-        threadId: inboxThread.id,
-        messageType: "question",
-        senderType: "system",
-        senderName: "Planner",
-        subject: "Clarification needed",
-        body: planningResult.questions.map((question, index) => `${index + 1}. ${question}`).join("\n"),
-        to: ["User"],
-        cc: resolvedAgentNames,
-        metadata: {
-          commandId: command.id,
-          needsClarification: true,
-        },
-      });
-
-      return {
-        needsClarification: true,
-        questions: planningResult.questions,
-        command: CommandService.get(command.id)!,
-        trace: planningResult.trace,
-        goals: [],
-      };
-    }
+     if (planningResult.needsClarification) {
+       planningResult = runtimeId
+         ? await PlanningService.clarifyAndPlan(
+            planningInstruction,
+            planningResult.questions,
+            runtimeId,
+            resolvedAgentNames,
+          )
+         : PlanningService.fallbackPlan(planningInstruction, resolvedAgentNames);
+     }
 
     const plannedGoals = planningResult.goals;
 

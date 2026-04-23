@@ -2,6 +2,7 @@ import { type UIMessage } from "ai";
 import { cn, formatDuration } from "@/lib/utils";
 import type { ConversationMessage } from "@/lib/api";
 import { m } from "@/paraglide/messages";
+import { ChatClarificationCard } from "@/components/chat/ChatClarificationCard";
 import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 import { ChatReasoningDrawer } from "@/components/chat/ChatReasoningDrawer";
 import { ChatToolTimeline } from "@/components/chat/ChatToolTimeline";
@@ -16,6 +17,7 @@ function buildMessageParts(message: ConversationMessage): Array<Record<string, u
   const parts: Array<Record<string, unknown>> = [];
   let reasoningBuffer = "";
   const toolPartsByCallId = new Map<string, Record<string, unknown>>();
+  const clarificationQuestions = message.clarificationQuestions ?? [];
 
   const flushReasoning = () => {
     const text = reasoningBuffer.trim();
@@ -62,7 +64,15 @@ function buildMessageParts(message: ConversationMessage): Array<Record<string, u
 
   flushReasoning();
 
-  if (message.content) {
+  if (clarificationQuestions.length > 0) {
+    parts.push({
+      type: "clarification",
+      summary: message.content,
+      questions: clarificationQuestions,
+    });
+  }
+
+  if (message.content && clarificationQuestions.length === 0) {
     parts.push({ type: "text", text: message.content });
   }
 
@@ -138,6 +148,16 @@ export function MessageBubble({ msg, userImageUrl }: { msg: UIMessage; userImage
 
           if (part.type === "reasoning") {
             return <ChatReasoningDrawer key={`${msg.id}-${index}`} text={part.text} metadata={metadata} />;
+          }
+
+          if (part.type === "clarification") {
+            return (
+              <ChatClarificationCard
+                key={`${msg.id}-${index}`}
+                summary={typeof part.summary === "string" ? part.summary : undefined}
+                questions={Array.isArray(part.questions) ? part.questions.map(String) : []}
+              />
+            );
           }
 
           if (part.type.startsWith("tool-")) {

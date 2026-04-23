@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Shield01Icon,
-  ArrowRight01Icon,
   ToggleLeft,
   ToggleRight,
   Cancel01Icon,
@@ -281,11 +280,16 @@ export function AgentDetailView({
                     <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium">
                       {conditionLabels[rule.condition] || rule.condition}
                     </span>
-                    <HugeiconsIcon icon={ArrowRight01Icon} className="size-2.5" />
                     <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium">
                       {actionLabels[rule.action] || rule.action}
                     </span>
+                    <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium">
+                      {rule.scope}
+                    </span>
                   </div>
+                  {rule.instruction ? (
+                    <div className="mt-2 text-xs text-foreground/75 whitespace-pre-wrap">{rule.instruction}</div>
+                  ) : null}
                 </div>
                 <button
                   onClick={() => onRuleToggle(rule.id, !rule.enabled)}

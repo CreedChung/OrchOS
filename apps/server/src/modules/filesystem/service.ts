@@ -1,17 +1,21 @@
-import { readdirSync, statSync, existsSync } from "fs";
-import { resolve, join } from "path";
+import { readdirSync, statSync, existsSync, readFileSync, writeFileSync } from "fs";
+import { resolve, join, dirname } from "path";
 import { homedir } from "os";
 
 export abstract class FilesystemService {
+  private static resolvePath(filePath: string) {
+    return filePath.startsWith("~")
+      ? join(homedir(), filePath.slice(1))
+      : resolve(filePath);
+  }
+
   static browse(dirPath: string): {
     currentPath: string;
     parentPath?: string;
     directories: { name: string; path: string }[];
   } {
     // Resolve ~ to home directory
-    const resolvedPath = dirPath.startsWith("~")
-      ? join(homedir(), dirPath.slice(1))
-      : resolve(dirPath);
+    const resolvedPath = FilesystemService.resolvePath(dirPath);
 
     if (!existsSync(resolvedPath)) {
       return { currentPath: resolvedPath, directories: [] };
@@ -46,6 +50,50 @@ export abstract class FilesystemService {
       currentPath: resolvedPath,
       parentPath,
       directories: entries,
+    };
+  }
+
+  static readFile(filePath: string): {
+    path: string;
+    content: string | null;
+  } {
+    const resolvedPath = FilesystemService.resolvePath(filePath);
+
+    if (!existsSync(resolvedPath)) {
+      return { path: resolvedPath, content: null };
+    }
+
+    try {
+      const stats = statSync(resolvedPath);
+      if (!stats.isFile()) {
+        return { path: resolvedPath, content: null };
+      }
+
+      return {
+        path: resolvedPath,
+        content: readFileSync(resolvedPath, "utf8"),
+      };
+    } catch {
+      return { path: resolvedPath, content: null };
+    }
+  }
+
+  static writeFile(filePath: string, content: string): {
+    path: string;
+    content: string;
+  } {
+    const resolvedPath = FilesystemService.resolvePath(filePath);
+    const parentDir = dirname(resolvedPath);
+
+    if (!existsSync(parentDir)) {
+      throw new Error("Parent directory does not exist");
+    }
+
+    writeFileSync(resolvedPath, content, "utf8");
+
+    return {
+      path: resolvedPath,
+      content,
     };
   }
 }

@@ -1,6 +1,14 @@
 import { create } from "zustand";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 
+export interface ConversationFlowDraft {
+  id: string;
+  role: "assistant";
+  content: string;
+  responseTime?: number;
+  trace?: ConversationMessage["trace"];
+}
+
 let loadConversationsPromise: Promise<void> | null = null;
 const loadMessagesPromises = new Map<string, Promise<void>>();
 let activeMessageLoads = 0;
@@ -27,6 +35,8 @@ function upsertConversation(conversations: Conversation[], conversation: Convers
 interface ConversationState {
   conversations: Conversation[];
   activeConversationId: string | null;
+  pendingConversationId: string | null;
+  flowDraftByConversationId: Record<string, ConversationFlowDraft | undefined>;
   messagesByConversationId: Record<string, ConversationMessage[]>;
   hasLoadedConversations: boolean;
   isLoadingConversations: boolean;
@@ -51,6 +61,8 @@ interface ConversationActions {
   ) => Promise<void>;
   deleteConversation: (id: string, permanent?: boolean) => Promise<void>;
   addMessage: (conversationId: string, message: ConversationMessage) => void;
+  setConversationPending: (conversationId: string | null) => void;
+  setConversationFlowDraft: (conversationId: string, draft: ConversationFlowDraft | undefined) => void;
   getActiveConversation: () => Conversation | null;
   getActiveMessages: () => ConversationMessage[];
 }
@@ -58,6 +70,8 @@ interface ConversationActions {
 export const useConversationStore = create<ConversationState & ConversationActions>((set, get) => ({
   conversations: [],
   activeConversationId: null,
+  pendingConversationId: null,
+  flowDraftByConversationId: {},
   messagesByConversationId: {},
   hasLoadedConversations: false,
   isLoadingConversations: false,
@@ -165,6 +179,19 @@ export const useConversationStore = create<ConversationState & ConversationActio
       messagesByConversationId: {
         ...state.messagesByConversationId,
         [conversationId]: [...(state.messagesByConversationId[conversationId] || []), message],
+      },
+    }));
+  },
+
+  setConversationPending: (conversationId) => {
+    set({ pendingConversationId: conversationId });
+  },
+
+  setConversationFlowDraft: (conversationId, draft) => {
+    set((state) => ({
+      flowDraftByConversationId: {
+        ...state.flowDraftByConversationId,
+        [conversationId]: draft,
       },
     }));
   },

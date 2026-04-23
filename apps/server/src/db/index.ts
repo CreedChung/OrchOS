@@ -49,7 +49,7 @@ function migrate(sqlite: Database) {
     "CREATE TABLE IF NOT EXISTS problems (id TEXT PRIMARY KEY, title TEXT NOT NULL, priority TEXT NOT NULL DEFAULT 'warning', source TEXT, context TEXT, goal_id TEXT, state_id TEXT, status TEXT NOT NULL DEFAULT 'open', actions TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
   );
   sqlite.run(
-    "CREATE TABLE IF NOT EXISTS rules (id TEXT PRIMARY KEY, name TEXT NOT NULL, condition TEXT NOT NULL, action TEXT NOT NULL, enabled TEXT NOT NULL DEFAULT 'true', created_at TEXT NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS rules (id TEXT PRIMARY KEY, name TEXT NOT NULL, condition TEXT NOT NULL, action TEXT NOT NULL, scope TEXT NOT NULL DEFAULT 'global', project_id TEXT REFERENCES projects(id), target_agent_ids TEXT NOT NULL DEFAULT '[]', path_patterns TEXT NOT NULL DEFAULT '[]', task_types TEXT NOT NULL DEFAULT '[]', instruction TEXT NOT NULL DEFAULT '', priority TEXT NOT NULL DEFAULT 'normal', enabled TEXT NOT NULL DEFAULT 'true', created_at TEXT NOT NULL)",
   );
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_commands_goal_id ON commands(goal_id)");
   sqlite.run("CREATE INDEX IF NOT EXISTS idx_states_goal_id ON states(goal_id)");
@@ -88,8 +88,29 @@ function migrate(sqlite: Database) {
   } catch {}
   try {
     sqlite.run(
-      "CREATE TABLE IF NOT EXISTS rules (id TEXT PRIMARY KEY, name TEXT NOT NULL, condition TEXT NOT NULL, action TEXT NOT NULL, enabled TEXT NOT NULL DEFAULT 'true', created_at TEXT NOT NULL)",
+      "CREATE TABLE IF NOT EXISTS rules (id TEXT PRIMARY KEY, name TEXT NOT NULL, condition TEXT NOT NULL, action TEXT NOT NULL, scope TEXT NOT NULL DEFAULT 'global', project_id TEXT REFERENCES projects(id), target_agent_ids TEXT NOT NULL DEFAULT '[]', path_patterns TEXT NOT NULL DEFAULT '[]', task_types TEXT NOT NULL DEFAULT '[]', instruction TEXT NOT NULL DEFAULT '', priority TEXT NOT NULL DEFAULT 'normal', enabled TEXT NOT NULL DEFAULT 'true', created_at TEXT NOT NULL)",
     );
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE rules ADD COLUMN scope TEXT NOT NULL DEFAULT 'global'");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE rules ADD COLUMN project_id TEXT REFERENCES projects(id)");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE rules ADD COLUMN target_agent_ids TEXT NOT NULL DEFAULT '[]'");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE rules ADD COLUMN path_patterns TEXT NOT NULL DEFAULT '[]'");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE rules ADD COLUMN task_types TEXT NOT NULL DEFAULT '[]'");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE rules ADD COLUMN instruction TEXT NOT NULL DEFAULT ''");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE rules ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal'");
   } catch {}
   try {
     sqlite.run("CREATE INDEX IF NOT EXISTS idx_problems_status ON problems(status)");

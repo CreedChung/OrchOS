@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import type { ActivityEntry, Goal, Problem, Project } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
+import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
 import { MessageBubble, mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
 
 interface ActivityPanelProps {
@@ -72,7 +73,7 @@ function SectionHeader({ title, meta }: { title: string; meta?: string }) {
 
 export function ActivityPanel({ activities, goals, projects, problems, collapsed, activeView }: ActivityPanelProps) {
   const { user } = useUser();
-  const { conversations, activeConversationId, messagesByConversationId } = useConversationStore();
+  const { conversations, activeConversationId, pendingConversationId, flowDraftByConversationId, messagesByConversationId } = useConversationStore();
 
   if (collapsed) {
     return null;
@@ -82,7 +83,32 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
   const activeProjectId = activeConversation?.projectId;
   const activeProject = projects.find((project) => project.id === activeProjectId);
   const conversationMessages = activeConversationId ? (messagesByConversationId[activeConversationId] ?? []) : [];
-  const flowMessages = mapConversationMessagesToUiMessages(conversationMessages);
+  const flowDraft = activeConversationId ? flowDraftByConversationId[activeConversationId] : undefined;
+  const persistedFlowMessages = mapConversationMessagesToUiMessages(conversationMessages);
+  const flowMessages = flowDraft
+    ? [
+        ...persistedFlowMessages,
+        {
+          id: flowDraft.id,
+          role: flowDraft.role,
+          metadata: {
+            responseTime: flowDraft.responseTime,
+          },
+          parts: mapConversationMessagesToUiMessages([
+            {
+              id: flowDraft.id,
+              conversationId: activeConversationId ?? "",
+              role: flowDraft.role,
+              content: flowDraft.content,
+              responseTime: flowDraft.responseTime,
+              trace: flowDraft.trace,
+              createdAt: new Date().toISOString(),
+            },
+          ])[0]?.parts ?? [],
+        } as UIMessage,
+      ]
+    : persistedFlowMessages;
+  const showPendingAssistantReply = activeConversationId !== null && pendingConversationId === activeConversationId;
   const threadGoals = activeConversationId
     ? goals.filter((goal) => goal.commandId && goal.projectId === activeProjectId).slice(0, 6)
     : [];
@@ -99,20 +125,21 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
 
   return (
     <aside className="flex h-full w-80 flex-col border-l border-border bg-sidebar">
-      <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
+      <div className="flex h-11 items-center gap-2 border-b border-border bg-sidebar px-4">
         <div className="truncate text-sm font-medium text-foreground">工作面板</div>
         <div className="truncate text-xs text-muted-foreground">{panelContext}</div>
       </div>
 
       <ScrollArea className="flex-1">
         <div className="space-y-4 py-3">
-          {activeView === "creation" && flowMessages.length > 0 ? (
+          {activeView === "creation" && (flowMessages.length > 0 || showPendingAssistantReply) ? (
             <section>
               <SectionHeader title="Conversation Flow" meta={`${flowMessages.length} messages`} />
               <div className="space-y-4 px-3">
                 {flowMessages.map((message) => (
                   <MessageBubble key={message.id} msg={message as UIMessage} userImageUrl={user?.imageUrl} />
                 ))}
+                {showPendingAssistantReply ? <ChatThinkingState /> : null}
               </div>
             </section>
           ) : null}

@@ -350,6 +350,13 @@ export interface Rule {
   name: string;
   condition: string;
   action: string;
+  scope: "global" | "project";
+  projectId?: string;
+  targetAgentIds: string[];
+  pathPatterns: string[];
+  taskTypes: string[];
+  instruction: string;
+  priority: "low" | "normal" | "high";
   enabled: boolean;
   createdAt: string;
 }
@@ -811,6 +818,31 @@ export const api = {
       directories: { name: string; path: string }[];
     };
   },
+  readWorkspaceFile: async (path: string) => {
+    const client = createEdenClient();
+    const result = await client.api.filesystem.file.get({
+      query: {
+        path,
+      },
+    });
+
+    return assertData(result) as {
+      path: string;
+      content: string | null;
+    };
+  },
+  writeWorkspaceFile: async (path: string, content: string) => {
+    const client = createEdenClient();
+    const result = await client.api.filesystem.file.put({
+      path,
+      content,
+    });
+
+    return assertData(result) as {
+      path: string;
+      content: string;
+    };
+  },
 
   // History
   getHistory: async (goalId?: string, limit?: number): Promise<HistoryEntry[]> => {
@@ -1019,11 +1051,18 @@ export const api = {
     name: string;
     condition: string;
     action: string;
+    scope?: Rule["scope"];
+    projectId?: string;
+    targetAgentIds?: string[];
+    pathPatterns?: string[];
+    taskTypes?: string[];
+    instruction?: string;
+    priority?: Rule["priority"];
     enabled?: boolean;
   }): Promise<Rule> => createEdenClient().api.rules.post(data).then(assertData),
   updateRule: (
     id: string,
-    data: Partial<Pick<Rule, "name" | "condition" | "action" | "enabled">>,
+    data: Partial<Pick<Rule, "name" | "condition" | "action" | "scope" | "projectId" | "targetAgentIds" | "pathPatterns" | "taskTypes" | "instruction" | "priority" | "enabled">>,
   ): Promise<Rule> => {
     const client = createEdenClient();
     return client.api.rules({ id }).patch(data).then(assertData);

@@ -33,9 +33,9 @@ export interface PlanningResult {
 const PLANNING_PROMPT = `You are a project planner for an AI agent orchestration system.
 
 First, decide whether the request is specific enough to split into execution goals.
-- If critical details are missing, respond with needsClarification=true and 1-3 concrete questions.
+- If critical details are missing, respond with needsClarification=true and 1-3 concrete clarification questions.
 - If the request is clear enough, respond with needsClarification=false and provide goals.
-- Ask clarification questions only when the missing information would materially change implementation or task assignment.
+- The clarification questions are for internal planning only. Do not ask the user directly.
 
 For each goal, provide:
 - title: A concise description of what needs to be done
@@ -59,14 +59,36 @@ Example format:
   ]
 }
 
-Clarification example:
+Task to decompose:`;
+
+const INTERNAL_CLARIFICATION_PROMPT = `You are a project planner for an AI agent orchestration system.
+
+The original request had ambiguities. Resolve them yourself using the most reasonable assumptions from the request and conversation context.
+- Do not ask the user follow-up questions.
+- Treat the clarification questions as internal planning checkpoints.
+- Make explicit, conservative assumptions and continue.
+- Always respond with needsClarification=false and an empty questions array.
+
+For each goal, provide:
+- title: A concise description of what needs to be done
+- description: A more detailed explanation
+- successCriteria: List of verifiable conditions for completion
+- actions: List of actions needed from: write_code, run_tests, fix_bug, commit, review
+
+IMPORTANT: Respond ONLY with a JSON object. No markdown, no explanation, just the raw JSON.
+
+Example format:
 {
-  "needsClarification": true,
-  "questions": [
-    "Which project or surface should this be implemented in?",
-    "What exact user outcome do you want after this is finished?"
-  ],
-  "goals": []
+  "needsClarification": false,
+  "questions": [],
+  "goals": [
+    {
+      "title": "Implement user authentication module",
+      "description": "Create login/signup endpoints with JWT token management",
+      "successCriteria": ["Auth endpoints respond correctly", "JWT tokens are generated and validated"],
+      "actions": ["write_code", "run_tests"]
+    }
+  ]
 }
 
 Task to decompose:`;
@@ -107,6 +129,52 @@ export abstract class PlanningService {
       return {
         ...parsed,
         goals: parsed.needsClarification ? [] : PlanningService.assignAgents(parsed.goals, availableAgents),
+        trace: result.trace,
+      };
+    } catch {
+      return PlanningService.fallbackPlan(instruction, agentNames);
+    }
+  }
+
+  static async clarifyAndPlan(
+    instruction: string,
+    questions: string[],
+    runtimeId: string,
+    agentNames?: string[],
+  ): Promise<PlanningResult> {
+    const runtime = RuntimeService.get(runtimeId);
+    if (!runtime) {
+      return PlanningService.fallbackPlan(instruction, agentNames);
+    }
+
+    const availableAgents = AgentService.list().filter(
+      (a) => a.enabled && a.status !== "error",
+    );
+
+    const agentInfo = availableAgents
+      .map((a) => `- ${a.name}: ${a.role} (capabilities: ${a.capabilities.join(", ")})`)
+      .join("\n");
+
+    const prompt = `${INTERNAL_CLARIFICATION_PROMPT}\n\nOriginal request:\n${instruction}\n\nInternal clarification points:\n${questions
+      .map((question, index) => `${index + 1}. ${question}`)
+      .join("\n")}\n\nAvailable agents:\n${agentInfo || "No specific agents - use any available runtime"}`;
+
+    try {
+      const result = await RuntimeService.chat(runtimeId, prompt, {});
+
+      if (!result.success || !result.output) {
+        return PlanningService.fallbackPlan(instruction, agentNames);
+      }
+
+      const parsed = PlanningService.parsePlan(result.output);
+      if (parsed.goals.length === 0) {
+        return PlanningService.fallbackPlan(instruction, agentNames);
+      }
+
+      return {
+        needsClarification: false,
+        questions: [],
+        goals: PlanningService.assignAgents(parsed.goals, availableAgents),
         trace: result.trace,
       };
     } catch {

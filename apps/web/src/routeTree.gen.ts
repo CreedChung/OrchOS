@@ -17,6 +17,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardSkillsRouteImport } from './routes/dashboard/skills'
+import { Route as DashboardRulesRouteImport } from './routes/dashboard/rules'
 import { Route as DashboardProjectsRouteImport } from './routes/dashboard/projects'
 import { Route as DashboardObservabilityRouteImport } from './routes/dashboard/observability'
 import { Route as DashboardMcpServersRouteImport } from './routes/dashboard/mcp-servers'
@@ -65,6 +66,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
 const DashboardSkillsRoute = DashboardSkillsRouteImport.update({
   id: '/skills',
   path: '/skills',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardRulesRoute = DashboardRulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardProjectsRoute = DashboardProjectsRouteImport.update({
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/projects': typeof DashboardProjectsRoute
+  '/dashboard/rules': typeof DashboardRulesRoute
   '/dashboard/skills': typeof DashboardSkillsRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/projects': typeof DashboardProjectsRoute
+  '/dashboard/rules': typeof DashboardRulesRoute
   '/dashboard/skills': typeof DashboardSkillsRoute
   '/dashboard': typeof DashboardIndexRoute
 }
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/projects': typeof DashboardProjectsRoute
+  '/dashboard/rules': typeof DashboardRulesRoute
   '/dashboard/skills': typeof DashboardSkillsRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/dashboard/mcp-servers'
     | '/dashboard/observability'
     | '/dashboard/projects'
+    | '/dashboard/rules'
     | '/dashboard/skills'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/dashboard/mcp-servers'
     | '/dashboard/observability'
     | '/dashboard/projects'
+    | '/dashboard/rules'
     | '/dashboard/skills'
     | '/dashboard'
   id:
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/dashboard/mcp-servers'
     | '/dashboard/observability'
     | '/dashboard/projects'
+    | '/dashboard/rules'
     | '/dashboard/skills'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
@@ -296,6 +308,13 @@ declare module '@tanstack/react-router' {
       path: '/skills'
       fullPath: '/dashboard/skills'
       preLoaderRoute: typeof DashboardSkillsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/rules': {
+      id: '/dashboard/rules'
+      path: '/rules'
+      fullPath: '/dashboard/rules'
+      preLoaderRoute: typeof DashboardRulesRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/projects': {
@@ -372,6 +391,7 @@ interface DashboardRouteChildren {
   DashboardMcpServersRoute: typeof DashboardMcpServersRoute
   DashboardObservabilityRoute: typeof DashboardObservabilityRoute
   DashboardProjectsRoute: typeof DashboardProjectsRoute
+  DashboardRulesRoute: typeof DashboardRulesRoute
   DashboardSkillsRoute: typeof DashboardSkillsRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
@@ -384,6 +404,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardMcpServersRoute: DashboardMcpServersRoute,
   DashboardObservabilityRoute: DashboardObservabilityRoute,
   DashboardProjectsRoute: DashboardProjectsRoute,
+  DashboardRulesRoute: DashboardRulesRoute,
   DashboardSkillsRoute: DashboardSkillsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }

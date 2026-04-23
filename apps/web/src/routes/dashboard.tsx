@@ -58,6 +58,7 @@ function getViewFromPath(pathname: string): SidebarView {
     "inbox",
     "creation",
     "agents",
+    "rules",
     "mcp-servers",
     "skills",
     "projects",
@@ -128,6 +129,8 @@ function DashboardLayout() {
     setSourceFilter,
     scopeFilter,
     setScopeFilter,
+    capabilityViewMode,
+    setCapabilityViewMode,
     activityPanelOpen,
     toggleActivityPanel,
     sidebarCollapsed,
@@ -202,6 +205,8 @@ function DashboardLayout() {
               scopeFilter={scopeFilter}
               onScopeFilterChange={setScopeFilter}
               scopeCounts={scopeCounts}
+              capabilityViewMode={capabilityViewMode}
+              onCapabilityViewModeChange={setCapabilityViewMode}
               agentModelFilter={agentModelFilter}
               onAgentModelFilterChange={setAgentModelFilter}
               agentModelCounts={agentModelCounts}

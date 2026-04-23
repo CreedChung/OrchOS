@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Search01Icon,
@@ -96,6 +97,8 @@ interface ToolbarProps {
   scopeCounts: { all: number; global: number; project: number };
   onRefresh?: () => void;
   onOpenCapabilityMarket?: () => void;
+  capabilityViewMode?: "mine" | "market";
+  onCapabilityViewModeChange?: (mode: "mine" | "market") => void;
 }
 
 export function Toolbar({
@@ -116,6 +119,8 @@ export function Toolbar({
   scopeCounts,
   onRefresh,
   onOpenCapabilityMarket,
+  capabilityViewMode = "mine",
+  onCapabilityViewModeChange,
 }: ToolbarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [isMac, setIsMac] = useState(false);
@@ -238,28 +243,39 @@ export function Toolbar({
         </div>
       )}
 
-      {/* MCP Servers / Skills: scope-based filter tabs */}
+      {/* MCP Servers / Skills: mine/market switch + scope tabs */}
       {(activeView === "mcp-servers" || activeView === "skills") && (
         <div className="flex items-center gap-1.5">
-          {(["all", "global", "project"] as ScopeFilter[]).map((filter) => {
-            const config = filter === "all" ? allFilterConfig : scopeFilterConfig[filter];
-            return (
-              <button
-                key={filter}
-                onClick={() => onScopeFilterChange(filter)}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:gap-1.5 sm:px-2.5",
-                  scopeFilter === filter
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                )}
-              >
-                <HugeiconsIcon icon={config.icon} className={cn("size-3", config.iconClassName)} />
-                <span className="hidden capitalize sm:inline">{config.label || filter}</span>
-                <span className="tabular-nums text-[10px] opacity-60">{scopeCounts[filter]}</span>
-              </button>
-            );
-          })}
+          {onCapabilityViewModeChange ? (
+            <Tabs value={capabilityViewMode} onValueChange={(value) => onCapabilityViewModeChange(value as "mine" | "market") }>
+              <TabsList>
+                <TabsTrigger value="mine">我的</TabsTrigger>
+                <TabsTrigger value="market">市场</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          ) : null}
+
+          {capabilityViewMode === "mine"
+            ? (["all", "global", "project"] as ScopeFilter[]).map((filter) => {
+                const config = filter === "all" ? allFilterConfig : scopeFilterConfig[filter];
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => onScopeFilterChange(filter)}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:gap-1.5 sm:px-2.5",
+                      scopeFilter === filter
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                    )}
+                  >
+                    <HugeiconsIcon icon={config.icon} className={cn("size-3", config.iconClassName)} />
+                    <span className="hidden capitalize sm:inline">{config.label || filter}</span>
+                    <span className="tabular-nums text-[10px] opacity-60">{scopeCounts[filter]}</span>
+                  </button>
+                );
+              })
+            : null}
         </div>
       )}
 

@@ -6,6 +6,8 @@ import {
   Delete02Icon,
   ToggleLeft,
   ToggleRight,
+  SparklesIcon,
+  Download01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -15,25 +17,61 @@ import { api, type SkillProfile } from "@/lib/api";
 import type { Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
+import { toast } from "sonner";
 
 interface SkillsViewProps {
   skills: SkillProfile[];
   projects: Project[];
   onRefresh: () => void;
   scopeFilter?: "all" | "global" | "project";
+  mode?: "mine" | "market";
 }
+
+interface SkillMarketItem {
+  id: string;
+  name: string;
+  description: string;
+  source: string;
+  tags: string[];
+}
+
+const officialSkillMarket: SkillMarketItem[] = [
+  {
+    id: "github-automation",
+    name: "GitHub Automation",
+    description: "Install GitHub issue, PR, and review automation skills from the official repository.",
+    source: "https://github.com/orchos/skill-market-github",
+    tags: ["github", "automation", "official"],
+  },
+  {
+    id: "repo-analysis",
+    name: "Repository Analysis",
+    description: "Adds repository inspection and architecture analysis skills for onboarding and planning.",
+    source: "https://github.com/orchos/skill-market-analysis",
+    tags: ["analysis", "planning", "official"],
+  },
+  {
+    id: "quality-gates",
+    name: "Quality Gates",
+    description: "Provides reusable skills for lint, test, and verification workflows.",
+    source: "https://github.com/orchos/skill-market-quality",
+    tags: ["quality", "ci", "official"],
+  },
+];
 
 export function SkillsView({
   skills: initialSkills,
   projects,
   onRefresh,
   scopeFilter = "all",
+  mode = "mine",
 }: SkillsViewProps) {
   const [skills, setSkills] = useState<SkillProfile[]>(initialSkills);
   const [activeSkillId, setActiveSkillId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
+  const [installingMarketId, setInstallingMarketId] = useState<string | null>(null);
 
   useEffect(() => {
     setSkills(initialSkills);
@@ -101,9 +139,77 @@ export function SkillsView({
   const sourceTypeLabel = (skill: SkillProfile) =>
     skill.sourceType === "repository" ? "Repository" : "Manual";
 
+  const handleInstallMarketSkill = async (item: SkillMarketItem) => {
+    setInstallingMarketId(item.id);
+    try {
+      const analysis = await api.analyzeSkillRepository({ source: item.source, scope: "global" });
+      await api.installSkillRepository({
+        analysisId: analysis.analysisId,
+        selectedSkills: analysis.installableSkills.map((candidate) => candidate.relativePath),
+        allowHighRisk: analysis.riskLevel === "high",
+      });
+      toast.success(`Installed ${item.name}`);
+      onRefresh();
+    } catch (err) {
+      console.error("Failed to install market skill:", err);
+      toast.error(`Failed to install ${item.name}`);
+    } finally {
+      setInstallingMarketId(null);
+    }
+  };
+
   return (
     <>
       <div className="flex flex-1 overflow-hidden">
+        {mode === "market" ? (
+          <ScrollArea className="flex-1">
+            <div className="mx-auto max-w-6xl space-y-6 p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-xl font-semibold text-foreground">Skills Market</h1>
+                  <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                    Browse official skills, compare what is available, and install them into your workspace.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {officialSkillMarket.map((item) => (
+                  <section key={item.id} className="rounded-xl border border-border/50 bg-card p-5 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                        <HugeiconsIcon icon={SparklesIcon} className="size-5 text-primary" />
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => void handleInstallMarketSkill(item)}
+                        disabled={installingMarketId === item.id}
+                      >
+                        <HugeiconsIcon icon={Download01Icon} className="mr-1.5 size-4" />
+                        {installingMarketId === item.id ? "Installing..." : "Install"}
+                      </Button>
+                    </div>
+
+                    <h2 className="mt-4 text-base font-semibold text-foreground">{item.name}</h2>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {item.tags.map((tag) => (
+                        <span key={tag} className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="mt-4 rounded-lg border border-border/60 bg-background/70 px-3 py-2 text-[11px] text-muted-foreground">
+                      Source: {item.source}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </div>
+          </ScrollArea>
+        ) : (
         <div className="flex h-full w-72 flex-col border-r border-border bg-background">
           <div className="flex h-14 items-center justify-between border-b border-border px-4 py-3">
             <h2 className="text-sm font-semibold text-foreground">{m.skills()}</h2>
@@ -288,6 +394,7 @@ export function SkillsView({
             </ScrollArea>
           ) : null}
         </div>
+        )}
       </div>
 
       <ConfirmDialog

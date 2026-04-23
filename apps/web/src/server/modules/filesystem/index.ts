@@ -21,4 +21,19 @@ export const filesystemController = new Elysia({ prefix: "/api/filesystem" }).ge
       ),
     }),
   },
-);
+)
+  .get(
+    "/file",
+    ({ query }) => {
+      return FilesystemService.readFile(query.path);
+    },
+    {
+      query: t.Object({
+        path: t.String(),
+      }),
+      response: t.Object({
+        path: t.String(),
+        content: t.Nullable(t.String()),
+      }),
+    },
+  );

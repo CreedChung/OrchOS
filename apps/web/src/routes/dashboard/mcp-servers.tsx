@@ -7,7 +7,14 @@ export const Route = createFileRoute("/dashboard/mcp-servers")({ component: McpS
 
 function McpServersPage() {
   const { mcpServers, refreshAll } = useDashboard();
-  const { scopeFilter } = useUIStore();
+  const { scopeFilter, capabilityViewMode } = useUIStore();
 
-  return <McpServersView servers={mcpServers} onRefresh={refreshAll} scopeFilter={scopeFilter} />;
+  return (
+    <McpServersView
+      servers={mcpServers}
+      onRefresh={refreshAll}
+      scopeFilter={scopeFilter}
+      mode={capabilityViewMode}
+    />
+  );
 }

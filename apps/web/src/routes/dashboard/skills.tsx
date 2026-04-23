@@ -7,7 +7,7 @@ export const Route = createFileRoute("/dashboard/skills")({ component: SkillsPag
 
 function SkillsPage() {
   const { skills, projects, refreshAll } = useDashboard();
-  const { scopeFilter } = useUIStore();
+  const { scopeFilter, capabilityViewMode } = useUIStore();
 
   return (
     <SkillsView
@@ -15,6 +15,7 @@ function SkillsPage() {
       projects={projects}
       onRefresh={refreshAll}
       scopeFilter={scopeFilter}
+      mode={capabilityViewMode}
     />
   );
 }

@@ -33,6 +33,7 @@ import {
   Wrench01Icon,
   Folder01Icon,
   AiBrain01Icon,
+  Shield01Icon,
   UserCircleIcon,
   Logout03Icon,
   Chat01Icon,
@@ -135,6 +136,7 @@ export function Sidebar({
       label: m.capabilities(),
       items: [
         { id: "agents", to: "/dashboard/agents", icon: Robot02Icon, label: m.agents() },
+        { id: "rules", to: "/dashboard/rules", icon: Shield01Icon, label: "Rules" },
         {
           id: "mcp-servers",
           to: "/dashboard/mcp-servers",

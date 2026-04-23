@@ -6,6 +6,7 @@ type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_re
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
 type ScopeFilter = "all" | "global" | "project";
 type CreationArchiveFilter = "all" | "active" | "archived";
+type CapabilityViewMode = "mine" | "market";
 type ThemeMode = "light" | "dark" | "auto";
 
 interface UIState {
@@ -20,6 +21,7 @@ interface UIState {
   goalStatusFilter: GoalStatusFilter;
   scopeFilter: ScopeFilter;
   creationArchiveFilter: CreationArchiveFilter;
+  capabilityViewMode: CapabilityViewMode;
 
   // Panel states
   activityPanelOpen: boolean;
@@ -43,6 +45,7 @@ interface UIActions {
   setGoalStatusFilter: (filter: GoalStatusFilter) => void;
   setScopeFilter: (filter: ScopeFilter) => void;
   setCreationArchiveFilter: (filter: CreationArchiveFilter) => void;
+  setCapabilityViewMode: (mode: CapabilityViewMode) => void;
   setActivityPanelOpen: (open: boolean) => void;
   toggleActivityPanel: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -78,6 +81,7 @@ export const useUIStore = create<UIState & UIActions>()(
       goalStatusFilter: "all" as GoalStatusFilter,
       scopeFilter: "all" as ScopeFilter,
       creationArchiveFilter: "all" as CreationArchiveFilter,
+      capabilityViewMode: "mine" as CapabilityViewMode,
 
       // Panel states
       activityPanelOpen: false,
@@ -99,6 +103,7 @@ export const useUIStore = create<UIState & UIActions>()(
       setGoalStatusFilter: (filter) => set({ goalStatusFilter: filter }),
       setScopeFilter: (filter) => set({ scopeFilter: filter }),
       setCreationArchiveFilter: (filter) => set({ creationArchiveFilter: filter }),
+      setCapabilityViewMode: (mode) => set({ capabilityViewMode: mode }),
       setActivityPanelOpen: (open) => set({ activityPanelOpen: open }),
       toggleActivityPanel: () => set((s) => ({ activityPanelOpen: !s.activityPanelOpen })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
