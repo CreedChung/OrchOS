@@ -153,7 +153,7 @@ function migrate(sqlite: Database) {
   } catch {}
   try {
     sqlite.run(
-      "CREATE TABLE IF NOT EXISTS skills (id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, enabled TEXT NOT NULL DEFAULT 'true', scope TEXT NOT NULL DEFAULT 'global', project_id TEXT REFERENCES projects(id), organization_id TEXT REFERENCES organizations(id), source_type TEXT NOT NULL DEFAULT 'manual', source_url TEXT, install_path TEXT, manifest_path TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
+      "CREATE TABLE IF NOT EXISTS skills (id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, enabled TEXT NOT NULL DEFAULT 'true', scope TEXT NOT NULL DEFAULT 'global', project_id TEXT REFERENCES projects(id), organization_id TEXT REFERENCES organizations(id), source_type TEXT NOT NULL DEFAULT 'manual', source_url TEXT, install_path TEXT, manifest_path TEXT, execution_count TEXT NOT NULL DEFAULT '0', success_count TEXT NOT NULL DEFAULT '0', success_rate TEXT NOT NULL DEFAULT '0', applicability_json TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
     );
   } catch {}
   try {
@@ -254,7 +254,7 @@ function migrate(sqlite: Database) {
   } catch {}
   try {
     sqlite.run(
-      "CREATE TABLE IF NOT EXISTS execution_graphs (id TEXT PRIMARY KEY, goal_id TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE, status TEXT NOT NULL DEFAULT 'pending', version TEXT NOT NULL DEFAULT '1', created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
+      "CREATE TABLE IF NOT EXISTS execution_graphs (id TEXT PRIMARY KEY, goal_id TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE, status TEXT NOT NULL DEFAULT 'pending', version TEXT NOT NULL DEFAULT '1', trace_id TEXT, context_snapshot_id TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
     );
   } catch {}
   try {
@@ -269,7 +269,47 @@ function migrate(sqlite: Database) {
   } catch {}
   try {
     sqlite.run(
-      "CREATE TABLE IF NOT EXISTS execution_attempts (id TEXT PRIMARY KEY, node_id TEXT NOT NULL REFERENCES execution_nodes(id) ON DELETE CASCADE, attempt_number TEXT NOT NULL, strategy TEXT NOT NULL DEFAULT 'default', status TEXT NOT NULL DEFAULT 'running', error_code TEXT, error_text TEXT, started_at TEXT NOT NULL, finished_at TEXT)",
+      "CREATE TABLE IF NOT EXISTS execution_attempts (id TEXT PRIMARY KEY, node_id TEXT NOT NULL REFERENCES execution_nodes(id) ON DELETE CASCADE, attempt_number TEXT NOT NULL, strategy TEXT NOT NULL DEFAULT 'default', status TEXT NOT NULL DEFAULT 'running', trace_id TEXT, input_snapshot_id TEXT, output_snapshot_id TEXT, latency_ms TEXT, token_usage_json TEXT, cost_estimate_usd TEXT, error_code TEXT, error_text TEXT, started_at TEXT NOT NULL, finished_at TEXT)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS context_snapshots (id TEXT PRIMARY KEY, parent_snapshot_id TEXT, goal_id TEXT REFERENCES goals(id) ON DELETE CASCADE, graph_id TEXT REFERENCES execution_graphs(id) ON DELETE CASCADE, attempt_id TEXT REFERENCES execution_attempts(id) ON DELETE SET NULL, kind TEXT NOT NULL DEFAULT 'goal_context', payload_json TEXT NOT NULL, created_at TEXT NOT NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS context_diffs (id TEXT PRIMARY KEY, from_snapshot_id TEXT NOT NULL REFERENCES context_snapshots(id) ON DELETE CASCADE, to_snapshot_id TEXT NOT NULL REFERENCES context_snapshots(id) ON DELETE CASCADE, patch_json TEXT NOT NULL, created_at TEXT NOT NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS memory_entries (id TEXT PRIMARY KEY, scope TEXT NOT NULL DEFAULT 'goal', scope_id TEXT NOT NULL, key TEXT NOT NULL, value_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS reflections (id TEXT PRIMARY KEY, graph_id TEXT REFERENCES execution_graphs(id) ON DELETE CASCADE, node_id TEXT REFERENCES execution_nodes(id) ON DELETE CASCADE, attempt_id TEXT REFERENCES execution_attempts(id) ON DELETE SET NULL, kind TEXT NOT NULL, summary TEXT NOT NULL, details_json TEXT, created_at TEXT NOT NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS failure_patterns (id TEXT PRIMARY KEY, signature TEXT NOT NULL, first_seen_at TEXT NOT NULL, last_seen_at TEXT NOT NULL, occurrence_count TEXT NOT NULL DEFAULT '1', example_reflection_id TEXT REFERENCES reflections(id) ON DELETE SET NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS strategy_updates (id TEXT PRIMARY KEY, source_reflection_id TEXT REFERENCES reflections(id) ON DELETE SET NULL, scope TEXT NOT NULL, scope_id TEXT, summary TEXT NOT NULL, payload_json TEXT, created_at TEXT NOT NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS handoffs (id TEXT PRIMARY KEY, graph_id TEXT REFERENCES execution_graphs(id) ON DELETE CASCADE, node_id TEXT REFERENCES execution_nodes(id) ON DELETE CASCADE, from_agent TEXT NOT NULL, to_agent TEXT NOT NULL, packet_json TEXT NOT NULL, created_at TEXT NOT NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS conflicts (id TEXT PRIMARY KEY, graph_id TEXT REFERENCES execution_graphs(id) ON DELETE CASCADE, node_id TEXT REFERENCES execution_nodes(id) ON DELETE CASCADE, conflict_type TEXT NOT NULL, summary TEXT NOT NULL, participants_json TEXT NOT NULL, resolution TEXT, created_at TEXT NOT NULL)",
     );
   } catch {}
   try {
@@ -298,6 +338,35 @@ function migrate(sqlite: Database) {
     sqlite.run("CREATE INDEX IF NOT EXISTS idx_execution_attempts_node_id ON execution_attempts(node_id)");
   } catch {}
   try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_context_snapshots_goal_id ON context_snapshots(goal_id)");
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_context_snapshots_graph_id ON context_snapshots(graph_id)");
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE INDEX IF NOT EXISTS idx_context_diffs_from_to ON context_diffs(from_snapshot_id, to_snapshot_id)",
+    );
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_memory_entries_scope ON memory_entries(scope, scope_id)");
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_reflections_graph_id ON reflections(graph_id)");
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_failure_patterns_signature ON failure_patterns(signature)");
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_strategy_updates_scope ON strategy_updates(scope, scope_id)");
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_handoffs_graph_id ON handoffs(graph_id)");
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_conflicts_graph_id ON conflicts(graph_id)");
+  } catch {}
+  try {
     sqlite.run(
       "CREATE INDEX IF NOT EXISTS idx_policy_decisions_subject ON policy_decisions(subject_type, subject_id)",
     );
@@ -306,6 +375,42 @@ function migrate(sqlite: Database) {
     sqlite.run(
       "CREATE INDEX IF NOT EXISTS idx_policy_violations_subject ON policy_violations(subject_type, subject_id)",
     );
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE execution_graphs ADD COLUMN trace_id TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE execution_graphs ADD COLUMN context_snapshot_id TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE execution_attempts ADD COLUMN trace_id TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE execution_attempts ADD COLUMN input_snapshot_id TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE execution_attempts ADD COLUMN output_snapshot_id TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE execution_attempts ADD COLUMN latency_ms TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE execution_attempts ADD COLUMN token_usage_json TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE execution_attempts ADD COLUMN cost_estimate_usd TEXT");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE skills ADD COLUMN execution_count TEXT NOT NULL DEFAULT '0'");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE skills ADD COLUMN success_count TEXT NOT NULL DEFAULT '0'");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE skills ADD COLUMN success_rate TEXT NOT NULL DEFAULT '0'");
+  } catch {}
+  try {
+    sqlite.run("ALTER TABLE skills ADD COLUMN applicability_json TEXT");
   } catch {}
   // Migrate existing runtime-like agents to runtimes table
   try {

@@ -25,6 +25,8 @@ import { observabilityController } from "@/modules/observability";
 import { inboxController } from "@/modules/inbox";
 import { graphController } from "@/modules/graph";
 import { policyController } from "@/modules/policy";
+import { contextController } from "@/modules/context";
+import { reflectionController } from "@/modules/reflection";
 import { seedData } from "@/db/seed";
 
 import "@/db";
@@ -60,6 +62,8 @@ export const app = new Elysia()
   .use(observabilityController)
   .use(graphController)
   .use(policyController)
+  .use(contextController)
+  .use(reflectionController)
   .listen({
     hostname: "0.0.0.0",
     port: 5173,

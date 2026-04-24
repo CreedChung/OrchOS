@@ -289,6 +289,8 @@ export interface ObservabilityMetrics {
   goals: { total: number; active: number; completed: number; paused: number };
   activities: { total: number };
   events: { total: number };
+   graphs: { total: number };
+   runtime: { avgLatencyMs: number; totalCostUsd: number };
 }
 
 export interface TimeSeriesPoint {
@@ -406,8 +408,59 @@ export interface SkillProfile {
   sourceUrl?: string;
   installPath?: string;
   manifestPath?: string;
+  executionCount?: number;
+  successCount?: number;
+  successRate?: number;
+  applicability?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface GraphAttemptTrace {
+  id: string;
+  nodeId: string;
+  attemptNumber: number;
+  strategy: string;
+  status: string;
+  traceId?: string;
+  inputSnapshotId?: string;
+  outputSnapshotId?: string;
+  latencyMs?: number;
+  tokenUsage?: { input: number; output: number; total: number };
+  costEstimateUsd?: number;
+  errorCode?: string;
+  errorText?: string;
+  startedAt: string;
+  finishedAt?: string;
+}
+
+export interface ExecutionGraphSummary {
+  id: string;
+  status: string;
+  traceId?: string;
+  contextSnapshotId?: string;
+  attemptCount: number;
+  avgLatencyMs: number;
+}
+
+export interface ReflectionRecord {
+  id: string;
+  graphId?: string;
+  nodeId?: string;
+  attemptId?: string;
+  kind: string;
+  summary: string;
+  details?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface GraphReplayResponse {
+  graph: Record<string, unknown>;
+  attempts: GraphAttemptTrace[];
+  context?: Record<string, unknown>;
+  reflections: ReflectionRecord[];
+  handoffs: Array<Record<string, unknown>>;
+  conflicts: Array<Record<string, unknown>>;
 }
 
 export interface SkillRepositoryCandidate {
@@ -1336,10 +1389,68 @@ export const api = {
   },
 
   getObservabilityThroughput: async (_timeRange: string): Promise<TimeSeriesPoint[]> => {
-    return [];
+    const client = createEdenClient();
+    const result = await client.api.observability.throughput.get({
+      query: { range: _timeRange },
+    });
+    return assertData(result);
   },
 
   getObservabilityGoals: async (_timeRange: string): Promise<GoalTimeSeriesPoint[]> => {
-    return [];
+    const client = createEdenClient();
+    const result = await client.api.observability.goals.get({
+      query: { range: _timeRange },
+    });
+    return assertData(result);
+  },
+
+  getObservabilityMetrics: async (timeRange: string): Promise<ObservabilityMetrics> => {
+    const client = createEdenClient();
+    const result = await client.api.observability.metrics.get({ query: { range: timeRange } });
+    return assertData(result);
+  },
+
+  getObservabilityGraphs: async (): Promise<ExecutionGraphSummary[]> => {
+    const client = createEdenClient();
+    const result = await client.api.observability.graphs.get();
+    return assertData(result) as ExecutionGraphSummary[];
+  },
+
+  getGraphReplay: async (id: string): Promise<GraphReplayResponse> => {
+    const client = createEdenClient();
+    const result = await client.api.graphs({ id }).replay.get();
+    return assertData(result) as GraphReplayResponse;
+  },
+
+  getGraphTrace: async (id: string): Promise<GraphAttemptTrace[]> => {
+    const client = createEdenClient();
+    const result = await client.api.graphs({ id }).trace.get();
+    return assertData(result) as GraphAttemptTrace[];
+  },
+
+  getAttemptDebug: async (attemptId: string): Promise<Record<string, unknown>> => {
+    const client = createEdenClient();
+    const result = await client.api.graphs.attempts({ attemptId }).debug.get();
+    return assertData(result) as Record<string, unknown>;
+  },
+
+  getContextSnapshotsByGoal: async (goalId: string): Promise<Array<Record<string, unknown>>> => {
+    const client = createEdenClient();
+    const result = await client.api.context.goals({ goalId }).snapshots.get();
+    return assertData(result) as Array<Record<string, unknown>>;
+  },
+
+  getContextDiff: async (fromSnapshotId: string, toSnapshotId: string): Promise<Record<string, unknown> | null> => {
+    const client = createEdenClient();
+    const result = await client.api.context.diff.get({
+      query: { fromSnapshotId, toSnapshotId },
+    });
+    return assertData(result) as Record<string, unknown> | null;
+  },
+
+  listReflections: async (): Promise<ReflectionRecord[]> => {
+    const client = createEdenClient();
+    const result = await client.api.reflections.get();
+    return assertData(result) as ReflectionRecord[];
   },
 };

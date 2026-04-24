@@ -2,13 +2,15 @@
 
 **AI Agent Orchestration System** — Coordinate multiple AI agents to accomplish complex development goals.
 
-OrchOS provides a dashboard where you can define goals, assign agents, track progress through a state machine (tests → build → lint → review → deploy), and manage problems that arise during execution.
+OrchOS provides a dashboard where you can define goals, assign agents, track progress through compatibility state projections, and execute work through a persisted execution graph with runtime policy enforcement.
 
 ---
 
 ## Features
 
-- **Goal Management** — Create goals with success criteria and track them through a multi-stage state machine
+- **Goal Management** — Create goals with success criteria and track them through projected states backed by execution graphs
+- **Execution Graphs** — Persist graph nodes, edges, and attempts for ordered and fallback-aware execution
+- **Policy Enforcement** — Validate plans, node execution, tool calls, and file writes before side effects happen
 - **Agent Management** — Register local or cloud-based AI agents, auto-detect installed CLIs, and assign agents to goals
 - **Problem Inbox** — Collect issues from GitHub PRs, test failures, lint errors, and convert them to goals
 - **Automation Rules** — Define conditions and actions to auto-fix, ignore, or assign reviewers
@@ -137,6 +139,16 @@ bun --filter=web build
 | POST   | `/api/goals/:id/actions`    | Trigger state action    |
 | POST   | `/api/goals/:id/loop`       | Run goal execution loop |
 
+### Graphs
+
+| Method | Path                     | Description                         |
+| ------ | ------------------------ | ----------------------------------- |
+| POST   | `/api/graphs/compile`    | Compile a goal into an execution graph |
+| GET    | `/api/graphs/:id`        | Get graph nodes and edges           |
+| POST   | `/api/graphs/:id/run`    | Run a persisted execution graph     |
+| GET    | `/api/graphs/:id/trace`  | Inspect node attempt history        |
+| GET    | `/api/graphs/:id/policy` | Inspect policy decisions and violations |
+
 ### More
 
 - **Projects** — `GET/POST/PATCH/DELETE /api/projects`
@@ -155,7 +167,13 @@ bun --filter=web build
 
 The backend uses **SQLite** with Drizzle ORM. The database file (`cortex.db`) is stored in `apps/server/` and uses WAL mode for concurrent reads/writes.
 
-Tables: `commands`, `goals`, `states`, `artifacts`, `activities`, `agents`, `projects`, `settings`, `events`, `organizations`, `problems`, `rules`, `mcp_servers`, `skills`
+Tables: `commands`, `goals`, `states`, `artifacts`, `activities`, `agents`, `projects`, `settings`, `events`, `organizations`, `problems`, `rules`, `mcp_servers`, `skills`, `execution_graphs`, `execution_nodes`, `execution_edges`, `execution_attempts`, `policy_decisions`, `policy_violations`
+
+### Migration Notes
+
+- Existing `states` APIs remain in place as a compatibility projection during the graph migration.
+- Command dispatch now compiles planned actions into a persisted graph before execution.
+- Goal execution prefers the graph scheduler path; linear state execution remains only as a fallback compatibility path.
 
 ### Migrations
 

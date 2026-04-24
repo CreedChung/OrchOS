@@ -13,6 +13,10 @@ export const SkillModel = {
     sourceUrl: t.Optional(t.String()),
     installPath: t.Optional(t.String()),
     manifestPath: t.Optional(t.String()),
+    executionCount: t.Optional(t.Number()),
+    successCount: t.Optional(t.Number()),
+    successRate: t.Optional(t.Number()),
+    applicability: t.Optional(t.Record(t.String(), t.Unknown())),
     createdAt: t.String(),
     updatedAt: t.String(),
   }),
@@ -34,6 +38,7 @@ export const SkillModel = {
     description: t.Optional(t.String()),
     enabled: t.Optional(t.Boolean()),
     scope: t.Optional(t.Union([t.Literal("global"), t.Literal("project")])),
+    applicability: t.Optional(t.Record(t.String(), t.Unknown())),
   }),
 
   listQuery: t.Object({

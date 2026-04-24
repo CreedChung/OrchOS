@@ -93,6 +93,7 @@ export const skillController = new Elysia({ prefix: "/api/skills" })
         description: body.description,
         enabled: body.enabled,
         scope: body.scope,
+        applicability: body.applicability,
       });
       if (!skill) throw status(404, "Skill not found");
       return skill;

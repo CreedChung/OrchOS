@@ -26,6 +26,8 @@ export abstract class GraphService {
     title: string;
     actions: Action[];
     assignedAgentName?: string;
+    traceId?: string;
+    contextSnapshotId?: string;
   }): ExecutionGraph {
     const existing = GraphService.getByGoal(data.goalId);
     if (existing) return existing;
@@ -33,7 +35,16 @@ export abstract class GraphService {
     const id = generateId("graph");
     const now = timestamp();
     db.insert(executionGraphs)
-      .values({ id, goalId: data.goalId, status: "pending", version: "1", createdAt: now, updatedAt: now })
+      .values({
+        id,
+        goalId: data.goalId,
+        status: "pending",
+        version: "1",
+        traceId: data.traceId || null,
+        contextSnapshotId: data.contextSnapshotId || null,
+        createdAt: now,
+        updatedAt: now,
+      })
       .run();
 
     const compiled = GraphCompiler.compileGoal({
@@ -82,13 +93,21 @@ export abstract class GraphService {
   static get(id: string): ExecutionGraph | undefined {
     const row = db.select().from(executionGraphs).where(eq(executionGraphs.id, id)).get();
     if (!row) return undefined;
-    return row;
+    return {
+      ...row,
+      traceId: row.traceId || undefined,
+      contextSnapshotId: row.contextSnapshotId || undefined,
+    };
   }
 
   static getByGoal(goalId: string): ExecutionGraph | undefined {
     const row = db.select().from(executionGraphs).where(eq(executionGraphs.goalId, goalId)).get();
     if (!row) return undefined;
-    return row;
+    return {
+      ...row,
+      traceId: row.traceId || undefined,
+      contextSnapshotId: row.contextSnapshotId || undefined,
+    };
   }
 
   static listNodes(graphId: string): ExecutionNode[] {
@@ -155,11 +174,50 @@ export abstract class GraphService {
         attemptNumber: Number(row.attemptNumber),
         strategy: row.strategy,
         status: row.status as ExecutionAttempt["status"],
+        traceId: row.traceId || undefined,
+        inputSnapshotId: row.inputSnapshotId || undefined,
+        outputSnapshotId: row.outputSnapshotId || undefined,
+        latencyMs: row.latencyMs ? Number(row.latencyMs) : undefined,
+        tokenUsage: parseJson(row.tokenUsageJson),
+        costEstimateUsd: row.costEstimateUsd ? Number(row.costEstimateUsd) : undefined,
         errorCode: row.errorCode || undefined,
         errorText: row.errorText || undefined,
         startedAt: row.startedAt,
         finishedAt: row.finishedAt || undefined,
       }));
+  }
+
+  static getAttempt(attemptId: string): ExecutionAttempt | undefined {
+    const row = db.select().from(executionAttempts).where(eq(executionAttempts.id, attemptId)).get();
+    if (!row) return undefined;
+
+    return {
+      id: row.id,
+      nodeId: row.nodeId,
+      attemptNumber: Number(row.attemptNumber),
+      strategy: row.strategy,
+      status: row.status as ExecutionAttempt["status"],
+      traceId: row.traceId || undefined,
+      inputSnapshotId: row.inputSnapshotId || undefined,
+      outputSnapshotId: row.outputSnapshotId || undefined,
+      latencyMs: row.latencyMs ? Number(row.latencyMs) : undefined,
+      tokenUsage: parseJson(row.tokenUsageJson),
+      costEstimateUsd: row.costEstimateUsd ? Number(row.costEstimateUsd) : undefined,
+      errorCode: row.errorCode || undefined,
+      errorText: row.errorText || undefined,
+      startedAt: row.startedAt,
+      finishedAt: row.finishedAt || undefined,
+    };
+  }
+
+  static getGraphByAttempt(attemptId: string): ExecutionGraph | undefined {
+    const attempt = GraphService.getAttempt(attemptId);
+    if (!attempt) return undefined;
+
+    const node = db.select().from(executionNodes).where(eq(executionNodes.id, attempt.nodeId)).get();
+    if (!node) return undefined;
+
+    return GraphService.get(node.graphId);
   }
 
   static markNodeStatus(
@@ -218,23 +276,34 @@ export abstract class GraphService {
         return source?.status === "failed";
       });
 
-      return dependsSatisfied || failureSatisfied;
+      if (incomingFailure.length > 0) {
+        return failureSatisfied;
+      }
+
+      return incomingDepends.length === 0 || dependsSatisfied;
     });
   }
 
-  static createAttempt(nodeId: string, strategy: string = "default"): ExecutionAttempt {
+  static createAttempt(data: {
+    nodeId: string;
+    strategy?: string;
+    traceId?: string;
+    inputSnapshotId?: string;
+  }): ExecutionAttempt {
     const existingCount = db
       .select()
       .from(executionAttempts)
-      .where(eq(executionAttempts.nodeId, nodeId))
+      .where(eq(executionAttempts.nodeId, data.nodeId))
       .all().length;
 
     const attempt: ExecutionAttempt = {
       id: generateId("attempt"),
-      nodeId,
+      nodeId: data.nodeId,
       attemptNumber: existingCount + 1,
-      strategy,
+      strategy: data.strategy || "default",
       status: "running",
+      traceId: data.traceId,
+      inputSnapshotId: data.inputSnapshotId,
       startedAt: timestamp(),
     };
 
@@ -245,6 +314,10 @@ export abstract class GraphService {
         attemptNumber: String(attempt.attemptNumber),
         strategy: attempt.strategy,
         status: attempt.status,
+        traceId: attempt.traceId || null,
+        inputSnapshotId: attempt.inputSnapshotId || null,
+        outputSnapshotId: null,
+        latencyMs: null,
         errorCode: null,
         errorText: null,
         startedAt: attempt.startedAt,
@@ -255,16 +328,46 @@ export abstract class GraphService {
     return attempt;
   }
 
-  static finishAttempt(nodeId: string, attemptNumber: number, data: { success: boolean; errorText?: string }) {
+  static finishAttempt(
+    nodeId: string,
+    attemptNumber: number,
+    data: {
+      success: boolean;
+      errorText?: string;
+      outputSnapshotId?: string;
+      latencyMs?: number;
+      tokenUsage?: { input: number; output: number; total: number };
+      costEstimateUsd?: number;
+    },
+  ) {
     db.update(executionAttempts)
       .set({
         status: data.success ? "success" : "failed",
+        outputSnapshotId: data.outputSnapshotId || null,
+        latencyMs: data.latencyMs !== undefined ? String(data.latencyMs) : null,
+        tokenUsageJson: data.tokenUsage ? JSON.stringify(data.tokenUsage) : null,
+        costEstimateUsd:
+          data.costEstimateUsd !== undefined ? String(data.costEstimateUsd) : null,
         errorText: data.errorText || null,
         finishedAt: timestamp(),
       })
       .where(
         and(eq(executionAttempts.nodeId, nodeId), eq(executionAttempts.attemptNumber, String(attemptNumber))),
       )
+      .run();
+  }
+
+  static updateAttemptContext(
+    attemptId: string,
+    data: { inputSnapshotId?: string; outputSnapshotId?: string; traceId?: string },
+  ) {
+    db.update(executionAttempts)
+      .set({
+        inputSnapshotId: data.inputSnapshotId,
+        outputSnapshotId: data.outputSnapshotId,
+        traceId: data.traceId,
+      })
+      .where(eq(executionAttempts.id, attemptId))
       .run();
   }
 }

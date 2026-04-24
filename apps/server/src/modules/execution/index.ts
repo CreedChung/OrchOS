@@ -3,7 +3,7 @@ import { authPlugin, requireAuth } from "@/modules/auth";
 import { ExecutionService } from "@/modules/execution/service";
 import { ExecutionModel } from "@/modules/execution/model";
 
-const engine = new ExecutionService();
+export const engine = new ExecutionService();
 
 export const executionController = new Elysia({ prefix: "/api/goals/:goalId" })
   .use(authPlugin)

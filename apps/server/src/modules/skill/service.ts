@@ -98,6 +98,10 @@ export abstract class SkillService {
       sourceUrl: row.sourceUrl || undefined,
       installPath: row.installPath || undefined,
       manifestPath: row.manifestPath || undefined,
+      executionCount: Number(row.executionCount || 0),
+      successCount: Number(row.successCount || 0),
+      successRate: Number(row.successRate || 0),
+      applicability: row.applicabilityJson ? JSON.parse(row.applicabilityJson) : undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };
@@ -131,6 +135,10 @@ export abstract class SkillService {
         sourceUrl: data.sourceUrl || null,
         installPath: data.installPath || null,
         manifestPath: data.manifestPath || null,
+        executionCount: "0",
+        successCount: "0",
+        successRate: "0",
+        applicabilityJson: null,
         createdAt: now,
         updatedAt: now,
       })
@@ -148,6 +156,9 @@ export abstract class SkillService {
       sourceUrl: data.sourceUrl,
       installPath: data.installPath,
       manifestPath: data.manifestPath,
+      executionCount: 0,
+      successCount: 0,
+      successRate: 0,
       createdAt: now,
       updatedAt: now,
     };
@@ -185,6 +196,7 @@ export abstract class SkillService {
       sourceUrl: string;
       installPath: string;
       manifestPath: string;
+      applicability: Record<string, unknown>;
     }>,
   ): SkillProfile | undefined {
     const existing = SkillService.get(id);
@@ -202,6 +214,7 @@ export abstract class SkillService {
     if (data.sourceUrl !== undefined) updates.sourceUrl = data.sourceUrl;
     if (data.installPath !== undefined) updates.installPath = data.installPath;
     if (data.manifestPath !== undefined) updates.manifestPath = data.manifestPath;
+    if (data.applicability !== undefined) updates.applicabilityJson = JSON.stringify(data.applicability);
 
     db.update(skills).set(updates).where(eq(skills.id, id)).run();
     return SkillService.get(id);
@@ -226,6 +239,43 @@ export abstract class SkillService {
       .run();
 
     return SkillService.get(id);
+  }
+
+  static recordExecution(id: string, success: boolean): SkillProfile | undefined {
+    const skill = SkillService.get(id);
+    if (!skill) return undefined;
+
+    const executionCount = (skill.executionCount || 0) + 1;
+    const successCount = (skill.successCount || 0) + (success ? 1 : 0);
+    const successRate = executionCount === 0 ? 0 : successCount / executionCount;
+
+    db.update(skills)
+      .set({
+        executionCount: String(executionCount),
+        successCount: String(successCount),
+        successRate: String(successRate),
+        updatedAt: timestamp(),
+      })
+      .where(eq(skills.id, id))
+      .run();
+
+    return SkillService.get(id);
+  }
+
+  static createCandidateFromTrace(data: {
+    name: string;
+    description?: string;
+    scope?: SkillScope;
+    projectId?: string;
+    applicability?: Record<string, unknown>;
+  }): SkillProfile {
+    return SkillService.create({
+      name: data.name,
+      description: data.description,
+      scope: data.scope,
+      projectId: data.projectId,
+      sourceType: "manual",
+    });
   }
 
   static async analyzeRepository(data: {

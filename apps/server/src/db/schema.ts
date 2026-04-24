@@ -312,6 +312,10 @@ export const skills = sqliteTable(
     sourceUrl: text("source_url"),
     installPath: text("install_path"),
     manifestPath: text("manifest_path"),
+    executionCount: text("execution_count").notNull().default("0"),
+    successCount: text("success_count").notNull().default("0"),
+    successRate: text("success_rate").notNull().default("0"),
+    applicabilityJson: text("applicability_json"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
@@ -330,6 +334,8 @@ export const executionGraphs = sqliteTable(
       .references(() => goals.id, { onDelete: "cascade" }),
     status: text("status").notNull().default("pending"),
     version: text("version").notNull().default("1"),
+    traceId: text("trace_id"),
+    contextSnapshotId: text("context_snapshot_id"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
@@ -390,12 +396,137 @@ export const executionAttempts = sqliteTable(
     attemptNumber: text("attempt_number").notNull(),
     strategy: text("strategy").notNull().default("default"),
     status: text("status").notNull().default("running"),
+    traceId: text("trace_id"),
+    inputSnapshotId: text("input_snapshot_id"),
+    outputSnapshotId: text("output_snapshot_id"),
+    latencyMs: text("latency_ms"),
+    tokenUsageJson: text("token_usage_json"),
+    costEstimateUsd: text("cost_estimate_usd"),
     errorCode: text("error_code"),
     errorText: text("error_text"),
     startedAt: text("started_at").notNull(),
     finishedAt: text("finished_at"),
   },
   (t) => [index("idx_execution_attempts_node_id").on(t.nodeId)],
+);
+
+export const contextSnapshots = sqliteTable(
+  "context_snapshots",
+  {
+    id: text("id").primaryKey(),
+    parentSnapshotId: text("parent_snapshot_id"),
+    goalId: text("goal_id").references(() => goals.id, { onDelete: "cascade" }),
+    graphId: text("graph_id").references(() => executionGraphs.id, { onDelete: "cascade" }),
+    attemptId: text("attempt_id").references(() => executionAttempts.id, { onDelete: "set null" }),
+    kind: text("kind").notNull().default("goal_context"),
+    payloadJson: text("payload_json").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [
+    index("idx_context_snapshots_goal_id").on(t.goalId),
+    index("idx_context_snapshots_graph_id").on(t.graphId),
+  ],
+);
+
+export const contextDiffs = sqliteTable(
+  "context_diffs",
+  {
+    id: text("id").primaryKey(),
+    fromSnapshotId: text("from_snapshot_id")
+      .notNull()
+      .references(() => contextSnapshots.id, { onDelete: "cascade" }),
+    toSnapshotId: text("to_snapshot_id")
+      .notNull()
+      .references(() => contextSnapshots.id, { onDelete: "cascade" }),
+    patchJson: text("patch_json").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("idx_context_diffs_from_to").on(t.fromSnapshotId, t.toSnapshotId)],
+);
+
+export const memoryEntries = sqliteTable(
+  "memory_entries",
+  {
+    id: text("id").primaryKey(),
+    scope: text("scope").notNull().default("goal"),
+    scopeId: text("scope_id").notNull(),
+    key: text("key").notNull(),
+    valueJson: text("value_json").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [index("idx_memory_entries_scope").on(t.scope, t.scopeId)],
+);
+
+export const reflections = sqliteTable(
+  "reflections",
+  {
+    id: text("id").primaryKey(),
+    graphId: text("graph_id").references(() => executionGraphs.id, { onDelete: "cascade" }),
+    nodeId: text("node_id").references(() => executionNodes.id, { onDelete: "cascade" }),
+    attemptId: text("attempt_id").references(() => executionAttempts.id, { onDelete: "set null" }),
+    kind: text("kind").notNull(),
+    summary: text("summary").notNull(),
+    detailsJson: text("details_json"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("idx_reflections_graph_id").on(t.graphId)],
+);
+
+export const failurePatterns = sqliteTable(
+  "failure_patterns",
+  {
+    id: text("id").primaryKey(),
+    signature: text("signature").notNull(),
+    firstSeenAt: text("first_seen_at").notNull(),
+    lastSeenAt: text("last_seen_at").notNull(),
+    occurrenceCount: text("occurrence_count").notNull().default("1"),
+    exampleReflectionId: text("example_reflection_id").references(() => reflections.id, { onDelete: "set null" }),
+  },
+  (t) => [index("idx_failure_patterns_signature").on(t.signature)],
+);
+
+export const strategyUpdates = sqliteTable(
+  "strategy_updates",
+  {
+    id: text("id").primaryKey(),
+    sourceReflectionId: text("source_reflection_id").references(() => reflections.id, { onDelete: "set null" }),
+    scope: text("scope").notNull(),
+    scopeId: text("scope_id"),
+    summary: text("summary").notNull(),
+    payloadJson: text("payload_json"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("idx_strategy_updates_scope").on(t.scope, t.scopeId)],
+);
+
+export const handoffs = sqliteTable(
+  "handoffs",
+  {
+    id: text("id").primaryKey(),
+    graphId: text("graph_id").references(() => executionGraphs.id, { onDelete: "cascade" }),
+    nodeId: text("node_id").references(() => executionNodes.id, { onDelete: "cascade" }),
+    fromAgent: text("from_agent").notNull(),
+    toAgent: text("to_agent").notNull(),
+    packetJson: text("packet_json").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("idx_handoffs_graph_id").on(t.graphId)],
+);
+
+export const conflicts = sqliteTable(
+  "conflicts",
+  {
+    id: text("id").primaryKey(),
+    graphId: text("graph_id").references(() => executionGraphs.id, { onDelete: "cascade" }),
+    nodeId: text("node_id").references(() => executionNodes.id, { onDelete: "cascade" }),
+    conflictType: text("conflict_type").notNull(),
+    summary: text("summary").notNull(),
+    participantsJson: text("participants_json").notNull(),
+    resolution: text("resolution"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("idx_conflicts_graph_id").on(t.graphId)],
 );
 
 export const policyDecisions = sqliteTable(

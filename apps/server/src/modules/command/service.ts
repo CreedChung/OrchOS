@@ -15,6 +15,7 @@ import { FilesystemService } from "@/modules/filesystem/service";
 import { RuleService } from "@/modules/rule/service";
 import { GraphService } from "@/modules/graph/service";
 import { PolicyService } from "@/modules/policy/service";
+import { ContextService } from "@/modules/context/service";
 import type { AcpTraceEvent } from "@/modules/runtime/acp";
 import type { Command, CommandStatus } from "@/types";
 
@@ -212,6 +213,12 @@ export abstract class CommandService {
       }
 
       GraphService.createForGoal({
+        traceId: generateId("trace"),
+        contextSnapshotId: ContextService.createSnapshot({
+          goalId: goal.id,
+          kind: "goal_context",
+          payload: ContextService.buildGoalContext(goal.id),
+        }).id,
         goalId: goal.id,
         title: goal.title,
         actions: validatedPlan.actions,

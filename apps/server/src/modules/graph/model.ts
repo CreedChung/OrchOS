@@ -36,6 +36,18 @@ export const GraphModel = {
     attemptNumber: t.Number(),
     strategy: t.String(),
     status: t.String(),
+    traceId: t.Optional(t.String()),
+    inputSnapshotId: t.Optional(t.String()),
+    outputSnapshotId: t.Optional(t.String()),
+    latencyMs: t.Optional(t.Number()),
+    tokenUsage: t.Optional(
+      t.Object({
+        input: t.Number(),
+        output: t.Number(),
+        total: t.Number(),
+      }),
+    ),
+    costEstimateUsd: t.Optional(t.Number()),
     errorCode: t.Optional(t.String()),
     errorText: t.Optional(t.String()),
     startedAt: t.String(),
@@ -69,6 +81,8 @@ export const GraphModel = {
     goalId: t.String(),
     status: t.String(),
     version: t.String(),
+    traceId: t.Optional(t.String()),
+    contextSnapshotId: t.Optional(t.String()),
     createdAt: t.String(),
     updatedAt: t.String(),
     nodes: t.Array(
@@ -98,5 +112,19 @@ export const GraphModel = {
         condition: t.Optional(t.Record(t.String(), t.Unknown())),
       }),
     ),
+  }),
+  replayResponse: t.Object({
+    graph: t.Any(),
+    attempts: t.Array(t.Any()),
+    context: t.Optional(t.Any()),
+    reflections: t.Array(t.Any()),
+    handoffs: t.Array(t.Any()),
+    conflicts: t.Array(t.Any()),
+  }),
+  attemptDebugResponse: t.Object({
+    attempt: t.Any(),
+    inputSnapshot: t.Optional(t.Any()),
+    outputSnapshot: t.Optional(t.Any()),
+    reflection: t.Optional(t.Any()),
   }),
 };

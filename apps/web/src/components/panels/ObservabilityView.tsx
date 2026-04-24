@@ -30,7 +30,14 @@ import {
   PieChart,
 } from "recharts";
 import { m } from "@/paraglide/messages";
-import { api, type TimeSeriesPoint, type GoalTimeSeriesPoint } from "@/lib/api";
+import {
+  api,
+  type TimeSeriesPoint,
+  type GoalTimeSeriesPoint,
+  type ExecutionGraphSummary,
+  type ObservabilityMetrics,
+  type ReflectionRecord,
+} from "@/lib/api";
 import type { AgentProfile, Goal, Problem } from "@/lib/types";
 
 interface ObservabilityViewProps {
@@ -107,10 +114,16 @@ export function ObservabilityView({ agents, goals, problems }: ObservabilityView
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [throughputApiData, setThroughputApiData] = useState<TimeSeriesPoint[]>([]);
   const [goalApiData, setGoalApiData] = useState<GoalTimeSeriesPoint[]>([]);
+  const [metrics, setMetrics] = useState<ObservabilityMetrics | null>(null);
+  const [graphSummaries, setGraphSummaries] = useState<ExecutionGraphSummary[]>([]);
+  const [reflections, setReflections] = useState<ReflectionRecord[]>([]);
 
   useEffect(() => {
     api.getObservabilityThroughput(timeRange).then(setThroughputApiData).catch(console.error);
     api.getObservabilityGoals(timeRange).then(setGoalApiData).catch(console.error);
+    api.getObservabilityMetrics(timeRange).then(setMetrics).catch(console.error);
+    api.getObservabilityGraphs().then(setGraphSummaries).catch(console.error);
+    api.listReflections().then(setReflections).catch(console.error);
   }, [timeRange]);
 
   const activeAgents = agents.filter((a) => a.status === "active").length;
@@ -197,9 +210,85 @@ export function ObservabilityView({ agents, goals, problems }: ObservabilityView
           <MetricCard
             icon={Clock01Icon}
             label={m.obs_avg_response()}
-            value={activeGoals > 0 || completedGoals > 0 ? "1.2s" : "—"}
+            value={metrics ? `${metrics.runtime.avgLatencyMs.toFixed(0)}ms` : "—"}
             trend="down"
           />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Execution Graphs</CardTitle>
+              <CardDescription className="text-xs">Persisted runs and replay coverage</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Graphs tracked</span>
+                <span className="font-medium">{metrics?.graphs.total ?? graphSummaries.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Replays available</span>
+                <span className="font-medium">{graphSummaries.filter((graph) => Boolean(graph.contextSnapshotId)).length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Mean graph latency</span>
+                <span className="font-medium">
+                  {graphSummaries.length > 0
+                    ? `${(
+                        graphSummaries.reduce((sum, graph) => sum + graph.avgLatencyMs, 0) /
+                        graphSummaries.length
+                      ).toFixed(0)}ms`
+                    : "—"}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Runtime Cost</CardTitle>
+              <CardDescription className="text-xs">Attempt-level estimates</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Avg latency</span>
+                <span className="font-medium">{metrics ? `${metrics.runtime.avgLatencyMs.toFixed(0)}ms` : "—"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Estimated cost</span>
+                <span className="font-medium">{metrics ? `$${metrics.runtime.totalCostUsd.toFixed(4)}` : "—"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Attempt traces</span>
+                <span className="font-medium">{graphSummaries.reduce((sum, graph) => sum + graph.attemptCount, 0)}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Reflection Feed</CardTitle>
+              <CardDescription className="text-xs">Failure clustering and degraded paths</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {reflections.slice(0, 3).map((reflection) => (
+                <div key={reflection.id} className="rounded-lg border border-border/60 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {reflection.kind}
+                    </span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {new Date(reflection.createdAt).toLocaleDateString()}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-foreground line-clamp-2">{reflection.summary}</p>
+                </div>
+              ))}
+              {reflections.length === 0 && (
+                <div className="text-sm text-muted-foreground">No reflection artifacts captured yet.</div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Throughput Chart + Agent Status Pie */}

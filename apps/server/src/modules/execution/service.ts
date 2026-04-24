@@ -1,6 +1,7 @@
 import type { ControlSettings, Action } from "@/types";
 import { db } from "@/db";
-import { settings } from "@/db/schema";
+import { commands, settings } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { GoalService } from "@/modules/goal/service";
 import { StateService } from "@/modules/state/service";
 import { AgentService } from "@/modules/agent/service";
@@ -17,6 +18,11 @@ import { GraphService } from "@/modules/graph/service";
 import { GraphScheduler } from "@/modules/graph/scheduler";
 import { PolicyService } from "@/modules/policy/service";
 import { InboxService } from "@/modules/inbox/service";
+import { ContextService } from "@/modules/context/service";
+import { ReflectionService } from "@/modules/reflection/service";
+import { ConflictService } from "@/modules/protocol/conflict";
+import { HandoffService } from "@/modules/protocol/handoff";
+import { SkillService } from "@/modules/skill/service";
 
 export class ExecutionService {
   private settings: ControlSettings = {
@@ -394,21 +400,67 @@ export class ExecutionService {
     return undefined;
   }
 
+  private syncCommandStatus(commandId?: string) {
+    if (!commandId) return;
+
+    const relatedGoals = GoalService.list().filter((goal) => goal.commandId === commandId);
+    if (relatedGoals.length === 0) return;
+
+    const allCompleted = relatedGoals.every((goal) => goal.status === "completed");
+    const hasActive = relatedGoals.some((goal) => goal.status === "active");
+    const hasPaused = relatedGoals.some((goal) => goal.status === "paused");
+
+    if (allCompleted) {
+      db.update(commands).set({ status: "completed" }).where(eq(commands.id, commandId)).run();
+      return;
+    }
+
+    if (!hasActive && hasPaused) {
+      db.update(commands).set({ status: "failed" }).where(eq(commands.id, commandId)).run();
+    }
+  }
+
   async runGoalLoop(goalId: string): Promise<void> {
     const goal = GoalService.get(goalId);
     if (!goal || goal.status !== "active") return;
+    const project = goal.projectId ? ProjectService.get(goal.projectId) : undefined;
 
     const graph = GraphService.getByGoal(goalId);
     if (graph) {
+      const graphTraceId = graph.traceId || generateId("trace");
+      const graphContextSnapshot = graph.contextSnapshotId
+        ? ContextService.getSnapshot(graph.contextSnapshotId)
+        : ContextService.createSnapshot({
+            goalId,
+            graphId: graph.id,
+            kind: "goal_context",
+            payload: ContextService.buildGoalContext(goalId),
+          });
       const agentsFilePath = project?.path ? `${project.path.replace(/\/$/, "")}/AGENTS.md` : undefined;
       await GraphScheduler.runGraph(graph.id, async (node) => {
         if (node.kind === "reflect") {
           const summary = "Graph execution reflection completed.";
           ActivityService.add(goalId, node.assignedAgentName || "Orchestrator", "reflect", summary);
+          ReflectionService.create({ graphId: graph.id, nodeId: node.id, success: true, message: summary });
           return { success: true, message: summary };
         }
 
         if (node.kind === "handoff") {
+          HandoffService.create({
+            fromAgent: "Orchestrator",
+            toAgent: node.assignedAgentName || "User",
+            graphId: graph.id,
+            nodeId: node.id,
+            input: {
+              taskId: node.id,
+              goalId,
+              graphId: graph.id,
+              nodeId: node.id,
+              title: node.label,
+              instruction: `Handoff for ${node.label}`,
+              contextSnapshotId: graphContextSnapshot?.id,
+            },
+          });
           const thread = InboxService.createAgentRequestThread({
             title: `Handoff for ${node.label}`,
             body: `Goal ${goalId} requires handoff for node '${node.label}'.`,
@@ -448,6 +500,10 @@ export class ExecutionService {
         }
 
         const rewrittenAction = (policy.rewrite?.action as Action | undefined) || node.action;
+        if (node.kind === "skill" && node.assignedAgentName) {
+          const matchedSkill = SkillService.list().find((skill) => skill.name === node.assignedAgentName);
+          if (matchedSkill) SkillService.recordExecution(matchedSkill.id, true);
+        }
         if (rewrittenAction === "write_code") {
           const filePolicy = PolicyService.validateFileWrite({
             subjectId: node.id,
@@ -457,16 +513,101 @@ export class ExecutionService {
           });
           if (!filePolicy.allowed) {
             if (state) StateService.updateState(state.id, "failed");
+            ReflectionService.create({
+              graphId: graph.id,
+              nodeId: node.id,
+              success: false,
+              message: filePolicy.reason || "File policy denied execution",
+              metadata: { goalId, kind: "file_write" },
+            });
             return { success: false, message: filePolicy.reason || "File policy denied execution" };
           }
         }
+        const overlappingTarget = ConflictService.detectFileOverlap(
+          rewrittenAction === "write_code"
+            ? [{ type: "file_write", target: project?.path || process.cwd(), mode: "write" as const }]
+            : [],
+        );
+        if (overlappingTarget) {
+          ConflictService.create({
+            graphId: graph.id,
+            nodeId: node.id,
+            conflictType: "file_overlap",
+            summary: `Detected overlapping file mutation target '${overlappingTarget}'.`,
+            participants: [node.id],
+            resolution: "policy-review",
+          });
+        }
         const result = await this.executeAction(goalId, rewrittenAction!, state?.id);
+        if (!result.success) {
+          ReflectionService.create({
+            graphId: graph.id,
+            nodeId: node.id,
+            success: false,
+            message: result.message,
+            metadata: { goalId, action: rewrittenAction },
+          });
+        }
         return result;
-      }, { concurrency: 2 });
+      }, {
+        concurrency: 2,
+        traceId: graphTraceId,
+        contextSnapshotId: graphContextSnapshot?.id,
+        contextFactory: (node, attemptId, baseSnapshotId) =>
+          ContextService.deriveSnapshot({
+            parentSnapshotId: baseSnapshotId,
+            goalId,
+            graphId: graph.id,
+            attemptId,
+            kind: "node_input",
+            patch: {
+              node: {
+                id: node.id,
+                kind: node.kind,
+                label: node.label,
+                action: node.action,
+              },
+            },
+          })?.id,
+        outputContextFactory: (node, attemptId, baseSnapshotId, result) =>
+          ContextService.deriveSnapshot({
+            parentSnapshotId: baseSnapshotId,
+            goalId,
+            graphId: graph.id,
+            attemptId,
+            kind: "node_output",
+            patch: {
+              nodeResult: {
+                nodeId: node.id,
+                success: result.success,
+                message: result.message,
+              },
+              goal: GoalService.get(goalId),
+              states: StateService.getStatesByGoal(goalId),
+              artifacts: StateService.getArtifactsByGoal(goalId),
+            },
+          })?.id,
+        metricsFactory: (node, result) => ({
+          tokenUsage: {
+            input: node.label.length,
+            output: result.message.length,
+            total: node.label.length + result.message.length,
+          },
+          costEstimateUsd: Number(((node.label.length + result.message.length) / 10000).toFixed(6)),
+        }),
+      });
+
+      const completedGraph = GraphService.get(graph.id);
+      if (completedGraph?.status === "failed") {
+        GoalService.update(goalId, { status: "paused" });
+        this.syncCommandStatus(goal.commandId);
+        return;
+      }
 
       if (GoalService.checkCompletion(goalId)) {
         GoalService.update(goalId, { status: "completed" });
         eventBus.emit("goal_completed", { goalId }, goalId);
+        this.syncCommandStatus(goal.commandId);
       }
       return;
     }
@@ -485,6 +626,7 @@ export class ExecutionService {
       if (GoalService.checkCompletion(goalId)) {
         GoalService.update(goalId, { status: "completed" });
         eventBus.emit("goal_completed", { goalId }, goalId);
+        this.syncCommandStatus(goal.commandId);
         return;
       }
 
@@ -500,6 +642,8 @@ export class ExecutionService {
 
       const result = await this.executeAction(goalId, nextAction, nextPendingState.id);
       if (!result.success) {
+        GoalService.update(goalId, { status: "paused" });
+        this.syncCommandStatus(goal.commandId);
         return;
       }
     }

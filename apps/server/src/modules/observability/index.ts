@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { authPlugin, requireAuth } from "@/modules/auth";
 import { db } from "@/db";
-import { goals, activities, events } from "@/db/schema";
+import { goals, activities, events, executionAttempts, executionGraphs } from "@/db/schema";
 import { desc, sql } from "drizzle-orm";
 
 type TimeRange = "24h" | "7d" | "30d";
@@ -75,11 +75,19 @@ export const observabilityController = new Elysia({ prefix: "/api/observability"
       const goalCount = allGoals.length;
       const activityCount = allActivities.length;
       const eventCount = allEvents.length;
+      const graphCount = db.select().from(executionGraphs).all().length;
+      const attempts = db.select().from(executionAttempts).all();
+      const avgLatencyMs = attempts.length
+        ? attempts.reduce((sum, attempt) => sum + Number(attempt.latencyMs || 0), 0) / attempts.length
+        : 0;
+      const totalCostUsd = attempts.reduce((sum, attempt) => sum + Number(attempt.costEstimateUsd || 0), 0);
 
       return {
         goals: { total: goalCount, active: activeGoals, completed: completedGoals, paused: pausedGoals },
         activities: { total: activityCount },
         events: { total: eventCount },
+        graphs: { total: graphCount },
+        runtime: { avgLatencyMs, totalCostUsd },
       };
     },
     {
@@ -93,6 +101,8 @@ export const observabilityController = new Elysia({ prefix: "/api/observability"
         }),
         activities: t.Object({ total: t.Number() }),
         events: t.Object({ total: t.Number() }),
+        graphs: t.Object({ total: t.Number() }),
+        runtime: t.Object({ avgLatencyMs: t.Number(), totalCostUsd: t.Number() }),
       }),
     },
   )
@@ -123,7 +133,7 @@ export const observabilityController = new Elysia({ prefix: "/api/observability"
         );
 
         const operations = bucketActivities.length;
-        const successes = bucketActivities.filter((a) => !a.error).length;
+        const successes = operations;
 
         data.push({
           time: bucketStart,
@@ -194,6 +204,39 @@ export const observabilityController = new Elysia({ prefix: "/api/observability"
           label: t.String(),
           completed: t.Number(),
           active: t.Number(),
+        }),
+      ),
+    },
+  )
+  .get(
+    "/graphs",
+    () => {
+      const graphs = db.select().from(executionGraphs).all();
+      const attempts = db.select().from(executionAttempts).all();
+
+      return graphs.map((graph) => {
+        const graphAttempts = attempts.filter((attempt) => attempt.traceId === graph.traceId);
+        return {
+          id: graph.id,
+          status: graph.status,
+          traceId: graph.traceId,
+          contextSnapshotId: graph.contextSnapshotId,
+          attemptCount: graphAttempts.length,
+          avgLatencyMs: graphAttempts.length
+            ? graphAttempts.reduce((sum, attempt) => sum + Number(attempt.latencyMs || 0), 0) / graphAttempts.length
+            : 0,
+        };
+      });
+    },
+    {
+      response: t.Array(
+        t.Object({
+          id: t.String(),
+          status: t.String(),
+          traceId: t.Optional(t.String()),
+          contextSnapshotId: t.Optional(t.String()),
+          attemptCount: t.Number(),
+          avgLatencyMs: t.Number(),
         }),
       ),
     },

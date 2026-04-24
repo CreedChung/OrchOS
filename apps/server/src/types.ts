@@ -224,6 +224,10 @@ export interface SkillProfile {
   sourceUrl?: string;
   installPath?: string;
   manifestPath?: string;
+  executionCount?: number;
+  successCount?: number;
+  successRate?: number;
+  applicability?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -300,17 +304,20 @@ export type ExecutionNodeKind =
   | "commit"
   | "review"
   | "reflect"
-  | "handoff";
+  | "handoff"
+  | "skill";
 
 export type ExecutionEdgeType = "depends_on" | "on_failure" | "fallback_to";
 
 export interface ExecutionGraph {
-   id: string;
-   goalId: string;
-   status: ExecutionGraphStatus;
-   version: string;
-   createdAt: string;
-   updatedAt: string;
+  id: string;
+  goalId: string;
+  status: ExecutionGraphStatus;
+  version: string;
+  traceId?: string;
+  contextSnapshotId?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ExecutionNode {
@@ -344,8 +351,123 @@ export interface ExecutionAttempt {
   attemptNumber: number;
   strategy: string;
   status: "running" | "success" | "failed";
+  traceId?: string;
+  inputSnapshotId?: string;
+  outputSnapshotId?: string;
+  latencyMs?: number;
+  tokenUsage?: {
+    input: number;
+    output: number;
+    total: number;
+  };
+  costEstimateUsd?: number;
   errorCode?: string;
   errorText?: string;
   startedAt: string;
   finishedAt?: string;
+}
+
+export interface ContextSnapshot {
+  id: string;
+  parentSnapshotId?: string;
+  goalId?: string;
+  graphId?: string;
+  attemptId?: string;
+  kind: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface ContextDiff {
+  id: string;
+  fromSnapshotId: string;
+  toSnapshotId: string;
+  patch: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface MemoryEntry {
+  id: string;
+  scope: string;
+  scopeId: string;
+  key: string;
+  value: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReflectionRecord {
+  id: string;
+  graphId?: string;
+  nodeId?: string;
+  attemptId?: string;
+  kind: string;
+  summary: string;
+  details?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface FailurePattern {
+  id: string;
+  signature: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  occurrenceCount: number;
+  exampleReflectionId?: string;
+}
+
+export interface StrategyUpdate {
+  id: string;
+  sourceReflectionId?: string;
+  scope: string;
+  scopeId?: string;
+  summary: string;
+  payload?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface AgentTaskInput {
+  taskId: string;
+  goalId: string;
+  graphId?: string;
+  nodeId?: string;
+  title: string;
+  instruction: string;
+  contextSnapshotId?: string;
+  sideEffects?: SideEffectDeclaration[];
+}
+
+export interface AgentTaskOutput {
+  taskId: string;
+  success: boolean;
+  summary: string;
+  artifacts?: Array<Record<string, unknown>>;
+  sideEffects?: SideEffectDeclaration[];
+}
+
+export interface SideEffectDeclaration {
+  type: "file_write" | "tool_call" | "git" | "message";
+  target: string;
+  mode?: "read" | "write" | "append" | "delete";
+}
+
+export interface HandoffPacket {
+  id: string;
+  fromAgent: string;
+  toAgent: string;
+  graphId?: string;
+  nodeId?: string;
+  input: AgentTaskInput;
+  createdAt: string;
+}
+
+export interface ConflictRecord {
+  id: string;
+  graphId?: string;
+  nodeId?: string;
+  conflictType: "file_overlap" | "node_ownership" | "policy_blocked";
+  summary: string;
+  participants: string[];
+  resolution?: string;
+  createdAt: string;
 }
