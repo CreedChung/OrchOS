@@ -320,3 +320,109 @@ export const skills = sqliteTable(
     index("idx_skills_organization_id").on(t.organizationId),
   ],
 );
+
+export const executionGraphs = sqliteTable(
+  "execution_graphs",
+  {
+    id: text("id").primaryKey(),
+    goalId: text("goal_id")
+      .notNull()
+      .references(() => goals.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("pending"),
+    version: text("version").notNull().default("1"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [index("idx_execution_graphs_goal_id").on(t.goalId)],
+);
+
+export const executionNodes = sqliteTable(
+  "execution_nodes",
+  {
+    id: text("id").primaryKey(),
+    graphId: text("graph_id")
+      .notNull()
+      .references(() => executionGraphs.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    label: text("label").notNull(),
+    status: text("status").notNull().default("pending"),
+    action: text("action"),
+    assignedAgentName: text("assigned_agent_name"),
+    assignedRuntimeId: text("assigned_runtime_id"),
+    inputJson: text("input_json"),
+    outputJson: text("output_json"),
+    policyJson: text("policy_json"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [index("idx_execution_nodes_graph_id").on(t.graphId)],
+);
+
+export const executionEdges = sqliteTable(
+  "execution_edges",
+  {
+    id: text("id").primaryKey(),
+    graphId: text("graph_id")
+      .notNull()
+      .references(() => executionGraphs.id, { onDelete: "cascade" }),
+    fromNodeId: text("from_node_id")
+      .notNull()
+      .references(() => executionNodes.id, { onDelete: "cascade" }),
+    toNodeId: text("to_node_id")
+      .notNull()
+      .references(() => executionNodes.id, { onDelete: "cascade" }),
+    edgeType: text("edge_type").notNull().default("depends_on"),
+    conditionJson: text("condition_json"),
+  },
+  (t) => [
+    index("idx_execution_edges_graph_id").on(t.graphId),
+    index("idx_execution_edges_to_node_id").on(t.toNodeId),
+  ],
+);
+
+export const executionAttempts = sqliteTable(
+  "execution_attempts",
+  {
+    id: text("id").primaryKey(),
+    nodeId: text("node_id")
+      .notNull()
+      .references(() => executionNodes.id, { onDelete: "cascade" }),
+    attemptNumber: text("attempt_number").notNull(),
+    strategy: text("strategy").notNull().default("default"),
+    status: text("status").notNull().default("running"),
+    errorCode: text("error_code"),
+    errorText: text("error_text"),
+    startedAt: text("started_at").notNull(),
+    finishedAt: text("finished_at"),
+  },
+  (t) => [index("idx_execution_attempts_node_id").on(t.nodeId)],
+);
+
+export const policyDecisions = sqliteTable(
+  "policy_decisions",
+  {
+    id: text("id").primaryKey(),
+    subjectType: text("subject_type").notNull(),
+    subjectId: text("subject_id").notNull(),
+    policySource: text("policy_source").notNull(),
+    decision: text("decision").notNull(),
+    reason: text("reason"),
+    rewriteJson: text("rewrite_json"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("idx_policy_decisions_subject").on(t.subjectType, t.subjectId)],
+);
+
+export const policyViolations = sqliteTable(
+  "policy_violations",
+  {
+    id: text("id").primaryKey(),
+    subjectType: text("subject_type").notNull(),
+    subjectId: text("subject_id").notNull(),
+    policySource: text("policy_source").notNull(),
+    reason: text("reason").notNull(),
+    metadataJson: text("metadata_json"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("idx_policy_violations_subject").on(t.subjectType, t.subjectId)],
+);

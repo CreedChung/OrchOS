@@ -252,6 +252,61 @@ function migrate(sqlite: Database) {
       "ALTER TABLE runtimes ADD COLUMN communication_mode TEXT NOT NULL DEFAULT 'cli-fallback'",
     );
   } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS execution_graphs (id TEXT PRIMARY KEY, goal_id TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE, status TEXT NOT NULL DEFAULT 'pending', version TEXT NOT NULL DEFAULT '1', created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS execution_nodes (id TEXT PRIMARY KEY, graph_id TEXT NOT NULL REFERENCES execution_graphs(id) ON DELETE CASCADE, kind TEXT NOT NULL, label TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', action TEXT, assigned_agent_name TEXT, assigned_runtime_id TEXT, input_json TEXT, output_json TEXT, policy_json TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS execution_edges (id TEXT PRIMARY KEY, graph_id TEXT NOT NULL REFERENCES execution_graphs(id) ON DELETE CASCADE, from_node_id TEXT NOT NULL REFERENCES execution_nodes(id) ON DELETE CASCADE, to_node_id TEXT NOT NULL REFERENCES execution_nodes(id) ON DELETE CASCADE, edge_type TEXT NOT NULL DEFAULT 'depends_on', condition_json TEXT)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS execution_attempts (id TEXT PRIMARY KEY, node_id TEXT NOT NULL REFERENCES execution_nodes(id) ON DELETE CASCADE, attempt_number TEXT NOT NULL, strategy TEXT NOT NULL DEFAULT 'default', status TEXT NOT NULL DEFAULT 'running', error_code TEXT, error_text TEXT, started_at TEXT NOT NULL, finished_at TEXT)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS policy_decisions (id TEXT PRIMARY KEY, subject_type TEXT NOT NULL, subject_id TEXT NOT NULL, policy_source TEXT NOT NULL, decision TEXT NOT NULL, reason TEXT, rewrite_json TEXT, created_at TEXT NOT NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE TABLE IF NOT EXISTS policy_violations (id TEXT PRIMARY KEY, subject_type TEXT NOT NULL, subject_id TEXT NOT NULL, policy_source TEXT NOT NULL, reason TEXT NOT NULL, metadata_json TEXT, created_at TEXT NOT NULL)",
+    );
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_execution_graphs_goal_id ON execution_graphs(goal_id)");
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_execution_nodes_graph_id ON execution_nodes(graph_id)");
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_execution_edges_graph_id ON execution_edges(graph_id)");
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_execution_edges_to_node_id ON execution_edges(to_node_id)");
+  } catch {}
+  try {
+    sqlite.run("CREATE INDEX IF NOT EXISTS idx_execution_attempts_node_id ON execution_attempts(node_id)");
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE INDEX IF NOT EXISTS idx_policy_decisions_subject ON policy_decisions(subject_type, subject_id)",
+    );
+  } catch {}
+  try {
+    sqlite.run(
+      "CREATE INDEX IF NOT EXISTS idx_policy_violations_subject ON policy_violations(subject_type, subject_id)",
+    );
+  } catch {}
   // Migrate existing runtime-like agents to runtimes table
   try {
     const existingRuntimes = sqlite.query("SELECT id FROM runtimes LIMIT 1").get();

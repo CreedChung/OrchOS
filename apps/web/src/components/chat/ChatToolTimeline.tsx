@@ -195,7 +195,45 @@ function GrepToolCard({ input, output }: { input: unknown; output: unknown }) {
   );
 }
 
+function MatchedRulesCard({ output }: { output: unknown }) {
+  const rules = Array.isArray(output) ? output.filter(isRecord) : [];
+
+  return (
+    <div className="space-y-2 px-2.5 py-2">
+      {rules.length === 0 ? (
+        <div className="text-[11px] text-muted-foreground">No rules were evaluated.</div>
+      ) : (
+        rules.map((rule, index) => {
+          const name = readString(rule.name) || `Rule ${index + 1}`;
+          const matched = rule.matched === true;
+          const priority = readString(rule.priority);
+          const scope = readString(rule.scope);
+          const reasons = Array.isArray(rule.reasons) ? rule.reasons.map(String) : [];
+          const taskTypes = Array.isArray(rule.taskTypes) ? rule.taskTypes.map(String) : [];
+          const pathPatterns = Array.isArray(rule.pathPatterns) ? rule.pathPatterns.map(String) : [];
+
+          return (
+            <div key={`${name}-${index}`} className="rounded-lg border border-border/40 bg-background/60 px-3 py-2">
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className={cn("size-2 rounded-full", matched ? "bg-emerald-500" : "bg-amber-500")} />
+                <span className="font-medium text-foreground/80">{name}</span>
+                {priority ? <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{priority}</span> : null}
+                {scope ? <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{scope}</span> : null}
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground">{matched ? "Matched" : "Not matched"}</div>
+              {taskTypes.length > 0 ? <div className="mt-1 text-[11px] text-muted-foreground">Task types: {taskTypes.join(", ")}</div> : null}
+              {pathPatterns.length > 0 ? <div className="mt-1 text-[11px] text-muted-foreground">Paths: {pathPatterns.join(", ")}</div> : null}
+              {!matched && reasons.length > 0 ? <div className="mt-1 text-[11px] text-amber-700 dark:text-amber-300">Reasons: {reasons.join(", ")}</div> : null}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
 function SpecializedToolCard({ toolType, input, output }: { toolType: string; input: unknown; output: unknown }) {
+  if (toolType === "matched_rules") return <MatchedRulesCard output={output} />;
   if (toolType === "bash") return <BashToolCard input={input} output={output} />;
   if (toolType === "read") return <ReadToolCard input={input} output={output} />;
   if (toolType === "write") return <WriteToolCard input={input} output={output} />;

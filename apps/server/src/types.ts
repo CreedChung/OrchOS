@@ -282,3 +282,70 @@ export interface TriggerActionRequest {
   stateId?: string;
   agentId?: string;
 }
+
+export type ExecutionGraphStatus = "pending" | "running" | "success" | "failed";
+
+export type ExecutionNodeStatus =
+  | "pending"
+  | "ready"
+  | "running"
+  | "success"
+  | "failed"
+  | "blocked";
+
+export type ExecutionNodeKind =
+  | "write_code"
+  | "run_tests"
+  | "fix_bug"
+  | "commit"
+  | "review"
+  | "reflect"
+  | "handoff";
+
+export type ExecutionEdgeType = "depends_on" | "on_failure" | "fallback_to";
+
+export interface ExecutionGraph {
+   id: string;
+   goalId: string;
+   status: ExecutionGraphStatus;
+   version: string;
+   createdAt: string;
+   updatedAt: string;
+}
+
+export interface ExecutionNode {
+  id: string;
+  graphId: string;
+  kind: ExecutionNodeKind;
+  label: string;
+  status: ExecutionNodeStatus;
+  action?: Action;
+  assignedAgentName?: string;
+  assignedRuntimeId?: string;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  policy?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExecutionEdge {
+  id: string;
+  graphId: string;
+  fromNodeId: string;
+  toNodeId: string;
+  edgeType: ExecutionEdgeType;
+  condition?: Record<string, unknown>;
+}
+
+export interface ExecutionAttempt {
+  id: string;
+  nodeId: string;
+  attemptNumber: number;
+  strategy: string;
+  status: "running" | "success" | "failed";
+  errorCode?: string;
+  errorText?: string;
+  startedAt: string;
+  finishedAt?: string;
+}

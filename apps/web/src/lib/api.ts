@@ -223,6 +223,25 @@ export interface RuntimeModelsResponse {
   rawOutput?: string;
 }
 
+export interface SkillMarketItem {
+  id: string;
+  name: string;
+  description: string;
+  source: string;
+  sourceType: "official";
+  tags: string[];
+}
+
+export interface McpMarketItem {
+  id: string;
+  name: string;
+  description: string;
+  command: string;
+  args: string[];
+  sourceType: "official";
+  tags: string[];
+}
+
 export interface DetectedRuntime {
   id: string;
   name: string;
@@ -1183,6 +1202,11 @@ export const api = {
     const result = await client.api.skills({ id }).get();
     return assertData(result);
   },
+  listSkillMarket: async (): Promise<SkillMarketItem[]> => {
+    const client = createEdenClient();
+    const result = await client.api.skills.market.get();
+    return assertData(result);
+  },
   createSkill: (data: {
     name: string;
     description?: string;
@@ -1223,6 +1247,11 @@ export const api = {
     allowHighRisk?: boolean;
   }): Promise<SkillRepositoryInstallResponse> =>
     createEdenClient().api.skills["install-repository"].post(data).then(assertData),
+  listMcpMarket: async (): Promise<McpMarketItem[]> => {
+    const client = createEdenClient();
+    const result = await client.api["mcp-servers"].market.get();
+    return assertData(result);
+  },
 
   // Conversations
   listConversations: async (): Promise<Conversation[]> => {

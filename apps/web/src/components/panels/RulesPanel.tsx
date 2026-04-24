@@ -248,7 +248,32 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
 
           <div className="grid gap-3 md:grid-cols-2">
             <LabeledField label="Target Agent IDs">
-              <textarea value={targetAgentIds} onChange={(e) => setTargetAgentIds(e.target.value)} placeholder="One agent id per line" className="min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring" />
+              <div className="space-y-2 rounded-md border border-border bg-background px-3 py-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {agents.map((agent) => {
+                    const selectedIds = new Set(splitLines(targetAgentIds));
+                    const selected = selectedIds.has(agent.id);
+                    return (
+                      <button
+                        key={agent.id}
+                        type="button"
+                        onClick={() => {
+                          const next = new Set(selectedIds);
+                          if (selected) next.delete(agent.id);
+                          else next.add(agent.id);
+                          setTargetAgentIds(Array.from(next).join("\n"));
+                        }}
+                        className={cn(
+                          "rounded-full border px-2 py-1 text-[10px] transition-colors",
+                          selected ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground",
+                        )}
+                      >
+                        {agent.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </LabeledField>
             <LabeledField label="Path Patterns">
               <textarea value={pathPatterns} onChange={(e) => setPathPatterns(e.target.value)} placeholder="One glob/path fragment per line" className="min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring" />
@@ -256,13 +281,30 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
           </div>
 
           <LabeledField label="Task Types">
-            <input
-              type="text"
-              value={taskTypes}
-              onChange={(e) => setTaskTypes(e.target.value)}
-              placeholder={taskTypeOptions.join(", ")}
-              className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+            <div className="flex flex-wrap gap-1.5 rounded-md border border-border bg-background px-3 py-2">
+              {taskTypeOptions.map((taskType) => {
+                const selectedTypes = new Set(splitLines(taskTypes));
+                const selected = selectedTypes.has(taskType);
+                return (
+                  <button
+                    key={taskType}
+                    type="button"
+                    onClick={() => {
+                      const next = new Set(selectedTypes);
+                      if (selected) next.delete(taskType);
+                      else next.add(taskType);
+                      setTaskTypes(Array.from(next).join(", "));
+                    }}
+                    className={cn(
+                      "rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.12em] transition-colors",
+                      selected ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground",
+                    )}
+                  >
+                    {taskType}
+                  </button>
+                );
+              })}
+            </div>
           </LabeledField>
 
           <LabeledField label="Instruction">

@@ -93,6 +93,8 @@ interface ConversationBoardCard {
   column: ConversationBoardColumnId;
 }
 
+type ConversationBoardFilter = "all" | ConversationBoardColumnId;
+
 const conversationBoardColumns: Array<{
   id: ConversationBoardColumnId;
   label: string;
@@ -244,7 +246,6 @@ export function CreationView({
     if (archiveFilter === "active") return conversations.filter((c) => !c.archived && !c.deleted);
     return conversations.filter((c) => !c.deleted);
   }, [archiveFilter, conversations]);
-
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
@@ -684,6 +685,7 @@ function ChatArea({
   const [projectSpecDraft, setProjectSpecDraft] = useState("");
   const [projectSpecLoading, setProjectSpecLoading] = useState(false);
   const [projectSpecSaving, setProjectSpecSaving] = useState(false);
+  const [boardFilter, setBoardFilter] = useState<ConversationBoardFilter>("all");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -756,8 +758,12 @@ function ChatArea({
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    const newFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
-    setAttachedFiles((prev) => [...prev, ...newFiles]);
+
+    const hasImage = Array.from(files).some((file) => file.type.startsWith("image/"));
+    if (hasImage) {
+      toast.error('当前模型不支持图片输入，请直接发送文字说明。');
+    }
+
     e.target.value = "";
   }, []);
 
@@ -870,7 +876,9 @@ function ChatArea({
 
     try {
       if (filesToSend.length > 0) {
-        toast.info(m.multimodal_notice());
+        toast.error('当前模型不支持图片输入，请移除图片后重试。');
+        setPendingUserMessage(null);
+        return;
       }
       await onSendMessage(content);
     } catch (err) {
@@ -1044,7 +1052,7 @@ function ChatArea({
             duration={2.6}
             className="rounded-xl"
           >
-            <div className="flex min-h-14 flex-col gap-2 rounded-xl border border-border bg-background px-3 py-3">
+            <div className="flex min-h-16 flex-col gap-2 rounded-xl border border-border bg-background px-3 py-3">
               {attachedFiles.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {attachedFiles.map((file, index) => (
@@ -1073,7 +1081,7 @@ function ChatArea({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={selectedRuntime ? `Message ${selectedRuntime.name}...` : m.creation_placeholder()}
-                className="min-h-[32px] w-full resize-none bg-transparent py-1 text-sm leading-6 outline-none placeholder:text-muted-foreground"
+                className="min-h-[40px] w-full resize-none bg-transparent py-1 text-sm leading-6 outline-none placeholder:text-muted-foreground"
                 rows={1}
                 onKeyDown={handleKeys}
                 spellCheck={false}
@@ -1160,16 +1168,62 @@ function ChatArea({
           </div>
 
           <section className="space-y-4">
-            <div className="flex items-center gap-2 px-1">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
-                当前看板
-              </div>
-              <div className="h-px flex-1 bg-border/50" />
-              <div className="text-[10px] text-muted-foreground/50">{boardCards.length} items</div>
+            <div className="flex flex-wrap items-center gap-2 px-1">
+              <button
+                type="button"
+                onClick={() => setBoardFilter("all")}
+                aria-pressed={boardFilter === "all"}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
+                  boardFilter === "all"
+                    ? "border-border bg-foreground text-background"
+                    : "border-border/50 bg-background text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <HugeiconsIcon icon={Menu01Icon} className="size-3.5" />
+                全部
+                <span className="rounded-full bg-background/15 px-1.5 py-0.5 text-[10px] tabular-nums text-inherit">
+                  {boardCards.length}
+                </span>
+              </button>
+
+              {conversationBoardColumns.map((column) => {
+                const count = boardCards.filter((card) => card.column === column.id).length;
+
+                return (
+                  <button
+                    key={column.id}
+                    type="button"
+                    onClick={() => setBoardFilter(column.id)}
+                    aria-pressed={boardFilter === column.id}
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
+                      boardFilter === column.id
+                        ? cn("border-transparent", column.bgAccent, column.tone)
+                        : "border-border/50 bg-background text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <HugeiconsIcon icon={column.icon} className={cn("size-3.5", boardFilter === column.id ? column.tone : "")} />
+                    {column.label}
+                    <span className="rounded-full bg-foreground/5 px-1.5 py-0.5 text-[10px] tabular-nums text-inherit">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-5">
-              {conversationBoardColumns.map((column) => {
+            <div
+              className={cn(
+                "grid gap-4",
+                conversationBoardColumns.filter((column) => boardFilter === "all" || column.id === boardFilter).length === 1
+                  ? "xl:grid-cols-1"
+                  : "xl:grid-cols-4",
+              )}
+            >
+              {conversationBoardColumns
+                .filter((column) => boardFilter === "all" || column.id === boardFilter)
+                .map((column) => {
                 const columnCards = boardCards.filter((card) => card.column === column.id);
 
                 return (

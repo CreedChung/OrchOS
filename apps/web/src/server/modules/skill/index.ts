@@ -4,8 +4,51 @@ import { SkillService } from "./service";
 import { SkillModel } from "./model";
 import type { AppDb } from "../../db/types";
 
+const skillMarketItem = t.Object({
+  id: t.String(),
+  name: t.String(),
+  description: t.String(),
+  source: t.String(),
+  sourceType: t.Union([t.Literal("official")]),
+  tags: t.Array(t.String()),
+});
+
+const officialSkillMarket = [
+  {
+    id: "github-automation",
+    name: "GitHub Automation",
+    description: "Install GitHub issue, PR, and review automation skills from the official repository.",
+    source: "https://github.com/orchos/skill-market-github",
+    sourceType: "official" as const,
+    tags: ["github", "automation", "official"],
+  },
+  {
+    id: "repo-analysis",
+    name: "Repository Analysis",
+    description: "Adds repository inspection and architecture analysis skills for onboarding and planning.",
+    source: "https://github.com/orchos/skill-market-analysis",
+    sourceType: "official" as const,
+    tags: ["analysis", "planning", "official"],
+  },
+  {
+    id: "quality-gates",
+    name: "Quality Gates",
+    description: "Provides reusable skills for lint, test, and verification workflows.",
+    source: "https://github.com/orchos/skill-market-quality",
+    sourceType: "official" as const,
+    tags: ["quality", "ci", "official"],
+  },
+];
+
 export function createSkillController(db: AppDb) {
   return new Elysia({ prefix: "/api/skills" })
+    .get(
+      "/market",
+      () => officialSkillMarket,
+      {
+        response: t.Array(skillMarketItem),
+      },
+    )
     .get(
       "/",
       ({ query }) =>

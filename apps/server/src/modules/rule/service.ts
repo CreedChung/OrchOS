@@ -40,6 +40,20 @@ interface RuleMatchContext {
   taskType: string;
 }
 
+export interface MatchedRuleSummary {
+  id: string;
+  name: string;
+  priority: Rule["priority"];
+  scope: Rule["scope"];
+  taskTypes: string[];
+  pathPatterns: string[];
+}
+
+export interface RuleEvaluationSummary extends MatchedRuleSummary {
+  matched: boolean;
+  reasons: string[];
+}
+
 function parseJsonArray(value: string | null | undefined): string[] {
   if (!value) return [];
 
@@ -85,32 +99,45 @@ function getRulePriorityScore(priority: Rule["priority"]) {
   return 1;
 }
 
-function matchesRule(rule: Rule, context: RuleMatchContext) {
-  if (!rule.enabled) return false;
-  if (!rule.instruction.trim()) return false;
-  if (rule.scope === "project" && rule.projectId && rule.projectId !== context.projectId) return false;
-  if (rule.targetAgentIds.length > 0 && (!context.agentId || !rule.targetAgentIds.includes(context.agentId))) return false;
-  if (rule.taskTypes.length > 0 && !rule.taskTypes.includes(context.taskType)) return false;
+function evaluateRule(rule: Rule, context: RuleMatchContext): RuleEvaluationSummary {
+  const reasons: string[] = [];
+
+  if (!rule.enabled) reasons.push("rule disabled");
+  if (!rule.instruction.trim()) reasons.push("instruction missing");
+  if (rule.scope === "project" && rule.projectId && rule.projectId !== context.projectId) reasons.push("projectId mismatch");
+  if (rule.targetAgentIds.length > 0 && (!context.agentId || !rule.targetAgentIds.includes(context.agentId))) reasons.push("targetAgentIds mismatch");
+  if (rule.taskTypes.length > 0 && !rule.taskTypes.includes(context.taskType)) reasons.push("taskType mismatch");
 
   if (rule.pathPatterns.length > 0) {
     const projectPath = normalizeRulePathInput(context.projectPath);
-    if (!projectPath) return false;
+    if (!projectPath) {
+      reasons.push("pathPatterns mismatch");
+    } else {
+      const matchesPath = rule.pathPatterns.some((pattern) => {
+        const normalizedPattern = normalizeRulePathInput(pattern);
+        if (!normalizedPattern) return false;
 
-    const matchesPath = rule.pathPatterns.some((pattern) => {
-      const normalizedPattern = normalizeRulePathInput(pattern);
-      if (!normalizedPattern) return false;
+        try {
+          return globToRegExp(normalizedPattern).test(projectPath);
+        } catch {
+          return projectPath.includes(normalizedPattern.replace(/\*/g, ""));
+        }
+      });
 
-      try {
-        return globToRegExp(normalizedPattern).test(projectPath);
-      } catch {
-        return projectPath.includes(normalizedPattern.replace(/\*/g, ""));
-      }
-    });
-
-    if (!matchesPath) return false;
+      if (!matchesPath) reasons.push("pathPatterns mismatch");
+    }
   }
 
-  return true;
+  return {
+    id: rule.id,
+    name: rule.name,
+    priority: rule.priority,
+    scope: rule.scope,
+    taskTypes: rule.taskTypes,
+    pathPatterns: rule.pathPatterns,
+    matched: reasons.length === 0,
+    reasons,
+  };
 }
 
 export const RuleService = {
@@ -175,7 +202,24 @@ export const RuleService = {
 
   matchInstructions(context: RuleMatchContext): Rule[] {
     return RuleService.list()
-      .filter((rule) => matchesRule(rule, context))
+      .filter((rule) => evaluateRule(rule, context).matched)
       .sort((a, b) => getRulePriorityScore(b.priority) - getRulePriorityScore(a.priority));
+  },
+
+  evaluateInstructions(context: RuleMatchContext): RuleEvaluationSummary[] {
+    return RuleService.list()
+      .map((rule) => evaluateRule(rule, context))
+      .sort((a, b) => Number(b.matched) - Number(a.matched) || getRulePriorityScore(b.priority) - getRulePriorityScore(a.priority));
+  },
+
+  summarizeMatchedRules(rules: Rule[]): MatchedRuleSummary[] {
+    return rules.map((rule) => ({
+      id: rule.id,
+      name: rule.name,
+      priority: rule.priority,
+      scope: rule.scope,
+      taskTypes: rule.taskTypes,
+      pathPatterns: rule.pathPatterns,
+    }));
   },
 };

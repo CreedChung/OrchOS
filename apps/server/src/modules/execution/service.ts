@@ -11,6 +11,12 @@ import { SandboxService } from "@/modules/sandbox/service";
 import { generateId } from "@/utils";
 import type { ExecutionModel } from "@/modules/execution/model";
 import { ProjectService } from "@/modules/project/service";
+import { FilesystemService } from "@/modules/filesystem/service";
+import { RuleService } from "@/modules/rule/service";
+import { GraphService } from "@/modules/graph/service";
+import { GraphScheduler } from "@/modules/graph/scheduler";
+import { PolicyService } from "@/modules/policy/service";
+import { InboxService } from "@/modules/inbox/service";
 
 export class ExecutionService {
   private settings: ControlSettings = {
@@ -110,6 +116,43 @@ export class ExecutionService {
     return { ...this.settings };
   }
 
+  private actionTaskType(action: Action): "code" | "review" | "debug" {
+    if (action === "review") return "review";
+    if (action === "fix_bug" || action === "run_tests") return "debug";
+    return "code";
+  }
+
+  private buildActionPrompt(action: Action, goalId: string, agentId?: string) {
+    const goal = GoalService.get(goalId);
+    const project = goal?.projectId ? ProjectService.get(goal.projectId) : undefined;
+    const agentsFilePath = project?.path ? `${project.path.replace(/\/$/, "")}/AGENTS.md` : undefined;
+    const agentsFile = agentsFilePath ? FilesystemService.readFile(agentsFilePath).content ?? undefined : undefined;
+    const matchedRules = RuleService.matchInstructions({
+      projectId: project?.id,
+      projectPath: project?.path,
+      agentId,
+      taskType: this.actionTaskType(action),
+    });
+
+    const basePrompt = `Implement the following goal: ${goal?.title}${goal?.description ? `\nDescription: ${goal.description}` : ""}${goal?.successCriteria?.length ? `\nSuccess criteria: ${goal.successCriteria.join(", ")}` : ""}`;
+    const sections: string[] = [];
+
+    if (agentsFile?.trim()) {
+      sections.push(["Project Instructions (AGENTS.md):", agentsFile.trim()].join("\n"));
+    }
+
+    if (matchedRules.length > 0) {
+      sections.push(
+        [
+          "Matched Rules:",
+          ...matchedRules.map((rule, index) => `${index + 1}. ${rule.name} [priority: ${rule.priority}]\n${rule.instruction}`),
+        ].join("\n"),
+      );
+    }
+
+    return sections.length > 0 ? `${sections.join("\n\n")}\n\n${basePrompt}` : basePrompt;
+  }
+
   async executeAction(
     goalId: string,
     action: Action,
@@ -202,7 +245,7 @@ export class ExecutionService {
 
       case "write_code": {
         const agent = agentId ? AgentService.get(agentId) : undefined;
-        const prompt = `Implement the following goal: ${goal?.title}${goal?.description ? `\nDescription: ${goal.description}` : ""}${goal?.successCriteria?.length ? `\nSuccess criteria: ${goal.successCriteria.join(", ")}` : ""}`;
+        const prompt = this.buildActionPrompt(action, goalId, agentId);
 
         let codeGenerated = false;
         let output = "";
@@ -354,6 +397,79 @@ export class ExecutionService {
   async runGoalLoop(goalId: string): Promise<void> {
     const goal = GoalService.get(goalId);
     if (!goal || goal.status !== "active") return;
+
+    const graph = GraphService.getByGoal(goalId);
+    if (graph) {
+      const agentsFilePath = project?.path ? `${project.path.replace(/\/$/, "")}/AGENTS.md` : undefined;
+      await GraphScheduler.runGraph(graph.id, async (node) => {
+        if (node.kind === "reflect") {
+          const summary = "Graph execution reflection completed.";
+          ActivityService.add(goalId, node.assignedAgentName || "Orchestrator", "reflect", summary);
+          return { success: true, message: summary };
+        }
+
+        if (node.kind === "handoff") {
+          const thread = InboxService.createAgentRequestThread({
+            title: `Handoff for ${node.label}`,
+            body: `Goal ${goalId} requires handoff for node '${node.label}'.`,
+            summary: `Generated from graph ${graph.id}`,
+            projectId: project?.id,
+            recipients: [node.assignedAgentName || "User"],
+            cc: ["User"],
+          });
+          return { success: true, message: `Handoff thread ${thread.id} created` };
+        }
+
+        const policy = PolicyService.validateNodeExecution({
+          nodeId: node.id,
+          action: node.action,
+          goalId,
+          projectId: project?.id,
+          projectPath: project?.path,
+          agentsFilePath,
+        });
+
+        if (!policy.allowed) {
+          const state = StateService.getStatesByGoal(goalId).find((item) => item.label === node.label);
+          if (state) StateService.updateState(state.id, "failed");
+          return { success: false, message: policy.reason || "Policy denied node execution" };
+        }
+
+        const state = StateService.getStatesByGoal(goalId).find((item) => item.label === node.label);
+        const toolPolicy = PolicyService.validateToolCall({
+          subjectId: node.id,
+          toolName: node.action === "write_code" || node.action === "fix_bug" ? "local-filesystem-write" : `action:${node.action}`,
+          projectPath: project?.path,
+          agentsFilePath,
+        });
+        if (!toolPolicy.allowed) {
+          if (state) StateService.updateState(state.id, "failed");
+          return { success: false, message: toolPolicy.reason || "Tool policy denied execution" };
+        }
+
+        const rewrittenAction = (policy.rewrite?.action as Action | undefined) || node.action;
+        if (rewrittenAction === "write_code") {
+          const filePolicy = PolicyService.validateFileWrite({
+            subjectId: node.id,
+            path: project?.path || process.cwd(),
+            projectPath: project?.path,
+            agentsFilePath,
+          });
+          if (!filePolicy.allowed) {
+            if (state) StateService.updateState(state.id, "failed");
+            return { success: false, message: filePolicy.reason || "File policy denied execution" };
+          }
+        }
+        const result = await this.executeAction(goalId, rewrittenAction!, state?.id);
+        return result;
+      }, { concurrency: 2 });
+
+      if (GoalService.checkCompletion(goalId)) {
+        GoalService.update(goalId, { status: "completed" });
+        eventBus.emit("goal_completed", { goalId }, goalId);
+      }
+      return;
+    }
 
     while (true) {
       const goalStates = StateService.getStatesByGoal(goalId);

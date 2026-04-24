@@ -8,6 +8,7 @@ import { SandboxService } from "@/modules/sandbox/service";
 import { CommandService } from "@/modules/command/service";
 import { RuleService } from "@/modules/rule/service";
 import { FilesystemService } from "@/modules/filesystem/service";
+import { ActivityService } from "@/modules/activity/service";
 
 type MessageTraceEvent =
   | { kind: "message"; text: string }
@@ -340,12 +341,20 @@ export abstract class ConversationService {
     const agentsFile = projectInstructionsPath
       ? FilesystemService.readFile(projectInstructionsPath).content ?? undefined
       : undefined;
-    const activeRules = RuleService.matchInstructions({
+    const ruleEvaluation = RuleService.evaluateInstructions({
       projectId: project?.id,
       projectPath: project?.path,
       agentId: conv.agentId,
       taskType: "chat",
-    })
+    });
+    const matchedRuleIds = new Set(ruleEvaluation.filter((rule) => rule.matched).map((rule) => rule.id));
+    const matchedRules = RuleService.matchInstructions({
+      projectId: project?.id,
+      projectPath: project?.path,
+      agentId: conv.agentId,
+      taskType: "chat",
+    });
+    const activeRules = matchedRules
       .map((rule) => ({
         name: rule.name,
         condition: rule.condition,
@@ -431,6 +440,17 @@ export abstract class ConversationService {
                 executionMode: "sandbox",
                 sandboxStatus,
                 sandboxVmId: vm.vmId,
+                trace: matchedRules.length > 0
+                  ? [
+                      {
+                        kind: "tool" as const,
+                        toolName: "matched_rules",
+                        toolCallId: `matched-rules-${conversationId}`,
+                        state: "output-available",
+                        output: ruleEvaluation,
+                      },
+                    ]
+                  : undefined,
                 ...projectMetadata,
               },
             };
@@ -474,9 +494,35 @@ export abstract class ConversationService {
         result.metadata = {
           executionMode: "local",
           sandboxStatus: conv.projectId ? "fallback" : undefined,
-          trace: result.trace,
+          trace: [
+            ...(result.trace ?? []),
+            ...(matchedRules.length > 0
+              ? [
+                  {
+                    kind: "tool" as const,
+                    toolName: "matched_rules",
+                    toolCallId: `matched-rules-${conversationId}`,
+                    state: "output-available",
+                    output: ruleEvaluation,
+                  },
+                ]
+              : []),
+          ],
           ...projectMetadata,
         };
+      }
+
+      if (matchedRuleIds.size > 0 && contextMessages.length > 0) {
+        ActivityService.add(
+          conv.id,
+          runtime?.name || runtimeId,
+          "rules_matched",
+          `${matchedRuleIds.size} rule(s) matched for chat`,
+          ruleEvaluation
+            .filter((rule) => rule.matched)
+            .map((rule) => `${rule.name} [${rule.priority}]`)
+            .join("\n"),
+        );
       }
 
       const responseTime = Date.now() - startTime;

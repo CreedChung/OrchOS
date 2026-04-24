@@ -4,8 +4,55 @@ import type { AppDb } from "../../db/types";
 import { McpServerService } from "./service";
 import { McpServerModel } from "./model";
 
+const mcpMarketItem = t.Object({
+  id: t.String(),
+  name: t.String(),
+  description: t.String(),
+  command: t.String(),
+  args: t.Array(t.String()),
+  sourceType: t.Union([t.Literal("official")]),
+  tags: t.Array(t.String()),
+});
+
+const officialMcpMarket = [
+  {
+    id: "filesystem",
+    name: "Filesystem MCP",
+    description: "Official filesystem access server for repository and workspace operations.",
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/root/project/OrchOS"],
+    sourceType: "official" as const,
+    tags: ["official", "filesystem"],
+  },
+  {
+    id: "github",
+    name: "GitHub MCP",
+    description: "Official GitHub MCP server for repositories, pull requests, and issues.",
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-github"],
+    sourceType: "official" as const,
+    tags: ["official", "github"],
+  },
+  {
+    id: "fetch",
+    name: "Fetch MCP",
+    description: "Official fetch server for safe remote document and API retrieval.",
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-fetch"],
+    sourceType: "official" as const,
+    tags: ["official", "network"],
+  },
+];
+
 export function createMcpController(db: AppDb) {
   return new Elysia({ prefix: "/api/mcp-servers" })
+    .get(
+      "/market",
+      () => officialMcpMarket,
+      {
+        response: t.Array(mcpMarketItem),
+      },
+    )
     .get(
       "/",
       ({ query }) => {

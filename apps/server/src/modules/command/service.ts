@@ -13,6 +13,8 @@ import { InboxService } from "@/modules/inbox/service";
 import { ProjectService } from "@/modules/project/service";
 import { FilesystemService } from "@/modules/filesystem/service";
 import { RuleService } from "@/modules/rule/service";
+import { GraphService } from "@/modules/graph/service";
+import { PolicyService } from "@/modules/policy/service";
 import type { AcpTraceEvent } from "@/modules/runtime/acp";
 import type { Command, CommandStatus } from "@/types";
 
@@ -32,9 +34,9 @@ export abstract class CommandService {
   private static buildPlanningInstruction(command: Command) {
     const projectId = command.projectIds.length > 0 ? command.projectIds[0] : undefined;
     const project = projectId ? ProjectService.get(projectId) : undefined;
-    const projectInstructionsPath = project?.path ? `${project.path.replace(/\/$/, "")}/AGENTS.md` : undefined;
-    const agentsFile = projectInstructionsPath
-      ? FilesystemService.readFile(projectInstructionsPath).content ?? undefined
+    const agentsFilePath = project?.path ? `${project.path.replace(/\/$/, "")}/AGENTS.md` : undefined;
+    const agentsFile = agentsFilePath
+      ? FilesystemService.readFile(agentsFilePath).content ?? undefined
       : undefined;
     const activeRules = RuleService.matchInstructions({
       projectId: project?.id,
@@ -113,6 +115,8 @@ export abstract class CommandService {
             .map((a) => a.name);
 
     const projectId = command.projectIds.length > 0 ? command.projectIds[0] : undefined;
+    const project = projectId ? ProjectService.get(projectId) : undefined;
+    const agentsFilePath = project?.path ? `${project.path.replace(/\/$/, "")}/AGENTS.md` : undefined;
 
     let planningResult;
 
@@ -160,6 +164,18 @@ export abstract class CommandService {
     });
 
     for (const planned of plannedGoals) {
+      const validatedPlan = PolicyService.validatePlan({
+        subjectId: command.id,
+        actions: planned.actions,
+        agentsFilePath,
+        projectId: project?.id,
+        projectPath: project?.path,
+      });
+
+      if (!validatedPlan.allowed) {
+        continue;
+      }
+
       const watchers = planned.assignedAgentName
         ? [planned.assignedAgentName]
         : resolvedAgentNames;
@@ -178,7 +194,7 @@ export abstract class CommandService {
         primaryGoalId = goal.id;
       }
 
-      for (const action of planned.actions) {
+      for (const action of validatedPlan.actions) {
         StateService.createState(
           goal.id,
           `${action} — ${planned.title}`,
@@ -191,9 +207,16 @@ export abstract class CommandService {
                 ? ["Fix", "Ignore"]
                 : action === "commit"
                   ? ["Commit"]
-                  : ["Review"],
+              : ["Review"],
         );
       }
+
+      GraphService.createForGoal({
+        goalId: goal.id,
+        title: goal.title,
+        actions: validatedPlan.actions,
+        assignedAgentName: planned.assignedAgentName,
+      });
 
       createdGoals.push({
         id: goal.id,
