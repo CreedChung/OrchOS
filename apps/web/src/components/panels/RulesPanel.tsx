@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -80,9 +80,23 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
+  const [activeRuleId, setActiveRuleId] = useState<string | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(288);
 
   const projectNameById = useMemo(() => new Map(projects.map((project) => [project.id, project.name])), [projects]);
   const agentNameById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent.name])), [agents]);
+  const activeRule = rules.find((rule) => rule.id === activeRuleId) ?? null;
+
+  useEffect(() => {
+    if (rules.length === 0) {
+      setActiveRuleId(null);
+      return;
+    }
+
+    if (!rules.some((rule) => rule.id === activeRuleId)) {
+      setActiveRuleId(rules[0].id);
+    }
+  }, [rules, activeRuleId]);
 
   const handleCreate = () => {
     if (!name.trim()) return;
@@ -121,6 +135,7 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
   };
 
   const handleEditRule = (rule: Rule) => {
+    setActiveRuleId(rule.id);
     setEditingRuleId(rule.id);
     setShowCreate(true);
     setName(rule.name);
@@ -143,29 +158,163 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
   const handleDeleteConfirm = () => {
     if (ruleToDelete) {
       onDeleteRule(ruleToDelete);
+      if (activeRuleId === ruleToDelete) {
+        setActiveRuleId(null);
+      }
       setRuleToDelete(null);
     }
   };
 
+  const handleResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const sidebarEl = event.currentTarget.parentElement;
+    const sidebarLeft = sidebarEl?.getBoundingClientRect().left ?? 0;
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 288);
+      setSidebarWidth(nextWidth);
+    };
+
+    const handlePointerUp = () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  };
+
+  const openCreateForm = () => {
+    setEditingRuleId(null);
+    setShowCreate(true);
+    setName("");
+    setCondition("always");
+    setAction("instruct");
+    setScope("global");
+    setProjectId("");
+    setTargetAgentIds("");
+    setPathPatterns("");
+    setTaskTypes("");
+    setInstruction("");
+    setPriority("normal");
+  };
+
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div className="flex items-center gap-2">
-          <HugeiconsIcon icon={Shield01Icon} className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">Rules</h2>
-          <span className="text-xs text-muted-foreground">({rules.filter((r) => r.enabled).length} active)</span>
+    <div className="flex flex-1 overflow-hidden">
+      <div
+        className="relative flex h-full shrink-0 flex-col border-r border-border bg-background"
+        style={{ width: Math.min(sidebarWidth, 288), maxWidth: "18rem" }}
+      >
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="flex items-center gap-2">
+            <HugeiconsIcon icon={Shield01Icon} className="size-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">Rules</h2>
+            <span className="text-xs text-muted-foreground">({rules.filter((r) => r.enabled).length} active)</span>
+          </div>
+          <button
+            onClick={openCreateForm}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <HugeiconsIcon icon={Add01Icon} className="size-3" />
+          </button>
         </div>
-        <button
-          onClick={() => setShowCreate(!showCreate)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          <HugeiconsIcon icon={Add01Icon} className="size-3" />
-          {m.new_rule()}
-        </button>
+
+        <ScrollArea className="flex-1">
+          <div className="space-y-0.5 p-2">
+            {rules.map((rule) => {
+              const isActive = rule.id === activeRuleId;
+              return (
+                <button
+                  key={rule.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveRuleId(rule.id);
+                    setShowCreate(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
+                    isActive ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-accent/50",
+                    !rule.enabled && "opacity-60",
+                  )}
+                >
+                  <HugeiconsIcon
+                    icon={Shield01Icon}
+                    className={cn("mt-0.5 size-4 shrink-0", rule.enabled ? "text-primary" : "text-muted-foreground")}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-xs font-medium">{rule.name}</p>
+                      <span
+                        className={cn(
+                          "size-2 shrink-0 rounded-full",
+                          rule.enabled ? "bg-emerald-500" : "bg-muted-foreground/40",
+                        )}
+                      />
+                    </div>
+                    <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                      {conditionLabels[rule.condition] || rule.condition} · {actionLabels[rule.action] || rule.action}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+            {rules.length === 0 && (
+              <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
+                <HugeiconsIcon icon={Shield01Icon} className="mb-2 size-8 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">{m.no_rules_yet()}</p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize rules list"
+          onPointerDown={handleResizeStart}
+          className="absolute top-0 right-[-4px] z-10 h-full w-2 cursor-col-resize rounded-full transition-colors hover:bg-primary/15"
+        />
       </div>
 
-      {showCreate && (
-        <div className="space-y-3 border-b border-border bg-accent/20 px-4 py-3">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="flex items-center gap-2">
+            <HugeiconsIcon icon={Shield01Icon} className="size-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">
+              {showCreate ? (editingRuleId ? "Edit Rule" : "Create Rule") : activeRule?.name ?? "Rules"}
+            </h2>
+          </div>
+          {!showCreate && activeRule ? (
+            <div className="flex items-center gap-1">
+              <button onClick={() => onToggleRule(activeRule.id, !activeRule.enabled)} className="shrink-0 text-muted-foreground hover:text-foreground" title={activeRule.enabled ? m.disable_rule() : m.enable_rule()}>
+                {activeRule.enabled ? <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" /> : <HugeiconsIcon icon={ToggleLeft} className="size-5" />}
+              </button>
+              <button onClick={() => handleEditRule(activeRule)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" title="Edit rule">
+                <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+              </button>
+              <button onClick={() => handleDeleteClick(activeRule.id)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" title={m.delete()}>
+                <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={openCreateForm}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <HugeiconsIcon icon={Add01Icon} className="size-3" />
+              {m.new_rule()}
+            </button>
+          )}
+        </div>
+
+        {showCreate ? (
+          <ScrollArea className="flex-1">
+            <div className="space-y-3 bg-accent/20 px-4 py-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-foreground">{editingRuleId ? "Edit Structured Rule" : "Create Structured Rule"}</span>
             <button onClick={() => setShowCreate(false)} className="text-muted-foreground hover:text-foreground">
@@ -326,62 +475,64 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
           >
             {editingRuleId ? "Save Rule" : m.create_rule()}
           </button>
-        </div>
-      )}
-
-      <ScrollArea className="flex-1">
-        <div className="divide-y divide-border/50">
-          {rules.map((rule) => (
-            <div key={rule.id} className={cn("flex items-start gap-3 px-4 py-3 transition-colors", rule.enabled ? "bg-card" : "bg-muted/30 opacity-60")}>
-              <HugeiconsIcon icon={Shield01Icon} className={cn("mt-0.5 size-4 shrink-0", rule.enabled ? "text-primary" : "text-muted-foreground")} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-foreground">{rule.name}</span>
-                  <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{rule.scope}</span>
-                  <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{rule.priority}</span>
-                </div>
-                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{conditionLabels[rule.condition] || rule.condition}</span>
-                  <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{actionLabels[rule.action] || rule.action}</span>
-                  {rule.projectId ? <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{projectNameById.get(rule.projectId) || rule.projectId}</span> : null}
-                </div>
-                {rule.instruction ? <div className="mt-2 text-xs text-foreground/80 whitespace-pre-wrap">{rule.instruction}</div> : null}
-                <div className="mt-2 space-y-1 text-[11px] text-muted-foreground">
-                  {rule.targetAgentIds.length > 0 ? <div>Agents: {rule.targetAgentIds.map((id) => agentNameById.get(id) || id).join(", ")}</div> : null}
-                  {rule.pathPatterns.length > 0 ? <div>Paths: {rule.pathPatterns.join(", ")}</div> : null}
-                  {rule.taskTypes.length > 0 ? <div>Task types: {rule.taskTypes.join(", ")}</div> : null}
-                </div>
-              </div>
-              <button onClick={() => onToggleRule(rule.id, !rule.enabled)} className="shrink-0 text-muted-foreground hover:text-foreground" title={rule.enabled ? m.disable_rule() : m.enable_rule()}>
-                {rule.enabled ? <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" /> : <HugeiconsIcon icon={ToggleLeft} className="size-5" />}
-              </button>
-              <button onClick={() => handleEditRule(rule)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" title="Edit rule">
-                <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-              </button>
-              <button onClick={() => handleDeleteClick(rule.id)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" title={m.delete()}>
-                <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-              </button>
             </div>
-          ))}
-          {rules.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <HugeiconsIcon icon={Shield01Icon} className="mb-2 size-8 text-muted-foreground/30" />
+          </ScrollArea>
+        ) : activeRule ? (
+          <ScrollArea className="flex-1">
+            <div className="space-y-6 px-4 py-4">
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-base font-semibold text-foreground">{activeRule.name}</span>
+                  <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{activeRule.scope}</span>
+                  <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{activeRule.priority}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{conditionLabels[activeRule.condition] || activeRule.condition}</span>
+                  <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{actionLabels[activeRule.action] || activeRule.action}</span>
+                  {activeRule.projectId ? <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{projectNameById.get(activeRule.projectId) || activeRule.projectId}</span> : null}
+                </div>
+                {activeRule.instruction ? <div className="mt-4 whitespace-pre-wrap text-sm text-foreground/80">{activeRule.instruction}</div> : null}
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <RuleMetaCard
+                  title="Agents"
+                  values={activeRule.targetAgentIds.map((id) => agentNameById.get(id) || id)}
+                  emptyLabel="No agent targets"
+                />
+                <RuleMetaCard
+                  title="Paths"
+                  values={activeRule.pathPatterns}
+                  emptyLabel="No path filters"
+                />
+                <RuleMetaCard
+                  title="Task types"
+                  values={activeRule.taskTypes}
+                  emptyLabel="No task filters"
+                />
+              </div>
+            </div>
+          </ScrollArea>
+        ) : (
+          <div className="flex h-full items-center justify-center px-6 text-center">
+            <div>
+              <HugeiconsIcon icon={Shield01Icon} className="mx-auto mb-2 size-8 text-muted-foreground/30" />
               <p className="text-sm text-muted-foreground">{m.no_rules_yet()}</p>
               <p className="mt-1 text-xs text-muted-foreground/60">Create structured rules for project, agent, path, and task-specific instruction matching.</p>
             </div>
-          )}
-        </div>
-      </ScrollArea>
+          </div>
+        )}
 
-      <ConfirmDialog
-        open={deleteConfirmOpen}
-        onOpenChange={setDeleteConfirmOpen}
-        title={m.delete_this_rule()}
-        description={m.delete_this_rule()}
-        onConfirm={handleDeleteConfirm}
-        confirmLabel={m.delete()}
-        variant="destructive"
-      />
+        <ConfirmDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          title={m.delete_this_rule()}
+          description={m.delete_this_rule()}
+          onConfirm={handleDeleteConfirm}
+          confirmLabel={m.delete()}
+          variant="destructive"
+        />
+      </div>
     </div>
   );
 }
@@ -399,5 +550,24 @@ function LabeledField({ label, children }: { label: string; children: React.Reac
       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
       {children}
     </label>
+  );
+}
+
+function RuleMetaCard({ title, values, emptyLabel }: { title: string; values: string[]; emptyLabel: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>
+      {values.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {values.map((value) => (
+            <span key={value} className="rounded-full bg-accent px-2 py-1 text-xs text-foreground">
+              {value}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-muted-foreground">{emptyLabel}</p>
+      )}
+    </div>
   );
 }

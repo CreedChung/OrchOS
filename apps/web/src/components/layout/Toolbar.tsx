@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Search01Icon,
@@ -13,12 +12,12 @@ import {
   GitPullRequestIcon,
   SquareIcon,
   InformationCircleIcon,
-  Robot02Icon,
   CodeIcon,
   CloudIcon,
   ArrowReloadHorizontalIcon,
   Wrench01Icon,
-  PlayCircleIcon,
+  Store04Icon,
+  FolderLibraryIcon,
 } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
 import type { SidebarView, InboxSource } from "@/lib/types";
@@ -35,7 +34,7 @@ const sourceFilterConfig: Record<
     github_pr: { icon: GitPullRequestIcon, label: m.prs(), iconClassName: "text-violet-500" },
     github_issue: { icon: SquareIcon, label: m.issues(), iconClassName: "text-emerald-500" },
     mention: { icon: InformationCircleIcon, label: m.mentions(), iconClassName: "text-sky-500" },
-    agent_request: { icon: Robot02Icon, label: m.agents(), iconClassName: "text-amber-500" },
+    agent_request: { icon: Wrench01Icon, label: m.agents(), iconClassName: "text-amber-500" },
   };
 
 const agentModelFilterConfig: Record<
@@ -51,13 +50,6 @@ const allFilterConfig = {
   label: m.all(),
   iconClassName: "text-muted-foreground/80",
 };
-
-const boardFilterConfig = {
-  waiting_user: { icon: InformationCircleIcon, iconClassName: "text-violet-500" },
-  blocked: { icon: SquareIcon, iconClassName: "text-destructive" },
-  in_progress: { icon: PlayCircleIcon, iconClassName: "text-sky-500" },
-  completed: { icon: Robot02Icon, iconClassName: "text-emerald-500" },
-} as const;
 
 interface ToolbarProps {
   activeView: SidebarView;
@@ -78,12 +70,6 @@ interface ToolbarProps {
   agentModelFilter: AgentModelFilter;
   onAgentModelFilterChange: (filter: AgentModelFilter) => void;
   agentModelCounts: { all: number; local: number; cloud: number };
-  boardCounts: {
-    waiting_user: number;
-    blocked: number;
-    in_progress: number;
-    completed: number;
-  };
   onRefresh?: () => void;
   onOpenCapabilityMarket?: () => void;
   capabilityViewMode?: "mine" | "market";
@@ -103,7 +89,6 @@ export function Toolbar({
   agentModelFilter,
   onAgentModelFilterChange,
   agentModelCounts,
-  boardCounts,
   onRefresh,
   onOpenCapabilityMarket,
   capabilityViewMode = "mine",
@@ -208,38 +193,29 @@ export function Toolbar({
         </div>
       )}
 
-      {activeView === "projects" && (
-        <div className="flex items-center gap-1.5">
-          {(
-            [
-              { key: "waiting_user", label: "Waiting User", icon: InformationCircleIcon },
-              { key: "blocked", label: "Blocked", icon: SquareIcon },
-              { key: "in_progress", label: "In Progress", icon: PlayCircleIcon },
-              { key: "completed", label: "Completed", icon: Robot02Icon },
-            ] as const
-          ).map((item) => (
-            <div
-              key={item.key}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-muted-foreground sm:gap-1.5 sm:px-2.5"
-            >
-              <HugeiconsIcon icon={item.icon} className={cn("size-3", boardFilterConfig[item.key].iconClassName)} />
-              <span className="hidden sm:inline">{item.label}</span>
-              <span className="tabular-nums text-[10px] opacity-60">{boardCounts[item.key]}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* MCP Servers / Skills: mine/market switch */}
       {(activeView === "mcp-servers" || activeView === "skills") && (
         <div className="flex items-center gap-1.5">
           {onCapabilityViewModeChange ? (
-            <Tabs value={capabilityViewMode} onValueChange={(value) => onCapabilityViewModeChange(value as "mine" | "market") }>
-              <TabsList>
-                <TabsTrigger value="mine">我的</TabsTrigger>
-                <TabsTrigger value="market">市场</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            ([
+              { key: "mine", label: "我的", icon: FolderLibraryIcon, iconClassName: "text-emerald-500" },
+              { key: "market", label: "市场", icon: Store04Icon, iconClassName: "text-sky-500" },
+            ] as const).map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => onCapabilityViewModeChange(item.key)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:gap-1.5 sm:px-2.5",
+                  capabilityViewMode === item.key
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                )}
+              >
+                <HugeiconsIcon icon={item.icon} className={cn("size-3", item.iconClassName)} />
+                <span>{item.label}</span>
+              </button>
+            ))
           ) : null}
         </div>
       )}

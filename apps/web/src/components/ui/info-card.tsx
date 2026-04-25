@@ -49,6 +49,7 @@ interface InfoCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   storageKey?: string;
   dismissType?: "once" | "forever";
+  showDismissButton?: boolean;
 }
 
 type InfoCardContentProps = CommonCardProps;
@@ -99,7 +100,13 @@ const InfoCardContext = createContext<{
   onDismiss: () => {},
 });
 
-function InfoCard({ children, className, storageKey, dismissType = "once" }: InfoCardProps) {
+function InfoCard({
+  children,
+  className,
+  storageKey,
+  dismissType = "once",
+  showDismissButton = true,
+}: InfoCardProps) {
   if (dismissType === "forever" && !storageKey) {
     throw new Error('A storageKey must be provided when using dismissType="forever"');
   }
@@ -151,29 +158,31 @@ function InfoCard({ children, className, storageKey, dismissType = "once" }: Inf
                 transition: { duration: 0.2 },
               }}
               transition={{ duration: 0.3, delay: 0 }}
-              className={cn("group relative rounded-lg border bg-white dark:bg-zinc-900 p-3", className)}
+              className={cn("group relative rounded-lg bg-white dark:bg-zinc-900 p-3", className)}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
-              <button
-                onClick={handleDismiss}
-                className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-muted hover:text-muted-foreground"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+              {showDismissButton ? (
+                <button
+                  onClick={handleDismiss}
+                  className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-muted hover:text-muted-foreground"
                 >
-                  <path
-                    d="M4 4L10 10M10 4L4 10"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M4 4L10 10M10 4L4 10"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              ) : null}
               {children}
             </motion.div>
           )}

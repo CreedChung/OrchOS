@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Archive01Icon,
   CheckmarkCircle02Icon,
-  Chat01Icon,
-  Clock01Icon,
   Delete02Icon,
   Menu01Icon,
   InformationCircleIcon,
@@ -14,16 +11,18 @@ import {
   Folder01Icon,
   Mic01Icon,
   Cancel01Icon,
-  Alert01Icon,
   PlayCircleIcon,
   UnfoldMoreIcon,
+  EyeIcon,
+  ViewOffIcon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
 import { AppDialog } from "@/components/ui/app-dialog";
 import { Button } from "@/components/ui/button";
 import { BorderBeam } from "border-beam";
-import { ArchiveRestore, ArchiveX, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import { InfoCard, InfoCardContent, InfoCardDescription, InfoCardTitle } from "@/components/ui/info-card";
 import {
   Select,
   SelectContent,
@@ -34,7 +33,6 @@ import {
   selectItemClassName,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
@@ -42,21 +40,14 @@ import { useConversationStore } from "@/lib/stores/conversation";
 import { m } from "@/paraglide/messages";
 import { toast } from "sonner";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
-import type { CreationArchiveFilter } from "@/components/layout/Toolbar";
 import { mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
 
 interface CreationViewProps {
   agents: AgentProfile[];
   runtimes: RuntimeProfile[];
   projects: Project[];
-  archiveFilter: CreationArchiveFilter;
-  onArchiveFilterChange: (filter: CreationArchiveFilter) => void;
   settings: ControlSettings | null;
   onSettingsChange: (settings: ControlSettings) => void;
-  sidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
-  sidebarWidth: number;
-  onSidebarWidthChange: (width: number) => void;
 }
 
 const EMPTY_CONVERSATION_MESSAGES: ConversationMessage[] = [];
@@ -67,18 +58,7 @@ function getProjectAgentsFilePath(project?: Project | null) {
   return `${project.path.replace(/\/$/, "")}/AGENTS.md`;
 }
 
-const creationFilterButtons = [
-  { value: "all", label: m.all(), icon: Menu01Icon, iconClassName: "text-muted-foreground/80" },
-  { value: "active", label: m.creation_active(), icon: Clock01Icon, iconClassName: "text-sky-500" },
-  { value: "archived", label: m.creation_archived(), icon: Archive01Icon, iconClassName: "text-amber-500" },
-] as const satisfies Array<{
-  value: CreationArchiveFilter;
-  label: string;
-  icon: typeof Menu01Icon;
-  iconClassName: string;
-}>;
-
-type ConversationBoardColumnId = "in_progress" | "waiting_user" | "completed" | "error";
+type ConversationBoardColumnId = "planning" | "in_progress" | "review" | "completed";
 
 interface ConversationBoardCard {
   conversation: Conversation;
@@ -101,6 +81,15 @@ const conversationBoardColumns: Array<{
   dotColor: string;
 }> = [
   {
+    id: "planning",
+    label: "计划中",
+    icon: File02Icon,
+    tone: "text-amber-600 dark:text-amber-400",
+    bgAccent: "bg-amber-500/5 dark:bg-amber-500/10",
+    borderAccent: "border-l-amber-500",
+    dotColor: "bg-amber-500",
+  },
+  {
     id: "in_progress",
     label: "进行中",
     icon: PlayCircleIcon,
@@ -110,8 +99,8 @@ const conversationBoardColumns: Array<{
     dotColor: "bg-sky-500",
   },
   {
-    id: "waiting_user",
-    label: "需要干预",
+    id: "review",
+    label: "待审查",
     icon: InformationCircleIcon,
     tone: "text-violet-600 dark:text-violet-400",
     bgAccent: "bg-violet-500/5 dark:bg-violet-500/10",
@@ -126,15 +115,6 @@ const conversationBoardColumns: Array<{
     bgAccent: "bg-emerald-500/5 dark:bg-emerald-500/10",
     borderAccent: "border-l-emerald-500",
     dotColor: "bg-emerald-500",
-  },
-  {
-    id: "error",
-    label: "错误",
-    icon: Alert01Icon,
-    tone: "text-red-500 dark:text-red-400",
-    bgAccent: "bg-red-500/5 dark:bg-red-500/10",
-    borderAccent: "border-l-red-500",
-    dotColor: "bg-red-500",
   },
 ];
 
@@ -157,17 +137,13 @@ function resolveConversationBoardColumn(
   messages: ConversationMessage[],
   pendingConversationId: string | null,
 ): ConversationBoardColumnId {
-  if (pendingConversationId === conversation.id) return "in_progress";
+  if (pendingConversationId === conversation.id) return "planning";
 
   const lastAssistantMessage = [...messages].reverse().find((message) => message.role === "assistant");
   const hasUserMessage = messages.some((message) => message.role === "user");
 
-  if (lastAssistantMessage?.error || lastAssistantMessage?.trace?.some((item) => item.kind === "tool" && !!item.errorText)) {
-    return "error";
-  }
-
   if ((lastAssistantMessage?.clarificationQuestions?.length ?? 0) > 0) {
-    return "waiting_user";
+    return "planning";
   }
 
   if (conversation.archived) {
@@ -175,11 +151,15 @@ function resolveConversationBoardColumn(
   }
 
   if (!hasUserMessage) {
+    return "planning";
+  }
+
+  if (lastAssistantMessage?.error || lastAssistantMessage?.trace?.some((item) => item.kind === "tool" && !!item.errorText)) {
     return "in_progress";
   }
 
   if (lastAssistantMessage) {
-    return "completed";
+    return "review";
   }
 
   return "in_progress";
@@ -189,14 +169,8 @@ export function CreationView({
   agents,
   runtimes,
   projects,
-  archiveFilter,
-  onArchiveFilterChange,
   settings,
   onSettingsChange,
-  sidebarCollapsed,
-  onToggleSidebar: _onToggleSidebar,
-  sidebarWidth,
-  onSidebarWidthChange,
 }: CreationViewProps) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [convToDelete, setConvToDelete] = useState<string | null>(null);
@@ -207,6 +181,7 @@ export function CreationView({
     activeConversationId,
     messagesByConversationId,
     hasLoadedConversations,
+    isLoadingConversations,
     loadConversations,
     setActiveConversationId,
     loadMessages,
@@ -237,11 +212,7 @@ export function CreationView({
     [conversations, activeConversationId],
   );
 
-  const filteredConversations = useMemo(() => {
-    if (archiveFilter === "archived") return conversations.filter((c) => c.archived && !c.deleted);
-    if (archiveFilter === "active") return conversations.filter((c) => !c.archived && !c.deleted);
-    return conversations.filter((c) => !c.deleted);
-  }, [archiveFilter, conversations]);
+  const availableConversations = useMemo(() => conversations.filter((conversation) => !conversation.deleted), [conversations]);
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
@@ -273,20 +244,17 @@ export function CreationView({
 
     if (
       activeConversationId &&
-      filteredConversations.some((conv) => conv.id === activeConversationId)
+      availableConversations.some((conv) => conv.id === activeConversationId)
     ) {
       return;
     }
 
-    if (filteredConversations.length > 0) {
-      setActiveConversationId(filteredConversations[0].id);
+    if (availableConversations.length > 0) {
+      setActiveConversationId(availableConversations[0].id);
       return;
     }
 
-    if (
-      archiveFilter === "archived" ||
-      autoCreatingConversationRef.current
-    ) {
+    if (autoCreatingConversationRef.current) {
       return;
     }
 
@@ -296,8 +264,7 @@ export function CreationView({
     });
   }, [
     activeConversationId,
-    archiveFilter,
-    filteredConversations,
+    availableConversations,
     handleNewConversation,
     hasLoadedConversations,
     setActiveConversationId,
@@ -334,149 +301,8 @@ export function CreationView({
     [updateConversation],
   );
 
-  const handleSidebarResizeStart = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const sidebarEl = event.currentTarget.parentElement;
-    const sidebarLeft = sidebarEl?.getBoundingClientRect().left ?? 0;
-
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-
-    const handlePointerMove = (moveEvent: PointerEvent) => {
-      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 288);
-      onSidebarWidthChange(nextWidth);
-    };
-
-    const handlePointerUp = () => {
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-    };
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-  }, [onSidebarWidthChange]);
-
-  useEffect(() => {
-    return () => {
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-  }, []);
-
   return (
     <div className="flex flex-1 overflow-hidden">
-      {!sidebarCollapsed && (
-        <div
-          className="relative flex h-full shrink-0 border-r border-border bg-background"
-          style={{ width: Math.min(sidebarWidth, 288), maxWidth: "18rem" }}
-        >
-          <div className="flex h-full min-w-0 flex-1 flex-col">
-             <div className="flex h-14 items-center border-b border-border px-4">
-               <h2 className="text-sm font-semibold text-foreground">{m.creation()}</h2>
-             </div>
-            <ScrollArea className="flex-1">
-              <div className="w-full space-y-0.5 p-1.5">
-                {!hasLoadedConversations ? (
-                  <ConversationListSkeleton />
-                ) : (
-                  <>
-                    {filteredConversations.map((conv) => (
-                      <div
-                        key={conv.id}
-                        className={cn(
-                          "group flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors",
-                          activeConversationId === conv.id
-                            ? "bg-accent font-medium text-accent-foreground"
-                            : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
-                        )}
-                        onClick={() => setActiveConversationId(conv.id)}
-                      >
-                        <HugeiconsIcon icon={Chat01Icon} className="size-3.5 shrink-0 opacity-50" />
-                        <span className="flex-1 truncate text-left text-xs">
-                          {conv.title || m.untitled_conversation()}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void handleUpdateConversation(
-                              conv.id,
-                              conv.deleted
-                                ? { deleted: false, archived: false }
-                                : { archived: !conv.archived, deleted: false },
-                            );
-                          }}
-                          className={cn(
-                            "shrink-0 rounded p-1 text-muted-foreground transition-opacity hover:bg-muted",
-                            conv.archived || conv.deleted ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-                          )}
-                          title={conv.deleted || conv.archived ? m.restore_conversation() : m.archive()}
-                          type="button"
-                        >
-                          {conv.archived || conv.deleted ? <ArchiveRestore className="size-3" /> : <ArchiveX className="size-3" />}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (conv.deleted) {
-                              void deleteConversation(conv.id, true).catch((err) => {
-                                console.error("Failed to permanently delete conversation:", err);
-                              });
-                              return;
-                            }
-                            setConvToDelete(conv.id);
-                            setDeleteConfirmOpen(true);
-                          }}
-                          className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
-                          title={conv.deleted ? m.delete_forever() : m.delete()}
-                          type="button"
-                        >
-                          <HugeiconsIcon icon={Delete02Icon} className="size-3" />
-                        </button>
-                      </div>
-                    ))}
-                    {filteredConversations.length === 0 && (
-                      <div className="py-6 text-center">
-                        <HugeiconsIcon icon={Chat01Icon} className="mx-auto mb-1.5 size-5 text-muted-foreground/30" />
-                        <p className="text-xs text-muted-foreground">{m.no_conversations()}</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </ScrollArea>
-            <div className="flex items-center justify-center gap-1 px-2 py-2.5">
-              {creationFilterButtons.map((filter) => (
-                <button
-                  key={filter.value}
-                  type="button"
-                  onClick={() => onArchiveFilterChange(filter.value)}
-                  aria-pressed={archiveFilter === filter.value}
-                  title={filter.label}
-                  className={cn(
-                    "inline-flex size-8 items-center justify-center rounded-md transition-colors",
-                    archiveFilter === filter.value
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                  )}
-                >
-                  <HugeiconsIcon icon={filter.icon} className={cn("size-3.5", filter.iconClassName)} />
-                </button>
-              ))}
-            </div>
-          </div>
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize conversation list"
-            onPointerDown={handleSidebarResizeStart}
-            className="absolute top-0 right-[-4px] z-10 h-full w-2 cursor-col-resize rounded-full transition-colors hover:bg-primary/15"
-          />
-        </div>
-      )}
-
-      {/* Chat area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {activeConversation ? (
           <ChatArea
@@ -601,9 +427,16 @@ export function CreationView({
             }}
             onReloadMessages={() => loadMessages(activeConversation.id)}
           />
-        ) : (
+        ) : !hasLoadedConversations && isLoadingConversations ? (
           <div className="flex h-full items-center justify-center">
             <Spinner className="text-muted-foreground/50" />
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center px-6 text-center">
+            <div>
+              <p className="text-sm font-medium text-foreground/80">准备开始一个新的创建</p>
+              <p className="mt-1 text-xs text-muted-foreground">输入你的目标后，会自动建立会话并进入计划阶段。</p>
+            </div>
           </div>
         )}
       </div>
@@ -669,6 +502,7 @@ function ChatArea({
   const [projectSpecLoading, setProjectSpecLoading] = useState(false);
   const [projectSpecSaving, setProjectSpecSaving] = useState(false);
   const [boardFilter, setBoardFilter] = useState<ConversationBoardFilter>("all");
+  const [inputCollapsed, setInputCollapsed] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const specFileInputRef = useRef<HTMLInputElement>(null);
@@ -708,7 +542,7 @@ function ChatArea({
         return {
           conversation: item,
           title: item.title || firstUserMessage || m.untitled_conversation(),
-          summary: firstUserMessage || "等待输入需求后开始执行",
+          summary: firstUserMessage || "等待输入需求后进入计划",
           projectName,
           updatedAt: item.updatedAt,
           column: resolveConversationBoardColumn(item, itemMessages, pendingConversationId),
@@ -916,8 +750,14 @@ function ChatArea({
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
+      {/* Input area */}
+      {!inputCollapsed && (
       <div className="shrink-0 bg-background px-4 py-4 md:px-6">
         <div className="mx-auto max-w-3xl">
+          <div className="mb-3 px-1">
+            <p className="text-sm font-medium text-foreground/85">我们开始创造吧</p>
+            <p className="mt-1 text-xs text-muted-foreground">描述你的目标，我会先拆解计划，再推进执行与审查。</p>
+          </div>
           <input
             ref={specFileInputRef}
             type="file"
@@ -933,7 +773,7 @@ function ChatArea({
             duration={2.6}
             className="rounded-xl"
           >
-            <div className="flex min-h-24 flex-col gap-2 rounded-xl border border-border bg-background px-3 py-3">
+            <div className="flex flex-col gap-2 rounded-xl border border-border bg-background px-3 pt-3 pb-1.5">
               {attachedFiles.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {attachedFiles.map((file, index) => (
@@ -970,35 +810,41 @@ function ChatArea({
                 style={{ maxHeight: "120px" }}
                 onInput={syncTextareaHeight}
               />
-                <div className="flex items-center justify-between gap-2 pt-2">
+                <div className="flex items-center justify-between gap-2 pt-2 pb-0.5">
                   <div className="flex items-center gap-1">
-                   <Select
-                    value={conversation.projectId || "__none__"}
-                    onValueChange={(v) =>
-                      queueConversationUpdate({
-                        projectId: !v || v === "__none__" ? undefined : v,
-                      })
-                    }
-                  >
-                     <SelectTrigger size="sm" className="w-28 cursor-default text-xs !rounded-lg">
-                       {isConversationUpdating ? (
-                         <Spinner size="sm" name="braille" className="mr-1 shrink-0 text-muted-foreground" />
-                       ) : (
-                         <HugeiconsIcon icon={Folder01Icon} className="size-3 mr-1 shrink-0" />
-                       )}
-                       <SelectValue>
-                         {selectedProject?.name || "临时会话"}
-                       </SelectValue>
-                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">临时会话</SelectItem>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Select
+                      value={conversation.projectId || "__none__"}
+                      onValueChange={(v) =>
+                        queueConversationUpdate({
+                          projectId: !v || v === "__none__" ? undefined : v,
+                        })
+                      }
+                    >
+                      <SelectTrigger
+                        size="sm"
+                        className="w-28 cursor-default justify-between px-2.5 text-xs [&>svg:last-child]:hidden"
+                      >
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          {isConversationUpdating ? (
+                            <Spinner size="sm" name="braille" className="size-3 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <HugeiconsIcon icon={Folder01Icon} className="size-3 shrink-0" />
+                          )}
+                          <SelectValue>
+                            {selectedProject?.name || "临时会话"}
+                          </SelectValue>
+                        </span>
+                        <HugeiconsIcon icon={UnfoldMoreIcon} className="size-3 shrink-0 text-muted-foreground" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">临时会话</SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   <RuntimeSelector
                     agents={agents.filter((a) => a.enabled)}
                     selectedAgentId={conversation.agentId ?? undefined}
@@ -1051,11 +897,12 @@ function ChatArea({
           </BorderBeam>
         </div>
       </div>
+      )}
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable] px-4 md:px-6">
-        <div className="mx-auto max-w-6xl py-6 space-y-6">
-          <div className="max-w-3xl space-y-3">
+      {/* Messages / Board */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 md:px-6">
+        <div className="mx-auto max-w-3xl pt-4 pb-1">
+          <div className="space-y-3">
           {selectedProject && hasProjectSpec ? (
             <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 px-4 py-3 text-xs text-sky-900 dark:text-sky-100">
               <div className="flex items-center justify-between gap-3">
@@ -1076,15 +923,16 @@ function ChatArea({
             </div>
           )}
           </div>
+        </div>
 
-          <section className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2 px-1">
+        <div className="mx-auto flex w-full max-w-full min-h-0 flex-1 flex-col gap-3 px-0 md:px-6 pb-2">
+            <div className="flex flex-wrap items-center gap-2 px-1 shrink-0">
               <button
                 type="button"
                 onClick={() => setBoardFilter("all")}
                 aria-pressed={boardFilter === "all"}
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
+                  "inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
                   boardFilter === "all"
                     ? "border-border bg-foreground text-background"
                     : "border-border/50 bg-background text-muted-foreground hover:text-foreground",
@@ -1107,7 +955,7 @@ function ChatArea({
                     onClick={() => setBoardFilter(column.id)}
                     aria-pressed={boardFilter === column.id}
                     className={cn(
-                      "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
+                      "inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
                       boardFilter === column.id
                         ? cn("border-transparent", column.bgAccent, column.tone)
                         : "border-border/50 bg-background text-muted-foreground hover:text-foreground",
@@ -1121,14 +969,24 @@ function ChatArea({
                   </button>
                 );
               })}
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                onClick={() => setInputCollapsed((v) => !v)}
+                title={inputCollapsed ? "显示输入" : "隐藏输入"}
+                className="ml-auto shrink-0"
+              >
+                <HugeiconsIcon icon={inputCollapsed ? EyeIcon : ViewOffIcon} className="size-3.5" />
+              </Button>
             </div>
 
             <div
               className={cn(
-                "grid gap-4",
+                "grid gap-4 min-h-0 flex-1 auto-rows-fr",
                 conversationBoardColumns.filter((column) => boardFilter === "all" || column.id === boardFilter).length === 1
-                  ? "xl:grid-cols-1"
-                  : "xl:grid-cols-4",
+                  ? "grid-cols-1"
+                  : "grid-cols-4",
               )}
             >
               {conversationBoardColumns
@@ -1140,7 +998,7 @@ function ChatArea({
                   <div
                     key={column.id}
                     className={cn(
-                      "flex min-h-[280px] flex-col rounded-xl border border-border/30 bg-muted/10",
+                      "flex min-h-0 flex-col rounded-xl border border-border/30 bg-muted/10",
                       column.bgAccent,
                     )}
                   >
@@ -1166,43 +1024,55 @@ function ChatArea({
                           type="button"
                           onClick={() => setActiveConversationId(card.conversation.id)}
                           className={cn(
-                            "group/card w-full rounded-xl border bg-background/60 px-4 py-3.5 text-left transition-all duration-200",
-                            "border-border/40 hover:border-border/80 hover:bg-background",
-                            "shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.08)]",
-                            "border-l-[3px]",
-                            column.borderAccent,
-                            activeConversationId === card.conversation.id && "bg-background border-border ring-1 ring-primary/20 shadow-[0_2px_8px_0_rgba(0,0,0,0.06)]",
+                            "group/card w-full rounded-xl text-left transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none",
                           )}
                         >
-                          <div className="mb-2 text-[13px] font-semibold leading-snug text-foreground/85 group-hover/card:text-foreground">
-                            {card.title}
-                          </div>
+                          <InfoCard
+                            showDismissButton={false}
+                            className={cn(
+                              "h-full border-border/40 bg-background/80 p-4 text-left shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] transition-all duration-200 group-hover/card:border-border/80 group-hover/card:bg-background group-hover/card:shadow-[0_4px_12px_0_rgba(0,0,0,0.08)]",
+                              activeConversationId === card.conversation.id && "border-border bg-background shadow-[0_2px_8px_0_rgba(0,0,0,0.06)]",
+                            )}
+                          >
+                            <InfoCardContent className="gap-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <InfoCardTitle className="mb-0 line-clamp-2 text-[13px] font-semibold leading-snug text-foreground/85 group-hover/card:text-foreground">
+                                    {card.title}
+                                  </InfoCardTitle>
+                                </div>
+                                <span className={cn("mt-0.5 size-2 shrink-0 rounded-full", column.dotColor)} />
+                              </div>
 
-                          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground/80">
-                            <HugeiconsIcon icon={Folder01Icon} className="size-3 text-amber-500/80" />
-                            {card.projectName || "临时会话"}
-                          </div>
+                              <div className="inline-flex w-fit items-center gap-1.5 rounded-md bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground/80">
+                                <HugeiconsIcon icon={Folder01Icon} className="size-3 text-amber-500/80" />
+                                {card.projectName || "临时会话"}
+                              </div>
 
-                          <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground/60">
-                            {card.summary}
-                          </p>
+                              <InfoCardDescription className="line-clamp-2 text-xs leading-relaxed text-muted-foreground/60">
+                                {card.summary}
+                              </InfoCardDescription>
 
-                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/15">
-                            <span className="text-[11px] tabular-nums text-muted-foreground/45">
-                              {formatConversationTime(card.updatedAt)}
-                            </span>
-                            {activeConversationId === card.conversation.id ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary">
-                                <span className="size-1.5 rounded-full bg-primary animate-pulse" />
-                                当前查看
-                              </span>
-                            ) : null}
-                          </div>
+                              <div className="flex items-center justify-between gap-2 border-t border-border/15 pt-2">
+                                <span className="text-[11px] tabular-nums text-muted-foreground/45">
+                                  {formatConversationTime(card.updatedAt)}
+                                </span>
+                                {activeConversationId === card.conversation.id ? (
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary">
+                                    <span className="size-1.5 rounded-full bg-primary animate-pulse" />
+                                    当前查看
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-muted-foreground/40">{column.label}</span>
+                                )}
+                              </div>
+                            </InfoCardContent>
+                          </InfoCard>
                         </button>
                       ))}
 
                       {columnCards.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/30 bg-background/20 px-3 py-10 m-1">
+                        <div className="m-1 flex flex-col items-center justify-center rounded-xl px-3 py-10">
                           <HugeiconsIcon icon={column.icon} className="mb-2 size-5 text-muted-foreground/15" />
                           <span className="text-xs text-muted-foreground/30">暂无任务</span>
                         </div>
@@ -1212,10 +1082,9 @@ function ChatArea({
                 );
               })}
             </div>
-          </section>
-
-          <div ref={messagesEndRef} />
         </div>
+
+        <div ref={messagesEndRef} />
       </div>
 
       <AppDialog
@@ -1447,20 +1316,5 @@ function RuntimeSelector({
         </>
       )}
     </div>
-  );
-}
-
-function ConversationListSkeleton() {
-  return (
-    <>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="flex items-center gap-2 rounded-md px-2.5 py-2">
-          <div className="size-3.5 rounded bg-muted animate-pulse shrink-0" />
-          <div className="flex-1 space-y-1">
-            <div className="h-3 w-28 bg-muted animate-pulse rounded" />
-          </div>
-        </div>
-      ))}
-    </>
   );
 }

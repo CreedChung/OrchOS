@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   type ReactNode,
 } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
@@ -32,6 +33,23 @@ import type {
   Command,
   ControlSettings,
 } from "@/lib/types";
+
+const WS_REFRESH_DEBOUNCE_MS = 150;
+
+type RefreshResults = {
+  goals?: Goal[];
+  runtimes?: RuntimeProfile[];
+  projects?: Project[];
+  settings?: ControlSettings;
+  organizations?: Organization[];
+  problemSummary?: ProblemSummary;
+  problems?: Problem[];
+  agents?: AgentProfile[];
+  rules?: Rule[];
+  commands?: Command[];
+  mcpServers?: McpServerProfile[];
+  skills?: SkillProfile[];
+};
 
 type DashboardView =
   | "inbox"
@@ -93,13 +111,6 @@ interface AgentModelCounts {
   cloud: number;
 }
 
-interface BoardCounts {
-  waiting_user: number;
-  blocked: number;
-  in_progress: number;
-  completed: number;
-}
-
 interface DashboardContextType {
   // Server data
   goals: Goal[];
@@ -127,7 +138,6 @@ interface DashboardContextType {
   mcpScopeCounts: ScopeCounts;
   skillsScopeCounts: ScopeCounts;
   agentModelCounts: AgentModelCounts;
-  boardCounts: BoardCounts;
 
   // Refresh
   refreshAll: () => Promise<void>;
@@ -251,20 +261,21 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setSettings,
   } = useUIStore();
 
-  const cache = useDashboardCache();
+  const initialCacheRef = useRef(useDashboardCache.getState());
+  const initialCache = initialCacheRef.current;
 
   // Server data (hydrated from cache, then refreshed from API)
-  const [goals, setGoals] = useState<Goal[]>(() => cache.goals);
-  const [agents, setAgents] = useState<AgentProfile[]>(() => cache.agents);
-  const [runtimes, setRuntimes] = useState<RuntimeProfile[]>(() => cache.runtimes);
-  const [projects, setProjects] = useState<Project[]>(() => cache.projects);
-  const [organizations, setOrganizations] = useState<Organization[]>(() => cache.organizations);
-  const [problems, setProblems] = useState<Problem[]>(() => cache.problems);
-  const [problemSummary, setProblemSummary] = useState<ProblemSummary>(() => cache.problemSummary);
-  const [rules, setRules] = useState<Rule[]>(() => cache.rules);
-  const [commands, setCommands] = useState<Command[]>(() => cache.commands);
-  const [mcpServers, setMcpServers] = useState<McpServerProfile[]>(() => cache.mcpServers);
-  const [skills, setSkills] = useState<SkillProfile[]>(() => cache.skills);
+  const [goals, setGoals] = useState<Goal[]>(() => initialCache.goals);
+  const [agents, setAgents] = useState<AgentProfile[]>(() => initialCache.agents);
+  const [runtimes, setRuntimes] = useState<RuntimeProfile[]>(() => initialCache.runtimes);
+  const [projects, setProjects] = useState<Project[]>(() => initialCache.projects);
+  const [organizations, setOrganizations] = useState<Organization[]>(() => initialCache.organizations);
+  const [problems, setProblems] = useState<Problem[]>(() => initialCache.problems);
+  const [problemSummary, setProblemSummary] = useState<ProblemSummary>(() => initialCache.problemSummary);
+  const [rules, setRules] = useState<Rule[]>(() => initialCache.rules);
+  const [commands, setCommands] = useState<Command[]>(() => initialCache.commands);
+  const [mcpServers, setMcpServers] = useState<McpServerProfile[]>(() => initialCache.mcpServers);
+  const [skills, setSkills] = useState<SkillProfile[]>(() => initialCache.skills);
   const [states, setStates] = useState<StateItem[]>([]);
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
@@ -278,8 +289,15 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [ruleFromProblem, setRuleFromProblem] = useState<Problem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [agentModelFilter, setAgentModelFilter] = useState<"all" | "local" | "cloud">("all");
+  const refreshInFlightRef = useRef<Promise<void> | null>(null);
+  const refreshQueuedRef = useRef(false);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loading, setLoading] = useState(() => {
-    return cache.goals.length === 0 && cache.runtimes.length === 0 && cache.organizations.length === 0;
+    return (
+      initialCache.goals.length === 0 &&
+      initialCache.runtimes.length === 0 &&
+      initialCache.organizations.length === 0
+    );
   });
 
   // Computed values
@@ -348,38 +366,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     [runtimes],
   );
 
-  const boardCounts = useMemo<BoardCounts>(() => {
-    const counts: BoardCounts = {
-      waiting_user: 0,
-      blocked: 0,
-      in_progress: 0,
-      completed: 0,
-    };
-
-    for (const goal of goals) {
-      const relatedProblems = problems.filter((problem) => problem.goalId === goal.id && problem.status === "open");
-
-      if (goal.status === "completed") {
-        counts.completed += 1;
-        continue;
-      }
-
-      if (relatedProblems.some((problem) => (problem.source || "").includes("agent_request"))) {
-        counts.waiting_user += 1;
-        continue;
-      }
-
-      if (goal.status === "paused" || relatedProblems.length > 0) {
-        counts.blocked += 1;
-        continue;
-      }
-
-      counts.in_progress += 1;
-    }
-
-    return counts;
-  }, [goals, problems]);
-
   const shouldLoadGoals = activeView === "projects" || activeView === "observability";
   const shouldLoadProjects =
     activeView === "creation" || activeView === "projects" || activeView === "skills";
@@ -404,20 +390,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   );
 
   const applyRefreshResults = useCallback(
-    (results: {
-      goals?: Goal[];
-      runtimes?: RuntimeProfile[];
-      projects?: Project[];
-      settings?: ControlSettings;
-      organizations?: Organization[];
-      problemSummary?: ProblemSummary;
-      problems?: Problem[];
-      agents?: AgentProfile[];
-      rules?: Rule[];
-      commands?: Command[];
-      mcpServers?: McpServerProfile[];
-      skills?: SkillProfile[];
-    }) => {
+    (results: RefreshResults) => {
       if (results.goals) setGoals(results.goals);
       if (results.runtimes) setRuntimes(results.runtimes);
       if (results.projects) setProjects(results.projects);
@@ -435,9 +408,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     [applyOrganizationResult, setSettings],
   );
 
+  const hasCachedDashboardData = useCallback(() => {
+    const cache = useDashboardCache.getState();
+    return cache.goals.length > 0 || cache.runtimes.length > 0 || cache.organizations.length > 0;
+  }, []);
+
   // Data fetching
-  const refreshAll = useCallback(async () => {
-    const hasCache = cache.goals.length > 0 || cache.runtimes.length > 0 || cache.organizations.length > 0;
+  const executeRefreshAll = useCallback(async () => {
+    const hasCache = hasCachedDashboardData();
     if (!hasCache) setLoading(true);
 
     const results = await Promise.allSettled([
@@ -454,34 +432,29 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       shouldLoadMcpServers ? api.listMcpServers() : Promise.resolve<McpServerProfile[]>([]),
       shouldLoadSkills ? api.listSkills() : Promise.resolve<SkillProfile[]>([]),
     ]);
-    const fresh: Record<string, unknown> = {};
-    if (results[0].status === "fulfilled") { setGoals(results[0].value); fresh.goals = results[0].value; }
-    if (results[1].status === "fulfilled") { setRuntimes(results[1].value); fresh.runtimes = results[1].value; }
-    if (results[2].status === "fulfilled") { setProjects(results[2].value); fresh.projects = results[2].value; }
-    if (results[3].status === "fulfilled") { setSettings(results[3].value); fresh.settings = results[3].value; }
+    const fresh: RefreshResults = {};
+    if (results[0].status === "fulfilled") fresh.goals = results[0].value;
+    if (results[1].status === "fulfilled") fresh.runtimes = results[1].value;
+    if (results[2].status === "fulfilled") fresh.projects = results[2].value;
+    if (results[3].status === "fulfilled") fresh.settings = results[3].value;
     if (results[4].status === "fulfilled") {
-      setOrganizations(results[4].value); fresh.organizations = results[4].value;
-      const currentOrgId = useUIStore.getState().activeOrganizationId;
-      if (results[4].value.length > 0 && !currentOrgId) {
-        setActiveOrganizationId(results[4].value[0].id);
-      }
+      fresh.organizations = results[4].value;
     }
-    if (results[5].status === "fulfilled") { setProblemSummary(results[5].value); fresh.problemSummary = results[5].value; }
-    if (results[6].status === "fulfilled") { setProblems(results[6].value); fresh.problems = results[6].value; }
-    if (results[7].status === "fulfilled") { setAgents(results[7].value); fresh.agents = results[7].value; }
-    if (results[8].status === "fulfilled") { setRules(results[8].value); fresh.rules = results[8].value; }
-    if (results[9].status === "fulfilled") { setCommands(results[9].value); fresh.commands = results[9].value; }
-    if (results[10].status === "fulfilled") { setMcpServers(results[10].value); fresh.mcpServers = results[10].value; }
-    if (results[11].status === "fulfilled") { setSkills(results[11].value); fresh.skills = results[11].value; }
+    if (results[5].status === "fulfilled") fresh.problemSummary = results[5].value;
+    if (results[6].status === "fulfilled") fresh.problems = results[6].value;
+    if (results[7].status === "fulfilled") fresh.agents = results[7].value;
+    if (results[8].status === "fulfilled") fresh.rules = results[8].value;
+    if (results[9].status === "fulfilled") fresh.commands = results[9].value;
+    if (results[10].status === "fulfilled") fresh.mcpServers = results[10].value;
+    if (results[11].status === "fulfilled") fresh.skills = results[11].value;
     for (const r of results) {
       if (r.status === "rejected") console.error("Failed to fetch data:", r.reason);
     }
-    useDashboardCache.getState().hydrate(fresh);
+    applyRefreshResults(fresh);
     setLoading(false);
   }, [
-    cache.goals, cache.runtimes, cache.organizations,
-    setSettings,
-    setActiveOrganizationId,
+    applyRefreshResults,
+    hasCachedDashboardData,
     shouldLoadGoals,
     shouldLoadProjects,
     shouldLoadProblems,
@@ -492,8 +465,42 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     shouldLoadSkills,
   ]);
 
+  const refreshAll = useCallback(async () => {
+    if (refreshInFlightRef.current) {
+      refreshQueuedRef.current = true;
+      return refreshInFlightRef.current;
+    }
+
+    const run = (async () => {
+      try {
+        await executeRefreshAll();
+      } finally {
+        refreshInFlightRef.current = null;
+
+        if (refreshQueuedRef.current) {
+          refreshQueuedRef.current = false;
+          void refreshAll();
+        }
+      }
+    })();
+
+    refreshInFlightRef.current = run;
+    return run;
+  }, [executeRefreshAll]);
+
+  const scheduleRefreshAll = useCallback(() => {
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+    }
+
+    refreshTimerRef.current = setTimeout(() => {
+      refreshTimerRef.current = null;
+      void refreshAll();
+    }, WS_REFRESH_DEBOUNCE_MS);
+  }, [refreshAll]);
+
   const initializeViewData = useCallback(async () => {
-    const hasCache = cache.goals.length > 0 || cache.runtimes.length > 0 || cache.organizations.length > 0;
+    const hasCache = hasCachedDashboardData();
     if (!hasCache) setLoading(true);
 
     if (activeView === "creation") {
@@ -551,7 +558,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
 
     await refreshAll();
-  }, [activeView, applyRefreshResults, cache.goals, cache.runtimes, cache.organizations, refreshAll, shouldLoadAgents, shouldLoadProjects]);
+  }, [
+    activeView,
+    applyRefreshResults,
+    hasCachedDashboardData,
+    refreshAll,
+    shouldLoadAgents,
+    shouldLoadProjects,
+  ]);
 
   const refreshGoalData = useCallback(async (goalId: string | null) => {
     if (!goalId) return;
@@ -572,6 +586,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void initializeViewData();
   }, [initializeViewData]);
+
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!shouldLoadGoals) {
@@ -634,7 +656,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     if (touchesActiveGoal) {
       void refreshGoalData(activeGoalId);
       if (shouldLoadGoals || shouldLoadCommands || shouldLoadProblems) {
-        void refreshAll();
+        scheduleRefreshAll();
       }
       return;
     }
@@ -644,12 +666,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       touchesGoalCollections &&
       (shouldLoadGoals || shouldLoadCommands || shouldLoadProblems)
     ) {
-      void refreshAll();
+      scheduleRefreshAll();
       return;
     }
 
     if (activeView === "inbox" || activeView === "observability") {
-      void refreshAll();
+      scheduleRefreshAll();
     }
   });
 
@@ -1034,7 +1056,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     mcpScopeCounts,
     skillsScopeCounts,
     agentModelCounts,
-    boardCounts,
     refreshAll,
     refreshGoalData,
     handleProblemAction,

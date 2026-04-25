@@ -7,7 +7,7 @@ import {
   createContext,
   useContext,
 } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
@@ -224,15 +224,13 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
       className="absolute bottom-0"
       style={{ width: FORM_WIDTH, height: FORM_HEIGHT, pointerEvents: showForm ? "all" : "none" }}
     >
-      <AnimatePresence>
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ type: "spring", stiffness: 550 / SPEED_FACTOR, damping: 45, mass: 0.7 }}
-            className="flex h-full flex-col"
-          >
+      {showForm && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ type: "spring", stiffness: 550 / SPEED_FACTOR, damping: 45, mass: 0.7 }}
+          className="flex h-full flex-col"
+        >
             {/* Header with agent selector */}
             <div className="flex items-center justify-between border-b border-border px-3 py-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -367,9 +365,8 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                 ⌘ Enter to send · Esc to close
               </p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </motion.div>
+      )}
     </form>
   );
 }

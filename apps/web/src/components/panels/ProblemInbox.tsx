@@ -213,7 +213,7 @@ export function ProblemInbox({
               <div key={problem.id} className="transition-colors hover:bg-accent/30">
                 <div
                   className={cn(
-                    "group flex gap-3 px-4 py-3",
+                    "group cursor-pointer flex gap-3 px-4 py-3",
                     config.bgClass,
                     isFocused && "ring-1 ring-in-ring ring-primary/30",
                     isSelected && "bg-accent/20",

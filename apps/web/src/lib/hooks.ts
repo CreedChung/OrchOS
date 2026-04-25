@@ -88,17 +88,25 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let ws: ReturnType<ReturnType<typeof createEdenClient>["ws"]["subscribe"]> | null = null;
     let reconnectAttempts = 0;
+    let shouldCloseWhenOpened = false;
 
     const connect = () => {
       if (isShuttingDown) {
         return;
       }
 
+      hasOpenedRef.current = false;
       const client = createEdenClient();
       ws = client.ws.subscribe();
 
       ws.on("open", () => {
         hasOpenedRef.current = true;
+
+        if (shouldCloseWhenOpened) {
+          ws?.close();
+          return;
+        }
+
         reconnectAttempts = 0;
       });
 
@@ -146,8 +154,18 @@ export function useWebSocket(onEvent: (event: Record<string, unknown>) => void) 
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
       }
+
+      if (!ws) {
+        return;
+      }
+
+      if (!hasOpenedRef.current) {
+        shouldCloseWhenOpened = true;
+        return;
+      }
+
       try {
-        ws?.close();
+        ws.close();
       } catch {
         // Ignore websocket shutdown noise during route teardown.
       }

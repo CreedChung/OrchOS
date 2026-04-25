@@ -154,9 +154,6 @@ function DashboardLayout() {
     setAgentModelFilter,
     inboxCounts,
     agentModelCounts,
-    boardCounts,
-    mcpScopeCounts,
-    skillsScopeCounts,
     loading,
   } = useDashboard();
 
@@ -165,8 +162,6 @@ function DashboardLayout() {
     setActiveOrganizationId,
     sourceFilter,
     setSourceFilter,
-    scopeFilter,
-    setScopeFilter,
     capabilityViewMode,
     setCapabilityViewMode,
     activityPanelOpen,
@@ -220,8 +215,6 @@ function DashboardLayout() {
     return () => window.clearTimeout(timeoutId);
   }, [loading, showAuthTransition]);
 
-  const scopeCounts = activeView === "skills" ? skillsScopeCounts : mcpScopeCounts;
-
   return (
     <I18nProvider>
       <>
@@ -260,15 +253,11 @@ function DashboardLayout() {
                 sourceFilter={sourceFilter}
                 onSourceFilterChange={setSourceFilter}
                 inboxCounts={inboxCounts}
-                scopeFilter={scopeFilter}
-                onScopeFilterChange={setScopeFilter}
-                scopeCounts={scopeCounts}
                 capabilityViewMode={capabilityViewMode}
                 onCapabilityViewModeChange={setCapabilityViewMode}
                 agentModelFilter={agentModelFilter}
                 onAgentModelFilterChange={setAgentModelFilter}
                 agentModelCounts={agentModelCounts}
-                boardCounts={boardCounts}
                 onRefresh={refreshAll}
                 onOpenCapabilityMarket={() => navigate({ to: "/dashboard/skills" })}
               />

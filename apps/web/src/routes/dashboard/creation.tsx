@@ -7,14 +7,6 @@ export const Route = createFileRoute("/dashboard/creation")({ component: Creatio
 
 function CreationPage() {
   const { agents, runtimes, projects } = useDashboard();
-  const {
-    creationArchiveFilter,
-    creationSidebarCollapsed,
-    creationSidebarWidth,
-    setCreationArchiveFilter,
-    toggleCreationSidebar,
-    setCreationSidebarWidth,
-  } = useUIStore();
   const settings = useUIStore((s) => s.settings);
   const setSettings = useUIStore((s) => s.setSettings);
 
@@ -23,14 +15,8 @@ function CreationPage() {
       agents={agents}
       runtimes={runtimes}
       projects={projects}
-      archiveFilter={creationArchiveFilter}
-      onArchiveFilterChange={setCreationArchiveFilter}
       settings={settings}
       onSettingsChange={setSettings}
-      sidebarCollapsed={creationSidebarCollapsed}
-      onToggleSidebar={toggleCreationSidebar}
-      sidebarWidth={creationSidebarWidth}
-      onSidebarWidthChange={setCreationSidebarWidth}
     />
   );
 }
