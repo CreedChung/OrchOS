@@ -31,6 +31,7 @@ function AgentsPage() {
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(288);
 
   const activeAgent = agents.find((a) => a.id === activeAgentId);
   const editingAgent = agents.find((a) => a.id === editingAgentId);
@@ -63,6 +64,8 @@ function AgentsPage() {
         agents={agents}
         activeAgentId={activeAgentId}
         loading={loading}
+        width={sidebarWidth}
+        onWidthChange={setSidebarWidth}
         onSelectAgent={setActiveAgentId}
         onAgentUpdated={refreshAll}
         onCreateAgent={() => setShowCreateAgentDialog(true)}

@@ -1,0 +1,4 @@
+pre-commit:
+  commands:
+    lint-strict:
+      run: bun run lint:strict

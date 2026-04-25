@@ -1,11 +1,23 @@
+import { useEffect } from "react";
 import { Navigate, createFileRoute } from "@tanstack/react-router";
-import { SignUp, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { SignUp, SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import { AuthPage } from "@/components/ui/auth-page";
 import { isClerkConfigured } from "@/lib/auth";
 
 export const Route = createFileRoute("/sign-up")({
   component: SignUpPage,
 });
+
+function AuthTransitionMarker() {
+  const { isSignedIn } = useAuth();
+  useEffect(() => {
+    if (isSignedIn) {
+      sessionStorage.setItem("orch_auth_transition", "true");
+    }
+  }, [isSignedIn]);
+  return null;
+}
 
 function SignUpPage() {
   if (!isClerkConfigured) {
@@ -17,9 +29,10 @@ function SignUpPage() {
   }
 
   return (
-    <>
+    <AuthProvider>
+      <AuthTransitionMarker />
       <SignedIn>
-        <Navigate to="/dashboard" replace />
+        <Navigate to="/dashboard/creation" replace />
       </SignedIn>
       <SignedOut>
         <AuthPage mode="signUp">
@@ -27,11 +40,11 @@ function SignUpPage() {
             path="/sign-up"
             routing="path"
             signInUrl="/sign-in"
-            fallbackRedirectUrl="/dashboard"
+            fallbackRedirectUrl="/dashboard/creation"
           />
         </AuthPage>
       </SignedOut>
-    </>
+    </AuthProvider>
   );
 }
 

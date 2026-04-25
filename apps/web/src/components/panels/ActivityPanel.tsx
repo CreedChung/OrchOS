@@ -134,7 +134,6 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
         <div className="space-y-4 py-3">
           {activeView === "creation" && (flowMessages.length > 0 || showPendingAssistantReply) ? (
             <section>
-              <SectionHeader title="Conversation Flow" meta={`${flowMessages.length} messages`} />
               <div className="space-y-4 px-3">
                 {flowMessages.map((message) => (
                   <MessageBubble key={message.id} msg={message as UIMessage} userImageUrl={user?.imageUrl} />

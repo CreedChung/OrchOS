@@ -1,10 +1,8 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { ClerkProvider } from "@clerk/clerk-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getLocale } from "@/paraglide/runtime";
 import { initializeClientLocale } from "@/lib/i18n-runtime";
-import { clerkPublishableKey, isClerkConfigured } from "@/lib/auth";
 
 import appCss from "../styles.css?url";
 
@@ -30,11 +28,6 @@ export const Route = createRootRoute({
       {
         rel: "stylesheet",
         href: appCss,
-      },
-      {
-        rel: "preload",
-        href: "/hero.png",
-        as: "image",
       },
     ],
   }),
@@ -64,13 +57,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
-        {isClerkConfigured ? (
-          <ClerkProvider publishableKey={clerkPublishableKey}>
-            <TooltipProvider>{children}</TooltipProvider>
-          </ClerkProvider>
-        ) : (
-          <TooltipProvider>{children}</TooltipProvider>
-        )}
+        <TooltipProvider>{children}</TooltipProvider>
         <Scripts />
       </body>
     </html>

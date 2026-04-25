@@ -8,6 +8,9 @@ import {
   ToggleRight,
   SparklesIcon,
   Download01Icon,
+  Menu01Icon,
+  Globe02Icon,
+  Folder01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -24,7 +27,10 @@ interface SkillsViewProps {
   projects: Project[];
   onRefresh: () => void;
   scopeFilter?: "all" | "global" | "project";
+  onScopeFilterChange?: (filter: "all" | "global" | "project") => void;
   mode?: "mine" | "market";
+  sidebarWidth?: number;
+  onSidebarWidthChange?: (width: number) => void;
 }
 
 export function SkillsView({
@@ -32,7 +38,10 @@ export function SkillsView({
   projects,
   onRefresh,
   scopeFilter = "all",
+  onScopeFilterChange,
   mode = "mine",
+  sidebarWidth = 288,
+  onSidebarWidthChange,
 }: SkillsViewProps) {
   const [skills, setSkills] = useState<SkillProfile[]>(initialSkills);
   const [activeSkillId, setActiveSkillId] = useState<string | null>(null);
@@ -108,6 +117,12 @@ export function SkillsView({
     [scopeFilter, skills],
   );
 
+  const scopeFilterButtons = [
+    { value: "all" as const, icon: Menu01Icon, iconClassName: "text-muted-foreground/80", label: "All" },
+    { value: "global" as const, icon: Globe02Icon, iconClassName: "text-sky-500", label: "Global" },
+    { value: "project" as const, icon: Folder01Icon, iconClassName: "text-amber-500", label: "Project" },
+  ];
+
   const activeSkill = filteredSkills.find((skill) => skill.id === activeSkillId) ?? null;
 
   useEffect(() => {
@@ -125,6 +140,31 @@ export function SkillsView({
     () => new Map(projects.map((project) => [project.id, project.name])),
     [projects],
   );
+
+  const handleResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!onSidebarWidthChange) return;
+    event.preventDefault();
+    const sidebarEl = event.currentTarget.parentElement;
+    const sidebarLeft = sidebarEl?.getBoundingClientRect().left ?? 0;
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 288);
+      onSidebarWidthChange(nextWidth);
+    };
+
+    const handlePointerUp = () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  };
 
   const skillScopeLabel = (skill: SkillProfile) => {
     if (skill.scope === "global") return "Global";
@@ -312,7 +352,10 @@ export function SkillsView({
           </ScrollArea>
         ) : (
         <>
-        <div className="flex h-full w-72 flex-col border-r border-border bg-background">
+        <div 
+          className="relative flex h-full shrink-0 flex-col border-r border-border bg-background"
+          style={{ width: Math.min(sidebarWidth, 288), maxWidth: "18rem" }}
+        >
           <div className="flex h-14 items-center justify-between border-b border-border px-4 py-3">
             <h2 className="text-sm font-semibold text-foreground">{m.skills()}</h2>
             <Button
@@ -398,6 +441,38 @@ export function SkillsView({
               )}
             </div>
           </ScrollArea>
+          
+          {onScopeFilterChange && mode === "mine" && (
+            <div className="flex items-center justify-center gap-1 px-2 py-2.5 border-t border-border">
+              {scopeFilterButtons.map((filter) => (
+                <button
+                  key={filter.value}
+                  type="button"
+                  onClick={() => onScopeFilterChange(filter.value)}
+                  aria-pressed={scopeFilter === filter.value}
+                  title={filter.label}
+                  className={cn(
+                    "inline-flex size-8 items-center justify-center rounded-md transition-colors",
+                    scopeFilter === filter.value
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                  )}
+                >
+                  <HugeiconsIcon icon={filter.icon} className={cn("size-3.5", filter.iconClassName)} />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {onSidebarWidthChange && (
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize skills list"
+              onPointerDown={handleResizeStart}
+              className="absolute top-0 right-[-4px] z-10 h-full w-2 cursor-col-resize rounded-full transition-colors hover:bg-primary/15"
+            />
+          )}
         </div>
 
         <div className="flex-1 overflow-hidden">

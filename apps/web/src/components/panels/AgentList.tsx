@@ -11,6 +11,8 @@ interface AgentListProps {
   agents: AgentProfile[];
   activeAgentId: string | null;
   loading?: boolean;
+  width?: number;
+  onWidthChange?: (width: number) => void;
   onSelectAgent: (id: string) => void;
   onAgentUpdated?: () => void;
   onCreateAgent?: () => void;
@@ -28,6 +30,8 @@ export function AgentList({
   agents,
   activeAgentId,
   loading,
+  width = 288,
+  onWidthChange,
   onSelectAgent,
   onAgentUpdated,
   onCreateAgent,
@@ -37,8 +41,36 @@ export function AgentList({
   const enabledAgents = agents.filter((a) => a.enabled);
   const disabledAgents = agents.filter((a) => !a.enabled);
 
+  const handleResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!onWidthChange) return;
+    event.preventDefault();
+    const sidebarEl = event.currentTarget.parentElement;
+    const sidebarLeft = sidebarEl?.getBoundingClientRect().left ?? 0;
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 288);
+      onWidthChange(nextWidth);
+    };
+
+    const handlePointerUp = () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  };
+
   return (
-    <div className="flex h-full w-72 flex-col border-r border-border bg-background">
+    <div 
+      className="relative flex h-full shrink-0 flex-col border-r border-border bg-background"
+      style={{ width: Math.min(width, 288), maxWidth: "18rem" }}
+    >
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b border-border px-4">
         <h2 className="text-sm font-semibold text-foreground">{m.agents()}</h2>
@@ -115,6 +147,15 @@ export function AgentList({
           )}
         </div>
       </ScrollArea>
+      {onWidthChange && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize agent list"
+          onPointerDown={handleResizeStart}
+          className="absolute top-0 right-[-4px] z-10 h-full w-2 cursor-col-resize rounded-full transition-colors hover:bg-primary/15"
+        />
+      )}
     </div>
   );
 }

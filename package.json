@@ -14,10 +14,10 @@
     "format": "oxfmt --write .",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
-    "prepare": "husky"
+    "prepare": "lefthook install"
   },
   "devDependencies": {
-    "husky": "^9.1.7",
+    "lefthook": "^1.11.13",
     "oxfmt": "^0.45.0",
     "oxlint": "^1.60.0",
     "prettier": "^3.7.4",

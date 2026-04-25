@@ -1,26 +1,22 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Add01Icon,
   Archive01Icon,
   CheckmarkCircle02Icon,
   Chat01Icon,
   Clock01Icon,
   Delete02Icon,
-  Edit02Icon,
   Menu01Icon,
   InformationCircleIcon,
   Robot02Icon,
   ArrowUp01Icon,
   File02Icon,
   Folder01Icon,
-  Upload04Icon,
   Mic01Icon,
   Cancel01Icon,
   Alert01Icon,
   PlayCircleIcon,
-  SidebarLeft01Icon,
-  SidebarRight01Icon,
+  UnfoldMoreIcon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
 import { AppDialog } from "@/components/ui/app-dialog";
@@ -198,7 +194,7 @@ export function CreationView({
   settings,
   onSettingsChange,
   sidebarCollapsed,
-  onToggleSidebar,
+  onToggleSidebar: _onToggleSidebar,
   sidebarWidth,
   onSidebarWidthChange,
 }: CreationViewProps) {
@@ -377,14 +373,9 @@ export function CreationView({
           style={{ width: Math.min(sidebarWidth, 288), maxWidth: "18rem" }}
         >
           <div className="flex h-full min-w-0 flex-1 flex-col">
-            <div className="flex h-14 items-center justify-between border-b border-border px-4">
-              <h2 className="text-sm font-semibold text-foreground">{m.creation()}</h2>
-              <div className="flex items-center gap-1">
-                <Button size="icon-sm" variant="ghost" onClick={handleNewConversation}>
-                  <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                </Button>
-              </div>
-            </div>
+             <div className="flex h-14 items-center border-b border-border px-4">
+               <h2 className="text-sm font-semibold text-foreground">{m.creation()}</h2>
+             </div>
             <ScrollArea className="flex-1">
               <div className="w-full space-y-0.5 p-1.5">
                 {!hasLoadedConversations ? (
@@ -497,8 +488,6 @@ export function CreationView({
             runtimes={enabledRuntimes}
             projects={projects}
             defaultAgentId={settings?.defaultAgentId}
-            sidebarCollapsed={sidebarCollapsed}
-            onToggleSidebar={onToggleSidebar}
             onUpdateConversation={handleUpdateConversation}
             onSetDefaultAgent={(agentId) => {
               const selectedAgent = agents.find((agent) => agent.id === agentId);
@@ -641,8 +630,6 @@ interface ChatAreaProps {
   runtimes: RuntimeProfile[];
   projects: Project[];
   defaultAgentId?: string;
-  sidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
   onUpdateConversation: (
     id: string,
     data: {
@@ -668,16 +655,12 @@ function ChatArea({
   runtimes,
   projects,
   defaultAgentId,
-  sidebarCollapsed,
-  onToggleSidebar,
   onUpdateConversation,
   onSetDefaultAgent,
   onSendMessage,
 }: ChatAreaProps) {
   const [input, setInput] = useState("");
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [titleValue, setTitleValue] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isConversationUpdating, setIsConversationUpdating] = useState(false);
   const [specDialogOpen, setSpecDialogOpen] = useState(false);
@@ -688,7 +671,6 @@ function ChatArea({
   const [boardFilter, setBoardFilter] = useState<ConversationBoardFilter>("all");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const specFileInputRef = useRef<HTMLInputElement>(null);
   const pendingConversationUpdateRef = useRef<Promise<void> | null>(null);
 
@@ -753,18 +735,6 @@ function ChatArea({
 
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
-  }, []);
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    const hasImage = Array.from(files).some((file) => file.type.startsWith("image/"));
-    if (hasImage) {
-      toast.error('当前模型不支持图片输入，请直接发送文字说明。');
-    }
-
-    e.target.value = "";
   }, []);
 
   const handleRemoveFile = useCallback((index: number) => {
@@ -944,46 +914,10 @@ function ChatArea({
     }
   }
 
-  const handleTitleSubmit = useCallback(async () => {
-    if (titleValue.trim()) {
-      await queueConversationUpdate({ title: titleValue.trim() });
-    }
-    setEditingTitle(false);
-  }, [queueConversationUpdate, titleValue]);
-
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex h-14 items-center justify-between gap-3 border-b border-border px-4">
-        <Button size="icon-sm" variant="ghost" onClick={onToggleSidebar} title={sidebarCollapsed ? m.expand_sidebar() : m.collapse_sidebar()}>
-          <HugeiconsIcon icon={sidebarCollapsed ? SidebarRight01Icon : SidebarLeft01Icon} className="size-4" />
-        </Button>
-        {editingTitle ? (
-          <input
-            autoFocus
-            value={titleValue}
-            onChange={(e) => setTitleValue(e.target.value)}
-            onBlur={handleTitleSubmit}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleTitleSubmit();
-              if (e.key === "Escape") setEditingTitle(false);
-            }}
-            className="flex-1 bg-transparent text-sm font-medium outline-none border-b border-primary"
-          />
-        ) : (
-          <button
-            onClick={() => {
-              setTitleValue(conversation.title || "");
-              setEditingTitle(true);
-            }}
-            className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors min-w-0 flex-1 text-left"
-          >
-            <span className="truncate">{conversation.title || m.untitled_conversation()}</span>
-            <HugeiconsIcon icon={Edit02Icon} className="size-3 shrink-0 opacity-40" />
-          </button>
-        )}
-
-        <div className="flex items-center gap-2 shrink-0">
+      <div className="shrink-0 bg-background px-4 py-4 md:px-6">
+        <div className="mx-auto max-w-3xl">
           <input
             ref={specFileInputRef}
             type="file"
@@ -991,59 +925,6 @@ function ChatArea({
             className="hidden"
             onChange={handleImportSpecFile}
           />
-          <Button
-            type="button"
-            variant={hasProjectSpec ? "outline" : "ghost"}
-            size="icon-sm"
-            title={selectedProject ? `${selectedProject.name} Project Instructions` : "Project Instructions"}
-            className={cn(
-              "shrink-0",
-              hasProjectSpec && "border-sky-500/30 bg-sky-500/5 text-sky-700 hover:bg-sky-500/10 dark:text-sky-300",
-            )}
-            onClick={handleOpenSpecDialog}
-          >
-            <HugeiconsIcon icon={File02Icon} className="size-4" />
-          </Button>
-          <Select
-            value={conversation.projectId || "__none__"}
-            onValueChange={(v) =>
-              queueConversationUpdate({
-                projectId: !v || v === "__none__" ? undefined : v,
-              })
-            }
-          >
-            <SelectTrigger className="h-7 w-32 cursor-default text-xs">
-              {isConversationUpdating ? (
-                <Spinner size="sm" name="braille" className="mr-1 shrink-0 text-muted-foreground" />
-              ) : (
-                <HugeiconsIcon icon={Folder01Icon} className="size-3 mr-1 shrink-0" />
-              )}
-              <SelectValue>
-                {selectedProject?.name || "临时会话"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">临时会话</SelectItem>
-              {projects.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
-                  {project.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <RuntimeSelector
-            agents={agents.filter((a) => a.enabled)}
-            selectedAgentId={conversation.agentId ?? undefined}
-            defaultAgentId={defaultAgentId}
-            onSelect={({ runtimeId, agentId }) => queueConversationUpdate({ runtimeId, agentId })}
-            onSetDefault={onSetDefaultAgent}
-          />
-        </div>
-      </div>
-
-      <div className="shrink-0 bg-background px-4 py-4 md:px-6">
-        <div className="mx-auto max-w-3xl">
           <BorderBeam
             size="md"
             theme="auto"
@@ -1052,7 +933,7 @@ function ChatArea({
             duration={2.6}
             className="rounded-xl"
           >
-            <div className="flex min-h-16 flex-col gap-2 rounded-xl border border-border bg-background px-3 py-3">
+            <div className="flex min-h-24 flex-col gap-2 rounded-xl border border-border bg-background px-3 py-3">
               {attachedFiles.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {attachedFiles.map((file, index) => (
@@ -1089,26 +970,55 @@ function ChatArea({
                 style={{ maxHeight: "120px" }}
                 onInput={syncTextareaHeight}
               />
-              <div className="flex items-center justify-between gap-2 pt-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  title={m.upload()}
-                  className="shrink-0 text-muted-foreground hover:text-foreground"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <HugeiconsIcon icon={Upload04Icon} className="size-4" />
-                </Button>
+                <div className="flex items-center justify-between gap-2 pt-2">
+                  <div className="flex items-center gap-1">
+                   <Select
+                    value={conversation.projectId || "__none__"}
+                    onValueChange={(v) =>
+                      queueConversationUpdate({
+                        projectId: !v || v === "__none__" ? undefined : v,
+                      })
+                    }
+                  >
+                     <SelectTrigger size="sm" className="w-28 cursor-default text-xs !rounded-lg">
+                       {isConversationUpdating ? (
+                         <Spinner size="sm" name="braille" className="mr-1 shrink-0 text-muted-foreground" />
+                       ) : (
+                         <HugeiconsIcon icon={Folder01Icon} className="size-3 mr-1 shrink-0" />
+                       )}
+                       <SelectValue>
+                         {selectedProject?.name || "临时会话"}
+                       </SelectValue>
+                     </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">临时会话</SelectItem>
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <RuntimeSelector
+                    agents={agents.filter((a) => a.enabled)}
+                    selectedAgentId={conversation.agentId ?? undefined}
+                    defaultAgentId={defaultAgentId}
+                    onSelect={({ runtimeId, agentId }) => queueConversationUpdate({ runtimeId, agentId })}
+                    onSetDefault={onSetDefaultAgent}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    title={selectedProject ? `${selectedProject.name} Project Instructions` : "Project Instructions"}
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={handleOpenSpecDialog}
+                  >
+                    <HugeiconsIcon icon={File02Icon} className="size-4" />
+                  </Button>
+                  </div>
                 <div className="flex shrink-0 items-center gap-1">
+
                   <Button
                     type="button"
                     variant="ghost"
@@ -1230,15 +1140,15 @@ function ChatArea({
                   <div
                     key={column.id}
                     className={cn(
-                      "flex min-h-[280px] flex-col rounded-xl border border-border/40 bg-muted/20",
+                      "flex min-h-[280px] flex-col rounded-xl border border-border/30 bg-muted/10",
                       column.bgAccent,
                     )}
                   >
-                    <div className="flex items-center gap-2.5 border-b border-border/30 px-4 py-3">
-                      <div className={cn("size-1.5 rounded-full", column.dotColor)} />
-                      <span className="text-xs font-semibold uppercase tracking-wider text-foreground/60">
-                        {column.label}
-                      </span>
+                     <div className="flex items-center gap-2.5 border-b border-border/20 px-4 py-3">
+                       <HugeiconsIcon icon={column.icon} className={cn("size-3.5", column.tone, "opacity-70")} />
+                       <span className="text-xs font-semibold tracking-wide text-foreground/50">
+                         {column.label}
+                       </span>
                       <span
                         className={cn(
                           "ml-auto inline-flex size-5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
@@ -1249,47 +1159,52 @@ function ChatArea({
                       </span>
                     </div>
 
-                    <div className="flex-1 space-y-2.5 p-3">
+                    <div className="flex-1 space-y-3 p-3">
                       {columnCards.map((card) => (
                         <button
                           key={card.conversation.id}
                           type="button"
                           onClick={() => setActiveConversationId(card.conversation.id)}
                           className={cn(
-                            "group/card w-full rounded-lg border border-border/30 bg-background/80 px-3.5 py-3 text-left shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] transition-all",
-                            "hover:border-border hover:bg-background hover:shadow-[0_2px_8px_0_rgba(0,0,0,0.06)] border-l-2",
+                            "group/card w-full rounded-xl border bg-background/60 px-4 py-3.5 text-left transition-all duration-200",
+                            "border-border/40 hover:border-border/80 hover:bg-background",
+                            "shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_0_rgba(0,0,0,0.08)]",
+                            "border-l-[3px]",
                             column.borderAccent,
-                            activeConversationId === card.conversation.id && "ring-1 ring-primary/30",
+                            activeConversationId === card.conversation.id && "bg-background border-border ring-1 ring-primary/20 shadow-[0_2px_8px_0_rgba(0,0,0,0.06)]",
                           )}
                         >
-                          <div className="mb-1.5 text-sm font-medium leading-snug text-foreground/90 group-hover/card:text-foreground">
+                          <div className="mb-2 text-[13px] font-semibold leading-snug text-foreground/85 group-hover/card:text-foreground">
                             {card.title}
                           </div>
 
-                          <div className="mb-2 inline-flex items-center gap-1 rounded-md bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                            <HugeiconsIcon icon={Folder01Icon} className="size-2.5 text-amber-500/70" />
+                          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground/80">
+                            <HugeiconsIcon icon={Folder01Icon} className="size-3 text-amber-500/80" />
                             {card.projectName || "临时会话"}
                           </div>
 
-                          <p className="mb-2 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground/70">
+                          <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground/60">
                             {card.summary}
                           </p>
 
-                          <div className="flex items-center justify-between gap-2 border-t border-border/20 pt-2 mt-1">
-                            <span className="text-[10px] tabular-nums text-muted-foreground/50">
+                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/15">
+                            <span className="text-[11px] tabular-nums text-muted-foreground/45">
                               {formatConversationTime(card.updatedAt)}
                             </span>
                             {activeConversationId === card.conversation.id ? (
-                              <span className="text-[10px] text-primary/70">当前查看</span>
+                              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary">
+                                <span className="size-1.5 rounded-full bg-primary animate-pulse" />
+                                当前查看
+                              </span>
                             ) : null}
                           </div>
                         </button>
                       ))}
 
                       {columnCards.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/40 bg-background/30 px-3 py-8">
-                          <HugeiconsIcon icon={column.icon} className="mb-1.5 size-4 text-muted-foreground/20" />
-                          <span className="text-[11px] text-muted-foreground/40">暂无任务</span>
+                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/30 bg-background/20 px-3 py-10 m-1">
+                          <HugeiconsIcon icon={column.icon} className="mb-2 size-5 text-muted-foreground/15" />
+                          <span className="text-xs text-muted-foreground/30">暂无任务</span>
                         </div>
                       ) : null}
                     </div>
@@ -1469,12 +1384,13 @@ function RuntimeSelector({
         }}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="inline-flex h-8 w-40 items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent px-2.5 text-xs text-foreground transition-colors outline-none hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="inline-flex h-7 w-28 items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent px-2.5 text-xs text-foreground transition-colors outline-none hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <span className="flex min-w-0 items-center gap-1.5">
           <HugeiconsIcon icon={Robot02Icon} className="size-3 shrink-0" />
           <span className="truncate">{selectedAgent?.name || m.no_agent()}</span>
         </span>
+        <HugeiconsIcon icon={UnfoldMoreIcon} className="size-3 shrink-0 text-muted-foreground" />
       </button>
 
       {open && (

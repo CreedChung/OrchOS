@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -13,8 +14,6 @@ import {
   SquareIcon,
   InformationCircleIcon,
   Robot02Icon,
-  Globe02Icon,
-  Folder01Icon,
   CodeIcon,
   CloudIcon,
   ArrowReloadHorizontalIcon,
@@ -27,14 +26,6 @@ import type { SidebarView, InboxSource } from "@/lib/types";
 type SourceFilter = "all" | InboxSource;
 export type ScopeFilter = "all" | "global" | "project";
 export type AgentModelFilter = "all" | "local" | "cloud";
-
-const scopeFilterConfig: Record<
-  Exclude<ScopeFilter, "all">,
-  { icon: typeof Globe02Icon; label: string; iconClassName: string }
-> = {
-  global: { icon: Globe02Icon, label: m.global(), iconClassName: "text-sky-500" },
-  project: { icon: Folder01Icon, label: m.project(), iconClassName: "text-amber-500" },
-};
 
 const sourceFilterConfig: Record<
   InboxSource,
@@ -70,6 +61,7 @@ const boardFilterConfig = {
 
 interface ToolbarProps {
   activeView: SidebarView;
+  loading?: boolean;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   activityPanelOpen: boolean;
@@ -92,9 +84,6 @@ interface ToolbarProps {
     in_progress: number;
     completed: number;
   };
-  scopeFilter: ScopeFilter;
-  onScopeFilterChange: (filter: ScopeFilter) => void;
-  scopeCounts: { all: number; global: number; project: number };
   onRefresh?: () => void;
   onOpenCapabilityMarket?: () => void;
   capabilityViewMode?: "mine" | "market";
@@ -103,6 +92,7 @@ interface ToolbarProps {
 
 export function Toolbar({
   activeView,
+  loading = false,
   searchQuery,
   onSearchChange,
   activityPanelOpen,
@@ -114,9 +104,6 @@ export function Toolbar({
   onAgentModelFilterChange,
   agentModelCounts,
   boardCounts,
-  scopeFilter,
-  onScopeFilterChange,
-  scopeCounts,
   onRefresh,
   onOpenCapabilityMarket,
   capabilityViewMode = "mine",
@@ -243,7 +230,7 @@ export function Toolbar({
         </div>
       )}
 
-      {/* MCP Servers / Skills: mine/market switch + scope tabs */}
+      {/* MCP Servers / Skills: mine/market switch */}
       {(activeView === "mcp-servers" || activeView === "skills") && (
         <div className="flex items-center gap-1.5">
           {onCapabilityViewModeChange ? (
@@ -254,28 +241,6 @@ export function Toolbar({
               </TabsList>
             </Tabs>
           ) : null}
-
-          {capabilityViewMode === "mine"
-            ? (["all", "global", "project"] as ScopeFilter[]).map((filter) => {
-                const config = filter === "all" ? allFilterConfig : scopeFilterConfig[filter];
-                return (
-                  <button
-                    key={filter}
-                    onClick={() => onScopeFilterChange(filter)}
-                    className={cn(
-                      "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:gap-1.5 sm:px-2.5",
-                      scopeFilter === filter
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                    )}
-                  >
-                    <HugeiconsIcon icon={config.icon} className={cn("size-3", config.iconClassName)} />
-                    <span className="hidden capitalize sm:inline">{config.label || filter}</span>
-                    <span className="tabular-nums text-[10px] opacity-60">{scopeCounts[filter]}</span>
-                  </button>
-                );
-              })
-            : null}
         </div>
       )}
 
@@ -286,7 +251,11 @@ export function Toolbar({
       <div className="flex items-center gap-2">
         {onRefresh && (
           <Button variant="outline" size="icon-sm" onClick={onRefresh} title={m.refresh()}>
-            <HugeiconsIcon icon={ArrowReloadHorizontalIcon} className="size-3.5" />
+            {loading ? (
+              <Spinner size="sm" className="size-3.5" />
+            ) : (
+              <HugeiconsIcon icon={ArrowReloadHorizontalIcon} className="size-3.5" />
+            )}
           </Button>
         )}
         {activeView === "skills" && onOpenCapabilityMarket && (

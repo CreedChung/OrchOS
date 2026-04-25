@@ -624,16 +624,16 @@ export function SettingsDialog({
             {tabDefs.map((tab) => {
               const Icon = tab.icon;
               return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    activeTab === tab.id
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                  )}
-                >
+                 <button
+                   key={tab.id}
+                   onClick={() => setActiveTab(tab.id)}
+                   className={cn(
+                     "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer",
+                     activeTab === tab.id
+                       ? "bg-accent text-accent-foreground"
+                       : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                   )}
+                 >
                   <HugeiconsIcon icon={Icon} className="size-4" />
                   {tab.labelKey()}
                 </button>
@@ -654,7 +654,7 @@ export function SettingsDialog({
             </h2>
             <button
               onClick={onClose}
-              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
             >
               <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
             </button>
@@ -940,14 +940,14 @@ export function SettingsDialog({
                           </span>
                           <p className="text-xs text-muted-foreground">{integration.descKey()}</p>
                         </div>
-                        <button
-                          className={cn(
-                            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                            integration.connected
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              : "border border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
-                          )}
-                        >
+                         <button
+                           className={cn(
+                             "rounded-md px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer",
+                             integration.connected
+                               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                               : "border border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                           )}
+                         >
                           {integration.connected ? m.connected() : m.connect()}
                         </button>
                       </div>
