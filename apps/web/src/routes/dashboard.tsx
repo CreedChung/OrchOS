@@ -166,6 +166,8 @@ function DashboardLayout() {
     setCapabilityViewMode,
     activityPanelOpen,
     toggleActivityPanel,
+    activityExpanded,
+    setActivityExpanded,
     sidebarCollapsed,
     toggleSidebar,
   } = useUIStore();
@@ -230,45 +232,51 @@ function DashboardLayout() {
         />
         <div className="flex h-screen flex-col overflow-hidden bg-background">
           <div className="flex flex-1 overflow-hidden">
-            <Sidebar
-              organizations={organizations}
-              problems={problems}
-              activeOrganizationId={activeOrganizationId}
-              activeView={activeView}
-              collapsed={sidebarCollapsed}
-              onOpenSettings={() => setShowSettingsDialog(true)}
-              onOrganizationChange={setActiveOrganizationId}
-              onOrganizationRename={handleOrganizationRename}
-              onOrganizationDelete={handleOrganizationDelete}
-              onToggleCollapse={toggleSidebar}
-            />
-            <div className="flex flex-1 flex-col overflow-hidden">
-              <Toolbar
+            {activityExpanded ? null : (
+              <Sidebar
+                organizations={organizations}
+                problems={problems}
+                activeOrganizationId={activeOrganizationId}
                 activeView={activeView}
-                loading={loading}
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                activityPanelOpen={activityPanelOpen}
-                onToggleActivityPanel={toggleActivityPanel}
-                sourceFilter={sourceFilter}
-                onSourceFilterChange={setSourceFilter}
-                inboxCounts={inboxCounts}
-                capabilityViewMode={capabilityViewMode}
-                onCapabilityViewModeChange={setCapabilityViewMode}
-                agentModelFilter={agentModelFilter}
-                onAgentModelFilterChange={setAgentModelFilter}
-                agentModelCounts={agentModelCounts}
-                onRefresh={refreshAll}
-                onOpenCapabilityMarket={() => navigate({ to: "/dashboard/skills" })}
+                collapsed={sidebarCollapsed}
+                onOpenSettings={() => setShowSettingsDialog(true)}
+                onOrganizationChange={setActiveOrganizationId}
+                onOrganizationRename={handleOrganizationRename}
+                onOrganizationDelete={handleOrganizationDelete}
+                onToggleCollapse={toggleSidebar}
               />
-              <Outlet />
+            )}
+            <div className="flex flex-1 flex-col overflow-hidden">
+              {activityExpanded ? null : (
+                <Toolbar
+                  activeView={activeView}
+                  loading={loading}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  activityPanelOpen={activityPanelOpen}
+                  onToggleActivityPanel={toggleActivityPanel}
+                  sourceFilter={sourceFilter}
+                  onSourceFilterChange={setSourceFilter}
+                  inboxCounts={inboxCounts}
+                  capabilityViewMode={capabilityViewMode}
+                  onCapabilityViewModeChange={setCapabilityViewMode}
+                  agentModelFilter={agentModelFilter}
+                  onAgentModelFilterChange={setAgentModelFilter}
+                  agentModelCounts={agentModelCounts}
+                  onRefresh={refreshAll}
+                  onOpenCapabilityMarket={() => navigate({ to: "/dashboard/skills" })}
+                />
+              )}
+              {activityExpanded ? null : <Outlet />}
             </div>
             <ActivityPanel
               activities={activities}
               goals={goals}
               projects={projects}
               problems={problems}
-              collapsed={!activityPanelOpen}
+              collapsed={!activityPanelOpen && !activityExpanded}
+              expanded={activityExpanded}
+              onCollapse={() => setActivityExpanded(!activityExpanded)}
               activeView={activeView}
             />
           </div>

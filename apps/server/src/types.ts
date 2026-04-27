@@ -212,6 +212,33 @@ export interface McpServerProfile {
   updatedAt: string;
 }
 
+export interface McpMarketItem {
+  id: string;
+  name: string;
+  description: string;
+  command: string;
+  args: string[];
+  source: string;
+  category?: string;
+  installed: boolean;
+  owner?: string;
+  repo?: string;
+  stars?: number;
+  homepage?: string;
+  lastUpdatedAt?: string;
+  sourceType: "official";
+  tags: string[];
+}
+
+export interface McpMarketResponse {
+  items: McpMarketItem[];
+  tags: string[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface SkillProfile {
   id: string;
   name: string;
@@ -247,6 +274,34 @@ export interface SkillRepositoryAnalysis {
   warnings: string[];
   installTarget: string;
   installableSkills: SkillRepositoryCandidate[];
+}
+
+export interface SkillMarketItem {
+  id: string;
+  name: string;
+  description: string;
+  source: string;
+  browseUrl?: string;
+  installSource?: string;
+  category?: string;
+  installable: boolean;
+  installed: boolean;
+  owner?: string;
+  repo?: string;
+  stars?: number;
+  homepage?: string;
+  lastUpdatedAt?: string;
+  sourceType: "official";
+  tags: string[];
+}
+
+export interface SkillMarketResponse {
+  items: SkillMarketItem[];
+  tags: string[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
 }
 
 export interface CreateGoalRequest {

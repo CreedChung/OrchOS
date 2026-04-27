@@ -25,8 +25,11 @@ import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
 import { Route as DashboardGoalsRouteImport } from './routes/dashboard/goals'
 import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
 import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
+import { Route as DashboardActivityRouteImport } from './routes/dashboard/activity'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
+import { Route as DashboardSkillsSkillIdRouteImport } from './routes/dashboard/skills.$skillId'
+import { Route as DashboardMcpServersServerIdRouteImport } from './routes/dashboard/mcp-servers.$serverId'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -108,6 +111,11 @@ const DashboardAgentsRoute = DashboardAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardActivityRoute = DashboardActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -118,6 +126,17 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardSkillsSkillIdRoute = DashboardSkillsSkillIdRouteImport.update({
+  id: '/$skillId',
+  path: '/$skillId',
+  getParentRoute: () => DashboardSkillsRoute,
+} as any)
+const DashboardMcpServersServerIdRoute =
+  DashboardMcpServersServerIdRouteImport.update({
+    id: '/$serverId',
+    path: '/$serverId',
+    getParentRoute: () => DashboardMcpServersRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -128,16 +147,19 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
-  '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
+  '/dashboard/mcp-servers': typeof DashboardMcpServersRouteWithChildren
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/rules': typeof DashboardRulesRoute
-  '/dashboard/skills': typeof DashboardSkillsRoute
+  '/dashboard/skills': typeof DashboardSkillsRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/mcp-servers/$serverId': typeof DashboardMcpServersServerIdRoute
+  '/dashboard/skills/$skillId': typeof DashboardSkillsSkillIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -147,16 +169,19 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
-  '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
+  '/dashboard/mcp-servers': typeof DashboardMcpServersRouteWithChildren
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/rules': typeof DashboardRulesRoute
-  '/dashboard/skills': typeof DashboardSkillsRoute
+  '/dashboard/skills': typeof DashboardSkillsRouteWithChildren
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/mcp-servers/$serverId': typeof DashboardMcpServersServerIdRoute
+  '/dashboard/skills/$skillId': typeof DashboardSkillsSkillIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -168,16 +193,19 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
+  '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
-  '/dashboard/mcp-servers': typeof DashboardMcpServersRoute
+  '/dashboard/mcp-servers': typeof DashboardMcpServersRouteWithChildren
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/projects': typeof DashboardProjectsRoute
   '/dashboard/rules': typeof DashboardRulesRoute
-  '/dashboard/skills': typeof DashboardSkillsRoute
+  '/dashboard/skills': typeof DashboardSkillsRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/mcp-servers/$serverId': typeof DashboardMcpServersServerIdRoute
+  '/dashboard/skills/$skillId': typeof DashboardSkillsSkillIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -190,6 +218,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/api/$'
     | '/api/chat'
+    | '/dashboard/activity'
     | '/dashboard/agents'
     | '/dashboard/creation'
     | '/dashboard/goals'
@@ -200,6 +229,8 @@ export interface FileRouteTypes {
     | '/dashboard/rules'
     | '/dashboard/skills'
     | '/dashboard/'
+    | '/dashboard/mcp-servers/$serverId'
+    | '/dashboard/skills/$skillId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -209,6 +240,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/api/$'
     | '/api/chat'
+    | '/dashboard/activity'
     | '/dashboard/agents'
     | '/dashboard/creation'
     | '/dashboard/goals'
@@ -219,6 +251,8 @@ export interface FileRouteTypes {
     | '/dashboard/rules'
     | '/dashboard/skills'
     | '/dashboard'
+    | '/dashboard/mcp-servers/$serverId'
+    | '/dashboard/skills/$skillId'
   id:
     | '__root__'
     | '/'
@@ -229,6 +263,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/api/$'
     | '/api/chat'
+    | '/dashboard/activity'
     | '/dashboard/agents'
     | '/dashboard/creation'
     | '/dashboard/goals'
@@ -239,6 +274,8 @@ export interface FileRouteTypes {
     | '/dashboard/rules'
     | '/dashboard/skills'
     | '/dashboard/'
+    | '/dashboard/mcp-servers/$serverId'
+    | '/dashboard/skills/$skillId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -366,6 +403,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAgentsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/activity': {
+      id: '/dashboard/activity'
+      path: '/activity'
+      fullPath: '/dashboard/activity'
+      preLoaderRoute: typeof DashboardActivityRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -380,32 +424,71 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/skills/$skillId': {
+      id: '/dashboard/skills/$skillId'
+      path: '/$skillId'
+      fullPath: '/dashboard/skills/$skillId'
+      preLoaderRoute: typeof DashboardSkillsSkillIdRouteImport
+      parentRoute: typeof DashboardSkillsRoute
+    }
+    '/dashboard/mcp-servers/$serverId': {
+      id: '/dashboard/mcp-servers/$serverId'
+      path: '/$serverId'
+      fullPath: '/dashboard/mcp-servers/$serverId'
+      preLoaderRoute: typeof DashboardMcpServersServerIdRouteImport
+      parentRoute: typeof DashboardMcpServersRoute
+    }
   }
 }
 
+interface DashboardMcpServersRouteChildren {
+  DashboardMcpServersServerIdRoute: typeof DashboardMcpServersServerIdRoute
+}
+
+const DashboardMcpServersRouteChildren: DashboardMcpServersRouteChildren = {
+  DashboardMcpServersServerIdRoute: DashboardMcpServersServerIdRoute,
+}
+
+const DashboardMcpServersRouteWithChildren =
+  DashboardMcpServersRoute._addFileChildren(DashboardMcpServersRouteChildren)
+
+interface DashboardSkillsRouteChildren {
+  DashboardSkillsSkillIdRoute: typeof DashboardSkillsSkillIdRoute
+}
+
+const DashboardSkillsRouteChildren: DashboardSkillsRouteChildren = {
+  DashboardSkillsSkillIdRoute: DashboardSkillsSkillIdRoute,
+}
+
+const DashboardSkillsRouteWithChildren = DashboardSkillsRoute._addFileChildren(
+  DashboardSkillsRouteChildren,
+)
+
 interface DashboardRouteChildren {
+  DashboardActivityRoute: typeof DashboardActivityRoute
   DashboardAgentsRoute: typeof DashboardAgentsRoute
   DashboardCreationRoute: typeof DashboardCreationRoute
   DashboardGoalsRoute: typeof DashboardGoalsRoute
   DashboardInboxRoute: typeof DashboardInboxRoute
-  DashboardMcpServersRoute: typeof DashboardMcpServersRoute
+  DashboardMcpServersRoute: typeof DashboardMcpServersRouteWithChildren
   DashboardObservabilityRoute: typeof DashboardObservabilityRoute
   DashboardProjectsRoute: typeof DashboardProjectsRoute
   DashboardRulesRoute: typeof DashboardRulesRoute
-  DashboardSkillsRoute: typeof DashboardSkillsRoute
+  DashboardSkillsRoute: typeof DashboardSkillsRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardActivityRoute: DashboardActivityRoute,
   DashboardAgentsRoute: DashboardAgentsRoute,
   DashboardCreationRoute: DashboardCreationRoute,
   DashboardGoalsRoute: DashboardGoalsRoute,
   DashboardInboxRoute: DashboardInboxRoute,
-  DashboardMcpServersRoute: DashboardMcpServersRoute,
+  DashboardMcpServersRoute: DashboardMcpServersRouteWithChildren,
   DashboardObservabilityRoute: DashboardObservabilityRoute,
   DashboardProjectsRoute: DashboardProjectsRoute,
   DashboardRulesRoute: DashboardRulesRoute,
-  DashboardSkillsRoute: DashboardSkillsRoute,
+  DashboardSkillsRoute: DashboardSkillsRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 

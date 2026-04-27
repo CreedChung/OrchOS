@@ -11,8 +11,13 @@ import {
   Menu01Icon,
   Globe02Icon,
   Folder01Icon,
+  InformationCircleIcon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Search01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
+import { AppDialog } from "@/components/ui/app-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -24,7 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CreateMcpServerDialog } from "@/components/dialogs/CreateMcpServerDialog";
-import { api, type McpMarketItem, type McpServerProfile } from "@/lib/api";
+import { McpMarketDetailView } from "@/components/panels/McpMarketDetailView";
+import { api, type McpMarketItem, type McpMarketResponse, type McpServerProfile } from "@/lib/api";
 import type { Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
@@ -51,6 +57,7 @@ export function McpServersView({
   sidebarWidth = 288,
   onSidebarWidthChange,
 }: McpServersViewProps) {
+  const MARKET_PAGE_SIZE = 30;
   const [servers, setServers] = useState<McpServerProfile[]>(initialServers);
   const [activeServerId, setActiveServerId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -59,10 +66,20 @@ export function McpServersView({
   const [, setLoading] = useState(false);
   const [installingMarketId, setInstallingMarketId] = useState<string | null>(null);
   const [marketItems, setMarketItems] = useState<McpMarketItem[]>([]);
+  const [marketTags, setMarketTags] = useState<string[]>([]);
   const [marketLoading, setMarketLoading] = useState(false);
+  const [marketError, setMarketError] = useState<string | null>(null);
+  const [selectedMarketItem, setSelectedMarketItem] = useState<McpMarketItem | null>(null);
   const [marketSearch, setMarketSearch] = useState("");
-  const [marketFilter, setMarketFilter] = useState<"all" | "official" | "installed">("all");
+  const [marketFilter, setMarketFilter] = useState<string>("all");
   const [selectedTag, setSelectedTag] = useState<string>("all");
+  const [marketPage, setMarketPage] = useState(1);
+  const [marketPageMeta, setMarketPageMeta] = useState<Pick<McpMarketResponse, "page" | "pageSize" | "total" | "totalPages">>({
+    page: 1,
+    pageSize: MARKET_PAGE_SIZE,
+    total: 0,
+    totalPages: 1,
+  });
   const [marketInstallScope, setMarketInstallScope] = useState<"global" | "project">("global");
   const [marketProjectId, setMarketProjectId] = useState<string>(projects[0]?.id ?? "");
 
@@ -76,12 +93,34 @@ export function McpServersView({
     let cancelled = false;
     const loadMarket = async () => {
       setMarketLoading(true);
+      setMarketError(null);
       try {
-        const items = await api.listMcpMarket();
-        if (!cancelled) setMarketItems(items);
+        const apiFilter = marketFilter.startsWith("category:") ? undefined : (marketFilter as "all" | "official" | "installed" | undefined);
+        const result = await api.listMcpMarket({
+          page: marketPage,
+          pageSize: MARKET_PAGE_SIZE,
+          search: marketSearch.trim() || undefined,
+          filter: apiFilter,
+          tag: selectedTag,
+        });
+        if (!cancelled) {
+          setMarketItems(result.items);
+          setMarketTags(result.tags);
+          setMarketPageMeta({
+            page: result.page,
+            pageSize: result.pageSize,
+            total: result.total,
+            totalPages: result.totalPages,
+          });
+        }
       } catch (err) {
         console.error("Failed to load MCP market:", err);
-        if (!cancelled) setMarketItems([]);
+        if (!cancelled) {
+          setMarketItems([]);
+          setMarketTags([]);
+          setMarketPageMeta({ page: 1, pageSize: MARKET_PAGE_SIZE, total: 0, totalPages: 1 });
+          setMarketError("MCP 市场加载失败，请确认服务端已启动并且 `/api/mcp-servers/market` 可访问。");
+        }
       } finally {
         if (!cancelled) setMarketLoading(false);
       }
@@ -91,7 +130,7 @@ export function McpServersView({
     return () => {
       cancelled = true;
     };
-  }, [mode]);
+  }, [MARKET_PAGE_SIZE, marketFilter, marketPage, marketSearch, mode, selectedTag]);
 
   useEffect(() => {
     if (marketInstallScope === "project" && !marketProjectId && projects[0]?.id) {
@@ -182,28 +221,89 @@ export function McpServersView({
     window.addEventListener("pointerup", handlePointerUp);
   };
 
-  const installedMarketServers = useMemo(
-    () => new Set(servers.map((server) => `${server.command}::${server.args.join(" ")}`)),
-    [servers],
-  );
   const installedMarketNames = useMemo(() => new Set(servers.map((server) => server.name.toLowerCase())), [servers]);
-  const marketTags = useMemo(
-    () => Array.from(new Set(marketItems.flatMap((item) => item.tags))).sort((a, b) => a.localeCompare(b)),
-    [marketItems],
-  );
-  const filteredMarketItems = useMemo(() => {
-    const query = marketSearch.trim().toLowerCase();
-    return marketItems.filter((item) => {
-      const isInstalled = installedMarketServers.has(`${item.command}::${item.args.join(" ")}`);
-      if (marketFilter === "official" && item.sourceType !== "official") return false;
-      if (marketFilter === "installed" && !isInstalled) return false;
-      if (selectedTag !== "all" && !item.tags.includes(selectedTag)) return false;
-      if (!query) return true;
-      return [item.name, item.description, item.command, ...item.args, ...item.tags].some((value) =>
-        value.toLowerCase().includes(query),
-      );
-    });
-  }, [installedMarketServers, marketFilter, marketItems, marketSearch, selectedTag]);
+  useEffect(() => {
+    setMarketPage(1);
+  }, [marketSearch, marketFilter, selectedTag]);
+
+  const marketPagination = useMemo(() => {
+    const totalPages = marketPageMeta.totalPages;
+    const currentPage = marketPageMeta.page;
+
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (currentPage <= 4) {
+      return [1, 2, 3, 4, 5, "ellipsis-right", totalPages] as const;
+    }
+
+    if (currentPage >= totalPages - 3) {
+      return [1, "ellipsis-left", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages] as const;
+    }
+
+    return [1, "ellipsis-left", currentPage - 1, currentPage, currentPage + 1, "ellipsis-right", totalPages] as const;
+  }, [marketPageMeta.page, marketPageMeta.totalPages]);
+
+  const marketCategories = useMemo(() => {
+    const categorySet = new Set<string>();
+    for (const item of marketItems) {
+      if (item.category) categorySet.add(item.category);
+    }
+    return Array.from(categorySet).sort();
+  }, [marketItems]);
+
+  const marketFilterGroups = useMemo(() => {
+    const groups: Array<{
+      key: string;
+      label: string;
+      icon: typeof Menu01Icon;
+      activeClass: string;
+      count: number;
+    }> = [
+      {
+        key: "all",
+        label: "全部",
+        icon: Menu01Icon,
+        activeClass: "bg-primary/10 text-primary ring-1 ring-primary/20",
+        count: marketPageMeta.total,
+      },
+      {
+        key: "official",
+        label: "官方",
+        icon: SparklesIcon,
+        activeClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400 ring-1 ring-sky-500/20",
+        count: marketItems.filter((item) => item.sourceType === "official").length,
+      },
+      {
+        key: "installed",
+        label: "已安装",
+        icon: Download01Icon,
+        activeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20",
+        count: marketItems.filter((item) => item.installed || installedMarketNames.has(item.name.toLowerCase())).length,
+      },
+    ];
+
+    for (const category of marketCategories) {
+      groups.push({
+        key: `category:${category}`,
+        label: category,
+        icon: Folder01Icon,
+        activeClass: "bg-violet-500/10 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/20",
+        count: marketItems.filter((item) => item.category === category).length,
+      });
+    }
+
+    return groups;
+  }, [installedMarketNames, marketItems, marketCategories, marketPageMeta.total]);
+
+  const displayedMarketItems = useMemo(() => {
+    if (marketFilter.startsWith("category:")) {
+      const category = marketFilter.slice("category:".length);
+      return marketItems.filter((item) => item.category === category);
+    }
+    return marketItems;
+  }, [marketFilter, marketItems]);
 
   const handleInstallMarketServer = async (item: McpMarketItem) => {
     if (marketInstallScope === "project" && !marketProjectId) {
@@ -232,7 +332,7 @@ export function McpServersView({
   };
 
   const getMarketMcpBadge = (item: McpMarketItem) => {
-    if (installedMarketServers.has(`${item.command}::${item.args.join(" ")}`)) {
+    if (item.installed) {
       return { label: "已安装", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" };
     }
 
@@ -260,40 +360,48 @@ export function McpServersView({
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <div className="md:col-span-2 xl:col-span-3">
-                  <div className="flex flex-col gap-3 rounded-xl border border-border/50 bg-card p-4 lg:flex-row lg:items-center">
-                    <input
-                      type="text"
-                      value={marketSearch}
-                      onChange={(e) => setMarketSearch(e.target.value)}
-                      placeholder="Search MCP servers in market"
-                      className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 lg:max-w-xs"
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      {(["all", "official", "installed"] as const).map((filter) => (
+                  <div className="flex flex-col gap-3 rounded-xl border border-border/50 bg-card p-4">
+                    <div className="relative w-full sm:max-w-sm">
+                      <HugeiconsIcon icon={Search01Icon} className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
+                      <input
+                        type="text"
+                        value={marketSearch}
+                        onChange={(e) => setMarketSearch(e.target.value)}
+                        placeholder="Search MCP servers in market"
+                        className="h-9 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {marketFilterGroups.map((group) => (
                         <button
-                          key={filter}
+                          key={group.key}
                           type="button"
-                          onClick={() => setMarketFilter(filter)}
+                          onClick={() => setMarketFilter(group.key)}
+                          aria-pressed={marketFilter === group.key}
                           className={cn(
-                            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                            marketFilter === filter
-                              ? "bg-accent text-accent-foreground"
-                              : "bg-muted text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                            "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-medium transition-all",
+                            marketFilter === group.key
+                              ? group.activeClass
+                              : "text-muted-foreground/80 hover:bg-muted/60 hover:text-foreground",
                           )}
                         >
-                          {filter === "all" ? "全部" : filter === "official" ? "官方" : "已安装"}
+                          <HugeiconsIcon icon={group.icon} className="size-3.5" />
+                          {group.label}
+                          <span className="rounded-full bg-foreground/5 px-1.5 py-0.5 text-[10px] tabular-nums text-inherit">
+                            {group.count}
+                          </span>
                         </button>
                       ))}
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setSelectedTag("all")}
                         className={cn(
-                          "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                          "inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
                           selectedTag === "all"
-                            ? "bg-accent text-accent-foreground"
-                            : "bg-muted text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                            ? "border-border bg-foreground text-background"
+                            : "border-border/50 bg-background text-muted-foreground hover:text-foreground",
                         )}
                       >
                         全部标签
@@ -304,10 +412,10 @@ export function McpServersView({
                           type="button"
                           onClick={() => setSelectedTag(tag)}
                           className={cn(
-                            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                            "inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors",
                             selectedTag === tag
-                              ? "bg-accent text-accent-foreground"
-                              : "bg-muted text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                              ? "border-border bg-foreground text-background"
+                              : "border-border/50 bg-background text-muted-foreground hover:text-foreground",
                           )}
                         >
                           {tag}
@@ -349,23 +457,43 @@ export function McpServersView({
                   </div>
                 </div>
 
-                {(marketLoading ? [] : filteredMarketItems).map((item) => {
-                  const isInstalled = installedMarketServers.has(`${item.command}::${item.args.join(" ")}`);
+                {(marketLoading ? [] : displayedMarketItems).map((item) => {
+                  const isInstalled = item.installed;
                   const badge = getMarketMcpBadge(item);
                   return (
-                  <section key={item.id} className="rounded-xl border border-border/50 bg-card p-5 shadow-sm">
+                  <section
+                    key={item.id}
+                    onClick={() => setSelectedMarketItem(item)}
+                    className="cursor-pointer rounded-xl border border-border/50 bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-border/80 hover:shadow-md"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
                         <HugeiconsIcon icon={SparklesIcon} className="size-5 text-primary" />
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => void handleInstallMarketServer(item)}
-                        disabled={installingMarketId === item.id || isInstalled}
-                      >
-                        <HugeiconsIcon icon={Download01Icon} className="mr-1.5 size-4" />
-                        {isInstalled ? "Installed" : installingMarketId === item.id ? "Installing..." : "Install"}
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="size-8 p-0"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedMarketItem(item);
+                          }}
+                        >
+                          <HugeiconsIcon icon={InformationCircleIcon} className="size-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleInstallMarketServer(item);
+                          }}
+                          disabled={installingMarketId === item.id || isInstalled}
+                        >
+                          <HugeiconsIcon icon={Download01Icon} className="mr-1.5 size-4" />
+                          {isInstalled ? "Installed" : installingMarketId === item.id ? "Installing..." : "Install"}
+                        </Button>
+                      </div>
                     </div>
 
                     <h2 className="mt-4 text-base font-semibold text-foreground">{item.name}</h2>
@@ -379,6 +507,11 @@ export function McpServersView({
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
 
                     <div className="mt-4 flex flex-wrap gap-2">
+                      {item.category ? (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary">
+                          {item.category}
+                        </span>
+                      ) : null}
                       {item.tags.map((tag) => (
                         <span key={tag} className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                           {tag}
@@ -387,6 +520,7 @@ export function McpServersView({
                     </div>
 
                     <div className="mt-4 rounded-lg border border-border/60 bg-background/70 px-3 py-2 text-[11px] text-muted-foreground">
+                      <div className="break-all">Source: {item.source}</div>
                       <div>Command: {item.command}</div>
                       <div className="mt-1 break-all">Args: {item.args.join(" ")}</div>
                     </div>
@@ -394,9 +528,62 @@ export function McpServersView({
                 );
                 })}
 
-                {!marketLoading && filteredMarketItems.length === 0 ? (
+                {!marketLoading && marketError ? (
+                  <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-destructive/30 bg-destructive/5 px-6 py-16 text-center text-sm text-destructive">
+                    {marketError}
+                  </div>
+                ) : null}
+
+                {!marketLoading && !marketError && marketPageMeta.total === 0 ? (
                   <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-border/50 bg-background/60 px-6 py-16 text-center text-sm text-muted-foreground">
                     No MCP servers matched the current market filters.
+                  </div>
+                ) : null}
+
+                {!marketLoading && !marketError && marketPageMeta.total > 0 ? (
+                  <div className="md:col-span-2 xl:col-span-3 flex flex-col gap-3 rounded-xl border border-border/50 bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      第 {marketPageMeta.page} / {marketPageMeta.totalPages} 页，共 {marketPageMeta.total} 条
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setMarketPage((page) => Math.max(1, page - 1))}
+                          disabled={marketPageMeta.page === 1}
+                        >
+                          <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-1.5 size-3.5" />
+                          上一页
+                        </Button>
+                      {marketPagination.map((entry) =>
+                        typeof entry === "number" ? (
+                          <Button
+                            key={entry}
+                            type="button"
+                            variant={entry === marketPageMeta.page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setMarketPage(entry)}
+                          >
+                            {entry}
+                          </Button>
+                        ) : (
+                          <span key={entry} className="px-1 text-sm text-muted-foreground">
+                            ...
+                          </span>
+                        ),
+                      )}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setMarketPage((page) => Math.min(marketPageMeta.totalPages, page + 1))}
+                          disabled={marketPageMeta.page === marketPageMeta.totalPages}
+                        >
+                          下一页
+                          <HugeiconsIcon icon={ArrowRight01Icon} className="ml-1.5 size-3.5" />
+                        </Button>
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -636,6 +823,22 @@ export function McpServersView({
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}
       />
+
+      <AppDialog
+        open={selectedMarketItem !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedMarketItem(null);
+        }}
+        title={selectedMarketItem?.name || "MCP Details"}
+        description={selectedMarketItem?.description}
+        size="xl"
+        bodyClassName="p-0"
+        className="max-w-4xl"
+      >
+        {selectedMarketItem ? (
+          <McpMarketDetailView item={selectedMarketItem} projects={projects} onRefresh={onRefresh} embedded />
+        ) : null}
+      </AppDialog>
     </>
   );
 }

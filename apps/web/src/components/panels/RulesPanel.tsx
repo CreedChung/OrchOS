@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -210,18 +211,15 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
         className="relative flex h-full shrink-0 flex-col border-r border-border bg-background"
         style={{ width: Math.min(sidebarWidth, 288), maxWidth: "18rem" }}
       >
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex h-14 items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
             <HugeiconsIcon icon={Shield01Icon} className="size-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground">Rules</h2>
             <span className="text-xs text-muted-foreground">({rules.filter((r) => r.enabled).length} active)</span>
           </div>
-          <button
-            onClick={openCreateForm}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <HugeiconsIcon icon={Add01Icon} className="size-3" />
-          </button>
+          <Button variant="ghost" size="icon-sm" onClick={openCreateForm} title={m.add()}>
+            <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+          </Button>
         </div>
 
         <ScrollArea className="flex-1">
@@ -282,7 +280,7 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex h-14 items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
             <HugeiconsIcon icon={Shield01Icon} className="size-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground">
@@ -301,15 +299,7 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
                 <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
               </button>
             </div>
-          ) : (
-            <button
-              onClick={openCreateForm}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <HugeiconsIcon icon={Add01Icon} className="size-3" />
-              {m.new_rule()}
-            </button>
-          )}
+          ) : null}
         </div>
 
         {showCreate ? (

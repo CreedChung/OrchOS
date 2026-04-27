@@ -15,6 +15,7 @@ import {
   UnfoldMoreIcon,
   EyeIcon,
   ViewOffIcon,
+  Edit02Icon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
 import { AppDialog } from "@/components/ui/app-dialog";
@@ -426,6 +427,10 @@ export function CreationView({
               }
             }}
             onReloadMessages={() => loadMessages(activeConversation.id)}
+            onDeleteConversation={(id) => {
+              setConvToDelete(id);
+              setDeleteConfirmOpen(true);
+            }}
           />
         ) : !hasLoadedConversations && isLoadingConversations ? (
           <div className="flex h-full items-center justify-center">
@@ -477,6 +482,7 @@ interface ChatAreaProps {
   onSetDefaultAgent: (agentId?: string) => void;
   onSendMessage: (content: string) => Promise<void>;
   onReloadMessages?: () => Promise<void>;
+  onDeleteConversation: (id: string) => void;
 }
 
 function ChatArea({
@@ -491,6 +497,7 @@ function ChatArea({
   onUpdateConversation,
   onSetDefaultAgent,
   onSendMessage,
+  onDeleteConversation,
 }: ChatAreaProps) {
   const [input, setInput] = useState("");
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
@@ -503,6 +510,8 @@ function ChatArea({
   const [projectSpecSaving, setProjectSpecSaving] = useState(false);
   const [boardFilter, setBoardFilter] = useState<ConversationBoardFilter>("all");
   const [inputCollapsed, setInputCollapsed] = useState(false);
+  const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const specFileInputRef = useRef<HTMLInputElement>(null);
@@ -546,8 +555,10 @@ function ChatArea({
           projectName,
           updatedAt: item.updatedAt,
           column: resolveConversationBoardColumn(item, itemMessages, pendingConversationId),
+          hasUserMessage: !!firstUserMessage,
         };
       })
+      .filter((card) => card.hasUserMessage)
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
   }, [conversations, messagesByConversationId, pendingConversationId, projects]);
   const visibleMessages = useMemo(() => {
@@ -822,7 +833,7 @@ function ChatArea({
                     >
                       <SelectTrigger
                         size="sm"
-                        className="w-28 cursor-default justify-between px-2.5 text-xs [&>svg:last-child]:hidden"
+                        className="w-28 cursor-default justify-between rounded-full data-[size=sm]:rounded-full px-2.5 text-xs [&>svg:last-child]:hidden"
                       >
                         <span className="flex min-w-0 items-center gap-1.5">
                           {isConversationUpdating ? (
@@ -1017,59 +1028,108 @@ function ChatArea({
                       </span>
                     </div>
 
-                    <div className="flex-1 space-y-3 p-3">
+                    <div
+                      className={cn(
+                        "grid min-h-0 flex-1 content-start auto-rows-max gap-3 overflow-y-auto p-3",
+                        boardFilter === "all" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-5",
+                      )}
+                    >
                       {columnCards.map((card) => (
-                        <button
-                          key={card.conversation.id}
-                          type="button"
-                          onClick={() => setActiveConversationId(card.conversation.id)}
-                          className={cn(
-                            "group/card w-full rounded-xl text-left transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none",
-                          )}
-                        >
-                          <InfoCard
-                            showDismissButton={false}
-                            className={cn(
-                              "h-full border-border/40 bg-background/80 p-4 text-left shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] transition-all duration-200 group-hover/card:border-border/80 group-hover/card:bg-background group-hover/card:shadow-[0_4px_12px_0_rgba(0,0,0,0.08)]",
-                              activeConversationId === card.conversation.id && "border-border bg-background shadow-[0_2px_8px_0_rgba(0,0,0,0.06)]",
-                            )}
-                          >
-                            <InfoCardContent className="gap-3">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0 flex-1">
-                                  <InfoCardTitle className="mb-0 line-clamp-2 text-[13px] font-semibold leading-snug text-foreground/85 group-hover/card:text-foreground">
-                                    {card.title}
-                                  </InfoCardTitle>
-                                </div>
-                                <span className={cn("mt-0.5 size-2 shrink-0 rounded-full", column.dotColor)} />
-                              </div>
+                         <div
+                           key={card.conversation.id}
+                           role="button"
+                           tabIndex={0}
+                           onClick={() => setActiveConversationId(card.conversation.id)}
+                           onKeyDown={(e) => { if (e.key === "Enter") setActiveConversationId(card.conversation.id); }}
+                           className={cn(
+                             "group/card cursor-pointer rounded-xl text-left transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none",
+                           )}
+                         >
+                           <InfoCard
+                             showDismissButton={false}
+                             className={cn(
+                               "border-border/40 bg-background/80 p-4 text-left transition-all duration-200 group-hover/card:border-border/80 group-hover/card:bg-background",
+                               activeConversationId === card.conversation.id && "border-border bg-background",
+                             )}
+                           >
+                              <InfoCardContent className="gap-3">
+                                   <div className="min-w-0 flex-1 flex items-start justify-between gap-2">
+                                     <div className="min-w-0 flex-1">
+                                       {editingCardId === card.conversation.id ? (
+                                         <input
+                                           autoFocus
+                                           value={editingTitle}
+                                           onChange={(e) => setEditingTitle(e.target.value)}
+                                           onBlur={() => {
+                                             if (editingTitle.trim() && editingTitle.trim() !== card.title) {
+                                               queueConversationUpdate({ title: editingTitle.trim() });
+                                             }
+                                             setEditingCardId(null);
+                                           }}
+                                           onKeyDown={(e) => {
+                                             if (e.key === "Enter") {
+                                               e.preventDefault();
+                                               (e.target as HTMLInputElement).blur();
+                                             }
+                                             if (e.key === "Escape") {
+                                               setEditingCardId(null);
+                                             }
+                                           }}
+                                           className="w-full rounded border border-ring/50 bg-background px-1.5 py-0.5 text-[13px] font-semibold leading-snug text-foreground outline-none"
+                                         />
+                                       ) : (
+                                           <InfoCardTitle className="mb-0 line-clamp-2 text-[13px] font-semibold leading-snug text-foreground/85 group-hover/card:text-foreground">
+                                             {card.title}
+                                           </InfoCardTitle>
+                                       )}
+                                     </div>
+                                     <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/card:opacity-100">
+                                       <button
+                                         type="button"
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           setEditingCardId(card.conversation.id);
+                                           setEditingTitle(card.title);
+                                         }}
+                                         className="flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+                                       >
+                                         <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                                       </button>
+                                       <button
+                                         type="button"
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           onDeleteConversation(card.conversation.id);
+                                         }}
+                                         className="flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                       >
+                                         <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                                       </button>
+                                     </div>
+                                   </div>
 
-                              <div className="inline-flex w-fit items-center gap-1.5 rounded-md bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground/80">
-                                <HugeiconsIcon icon={Folder01Icon} className="size-3 text-amber-500/80" />
-                                {card.projectName || "临时会话"}
-                              </div>
+                                <InfoCardDescription className="line-clamp-2 text-xs leading-relaxed text-muted-foreground/60">
+                                  {card.summary}
+                                </InfoCardDescription>
 
-                              <InfoCardDescription className="line-clamp-2 text-xs leading-relaxed text-muted-foreground/60">
-                                {card.summary}
-                              </InfoCardDescription>
-
-                              <div className="flex items-center justify-between gap-2 border-t border-border/15 pt-2">
-                                <span className="text-[11px] tabular-nums text-muted-foreground/45">
-                                  {formatConversationTime(card.updatedAt)}
-                                </span>
-                                {activeConversationId === card.conversation.id ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary">
-                                    <span className="size-1.5 rounded-full bg-primary animate-pulse" />
-                                    当前查看
-                                  </span>
-                                ) : (
-                                  <span className="text-[11px] text-muted-foreground/40">{column.label}</span>
-                                )}
-                              </div>
-                            </InfoCardContent>
-                          </InfoCard>
-                        </button>
-                      ))}
+                                 <div className="flex items-center justify-between gap-2 border-t border-border/15 pt-2">
+                                   <div className="flex items-center gap-2">
+                                     <div className="inline-flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground/80">
+                                       <HugeiconsIcon icon={Folder01Icon} className="size-3 text-amber-500/80" />
+                                       {card.projectName || "临时会话"}
+                                     </div>
+                                     {activeConversationId !== card.conversation.id && (
+                                       <span className="text-[11px] text-muted-foreground/40">{column.label}</span>
+                                     )}
+                                   </div>
+                                   <span className="text-[11px] tabular-nums text-muted-foreground/45">
+                                     {formatConversationTime(card.updatedAt)}
+                                   </span>
+                                 </div>
+                              </InfoCardContent>
+                           </InfoCard>
+                         </div>
+                       ))}
 
                       {columnCards.length === 0 ? (
                         <div className="m-1 flex flex-col items-center justify-center rounded-xl px-3 py-10">

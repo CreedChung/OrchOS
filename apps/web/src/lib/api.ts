@@ -228,8 +228,27 @@ export interface SkillMarketItem {
   name: string;
   description: string;
   source: string;
+  browseUrl?: string;
+  installSource?: string;
+  category?: string;
+  installable: boolean;
+  installed: boolean;
+  owner?: string;
+  repo?: string;
+  stars?: number;
+  homepage?: string;
+  lastUpdatedAt?: string;
   sourceType: "official";
   tags: string[];
+}
+
+export interface SkillMarketResponse {
+  items: SkillMarketItem[];
+  tags: string[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
 }
 
 export interface McpMarketItem {
@@ -238,8 +257,25 @@ export interface McpMarketItem {
   description: string;
   command: string;
   args: string[];
+  source: string;
+  category?: string;
+  installed: boolean;
+  owner?: string;
+  repo?: string;
+  stars?: number;
+  homepage?: string;
+  lastUpdatedAt?: string;
   sourceType: "official";
   tags: string[];
+}
+
+export interface McpMarketResponse {
+  items: McpMarketItem[];
+  tags: string[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
 }
 
 export interface DetectedRuntime {
@@ -1233,6 +1269,11 @@ export const api = {
     const client = createEdenClient();
     return client.api["mcp-servers"]({ id }).toggle.post({ enabled }).then(assertData);
   },
+  getMcpMarketItem: async (id: string): Promise<McpMarketItem> => {
+    const client = createEdenClient();
+    const result = await client.api["mcp-servers"].market({ id }).get();
+    return assertData(result);
+  },
 
   // Skills
   listSkills: async (options?: {
@@ -1255,9 +1296,28 @@ export const api = {
     const result = await client.api.skills({ id }).get();
     return assertData(result);
   },
-  listSkillMarket: async (): Promise<SkillMarketItem[]> => {
+  listSkillMarket: async (options?: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    filter?: "all" | "official" | "installed";
+    tag?: string;
+  }): Promise<SkillMarketResponse> => {
     const client = createEdenClient();
-    const result = await client.api.skills.market.get();
+    const result = await client.api.skills.market.get({
+      query: {
+        page: options?.page ? String(options.page) : undefined,
+        pageSize: options?.pageSize ? String(options.pageSize) : undefined,
+        search: options?.search,
+        filter: options?.filter,
+        tag: options?.tag,
+      },
+    });
+    return assertData(result);
+  },
+  getSkillMarketItem: async (id: string): Promise<SkillMarketItem> => {
+    const client = createEdenClient();
+    const result = await client.api.skills.market({ id }).get();
     return assertData(result);
   },
   createSkill: (data: {
@@ -1300,9 +1360,23 @@ export const api = {
     allowHighRisk?: boolean;
   }): Promise<SkillRepositoryInstallResponse> =>
     createEdenClient().api.skills["install-repository"].post(data).then(assertData),
-  listMcpMarket: async (): Promise<McpMarketItem[]> => {
+  listMcpMarket: async (options?: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    filter?: "all" | "official" | "installed";
+    tag?: string;
+  }): Promise<McpMarketResponse> => {
     const client = createEdenClient();
-    const result = await client.api["mcp-servers"].market.get();
+    const result = await client.api["mcp-servers"].market.get({
+      query: {
+        page: options?.page ? String(options.page) : undefined,
+        pageSize: options?.pageSize ? String(options.pageSize) : undefined,
+        search: options?.search,
+        filter: options?.filter,
+        tag: options?.tag,
+      },
+    });
     return assertData(result);
   },
 

@@ -1,34 +1,20 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useUser } from "@clerk/clerk-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01Icon, Robot02Icon, Alert01Icon, InformationCircleIcon } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
-import {
-  Alert01Icon,
-  ArrowRight01Icon,
-  ArrowExpand01Icon,
-  ArrowShrink01Icon,
-  InformationCircleIcon,
-  Robot02Icon,
-} from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
-import type { ActivityEntry, Goal, Problem, Project } from "@/lib/types";
+import { useDashboard } from "@/lib/dashboard-context";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
 import { MessageBubble, mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type { Goal, Problem } from "@/lib/types";
 
-interface ActivityPanelProps {
-  activities: ActivityEntry[];
-  goals: Goal[];
-  projects: Project[];
-  problems: Problem[];
-  collapsed: boolean;
-  expanded?: boolean;
-  onCollapse?: () => void;
-  activeView: "inbox" | "creation" | "agents" | "mcp-servers" | "skills" | "projects" | "observability";
-}
+export const Route = createFileRoute("/dashboard/activity")({ component: ActivityPage });
 
 function readThreadTone(status: Goal["status"]) {
   if (status === "completed") return "bg-emerald-500";
@@ -45,7 +31,6 @@ function formatTime(value?: string) {
 
 function getProjectTaskGroups(goals: Goal[], activeProjectId?: string) {
   const scopedGoals = activeProjectId ? goals.filter((goal) => goal.projectId === activeProjectId) : goals;
-
   return {
     current: scopedGoals.filter((goal) => goal.status === "active").slice(0, 6),
     completed: scopedGoals.filter((goal) => goal.status === "completed").slice(0, 4),
@@ -60,13 +45,12 @@ function getAttentionItems(problems: Problem[], goals: Goal[], activeProjectId?:
         return goal?.projectId === activeProjectId;
       })
     : problems;
-
   return scopedProblems.filter((problem) => problem.status === "open").slice(0, 8);
 }
 
 function SectionHeader({ title, meta }: { title: string; meta?: string }) {
   return (
-    <div className="mb-2 flex items-center gap-2 px-3">
+    <div className="mb-2 flex items-center gap-2 px-6">
       <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
         {title}
       </div>
@@ -76,13 +60,11 @@ function SectionHeader({ title, meta }: { title: string; meta?: string }) {
   );
 }
 
-export function ActivityPanel({ activities, goals, projects, problems, collapsed, expanded, onCollapse, activeView }: ActivityPanelProps) {
+function ActivityPage() {
+  const navigate = useNavigate();
   const { user } = useUser();
+  const { activities, goals, projects, problems } = useDashboard();
   const { conversations, activeConversationId, pendingConversationId, flowDraftByConversationId, messagesByConversationId } = useConversationStore();
-
-  if (collapsed) {
-    return null;
-  }
 
   const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) ?? null;
   const activeProjectId = activeConversation?.projectId;
@@ -124,32 +106,27 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
     projectGroups.current.length > 0 || projectGroups.paused.length > 0 || projectGroups.completed.length > 0;
   const panelContext = activeProject
     ? `${activeProject.name} · ${m.project()}`
-    : activeView === "creation"
-      ? "当前线程与项目态势"
-      : "当前页面上下文态势";
+    : "当前线程与项目态势";
 
   return (
-    <aside className={cn("flex h-full flex-col border-l border-border bg-sidebar", expanded ? "flex-1" : "w-80")}>
+    <div className="flex h-full flex-col bg-sidebar">
       <div className="flex h-11 items-center gap-2 border-b border-border bg-sidebar px-4">
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => navigate({ to: "/dashboard/creation" })}
+        >
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="size-3.5" />
+        </Button>
         <div className="truncate text-sm font-medium text-foreground">工作面板</div>
         <div className="truncate text-xs text-muted-foreground">{panelContext}</div>
-        <div className="ml-auto shrink-0">
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={onCollapse}
-            title={expanded ? "收起面板" : "展开为独立页面"}
-          >
-            <HugeiconsIcon icon={expanded ? ArrowShrink01Icon : ArrowExpand01Icon} className="size-3.5" />
-          </Button>
-        </div>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className={cn("space-y-4 py-3", expanded && "mx-auto max-w-3xl")}>
-          {activeView === "creation" && (flowMessages.length > 0 || showPendingAssistantReply) ? (
+        <div className="mx-auto max-w-3xl space-y-6 py-4">
+          {flowMessages.length > 0 || showPendingAssistantReply ? (
             <section>
-              <div className="space-y-4 px-3">
+              <div className="space-y-4 px-6">
                 {flowMessages.map((message) => (
                   <MessageBubble key={message.id} msg={message as UIMessage} userImageUrl={user?.imageUrl} />
                 ))}
@@ -161,7 +138,7 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
           {threadGoals.length > 0 ? (
             <section>
               <SectionHeader title="Current Thread" meta={`${threadGoals.length} goals`} />
-              <div className="space-y-2 px-3">
+              <div className="space-y-2 px-6">
                 {threadGoals.map((goal) => (
                   <div key={goal.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
                     <div className="flex items-center gap-2">
@@ -184,7 +161,7 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
                 title="Project Tasks"
                 meta={activeProject ? activeProject.name : projects.length > 0 ? `${projects.length} projects` : undefined}
               />
-              <div className="space-y-3 px-3">
+              <div className="space-y-3 px-6">
                 {projectGroups.current.length > 0 ? (
                   <div>
                     <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-sky-600/80">进行中</div>
@@ -233,7 +210,7 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
           {attentionItems.length > 0 ? (
             <section>
               <SectionHeader title="Needs Attention" meta={`${attentionItems.length} open`} />
-              <div className="space-y-2 px-3">
+              <div className="space-y-2 px-6">
                 {attentionItems.map((problem) => (
                   <div key={problem.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
                     <div className="flex items-start gap-2">
@@ -260,13 +237,13 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
           {recentActivities.length > 0 ? (
             <section>
               <SectionHeader title="Recent Activity" meta={`${recentActivities.length} items`} />
-              <div className="space-y-2 px-3">
+              <div className="space-y-2 px-6">
                 {recentActivities.map((activity) => (
                   <div key={activity.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
                     <div className="flex items-center gap-2 text-[11px] text-muted-foreground/70">
                       <HugeiconsIcon icon={Robot02Icon} className="size-3 text-primary/70" />
                       <span className="font-medium text-foreground/80">{activity.agent}</span>
-                      <HugeiconsIcon icon={ArrowRight01Icon} className="size-2.5" />
+                      <HugeiconsIcon icon={ArrowLeft01Icon} className="size-2.5" />
                       <span>{activity.action}</span>
                     </div>
                     {activity.detail ? (
@@ -284,6 +261,6 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
           ) : null}
         </div>
       </ScrollArea>
-    </aside>
+    </div>
   );
 }

@@ -25,6 +25,7 @@ interface UIState {
 
   // Panel states
   activityPanelOpen: boolean;
+  activityExpanded: boolean;
   sidebarCollapsed: boolean;
   creationSidebarCollapsed: boolean;
   creationSidebarWidth: number;
@@ -48,6 +49,8 @@ interface UIActions {
   setCapabilityViewMode: (mode: CapabilityViewMode) => void;
   setActivityPanelOpen: (open: boolean) => void;
   toggleActivityPanel: () => void;
+  setActivityExpanded: (expanded: boolean) => void;
+  toggleActivityExpanded: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebar: () => void;
   setCreationSidebarCollapsed: (collapsed: boolean) => void;
@@ -85,6 +88,7 @@ export const useUIStore = create<UIState & UIActions>()(
 
       // Panel states
       activityPanelOpen: false,
+      activityExpanded: false,
       sidebarCollapsed: false,
       creationSidebarCollapsed: false,
       creationSidebarWidth: 288,
@@ -106,6 +110,8 @@ export const useUIStore = create<UIState & UIActions>()(
       setCapabilityViewMode: (mode) => set({ capabilityViewMode: mode }),
       setActivityPanelOpen: (open) => set({ activityPanelOpen: open }),
       toggleActivityPanel: () => set((s) => ({ activityPanelOpen: !s.activityPanelOpen })),
+      setActivityExpanded: (expanded) => set({ activityExpanded: expanded }),
+      toggleActivityExpanded: () => set((s) => ({ activityExpanded: !s.activityExpanded })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setCreationSidebarCollapsed: (collapsed) => set({ creationSidebarCollapsed: collapsed }),

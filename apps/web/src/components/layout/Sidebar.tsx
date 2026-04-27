@@ -169,8 +169,12 @@ export function Sidebar({
       >
         {/* Organization Selector */}
         <div className={cn("flex h-11 items-center border-b border-border", collapsed ? "justify-center px-2" : "px-4")}>
-          {collapsed ? null : (
-            <>
+          <div
+            className={cn(
+              "flex min-w-0 flex-1 items-center gap-2 transition-opacity duration-150",
+              collapsed ? "opacity-0 delay-0 pointer-events-none absolute" : "opacity-100 delay-100",
+            )}
+          >
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
@@ -217,8 +221,7 @@ export function Sidebar({
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
-            </>
-          )}
+          </div>
           <button
             onClick={onToggleCollapse}
             className={cn(
@@ -232,73 +235,54 @@ export function Sidebar({
 
         {/* Navigation Sections */}
         <ScrollArea className="flex-1">
-          <div className={cn("space-y-1 pb-2 pt-2", collapsed ? "px-1 py-1" : "px-2")}>
+          <div
+            className={cn(
+              "space-y-1 pb-2 pt-2",
+              collapsed ? "flex flex-col items-center px-1 py-1" : "px-2",
+            )}
+          >
             {sections.map((section, si) => (
-              <div key={si} className="space-y-0.5">
-                {!collapsed && section.label && (
-                  <span className="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <div key={si} className={cn("space-y-0.5", collapsed && "flex w-full flex-col items-center")}>
+                {section.label && (
+                  <span
+                    className={cn(
+                      "block overflow-hidden px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 transition-opacity duration-150",
+                      collapsed ? "opacity-0 delay-0 h-0" : "opacity-100 delay-150 h-auto",
+                    )}
+                  >
                     {section.label}
                   </span>
                 )}
                 {section.items.map(
                   ({ id, to, icon: Icon, label, shortcut, badge, badgeCritical }) => {
                     const isActive = activeView === id;
-                    if (collapsed) {
-                      return (
-                        <Tooltip key={id}>
-                          <TooltipTrigger
-                            render={(props) => (
-                              <Link
-                                to={to}
-                                {...props}
-                                className={cn(
-                                  "mx-auto flex size-10 items-center justify-center rounded-md transition-colors",
-                                  isActive
-                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                                )}
-                              >
-                                <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
-                              </Link>
-                            )}
-                          />
-                          <TooltipContent side="right">
-                            <span className="flex items-center gap-2">
-                              {label}
-                              {badge != null && badge > 0 && (
-                                <span
-                                  className={cn(
-                                    "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-                                    badgeCritical
-                                      ? "bg-red-500/10 text-red-600 dark:text-red-400"
-                                      : "bg-muted text-muted-foreground",
-                                  )}
-                                >
-                                  {badge}
-                                </span>
-                              )}
-                            </span>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    }
-                    return (
+                    const navItem = (
                       <Link
                         key={id}
                         to={to}
                         className={cn(
-                          "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                          "flex items-center gap-2.5 rounded-md transition-colors",
+                          collapsed
+                            ? "mx-auto justify-center size-10 px-0"
+                            : "w-full px-2.5 py-2 text-sm",
                           isActive
                             ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                             : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                         )}
                       >
                         <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
-                        <span className="flex-1 text-left">{label}</span>
-                        {shortcut && (
+                        <span
+                          className={cn(
+                            "flex-1 text-left overflow-hidden transition-opacity duration-150",
+                            collapsed ? "opacity-0 delay-0 w-0" : "opacity-100 delay-150 w-auto",
+                          )}
+                        >
+                          {label}
+                        </span>
+                        {!collapsed && shortcut && (
                           <span
                             className={cn(
-                              "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums",
+                              "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-opacity duration-150 opacity-100 delay-150",
                               isActive
                                 ? "border-sidebar-foreground/15 bg-sidebar-background/60 text-sidebar-foreground/60"
                                 : "border-border/60 bg-background/70 text-muted-foreground",
@@ -312,7 +296,8 @@ export function Sidebar({
                         {badge != null && badge > 0 && (
                           <span
                             className={cn(
-                              "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                              "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums transition-opacity duration-150",
+                              collapsed ? "opacity-0 delay-0 h-0 overflow-hidden" : "opacity-100 delay-150",
                               badgeCritical
                                 ? "bg-red-500/10 text-red-600 dark:text-red-400"
                                 : "bg-muted text-muted-foreground",
@@ -323,6 +308,15 @@ export function Sidebar({
                         )}
                       </Link>
                     );
+                    if (collapsed) {
+                      return (
+                        <Tooltip key={id}>
+                          <TooltipTrigger render={(_props) => navItem} />
+                          <TooltipContent side="right">{label}</TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+                    return navItem;
                   },
                 )}
               </div>
@@ -330,9 +324,13 @@ export function Sidebar({
           </div>
         </ScrollArea>
 
-        {/* Info Card - hidden when collapsed */}
-        {!collapsed && (
-          <div className="px-3 pb-2">
+        {/* Info Card */}
+        <div
+          className={cn(
+            "px-3 pb-2 transition-opacity duration-150",
+            collapsed ? "opacity-0 delay-0 h-0 overflow-hidden pointer-events-none" : "opacity-100 delay-150",
+          )}
+        >
             <InfoCard storageKey="sidebar-welcome" dismissType="forever">
               <InfoCardContent>
                 <InfoCardTitle>{m.welcome_to_orchos()}</InfoCardTitle>
@@ -353,7 +351,6 @@ export function Sidebar({
               </InfoCardFooter>
             </InfoCard>
           </div>
-        )}
 
         {/* Bottom: User Profile */}
         <div className={cn("border-t border-border", collapsed ? "p-1" : "p-2")}>

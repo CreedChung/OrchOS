@@ -90,7 +90,7 @@ export function Toolbar({
   onAgentModelFilterChange,
   agentModelCounts,
   onRefresh,
-  onOpenCapabilityMarket,
+  onOpenCapabilityMarket: _onOpenCapabilityMarket,
   capabilityViewMode = "mine",
   onCapabilityViewModeChange,
 }: ToolbarProps) {
@@ -232,16 +232,6 @@ export function Toolbar({
             ) : (
               <HugeiconsIcon icon={ArrowReloadHorizontalIcon} className="size-3.5" />
             )}
-          </Button>
-        )}
-        {activeView === "skills" && onOpenCapabilityMarket && (
-          <Button
-            variant="outline"
-            size="icon-sm"
-            onClick={onOpenCapabilityMarket}
-            title={m.skills()}
-          >
-            <HugeiconsIcon icon={Wrench01Icon} className="size-3.5" />
           </Button>
         )}
         <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5 sm:px-2.5 w-full max-w-xs">
