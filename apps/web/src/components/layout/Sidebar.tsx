@@ -97,6 +97,7 @@ export function Sidebar({
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
+  const [showExpandedContent, setShowExpandedContent] = useState(!collapsed);
   const openInboxCount = problems.filter((p) => p.status === "open" && isInboxItem(p)).length;
   const criticalCount = problems.filter(
     (p) => p.status === "open" && isInboxItem(p) && p.priority === "critical",
@@ -105,6 +106,19 @@ export function Sidebar({
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad|iPod/.test(window.navigator.platform));
   }, []);
+
+  useEffect(() => {
+    if (collapsed) {
+      setShowExpandedContent(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowExpandedContent(true);
+    }, 220);
+
+    return () => window.clearTimeout(timer);
+  }, [collapsed]);
 
   const sections: SidebarSection[] = [
     {
@@ -161,22 +175,24 @@ export function Sidebar({
 
   return (
     <TooltipProvider delay={0}>
-      <aside
-        className={cn(
-          "flex h-full flex-col border-r border-border bg-sidebar transition-[width] duration-200",
-          collapsed ? "w-14" : "w-60",
-        )}
-      >
+        <aside
+          className={cn(
+            "flex h-full flex-col border-r border-border bg-sidebar transition-[width] duration-300 ease-out",
+            collapsed ? "w-14" : "w-60",
+          )}
+        >
         {/* Organization Selector */}
-        <div className={cn("flex h-11 items-center border-b border-border", collapsed ? "justify-center px-2" : "px-4")}>
+        <div className="relative flex h-11 items-center border-b border-border px-2">
           <div
             className={cn(
-              "flex min-w-0 flex-1 items-center gap-2 transition-opacity duration-150",
-              collapsed ? "opacity-0 delay-0 pointer-events-none absolute" : "opacity-100 delay-100",
+              "flex min-w-0 flex-1 items-center gap-2 pr-11 transition-opacity duration-300 ease-out",
+              !showExpandedContent
+                ? "pointer-events-none absolute opacity-0 delay-0"
+                : "opacity-100 delay-180",
             )}
           >
               <DropdownMenu modal={false}>
-                <DropdownMenuTrigger className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+                <DropdownMenuTrigger className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-sm font-medium text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
                     <HugeiconsIcon icon={Target01Icon} className="size-3.5" />
                   </span>
@@ -205,7 +221,7 @@ export function Sidebar({
               </DropdownMenu>
               {activeOrganizationId && (
                 <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger className="ml-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+                  <DropdownMenuTrigger className="ml-1 flex size-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
                     <HugeiconsIcon icon={MoreHorizontal} className="size-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-36">
@@ -225,8 +241,7 @@ export function Sidebar({
           <button
             onClick={onToggleCollapse}
             className={cn(
-              "shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer",
-              !collapsed && "ml-1",
+              "absolute right-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer",
             )}
           >
             <HugeiconsIcon icon={collapsed ? SidebarRight01Icon : SidebarLeft01Icon} className="size-4" />
@@ -237,19 +252,22 @@ export function Sidebar({
         <ScrollArea className="flex-1">
           <div
             className={cn(
-              "space-y-1 pb-2 pt-2",
-              collapsed ? "flex flex-col items-center px-1 py-1" : "px-2",
+              "space-y-1 px-2 pb-2 pt-2",
+              collapsed && "flex flex-col items-center",
             )}
           >
             {sections.map((section, si) => (
               <div key={si} className={cn("space-y-0.5", collapsed && "flex w-full flex-col items-center")}>
                 {section.label && (
-                  <span
-                    className={cn(
-                      "block overflow-hidden px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 transition-opacity duration-150",
-                      collapsed ? "opacity-0 delay-0 h-0" : "opacity-100 delay-150 h-auto",
-                    )}
-                  >
+                    <span
+                      className={cn(
+                        "block h-5 overflow-hidden px-2.5 text-[10px] leading-5 font-semibold uppercase tracking-wider text-muted-foreground/60 transition-opacity duration-300 ease-out",
+                        !showExpandedContent
+                          ? "opacity-0 delay-0"
+                          : "opacity-100 delay-180",
+                      )}
+                      aria-hidden={!showExpandedContent}
+                    >
                     {section.label}
                   </span>
                 )}
@@ -261,10 +279,10 @@ export function Sidebar({
                         key={id}
                         to={to}
                         className={cn(
-                          "flex items-center gap-2.5 rounded-md transition-colors",
+                          "flex h-10 items-center rounded-md transition-colors",
                           collapsed
-                            ? "mx-auto justify-center size-10 px-0"
-                            : "w-full px-2.5 py-2 text-sm",
+                            ? "mx-auto size-10 justify-center gap-0 px-0"
+                            : "w-full gap-2.5 px-2.5 text-sm",
                           isActive
                             ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                             : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
@@ -273,16 +291,18 @@ export function Sidebar({
                         <HugeiconsIcon icon={Icon} className="size-4 shrink-0" />
                         <span
                           className={cn(
-                            "flex-1 text-left overflow-hidden transition-opacity duration-150",
-                            collapsed ? "opacity-0 delay-0 w-0" : "opacity-100 delay-150 w-auto",
+                            "text-left overflow-hidden whitespace-nowrap transition-[opacity,width] duration-300 ease-out",
+                            !showExpandedContent
+                              ? "w-0 shrink-0 opacity-0 delay-0"
+                              : "min-w-0 flex-1 opacity-100 delay-180",
                           )}
                         >
                           {label}
                         </span>
-                        {!collapsed && shortcut && (
+                        {showExpandedContent && shortcut && (
                           <span
                             className={cn(
-                              "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-opacity duration-150 opacity-100 delay-150",
+                              "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-opacity duration-300 ease-out opacity-100 delay-220",
                               isActive
                                 ? "border-sidebar-foreground/15 bg-sidebar-background/60 text-sidebar-foreground/60"
                                 : "border-border/60 bg-background/70 text-muted-foreground",
@@ -296,8 +316,10 @@ export function Sidebar({
                         {badge != null && badge > 0 && (
                           <span
                             className={cn(
-                              "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums transition-opacity duration-150",
-                              collapsed ? "opacity-0 delay-0 h-0 overflow-hidden" : "opacity-100 delay-150",
+                              "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums overflow-hidden whitespace-nowrap transition-[opacity,width,padding,margin] duration-300 ease-out",
+                              !showExpandedContent
+                                ? "w-0 shrink-0 px-0 py-0 opacity-0 delay-0"
+                                : "opacity-100 delay-220",
                               badgeCritical
                                 ? "bg-red-500/10 text-red-600 dark:text-red-400"
                                 : "bg-muted text-muted-foreground",
@@ -311,7 +333,9 @@ export function Sidebar({
                     if (collapsed) {
                       return (
                         <Tooltip key={id}>
-                          <TooltipTrigger render={(_props) => navItem} />
+                          <TooltipTrigger
+                            render={(_props) => <div className="flex w-full justify-center">{navItem}</div>}
+                          />
                           <TooltipContent side="right">{label}</TooltipContent>
                         </Tooltip>
                       );
@@ -325,12 +349,12 @@ export function Sidebar({
         </ScrollArea>
 
         {/* Info Card */}
-        <div
-          className={cn(
-            "px-3 pb-2 transition-opacity duration-150",
-            collapsed ? "opacity-0 delay-0 h-0 overflow-hidden pointer-events-none" : "opacity-100 delay-150",
-          )}
-        >
+          <div
+            className={cn(
+              "px-3 pb-2 transition-opacity duration-200 ease-out",
+              !showExpandedContent ? "hidden pointer-events-none opacity-0" : "block opacity-100 delay-300",
+            )}
+          >
             <InfoCard storageKey="sidebar-welcome" dismissType="forever">
               <InfoCardContent>
                 <InfoCardTitle>{m.welcome_to_orchos()}</InfoCardTitle>
@@ -353,8 +377,12 @@ export function Sidebar({
           </div>
 
         {/* Bottom: User Profile */}
-        <div className={cn("border-t border-border", collapsed ? "p-1" : "p-2")}>
-          <ClerkUserProfile onOpenSettings={onOpenSettings} collapsed={collapsed} />
+        <div className={cn("border-t border-border", collapsed ? "flex justify-center p-2" : "p-2")}>
+          <ClerkUserProfile
+            onOpenSettings={onOpenSettings}
+            collapsed={collapsed}
+            showExpandedContent={showExpandedContent}
+          />
         </div>
 
         <RenameDialog
@@ -385,12 +413,20 @@ export function Sidebar({
   );
 }
 
-function ClerkUserProfile({ onOpenSettings, collapsed }: { onOpenSettings: () => void; collapsed: boolean }) {
+function ClerkUserProfile({
+  onOpenSettings,
+  collapsed,
+  showExpandedContent,
+}: {
+  onOpenSettings: () => void;
+  collapsed: boolean;
+  showExpandedContent: boolean;
+}) {
   const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim();
   const [profileOpen, setProfileOpen] = useState(false);
 
   if (!isClerkConfigured) {
-    if (collapsed) {
+    if (!showExpandedContent) {
       return (
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger className="flex size-10 items-center justify-center rounded-md transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
@@ -420,7 +456,7 @@ function ClerkUserProfile({ onOpenSettings, collapsed }: { onOpenSettings: () =>
     return (
       <>
         <DropdownMenu modal={false}>
-          <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+          <DropdownMenuTrigger className="flex h-10 w-full items-center gap-2.5 rounded-md px-2.5 text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
               <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
             </div>
@@ -457,16 +493,30 @@ function ClerkUserProfile({ onOpenSettings, collapsed }: { onOpenSettings: () =>
     );
   }
 
-  return <ClerkAuthenticatedProfile onOpenSettings={onOpenSettings} collapsed={collapsed} />;
+  return (
+    <ClerkAuthenticatedProfile
+      onOpenSettings={onOpenSettings}
+      collapsed={collapsed}
+      showExpandedContent={showExpandedContent}
+    />
+  );
 }
 
-function ClerkAuthenticatedProfile({ onOpenSettings, collapsed }: { onOpenSettings: () => void; collapsed: boolean }) {
+function ClerkAuthenticatedProfile({
+  onOpenSettings,
+  collapsed,
+  showExpandedContent,
+}: {
+  onOpenSettings: () => void;
+  collapsed: boolean;
+  showExpandedContent: boolean;
+}) {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const [profileOpen, setProfileOpen] = useState(false);
 
   if (!isLoaded) {
-    if (collapsed) {
+    if (!showExpandedContent) {
       return (
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger className="flex size-10 items-center justify-center rounded-md transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
@@ -496,7 +546,7 @@ function ClerkAuthenticatedProfile({ onOpenSettings, collapsed }: { onOpenSettin
 
     return (
       <DropdownMenu modal={false}>
-        <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+        <DropdownMenuTrigger className="flex h-10 w-full items-center gap-2.5 rounded-md px-2.5 text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
           <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
           </div>
@@ -538,10 +588,10 @@ function ClerkAuthenticatedProfile({ onOpenSettings, collapsed }: { onOpenSettin
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger
           className={cn(
-            "rounded-md text-left transition-colors hover:bg-sidebar-accent/50 cursor-pointer",
-            collapsed
+            "h-10 rounded-md text-left transition-colors hover:bg-sidebar-accent/50 cursor-pointer",
+            !showExpandedContent
               ? "flex size-10 items-center justify-center"
-              : "flex w-full items-center gap-2.5 px-2.5 py-2",
+              : "flex w-full items-center gap-2.5 px-2.5",
           )}
         >
           {user.imageUrl ? (
@@ -555,7 +605,7 @@ function ClerkAuthenticatedProfile({ onOpenSettings, collapsed }: { onOpenSettin
               {initials}
             </div>
           )}
-          {!collapsed && (
+          {showExpandedContent && (
             <>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-sidebar-foreground">{displayName}</p>
@@ -572,9 +622,9 @@ function ClerkAuthenticatedProfile({ onOpenSettings, collapsed }: { onOpenSettin
           side="top"
           align="start"
           sideOffset={8}
-          className={cn("mb-1", collapsed ? "min-w-48" : "min-w-[var(--radix-dropdown-menu-trigger-width)]")}
+          className={cn("mb-1", !showExpandedContent ? "min-w-48" : "min-w-[var(--radix-dropdown-menu-trigger-width)]")}
         >
-          {collapsed && (
+          {!showExpandedContent && (
             <>
               <div className="flex items-center gap-2.5 px-2 py-2">
                 {user.imageUrl ? (

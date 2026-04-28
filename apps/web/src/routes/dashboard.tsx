@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { createFileRoute, Outlet, useLocation, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -113,7 +113,6 @@ function DashboardWrapper() {
 
 function DashboardLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
   const dashboardPath = getDashboardEntryPath(location.pathname);
   const activeView = getViewFromPath(dashboardPath);
   const [showMorphPanel, setShowMorphPanel] = useState(false);
@@ -232,22 +231,20 @@ function DashboardLayout() {
         />
         <div className="flex h-screen flex-col overflow-hidden bg-background">
           <div className="flex flex-1 overflow-hidden">
+            <Sidebar
+              organizations={organizations}
+              problems={problems}
+              activeOrganizationId={activeOrganizationId}
+              activeView={activeView}
+              collapsed={sidebarCollapsed}
+              onOpenSettings={() => setShowSettingsDialog(true)}
+              onOrganizationChange={setActiveOrganizationId}
+              onOrganizationRename={handleOrganizationRename}
+              onOrganizationDelete={handleOrganizationDelete}
+              onToggleCollapse={toggleSidebar}
+            />
             {activityExpanded ? null : (
-              <Sidebar
-                organizations={organizations}
-                problems={problems}
-                activeOrganizationId={activeOrganizationId}
-                activeView={activeView}
-                collapsed={sidebarCollapsed}
-                onOpenSettings={() => setShowSettingsDialog(true)}
-                onOrganizationChange={setActiveOrganizationId}
-                onOrganizationRename={handleOrganizationRename}
-                onOrganizationDelete={handleOrganizationDelete}
-                onToggleCollapse={toggleSidebar}
-              />
-            )}
-            <div className="flex flex-1 flex-col overflow-hidden">
-              {activityExpanded ? null : (
+              <div className="flex flex-1 flex-col overflow-hidden">
                 <Toolbar
                   activeView={activeView}
                   loading={loading}
@@ -264,11 +261,10 @@ function DashboardLayout() {
                   onAgentModelFilterChange={setAgentModelFilter}
                   agentModelCounts={agentModelCounts}
                   onRefresh={refreshAll}
-                  onOpenCapabilityMarket={() => navigate({ to: "/dashboard/skills" })}
                 />
-              )}
-              {activityExpanded ? null : <Outlet />}
-            </div>
+                <Outlet />
+              </div>
+            )}
             <ActivityPanel
               activities={activities}
               goals={goals}

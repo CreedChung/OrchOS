@@ -212,6 +212,18 @@ export function CreationView({
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
     [conversations, activeConversationId],
   );
+  const draftConversation = useMemo<Conversation>(
+    () => ({
+      id: "__draft__",
+      title: "",
+      archived: false,
+      deleted: false,
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
+    }),
+    [],
+  );
+  const displayConversation = activeConversation ?? draftConversation;
 
   const availableConversations = useMemo(() => conversations.filter((conversation) => !conversation.deleted), [conversations]);
   useEffect(() => {
@@ -281,6 +293,13 @@ export function CreationView({
     }
   }, [convToDelete, deleteConversation]);
 
+  const handleDeleteConfirmOpenChange = useCallback((open: boolean) => {
+    setDeleteConfirmOpen(open);
+    if (!open) {
+      setConvToDelete(null);
+    }
+  }, []);
+
   const handleUpdateConversation = useCallback(
     async (
       id: string,
@@ -302,12 +321,29 @@ export function CreationView({
     [updateConversation],
   );
 
+  const handleCreateConversation = useCallback(
+    async (data: { projectId?: string; agentId?: string; runtimeId?: string }) => {
+      try {
+        return await createConversation(data);
+      } catch (err) {
+        console.error("Failed to create conversation:", err);
+        throw err;
+      }
+    },
+    [createConversation],
+  );
+
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="flex flex-1 flex-col overflow-hidden">
-        {activeConversation ? (
+        {!hasLoadedConversations && isLoadingConversations ? (
+          <div className="flex h-full items-center justify-center">
+            <Spinner className="text-muted-foreground/50" />
+          </div>
+        ) : (
           <ChatArea
-            conversation={activeConversation}
+            conversation={displayConversation}
+            isDraftConversation={!activeConversation}
             messages={uiMessages}
             sending={sending}
             chatError={chatError}
@@ -316,6 +352,7 @@ export function CreationView({
             projects={projects}
             defaultAgentId={settings?.defaultAgentId}
             onUpdateConversation={handleUpdateConversation}
+            onCreateConversation={handleCreateConversation}
             onSetDefaultAgent={(agentId) => {
               const selectedAgent = agents.find((agent) => agent.id === agentId);
               void api.updateSettings({
@@ -325,12 +362,15 @@ export function CreationView({
                 onSettingsChange(updated);
               });
             }}
-            onSendMessage={async (content) => {
+            onSendMessage={async (content, targetConversation) => {
+              const conversation = targetConversation ?? activeConversation;
+              if (!conversation) return;
+
               setSending(true);
               setChatError(null);
-              setConversationPending(activeConversation.id);
-              setConversationFlowDraft(activeConversation.id, {
-                id: `draft-${activeConversation.id}`,
+              setConversationPending(conversation.id);
+              setConversationFlowDraft(conversation.id, {
+                id: `draft-${conversation.id}`,
                 role: "assistant",
                 content: "",
                 trace: [
@@ -338,25 +378,25 @@ export function CreationView({
                     kind: "thought",
                     text: "正在分析当前项目上下文并拆解执行任务。",
                   },
-                  {
-                    kind: "tool",
-                    toolName: "dispatch_command",
-                    toolCallId: `dispatch-${activeConversation.id}`,
-                    state: "input-streaming",
-                    input: {
-                      instruction: content,
-                      runtimeId: activeConversation.runtimeId,
+                    {
+                      kind: "tool",
+                      toolName: "dispatch_command",
+                      toolCallId: `dispatch-${conversation.id}`,
+                      state: "input-streaming",
+                      input: {
+                        instruction: content,
+                        runtimeId: conversation.runtimeId,
+                      },
                     },
-                  },
-                ],
-              });
-              try {
-                const result = await api.createGoalsFromConversation(activeConversation.id, {
-                  instruction: content,
-                  runtimeId: activeConversation.runtimeId,
+                  ],
                 });
-                setConversationFlowDraft(activeConversation.id, {
-                  id: `draft-${activeConversation.id}`,
+              try {
+                const result = await api.createGoalsFromConversation(conversation.id, {
+                  instruction: content,
+                  runtimeId: conversation.runtimeId,
+                });
+                setConversationFlowDraft(conversation.id, {
+                  id: `draft-${conversation.id}`,
                   role: "assistant",
                   content: result.needsClarification
                     ? "需要更多信息后才能继续执行。"
@@ -373,11 +413,11 @@ export function CreationView({
                     {
                       kind: "tool",
                       toolName: "dispatch_command",
-                      toolCallId: `dispatch-${activeConversation.id}`,
+                      toolCallId: `dispatch-${conversation.id}`,
                       state: "output-available",
                       input: {
                         instruction: content,
-                        runtimeId: activeConversation.runtimeId,
+                        runtimeId: conversation.runtimeId,
                       },
                       output: {
                         commandId: result.command.id,
@@ -388,16 +428,16 @@ export function CreationView({
                     },
                   ],
                 });
-                await loadMessages(activeConversation.id, { force: true });
-                if (!activeConversation.title && messages.length === 0) {
-                  await handleUpdateConversation(activeConversation.id, {
+                await loadMessages(conversation.id, { force: true });
+                if (!conversation.title && messages.length === 0) {
+                  await handleUpdateConversation(conversation.id, {
                     title: content.slice(0, 60),
                   });
                 }
                 return;
               } catch (err) {
-                setConversationFlowDraft(activeConversation.id, {
-                  id: `draft-${activeConversation.id}`,
+                setConversationFlowDraft(conversation.id, {
+                  id: `draft-${conversation.id}`,
                   role: "assistant",
                   content: err instanceof Error ? err.message : "Failed to send message",
                   trace: [
@@ -408,11 +448,11 @@ export function CreationView({
                     {
                       kind: "tool",
                       toolName: "dispatch_command",
-                      toolCallId: `dispatch-${activeConversation.id}`,
+                      toolCallId: `dispatch-${conversation.id}`,
                       state: "output-error",
                       input: {
                         instruction: content,
-                        runtimeId: activeConversation.runtimeId,
+                        runtimeId: conversation.runtimeId,
                       },
                       errorText: err instanceof Error ? err.message : "Failed to send message",
                     },
@@ -426,29 +466,18 @@ export function CreationView({
                 setSending(false);
               }
             }}
-            onReloadMessages={() => loadMessages(activeConversation.id)}
+            onReloadMessages={activeConversation ? () => loadMessages(activeConversation.id) : undefined}
             onDeleteConversation={(id) => {
               setConvToDelete(id);
               setDeleteConfirmOpen(true);
             }}
           />
-        ) : !hasLoadedConversations && isLoadingConversations ? (
-          <div className="flex h-full items-center justify-center">
-            <Spinner className="text-muted-foreground/50" />
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center px-6 text-center">
-            <div>
-              <p className="text-sm font-medium text-foreground/80">准备开始一个新的创建</p>
-              <p className="mt-1 text-xs text-muted-foreground">输入你的目标后，会自动建立会话并进入计划阶段。</p>
-            </div>
-          </div>
         )}
       </div>
 
       <ConfirmDialog
         open={deleteConfirmOpen}
-        onOpenChange={setDeleteConfirmOpen}
+        onOpenChange={handleDeleteConfirmOpenChange}
         title={m.delete()}
         description={m.delete_conversation_confirm()}
         onConfirm={handleDeleteConversation}
@@ -461,6 +490,7 @@ export function CreationView({
 
 interface ChatAreaProps {
   conversation: Conversation;
+  isDraftConversation: boolean;
   messages: UIMessage[];
   sending: boolean;
   chatError: string | null;
@@ -468,6 +498,7 @@ interface ChatAreaProps {
   runtimes: RuntimeProfile[];
   projects: Project[];
   defaultAgentId?: string;
+  onCreateConversation: (data: { projectId?: string; agentId?: string; runtimeId?: string }) => Promise<Conversation>;
   onUpdateConversation: (
     id: string,
     data: {
@@ -480,13 +511,14 @@ interface ChatAreaProps {
     },
   ) => Promise<void>;
   onSetDefaultAgent: (agentId?: string) => void;
-  onSendMessage: (content: string) => Promise<void>;
+  onSendMessage: (content: string, conversation?: Conversation) => Promise<void>;
   onReloadMessages?: () => Promise<void>;
   onDeleteConversation: (id: string) => void;
 }
 
 function ChatArea({
   conversation,
+  isDraftConversation,
   messages,
   sending,
   chatError,
@@ -494,6 +526,7 @@ function ChatArea({
   runtimes,
   projects,
   defaultAgentId,
+  onCreateConversation,
   onUpdateConversation,
   onSetDefaultAgent,
   onSendMessage,
@@ -516,6 +549,19 @@ function ChatArea({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const specFileInputRef = useRef<HTMLInputElement>(null);
   const pendingConversationUpdateRef = useRef<Promise<void> | null>(null);
+  const [draftProjectId, setDraftProjectId] = useState<string | undefined>(conversation.projectId);
+  const [draftAgentId, setDraftAgentId] = useState<string | undefined>(conversation.agentId);
+  const [draftRuntimeId, setDraftRuntimeId] = useState<string | undefined>(conversation.runtimeId);
+
+  useEffect(() => {
+    setDraftProjectId(conversation.projectId);
+    setDraftAgentId(conversation.agentId);
+    setDraftRuntimeId(conversation.runtimeId);
+  }, [conversation.agentId, conversation.projectId, conversation.runtimeId, conversation.id]);
+
+  const effectiveProjectId = isDraftConversation ? draftProjectId : conversation.projectId;
+  const effectiveAgentId = isDraftConversation ? draftAgentId : conversation.agentId;
+  const effectiveRuntimeId = isDraftConversation ? draftRuntimeId : conversation.runtimeId;
 
   const { isListening, transcript, isSupported, start, stop } = useSpeechRecognition();
 
@@ -529,12 +575,12 @@ function ChatArea({
   }, [transcript]);
 
   const selectedRuntime = useMemo(
-    () => runtimes.find((r) => r.id === conversation.runtimeId),
-    [runtimes, conversation.runtimeId],
+    () => runtimes.find((r) => r.id === effectiveRuntimeId),
+    [effectiveRuntimeId, runtimes],
   );
   const selectedProject = useMemo(
-    () => projects.find((p) => p.id === conversation.projectId),
-    [projects, conversation.projectId],
+    () => projects.find((p) => p.id === effectiveProjectId),
+    [effectiveProjectId, projects],
   );
   const { conversations, activeConversationId, pendingConversationId, messagesByConversationId, setActiveConversationId } =
     useConversationStore();
@@ -660,6 +706,13 @@ function ChatArea({
       archived?: boolean;
       deleted?: boolean;
     }) => {
+      if (isDraftConversation) {
+        if (data.projectId !== undefined) setDraftProjectId(data.projectId);
+        if (data.agentId !== undefined) setDraftAgentId(data.agentId);
+        if (data.runtimeId !== undefined) setDraftRuntimeId(data.runtimeId);
+        return Promise.resolve();
+      }
+
       setIsConversationUpdating(true);
       const request = onUpdateConversation(conversation.id, data);
       pendingConversationUpdateRef.current = request;
@@ -673,7 +726,7 @@ function ChatArea({
 
       return request;
     },
-    [conversation.id, onUpdateConversation],
+    [conversation.id, isDraftConversation, onUpdateConversation],
   );
 
   const handleSend = useCallback(async () => {
@@ -695,13 +748,22 @@ function ChatArea({
         setPendingUserMessage(null);
         return;
       }
-      await onSendMessage(content);
+
+      const targetConversation = isDraftConversation
+        ? await onCreateConversation({
+            projectId: draftProjectId,
+            agentId: draftAgentId,
+            runtimeId: draftRuntimeId,
+          })
+        : conversation;
+
+      await onSendMessage(content, targetConversation);
     } catch (err) {
       setPendingUserMessage(null);
       console.error("Failed to send message:", err);
       toast.error(m.send_failed());
     }
-  }, [input, attachedFiles, sending, onSendMessage]);
+  }, [attachedFiles, conversation, draftAgentId, draftProjectId, draftRuntimeId, input, isDraftConversation, onCreateConversation, onSendMessage, sending]);
 
   const handleOpenSpecDialog = useCallback(() => {
     if (!selectedProject || !projectAgentsFilePath) {
@@ -824,7 +886,7 @@ function ChatArea({
                 <div className="flex items-center justify-between gap-2 pt-2 pb-0.5">
                   <div className="flex items-center gap-1">
                     <Select
-                      value={conversation.projectId || "__none__"}
+                      value={effectiveProjectId || "__none__"}
                       onValueChange={(v) =>
                         queueConversationUpdate({
                           projectId: !v || v === "__none__" ? undefined : v,
@@ -858,7 +920,7 @@ function ChatArea({
                     </Select>
                   <RuntimeSelector
                     agents={agents.filter((a) => a.enabled)}
-                    selectedAgentId={conversation.agentId ?? undefined}
+                    selectedAgentId={effectiveAgentId ?? undefined}
                     defaultAgentId={defaultAgentId}
                     onSelect={({ runtimeId, agentId }) => queueConversationUpdate({ runtimeId, agentId })}
                     onSetDefault={onSetDefaultAgent}
@@ -1132,7 +1194,7 @@ function ChatArea({
                        ))}
 
                       {columnCards.length === 0 ? (
-                        <div className="m-1 flex flex-col items-center justify-center rounded-xl px-3 py-10">
+                        <div className="m-1 flex min-h-full flex-col items-center justify-center rounded-xl px-3 py-10">
                           <HugeiconsIcon icon={column.icon} className="mb-2 size-5 text-muted-foreground/15" />
                           <span className="text-xs text-muted-foreground/30">暂无任务</span>
                         </div>

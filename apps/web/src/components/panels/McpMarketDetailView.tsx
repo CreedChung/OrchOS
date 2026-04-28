@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api, type McpMarketItem } from "@/lib/api";
 import type { Project } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface McpMarketDetailViewProps {

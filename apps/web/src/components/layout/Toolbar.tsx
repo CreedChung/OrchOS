@@ -71,7 +71,6 @@ interface ToolbarProps {
   onAgentModelFilterChange: (filter: AgentModelFilter) => void;
   agentModelCounts: { all: number; local: number; cloud: number };
   onRefresh?: () => void;
-  onOpenCapabilityMarket?: () => void;
   capabilityViewMode?: "mine" | "market";
   onCapabilityViewModeChange?: (mode: "mine" | "market") => void;
 }
@@ -90,7 +89,6 @@ export function Toolbar({
   onAgentModelFilterChange,
   agentModelCounts,
   onRefresh,
-  onOpenCapabilityMarket: _onOpenCapabilityMarket,
   capabilityViewMode = "mine",
   onCapabilityViewModeChange,
 }: ToolbarProps) {
@@ -137,7 +135,6 @@ export function Toolbar({
 
   return (
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
-      {/* Inbox: source-based filter tabs */}
       {activeView === "inbox" && (
         <div className="flex items-center gap-1.5">
           {(["all", "github_pr", "github_issue", "mention", "agent_request"] as SourceFilter[]).map(
@@ -166,7 +163,6 @@ export function Toolbar({
         </div>
       )}
 
-      {/* Agents: model-based filter tabs */}
       {activeView === "agents" && (
         <div className="flex items-center gap-1.5">
           {(["all", "local", "cloud"] as AgentModelFilter[]).map((filter) => {
@@ -193,7 +189,6 @@ export function Toolbar({
         </div>
       )}
 
-      {/* MCP Servers / Skills: mine/market switch */}
       {(activeView === "mcp-servers" || activeView === "skills") && (
         <div className="flex items-center gap-1.5">
           {onCapabilityViewModeChange ? (
@@ -220,10 +215,8 @@ export function Toolbar({
         </div>
       )}
 
-      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Right side: Refresh + Search + Activity panel toggle */}
       <div className="flex items-center gap-2">
         {onRefresh && (
           <Button variant="outline" size="icon-sm" onClick={onRefresh} title={m.refresh()}>
@@ -234,7 +227,7 @@ export function Toolbar({
             )}
           </Button>
         )}
-        <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5 sm:px-2.5 w-full max-w-xs">
+        <div className="flex w-full max-w-xs items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5 sm:px-2.5">
           <HugeiconsIcon icon={Search01Icon} className="size-3.5 shrink-0 text-muted-foreground" />
           <input
             ref={searchInputRef}

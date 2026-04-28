@@ -3,6 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   FolderGitIcon,
   Add01Icon,
+  Cancel01Icon,
   Delete02Icon,
   ToggleLeft,
   ToggleRight,
@@ -17,7 +18,6 @@ import {
   Search01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { AppDialog } from "@/components/ui/app-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -343,6 +343,12 @@ export function McpServersView({
     return null;
   };
 
+  useEffect(() => {
+    setSelectedMarketItem((selected) =>
+      selected ? marketItems.find((entry) => entry.id === selected.id) ?? selected : selected,
+    );
+  }, [marketItems]);
+
   return (
     <>
       <div className="flex flex-1 overflow-hidden">
@@ -360,6 +366,40 @@ export function McpServersView({
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <div className="md:col-span-2 xl:col-span-3">
+                  {selectedMarketItem ? (
+                    <div className="mb-4 overflow-hidden rounded-xl border border-border/40 bg-card/70">
+                      <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                            当前预览
+                          </p>
+                          <p className="mt-1 truncate text-sm font-medium text-foreground">
+                            {selectedMarketItem.name}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => setSelectedMarketItem(null)}
+                          title={m.dismiss()}
+                          className="shrink-0 text-muted-foreground hover:text-foreground"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+                        </Button>
+                      </div>
+                      <McpMarketDetailView item={selectedMarketItem} projects={projects} onRefresh={onRefresh} embedded />
+                    </div>
+                  ) : !marketLoading ? (
+                    <div className="mb-4 rounded-xl border border-dashed border-border/50 bg-card/40 px-6 py-8 text-center">
+                      <HugeiconsIcon icon={SparklesIcon} className="mx-auto mb-3 size-7 text-muted-foreground/25" />
+                      <p className="text-sm font-medium text-foreground/80">选择一个 MCP 查看详情</p>
+                      <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                        点击下方市场卡片后，这里会展示来源、命令和安装目标。
+                      </p>
+                    </div>
+                  ) : null}
+
                   <div className="flex flex-col gap-3 rounded-xl border border-border/50 bg-card p-4">
                     <div className="relative w-full sm:max-w-sm">
                       <HugeiconsIcon icon={Search01Icon} className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
@@ -824,21 +864,6 @@ export function McpServersView({
         onCreated={handleCreated}
       />
 
-      <AppDialog
-        open={selectedMarketItem !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedMarketItem(null);
-        }}
-        title={selectedMarketItem?.name || "MCP Details"}
-        description={selectedMarketItem?.description}
-        size="xl"
-        bodyClassName="p-0"
-        className="max-w-4xl"
-      >
-        {selectedMarketItem ? (
-          <McpMarketDetailView item={selectedMarketItem} projects={projects} onRefresh={onRefresh} embedded />
-        ) : null}
-      </AppDialog>
     </>
   );
 }

@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Wrench01Icon,
   Add01Icon,
+  Cancel01Icon,
   Delete02Icon,
   ToggleLeft,
   ToggleRight,
@@ -19,7 +20,6 @@ import {
   FolderGitIcon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { AppDialog } from "@/components/ui/app-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CreateSkillDialog } from "@/components/dialogs/CreateSkillDialog";
@@ -349,6 +349,12 @@ export function SkillsView({
     return null;
   };
 
+  useEffect(() => {
+    setSelectedMarketItem((selected) =>
+      selected ? marketItems.find((entry) => entry.id === selected.id) ?? selected : selected,
+    );
+  }, [marketItems]);
+
   return (
     <>
       <div className="flex flex-1 overflow-hidden">
@@ -372,6 +378,40 @@ export function SkillsView({
               </div>
 
               <div className="mt-6 space-y-5">
+                {selectedMarketItem ? (
+                  <div className="overflow-hidden rounded-xl border border-border/40 bg-card/70">
+                    <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                          当前预览
+                        </p>
+                        <p className="mt-1 truncate text-sm font-medium text-foreground">
+                          {selectedMarketItem.name}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setSelectedMarketItem(null)}
+                        title={m.dismiss()}
+                        className="shrink-0 text-muted-foreground hover:text-foreground"
+                      >
+                        <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+                      </Button>
+                    </div>
+                    <SkillMarketDetailView item={selectedMarketItem} embedded />
+                  </div>
+                ) : !marketLoading ? (
+                  <div className="rounded-xl border border-dashed border-border/50 bg-card/40 px-6 py-8 text-center">
+                    <HugeiconsIcon icon={SparklesIcon} className="mx-auto mb-3 size-7 text-muted-foreground/25" />
+                    <p className="text-sm font-medium text-foreground/80">选择一个技能查看详情</p>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                      点击下方市场卡片后，这里会展示说明、来源和安装操作。
+                    </p>
+                  </div>
+                ) : null}
+
                 <div className="flex flex-col gap-3 rounded-xl border border-border/40 bg-card/80 p-4 backdrop-blur-sm lg:flex-row lg:items-center lg:gap-4">
                   <div className="relative flex-1 lg:max-w-xs">
                     <HugeiconsIcon icon={Search01Icon} className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
@@ -446,10 +486,10 @@ export function SkillsView({
                     const badge = getMarketSkillBadge(item);
                     const isOfficial = item.sourceType === "official";
                     return (
-                    <section
-                      key={item.id}
-                      onClick={() => setSelectedMarketItem(item)}
-                      className={cn(
+                      <section
+                       key={item.id}
+                       onClick={() => setSelectedMarketItem(item)}
+                       className={cn(
                         "group relative cursor-pointer overflow-hidden rounded-xl border bg-card transition-all duration-200 hover:shadow-md hover:border-border/80 hover:-translate-y-0.5",
                         isOfficial ? "border-primary/20 hover:border-primary/40" : "border-border/40",
                       )}
@@ -862,19 +902,6 @@ export function SkillsView({
         onCreated={handleCreated}
       />
 
-      <AppDialog
-        open={selectedMarketItem !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedMarketItem(null);
-        }}
-        title={selectedMarketItem?.name || "Skill Details"}
-        description={selectedMarketItem?.description}
-        size="xl"
-        bodyClassName="p-0"
-        className="max-w-4xl"
-      >
-        {selectedMarketItem ? <SkillMarketDetailView item={selectedMarketItem} embedded /> : null}
-      </AppDialog>
     </>
   );
 }

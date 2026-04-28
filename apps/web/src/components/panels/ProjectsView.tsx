@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Add01Icon,
   Alert01Icon,
+  Cancel01Icon,
   CheckmarkCircle02Icon,
   Folder01Icon,
   FolderIcon,
@@ -131,12 +132,12 @@ export function ProjectsView({
   }, [goals]);
 
   useEffect(() => {
-    if (projects.length > 0 && !activeProjectId) {
-      setActiveProjectId(projects[0].id);
+    if (activeProjectId && !projects.some((project) => project.id === activeProjectId)) {
+      setActiveProjectId(null);
     }
   }, [projects, activeProjectId]);
 
-  const activeProject = projects.find((p) => p.id === activeProjectId) ?? null;
+  const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
 
   const projectGoals = useMemo(() => {
     if (!activeProjectId) return [];
@@ -297,7 +298,7 @@ export function ProjectsView({
           )}
         </div>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden">
           {activeProject ? (
             <ScrollArea className="h-full">
               <div className="mx-auto max-w-3xl space-y-6 p-6">
@@ -316,6 +317,16 @@ export function ProjectsView({
                         </p>
                       </div>
                     </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => setActiveProjectId(null)}
+                      title={m.dismiss()}
+                      className="mt-3 text-muted-foreground hover:text-foreground"
+                    >
+                      <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+                    </Button>
                     {activeProject.path && (
                       <p className="mt-3 max-w-2xl break-all font-mono text-xs text-muted-foreground">
                         {activeProject.path}
@@ -393,6 +404,16 @@ export function ProjectsView({
                 </section>
               </div>
             </ScrollArea>
+          ) : projects.length > 0 ? (
+            <div className="flex h-full items-center justify-center p-6">
+              <div className="flex max-w-sm flex-col items-center rounded-2xl border border-dashed border-border/50 bg-background/70 px-8 py-10 text-center">
+                <HugeiconsIcon icon={Folder01Icon} className="mb-3 size-8 text-muted-foreground/25" />
+                <p className="text-sm font-medium text-foreground/80">选择一个项目开始查看</p>
+                <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                  从左侧点击项目后，这里会显示当前项目的目标、活动和上下文信息。
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="flex h-full items-center justify-center">
               <div className="text-center">

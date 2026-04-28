@@ -129,7 +129,12 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
       : "当前页面上下文态势";
 
   return (
-    <aside className={cn("flex h-full flex-col border-l border-border bg-sidebar", expanded ? "flex-1" : "w-80")}>
+    <aside
+      className={cn(
+        "flex h-full flex-col bg-sidebar",
+        expanded ? "flex-1" : "w-80 border-l border-border",
+      )}
+    >
       <div className="flex h-11 items-center gap-2 border-b border-border bg-sidebar px-4">
         <div className="truncate text-sm font-medium text-foreground">工作面板</div>
         <div className="truncate text-xs text-muted-foreground">{panelContext}</div>
