@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
+import { useUIStore } from "@/lib/store";
 import { m } from "@/paraglide/messages";
 import { toast } from "sonner";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
@@ -582,6 +583,7 @@ function ChatArea({
     () => projects.find((p) => p.id === effectiveProjectId),
     [effectiveProjectId, projects],
   );
+  const setActivityPanelOpen = useUIStore((state) => state.setActivityPanelOpen);
   const { conversations, activeConversationId, pendingConversationId, messagesByConversationId, setActiveConversationId } =
     useConversationStore();
   const projectAgentsFilePath = useMemo(() => getProjectAgentsFilePath(selectedProject), [selectedProject]);
@@ -631,6 +633,11 @@ function ChatArea({
   const handleRemoveFile = useCallback((index: number) => {
     setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
+
+  const openConversationDetails = useCallback((conversationId: string) => {
+    setActiveConversationId(conversationId);
+    setActivityPanelOpen(true);
+  }, [setActiveConversationId, setActivityPanelOpen]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -1092,20 +1099,25 @@ function ChatArea({
 
                     <div
                       className={cn(
-                        "grid min-h-0 flex-1 content-start auto-rows-max gap-3 overflow-y-auto p-3",
-                        boardFilter === "all" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-5",
+                        "min-h-0 flex-1 p-3",
+                        columnCards.length === 0
+                          ? "flex items-center justify-center"
+                          : cn(
+                              "grid content-start auto-rows-max gap-3 overflow-y-auto",
+                              boardFilter === "all" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-5",
+                            ),
                       )}
                     >
                       {columnCards.map((card) => (
-                         <div
-                           key={card.conversation.id}
-                           role="button"
-                           tabIndex={0}
-                           onClick={() => setActiveConversationId(card.conversation.id)}
-                           onKeyDown={(e) => { if (e.key === "Enter") setActiveConversationId(card.conversation.id); }}
-                           className={cn(
-                             "group/card cursor-pointer rounded-xl text-left transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none",
-                           )}
+                          <div
+                            key={card.conversation.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => openConversationDetails(card.conversation.id)}
+                            onKeyDown={(e) => { if (e.key === "Enter") openConversationDetails(card.conversation.id); }}
+                            className={cn(
+                              "group/card cursor-pointer rounded-xl text-left transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none",
+                            )}
                          >
                            <InfoCard
                              showDismissButton={false}
@@ -1194,7 +1206,7 @@ function ChatArea({
                        ))}
 
                       {columnCards.length === 0 ? (
-                        <div className="m-1 flex min-h-full flex-col items-center justify-center rounded-xl px-3 py-10">
+                        <div className="flex w-full flex-col items-center justify-center rounded-xl px-3 py-10 text-center">
                           <HugeiconsIcon icon={column.icon} className="mb-2 size-5 text-muted-foreground/15" />
                           <span className="text-xs text-muted-foreground/30">暂无任务</span>
                         </div>

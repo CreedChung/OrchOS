@@ -31,6 +31,17 @@ export const ProjectModel = {
   cloneBody: t.Object({
     force: t.Optional(t.Boolean()),
   }),
+  previewStartResponse: t.Object({
+    projectId: t.String(),
+    running: t.Boolean(),
+    command: t.Optional(t.String()),
+    url: t.Optional(t.String()),
+    port: t.Optional(t.Number()),
+    pid: t.Optional(t.Number()),
+    startedAt: t.Optional(t.String()),
+    logs: t.Optional(t.String()),
+    error: t.Optional(t.String()),
+  }),
 } as const;
 
 export type ProjectModel = {

@@ -173,6 +173,18 @@ export interface Project {
   createdAt: string;
 }
 
+export interface ProjectPreviewStatus {
+  projectId: string;
+  running: boolean;
+  command?: string;
+  url?: string;
+  port?: number;
+  pid?: number;
+  startedAt?: string;
+  logs?: string;
+  error?: string;
+}
+
 export interface HistoryEntry {
   id: string;
   type: string;
@@ -909,6 +921,16 @@ export const api = {
   ): Promise<{ success: boolean; path: string }> => {
     const client = createEdenClient();
     const result = await client.api.projects({ id }).clone.post(options);
+    return assertData(result);
+  },
+  getProjectPreview: async (id: string): Promise<ProjectPreviewStatus> => {
+    const client = createEdenClient();
+    const result = await client.api.projects({ id }).preview.get();
+    return assertData(result);
+  },
+  startProjectPreview: async (id: string): Promise<ProjectPreviewStatus> => {
+    const client = createEdenClient();
+    const result = await client.api.projects({ id }).preview.post(undefined);
     return assertData(result);
   },
 

@@ -426,7 +426,7 @@ function ClerkUserProfile({
   const [profileOpen, setProfileOpen] = useState(false);
 
   if (!isClerkConfigured) {
-    if (!showExpandedContent) {
+    if (collapsed) {
       return (
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger className="flex size-10 items-center justify-center rounded-md transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
@@ -438,6 +438,7 @@ function ClerkUserProfile({
             side="top"
             align="start"
             sideOffset={8}
+            disableAnimation
             className="min-w-48"
           >
             <DropdownMenuItem onClick={() => setProfileOpen(true)}>
@@ -456,21 +457,25 @@ function ClerkUserProfile({
     return (
       <>
         <DropdownMenu modal={false}>
-          <DropdownMenuTrigger className="flex h-10 w-full items-center gap-2.5 rounded-md px-2.5 text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+          <DropdownMenuTrigger className="flex h-10 w-full items-center gap-2.5 rounded-md px-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
               <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
             </div>
-            <div className="min-w-0 flex-1 text-left">
+            <div className={cn("min-w-0 flex-1 text-left", !showExpandedContent && "invisible")}>
               <p className="truncate text-sm font-medium text-sidebar-foreground">{m.user()}</p>
               <p className="truncate text-xs text-sidebar-foreground/60">user@orchos.dev</p>
             </div>
-            <HugeiconsIcon icon={ChevronUp} className="size-3 shrink-0 opacity-50" />
+            <HugeiconsIcon
+              icon={ChevronUp}
+              className={cn("size-3 shrink-0 opacity-50", !showExpandedContent && "invisible")}
+            />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             side="top"
             align="start"
             sideOffset={8}
-            className="mb-1 min-w-[var(--radix-dropdown-menu-trigger-width)]"
+            disableAnimation
+            className="mb-1 min-w-(--anchor-width)"
           >
             <DropdownMenuItem onClick={() => setProfileOpen(true)}>
               <HugeiconsIcon icon={UserCircleIcon} className="size-3.5" />
@@ -516,7 +521,7 @@ function ClerkAuthenticatedProfile({
   const [profileOpen, setProfileOpen] = useState(false);
 
   if (!isLoaded) {
-    if (!showExpandedContent) {
+    if (collapsed) {
       return (
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger className="flex size-10 items-center justify-center rounded-md transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
@@ -524,7 +529,7 @@ function ClerkAuthenticatedProfile({
               <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" side="top" className="min-w-48 mb-1">
+          <DropdownMenuContent align="start" side="top" disableAnimation className="min-w-48 mb-1">
             <div className="flex items-center gap-2.5 px-2 py-2">
               <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
                 U
@@ -546,14 +551,17 @@ function ClerkAuthenticatedProfile({
 
     return (
       <DropdownMenu modal={false}>
-        <DropdownMenuTrigger className="flex h-10 w-full items-center gap-2.5 rounded-md px-2.5 text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+        <DropdownMenuTrigger className="flex h-10 w-full items-center gap-2.5 rounded-md px-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
           <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
           </div>
-          <span className="flex-1 truncate text-left">{m.user()}</span>
-          <HugeiconsIcon icon={ChevronUp} className="size-3 shrink-0 opacity-50" />
+          <span className={cn("flex-1 truncate text-left", !showExpandedContent && "invisible")}>{m.user()}</span>
+          <HugeiconsIcon
+            icon={ChevronUp}
+            className={cn("size-3 shrink-0 opacity-50", !showExpandedContent && "invisible")}
+          />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="top" className="min-w-48 mb-1">
+        <DropdownMenuContent align="start" side="top" disableAnimation className="mb-1 min-w-(--anchor-width)">
           <div className="flex items-center gap-2.5 px-2 py-2">
             <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
               U
@@ -588,8 +596,8 @@ function ClerkAuthenticatedProfile({
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger
           className={cn(
-            "h-10 rounded-md text-left transition-colors hover:bg-sidebar-accent/50 cursor-pointer",
-            !showExpandedContent
+            "h-10 rounded-md text-left hover:bg-sidebar-accent/50 cursor-pointer",
+            collapsed
               ? "flex size-10 items-center justify-center"
               : "flex w-full items-center gap-2.5 px-2.5",
           )}
@@ -605,15 +613,18 @@ function ClerkAuthenticatedProfile({
               {initials}
             </div>
           )}
-          {showExpandedContent && (
+          {!collapsed && (
             <>
-              <div className="min-w-0 flex-1">
+              <div className={cn("min-w-0 flex-1", !showExpandedContent && "invisible")}>
                 <p className="truncate text-sm font-medium text-sidebar-foreground">{displayName}</p>
                 <p className="truncate text-xs text-sidebar-foreground/60">{email}</p>
               </div>
               <HugeiconsIcon
                 icon={ChevronUp}
-                className="size-3 shrink-0 opacity-50 text-sidebar-foreground/70"
+                className={cn(
+                  "size-3 shrink-0 opacity-50 text-sidebar-foreground/70",
+                  !showExpandedContent && "invisible",
+                )}
               />
             </>
           )}
@@ -622,9 +633,10 @@ function ClerkAuthenticatedProfile({
           side="top"
           align="start"
           sideOffset={8}
-          className={cn("mb-1", !showExpandedContent ? "min-w-48" : "min-w-[var(--radix-dropdown-menu-trigger-width)]")}
+          disableAnimation
+          className={cn("mb-1", collapsed ? "min-w-48" : "min-w-(--anchor-width)")}
         >
-          {!showExpandedContent && (
+          {collapsed && (
             <>
               <div className="flex items-center gap-2.5 px-2 py-2">
                 {user.imageUrl ? (

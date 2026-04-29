@@ -77,4 +77,24 @@ export const projectController = new Elysia({ prefix: "/api/projects" })
       body: t.Optional(ProjectModel.cloneBody),
       response: ProjectModel.cloneResponse,
     },
+  )
+  .get(
+    "/:id/preview",
+    ({ params: { id } }) => {
+      return ProjectService.getPreviewStatus(id);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      response: ProjectModel.previewStartResponse,
+    },
+  )
+  .post(
+    "/:id/preview",
+    async ({ params: { id } }) => {
+      return await ProjectService.startPreview(id);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      response: ProjectModel.previewStartResponse,
+    },
   );

@@ -21,6 +21,9 @@ const MorphPanel = lazy(() =>
   import("@/components/ui/ai-input").then((module) => ({ default: module.MorphPanel })),
 );
 
+const ACTIVITY_PANEL_TRANSITION_MS = 240;
+const ACTIVITY_MAIN_FADE_MS = 140;
+
 export const Route = createFileRoute("/dashboard")({
   component: DashboardWrapper,
 });
@@ -118,6 +121,7 @@ function DashboardLayout() {
   const [showMorphPanel, setShowMorphPanel] = useState(false);
   const [showAuthTransition, setShowAuthTransition] = useState(() => isAuthTransition());
   const [startDashboardReveal, setStartDashboardReveal] = useState(false);
+  const [activityMainVisible, setActivityMainVisible] = useState(true);
   const revealTriggeredRef = useRef(false);
 
   const {
@@ -170,6 +174,27 @@ function DashboardLayout() {
     sidebarCollapsed,
     toggleSidebar,
   } = useUIStore();
+
+  useEffect(() => {
+    if (activityExpanded) {
+      setActivityMainVisible(false);
+      return;
+    }
+
+    if (activityMainVisible) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setActivityMainVisible(true);
+    }, ACTIVITY_PANEL_TRANSITION_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activityExpanded, activityMainVisible]);
+
+  const dashboardColumns = activityExpanded
+    ? "auto minmax(0,0fr) minmax(0,1fr)"
+    : `auto minmax(0,1fr) ${activityPanelOpen ? "20rem" : "0px"}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -230,7 +255,14 @@ function DashboardLayout() {
           }}
         />
         <div className="flex h-screen flex-col overflow-hidden bg-background">
-          <div className="flex flex-1 overflow-hidden">
+          <div
+            className="grid flex-1 overflow-hidden transition-[grid-template-columns] ease-out"
+            style={{
+              gridTemplateColumns: dashboardColumns,
+              transitionDuration: `${ACTIVITY_PANEL_TRANSITION_MS}ms`,
+              transitionDelay: activityExpanded ? `${ACTIVITY_MAIN_FADE_MS}ms` : "0ms",
+            }}
+          >
             <Sidebar
               organizations={organizations}
               problems={problems}
@@ -243,8 +275,15 @@ function DashboardLayout() {
               onOrganizationDelete={handleOrganizationDelete}
               onToggleCollapse={toggleSidebar}
             />
-            {activityExpanded ? null : (
-              <div className="flex flex-1 flex-col overflow-hidden">
+            <div
+              className={[
+                "flex min-w-0 flex-col overflow-hidden transition-opacity ease-out",
+                activityMainVisible ? "opacity-100" : "pointer-events-none opacity-0",
+              ].join(" ")}
+              style={{ transitionDuration: `${ACTIVITY_MAIN_FADE_MS}ms` }}
+              aria-hidden={!activityMainVisible}
+            >
+              <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <Toolbar
                   activeView={activeView}
                   loading={loading}
@@ -264,7 +303,7 @@ function DashboardLayout() {
                 />
                 <Outlet />
               </div>
-            )}
+            </div>
             <ActivityPanel
               activities={activities}
               goals={goals}

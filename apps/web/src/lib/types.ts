@@ -67,6 +67,18 @@ export interface Project {
   createdAt?: string;
 }
 
+export interface ProjectPreviewStatus {
+  projectId: string;
+  running: boolean;
+  command?: string;
+  url?: string;
+  port?: number;
+  pid?: number;
+  startedAt?: string;
+  logs?: string;
+  error?: string;
+}
+
 export interface HistoryEntry {
   id: string;
   type: string;

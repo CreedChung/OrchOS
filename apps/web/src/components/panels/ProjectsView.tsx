@@ -22,7 +22,8 @@ import { api, type InboxThread } from "@/lib/api";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
-import type { Command, Goal, Problem, Project } from "@/lib/types";
+import type { Command, Goal, Problem, Project, ProjectPreviewStatus } from "@/lib/types";
+import { toast } from "sonner";
 
 interface ProjectsViewProps {
   projects: Project[];
@@ -87,6 +88,8 @@ export function ProjectsView({
   const [showDirectoryPicker, setShowDirectoryPicker] = useState(false);
   const [creatingProject, setCreatingProject] = useState(false);
   const [formData, setFormData] = useState({ name: "", path: "", repositoryUrl: "" });
+  const [previewStatus, setPreviewStatus] = useState<ProjectPreviewStatus | null>(null);
+  const [startingPreview, setStartingPreview] = useState(false);
 
   useEffect(() => {
     void loadConversations();
@@ -138,6 +141,24 @@ export function ProjectsView({
   }, [projects, activeProjectId]);
 
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadPreviewStatus = async () => {
+      if (!activeProjectId) {
+        setPreviewStatus(null);
+        return;
+      }
+      try {
+        const status = await api.getProjectPreview(activeProjectId);
+        if (!cancelled) setPreviewStatus(status);
+      } catch {
+        if (!cancelled) setPreviewStatus(null);
+      }
+    };
+    void loadPreviewStatus();
+    return () => { cancelled = true; };
+  }, [activeProjectId]);
 
   const projectGoals = useMemo(() => {
     if (!activeProjectId) return [];
@@ -198,6 +219,36 @@ export function ProjectsView({
     };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
+  };
+
+  const handleOpenPreview = async () => {
+    if (!activeProject) return;
+
+    const previewTab = window.open("about:blank", "_blank", "noopener,noreferrer");
+    if (!previewTab) {
+      toast.error("浏览器拦截了新标签页，请允许弹窗后重试。");
+      return;
+    }
+
+    previewTab.document.write("<title>Starting preview...</title><p style=\"font-family: sans-serif; padding: 16px;\">Starting project preview...</p>");
+    setStartingPreview(true);
+
+    try {
+      const status = await api.startProjectPreview(activeProject.id);
+      setPreviewStatus(status);
+      if (!status.running || !status.url) {
+        previewTab.close();
+        toast.error(status.error || "项目预览启动失败");
+        return;
+      }
+      previewTab.location.href = status.url;
+      toast.success("项目预览已启动");
+    } catch (error) {
+      previewTab.close();
+      toast.error(error instanceof Error ? error.message : "项目预览启动失败");
+    } finally {
+      setStartingPreview(false);
+    }
   };
 
   return (
@@ -336,6 +387,28 @@ export function ProjectsView({
                       <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                         <HugeiconsIcon icon={Link01Icon} className="size-3" />
                         <span className="break-all">{activeProject.repositoryUrl}</span>
+                      </div>
+                    )}
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <Button type="button" onClick={() => void handleOpenPreview()} disabled={startingPreview}>
+                        <HugeiconsIcon icon={PlayCircleIcon} className="mr-1.5 size-4" />
+                        {startingPreview ? "Starting..." : previewStatus?.running ? "Open Preview" : "Start Preview"}
+                      </Button>
+                      {previewStatus?.running && previewStatus.url && (
+                        <a
+                          href={previewStatus.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-primary underline-offset-4 hover:underline"
+                        >
+                          {previewStatus.url}
+                        </a>
+                      )}
+                    </div>
+                    {(previewStatus?.error || previewStatus?.command) && (
+                      <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                        {previewStatus.command && <p>Command: <span className="font-mono">{previewStatus.command}</span></p>}
+                        {previewStatus.error && <p className="text-red-500">{previewStatus.error}</p>}
                       </div>
                     )}
                   </div>
