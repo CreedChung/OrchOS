@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  ArrowDown01Icon,
   CheckmarkCircle02Icon,
   Delete02Icon,
   Menu01Icon,
@@ -13,13 +14,12 @@ import {
   Cancel01Icon,
   PlayCircleIcon,
   UnfoldMoreIcon,
-  EyeIcon,
-  ViewOffIcon,
   Edit02Icon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
 import { AppDialog } from "@/components/ui/app-dialog";
 import { Button } from "@/components/ui/button";
+import { RenameDialog } from "@/components/dialogs/RenameDialog";
 import { BorderBeam } from "border-beam";
 import { Star } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
@@ -30,10 +30,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  selectContentClassName,
-  selectItemClassName,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
@@ -544,8 +543,8 @@ function ChatArea({
   const [projectSpecSaving, setProjectSpecSaving] = useState(false);
   const [boardFilter, setBoardFilter] = useState<ConversationBoardFilter>("all");
   const [inputCollapsed, setInputCollapsed] = useState(false);
-  const [editingCardId, setEditingCardId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState("");
+  const [renameCardId, setRenameCardId] = useState<string | null>(null);
+  const [renameCardTitle, setRenameCardTitle] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const specFileInputRef = useRef<HTMLInputElement>(null);
@@ -832,7 +831,7 @@ function ChatArea({
     <div className="relative flex flex-1 flex-col overflow-hidden">
       {/* Input area */}
       {!inputCollapsed && (
-      <div className="shrink-0 bg-background px-4 py-4 md:px-6">
+      <div className="shrink-0 overflow-visible bg-background px-4 py-4 md:px-6">
         <div className="mx-auto max-w-3xl">
           <div className="mb-3 px-1">
             <p className="text-sm font-medium text-foreground/85">我们开始创造吧</p>
@@ -853,7 +852,7 @@ function ChatArea({
             duration={2.6}
             className="rounded-xl"
           >
-            <div className="flex flex-col gap-2 rounded-xl border border-border bg-background px-3 pt-3 pb-1.5">
+            <div className="relative flex flex-col gap-2 overflow-visible rounded-xl border border-border bg-background px-3 pt-3 pb-1.5">
               {attachedFiles.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {attachedFiles.map((file, index) => (
@@ -890,8 +889,8 @@ function ChatArea({
                 style={{ maxHeight: "120px" }}
                 onInput={syncTextareaHeight}
               />
-                <div className="flex items-center justify-between gap-2 pt-2 pb-0.5">
-                  <div className="flex items-center gap-1">
+                <div className="relative z-20 flex items-center justify-between gap-2 pt-2 pb-0.5">
+                  <div className="overflow-visible flex items-center gap-1">
                     <Select
                       value={effectiveProjectId || "__none__"}
                       onValueChange={(v) =>
@@ -902,7 +901,7 @@ function ChatArea({
                     >
                       <SelectTrigger
                         size="sm"
-                        className="w-28 cursor-default justify-between rounded-full data-[size=sm]:rounded-full px-2.5 text-xs [&>svg:last-child]:hidden"
+                        className="w-36 cursor-default justify-between rounded-full data-[size=sm]:rounded-full px-2.5 text-xs [&>svg:last-child]:hidden"
                       >
                         <span className="flex min-w-0 items-center gap-1.5">
                           {isConversationUpdating ? (
@@ -1057,7 +1056,7 @@ function ChatArea({
                 title={inputCollapsed ? "显示输入" : "隐藏输入"}
                 className="ml-auto shrink-0"
               >
-                <HugeiconsIcon icon={inputCollapsed ? EyeIcon : ViewOffIcon} className="size-3.5" />
+                <HugeiconsIcon icon={inputCollapsed ? ArrowDown01Icon : ArrowUp01Icon} className="size-3.5" />
               </Button>
             </div>
 
@@ -1109,77 +1108,79 @@ function ChatArea({
                       )}
                     >
                       {columnCards.map((card) => (
+                          (() => {
+                            const isRenameDialogOpen = renameCardId === card.conversation.id;
+
+                            return (
                           <div
                             key={card.conversation.id}
                             role="button"
-                            tabIndex={0}
-                            onClick={() => openConversationDetails(card.conversation.id)}
-                            onKeyDown={(e) => { if (e.key === "Enter") openConversationDetails(card.conversation.id); }}
+                            tabIndex={isRenameDialogOpen ? -1 : 0}
+                            onClick={() => {
+                              if (isRenameDialogOpen) return;
+                              openConversationDetails(card.conversation.id);
+                            }}
+                            onKeyDown={(e) => {
+                              if (isRenameDialogOpen) return;
+                              if (e.key === "Enter") openConversationDetails(card.conversation.id);
+                            }}
                             className={cn(
                               "group/card cursor-pointer rounded-xl text-left transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none",
                             )}
-                         >
+                          >
                            <InfoCard
                              showDismissButton={false}
                              className={cn(
                                "border-border/40 bg-background/80 p-4 text-left transition-all duration-200 group-hover/card:border-border/80 group-hover/card:bg-background",
                                activeConversationId === card.conversation.id && "border-border bg-background",
                              )}
-                           >
-                              <InfoCardContent className="gap-3">
-                                   <div className="min-w-0 flex-1 flex items-start justify-between gap-2">
-                                     <div className="min-w-0 flex-1">
-                                       {editingCardId === card.conversation.id ? (
-                                         <input
-                                           autoFocus
-                                           value={editingTitle}
-                                           onChange={(e) => setEditingTitle(e.target.value)}
-                                           onBlur={() => {
-                                             if (editingTitle.trim() && editingTitle.trim() !== card.title) {
-                                               queueConversationUpdate({ title: editingTitle.trim() });
-                                             }
-                                             setEditingCardId(null);
+                            >
+                               <InfoCardContent className="gap-3">
+                                    <div className="min-w-0 flex-1 flex items-start justify-between gap-2">
+                                      <div className="min-w-0 flex-1">
+                                        <InfoCardTitle className="mb-0 line-clamp-2 text-[13px] font-semibold leading-snug text-foreground/85 group-hover/card:text-foreground">
+                                          {card.title}
+                                        </InfoCardTitle>
+                                      </div>
+                                       <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover/card:opacity-100">
+                                         <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon-xs"
+                                          title="重命名会话"
+                                          onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                          }}
+                                           onClick={(e) => {
+                                             e.preventDefault();
+                                             e.stopPropagation();
+                                             setRenameCardId(card.conversation.id);
+                                             setRenameCardTitle(card.title);
                                            }}
-                                           onKeyDown={(e) => {
-                                             if (e.key === "Enter") {
-                                               e.preventDefault();
-                                               (e.target as HTMLInputElement).blur();
-                                             }
-                                             if (e.key === "Escape") {
-                                               setEditingCardId(null);
-                                             }
-                                           }}
-                                           className="w-full rounded border border-ring/50 bg-background px-1.5 py-0.5 text-[13px] font-semibold leading-snug text-foreground outline-none"
-                                         />
-                                       ) : (
-                                           <InfoCardTitle className="mb-0 line-clamp-2 text-[13px] font-semibold leading-snug text-foreground/85 group-hover/card:text-foreground">
-                                             {card.title}
-                                           </InfoCardTitle>
-                                       )}
-                                     </div>
-                                     <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/card:opacity-100">
-                                       <button
-                                         type="button"
-                                         onClick={(e) => {
-                                           e.stopPropagation();
-                                           setEditingCardId(card.conversation.id);
-                                           setEditingTitle(card.title);
-                                         }}
-                                         className="flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
-                                       >
-                                         <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-                                       </button>
-                                       <button
-                                         type="button"
-                                         onClick={(e) => {
-                                           e.stopPropagation();
-                                           onDeleteConversation(card.conversation.id);
-                                         }}
-                                         className="flex size-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                       >
-                                         <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                                       </button>
-                                     </div>
+                                           className="text-muted-foreground/60 hover:text-foreground"
+                                         >
+                                          <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon-xs"
+                                          title="删除会话"
+                                          onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                          }}
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            onDeleteConversation(card.conversation.id);
+                                          }}
+                                          className="text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive"
+                                        >
+                                          <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                                        </Button>
+                                      </div>
                                    </div>
 
                                 <InfoCardDescription className="line-clamp-2 text-xs leading-relaxed text-muted-foreground/60">
@@ -1201,9 +1202,11 @@ function ChatArea({
                                    </span>
                                  </div>
                               </InfoCardContent>
-                           </InfoCard>
-                         </div>
-                       ))}
+                            </InfoCard>
+                          </div>
+                            );
+                          })()
+                        ))}
 
                       {columnCards.length === 0 ? (
                         <div className="flex w-full flex-col items-center justify-center rounded-xl px-3 py-10 text-center">
@@ -1220,6 +1223,24 @@ function ChatArea({
 
         <div ref={messagesEndRef} />
       </div>
+
+      <RenameDialog
+        open={renameCardId !== null}
+        title="重命名会话"
+        initialValue={renameCardTitle}
+        placeholder={m.untitled_conversation()}
+        onClose={() => {
+          setRenameCardId(null);
+          setRenameCardTitle("");
+        }}
+        onSubmit={(name) => {
+          if (renameCardId && name !== renameCardTitle) {
+            void queueConversationUpdate({ title: name });
+          }
+          setRenameCardId(null);
+          setRenameCardTitle("");
+        }}
+      />
 
       <AppDialog
         open={specDialogOpen}
@@ -1302,9 +1323,6 @@ function RuntimeSelector({
 }: RuntimeSelectorProps) {
   const safeAgents = Array.isArray(agents) ? agents : [];
   const [open, setOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedAgent = safeAgents.find((a) => a.id === selectedAgentId);
 
@@ -1324,38 +1342,6 @@ function RuntimeSelector({
       type: "agent" as const,
     })),
   ];
-  const triggerRect = triggerRef.current?.getBoundingClientRect();
-  const menuLeft = triggerRect?.left ?? 0;
-  const menuTop = (triggerRect?.bottom ?? 0) + 4;
-
-  const cancelClose = useCallback(() => {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
-  }, []);
-
-  const scheduleClose = useCallback(() => {
-    cancelClose();
-    closeTimerRef.current = setTimeout(() => {
-      setOpen(false);
-    }, 150);
-  }, [cancelClose]);
-
-  useEffect(() => () => cancelClose(), [cancelClose]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!wrapperRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [open]);
 
   const handleSelect = useCallback((item: (typeof allItems)[number]) => {
     if (item.type === "none") {
@@ -1367,88 +1353,62 @@ function RuntimeSelector({
   }, [onSelect]);
 
   return (
-    <div
-      ref={wrapperRef}
-      className="relative inline-flex"
-      onMouseEnter={cancelClose}
-      onMouseLeave={() => {
-        if (open) {
-          scheduleClose();
-        }
-      }}
-    >
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          cancelClose();
-          setOpen((current) => !current);
-        }}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        className="inline-flex h-7 w-28 items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent px-2.5 text-xs text-foreground transition-colors outline-none hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+    <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger
+        onClick={(e) => e.stopPropagation()}
+        className="inline-flex h-7 w-36 items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent px-2.5 text-xs text-foreground transition-colors outline-none hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <span className="flex min-w-0 items-center gap-1.5">
           <HugeiconsIcon icon={Robot02Icon} className="size-3 shrink-0" />
           <span className="truncate">{selectedAgent?.name || m.no_agent()}</span>
         </span>
         <HugeiconsIcon icon={UnfoldMoreIcon} className="size-3 shrink-0 text-muted-foreground" />
-      </button>
+      </DropdownMenuTrigger>
 
-      {open && (
-        <>
-          <div
-            className="fixed z-50 animate-in fade-in-0 zoom-in-95"
-            style={{
-              left: menuLeft,
-              top: menuTop,
-            }}
-          >
-            <div className={cn(selectContentClassName, "min-w-[160px] w-auto") }>
-              {allItems.map((item) => {
-                const isDefault = item.agentId !== undefined && item.agentId === defaultAgentId;
-                return (
-                  <div
-                    key={item.id}
-                    className={cn(
-                      selectItemClassName,
-                      "flex items-center justify-between gap-2 whitespace-nowrap transition-colors",
-                      selectedAgentId === item.agentId
-                        ? "bg-accent text-accent-foreground"
-                        : "text-foreground hover:bg-accent/50",
-                    )}
-                  >
-                    <button
-                      type="button"
-                      className="flex-1 text-left"
-                      onClick={() => handleSelect(item)}
-                    >
-                      {item.name}
-                    </button>
-                    {isDefault && (
-                      <Star className="size-3 shrink-0 fill-primary text-primary" />
-                    )}
-                    {!isDefault && item.agentId !== undefined && (
-                      <button
-                        type="button"
-                        className="shrink-0 rounded p-0.5 text-muted-foreground/40 hover:text-primary transition-colors"
-                        title={m.set_as_default()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSetDefault(item.agentId);
-                        }}
-                      >
-                        <Star className="size-3" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+      <DropdownMenuContent align="start" className="min-w-(--anchor-width)">
+        {allItems.map((item) => {
+          const isSelected = selectedAgentId === item.agentId;
+          const isDefault = item.agentId !== undefined && item.agentId === defaultAgentId;
+
+          return (
+            <DropdownMenuItem
+              key={item.id}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleSelect(item);
+              }}
+              className={cn("flex items-center justify-between gap-2", isSelected && "bg-accent text-accent-foreground")}
+            >
+              <span className="truncate">{item.name}</span>
+              {item.agentId !== undefined ? (
+                <button
+                  type="button"
+                  className={cn(
+                    "flex size-5 shrink-0 items-center justify-center rounded p-0.5 transition-colors",
+                    isDefault
+                      ? "text-primary"
+                      : "text-muted-foreground/40 hover:text-primary",
+                  )}
+                  title={isDefault ? "Default agent" : m.set_as_default()}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (!isDefault) {
+                      onSetDefault(item.agentId);
+                    }
+                  }}
+                >
+                  <Star className={cn("size-3", isDefault && "fill-primary")} />
+                </button>
+              ) : null}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

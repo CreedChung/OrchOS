@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { createFileRoute, Outlet, useLocation, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, Navigate, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -16,13 +16,14 @@ import { useUIStore } from "@/lib/store";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
 import { AuthTransitionOverlay } from "@/components/ui/auth-transition-overlay";
 import type { SidebarView } from "@/lib/types";
+import { getCapabilityModeFromPath, getCapabilityPath, isCapabilityView } from "@/lib/capability-routing";
 
 const MorphPanel = lazy(() =>
   import("@/components/ui/ai-input").then((module) => ({ default: module.MorphPanel })),
 );
 
-const ACTIVITY_PANEL_TRANSITION_MS = 240;
-const ACTIVITY_MAIN_FADE_MS = 140;
+const ACTIVITY_PANEL_TRANSITION_MS = 320;
+const ACTIVITY_PANEL_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardWrapper,
@@ -80,7 +81,7 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
 }
 
 function getViewFromPath(pathname: string): SidebarView {
-  const segment = pathname.replace("/dashboard/", "").replace("/dashboard", "");
+  const segment = pathname.replace("/dashboard/", "").replace("/dashboard", "").split("/")[0] ?? "";
   const validViews: SidebarView[] = [
     "inbox",
     "creation",
@@ -116,12 +117,15 @@ function DashboardWrapper() {
 
 function DashboardLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const dashboardPath = getDashboardEntryPath(location.pathname);
   const activeView = getViewFromPath(dashboardPath);
+  const capabilityViewMode = isCapabilityView(activeView)
+    ? getCapabilityModeFromPath(dashboardPath, activeView)
+    : "mine";
   const [showMorphPanel, setShowMorphPanel] = useState(false);
   const [showAuthTransition, setShowAuthTransition] = useState(() => isAuthTransition());
   const [startDashboardReveal, setStartDashboardReveal] = useState(false);
-  const [activityMainVisible, setActivityMainVisible] = useState(true);
   const revealTriggeredRef = useRef(false);
 
   const {
@@ -165,8 +169,6 @@ function DashboardLayout() {
     setActiveOrganizationId,
     sourceFilter,
     setSourceFilter,
-    capabilityViewMode,
-    setCapabilityViewMode,
     activityPanelOpen,
     toggleActivityPanel,
     activityExpanded,
@@ -174,23 +176,6 @@ function DashboardLayout() {
     sidebarCollapsed,
     toggleSidebar,
   } = useUIStore();
-
-  useEffect(() => {
-    if (activityExpanded) {
-      setActivityMainVisible(false);
-      return;
-    }
-
-    if (activityMainVisible) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setActivityMainVisible(true);
-    }, ACTIVITY_PANEL_TRANSITION_MS);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [activityExpanded, activityMainVisible]);
 
   const dashboardColumns = activityExpanded
     ? "auto minmax(0,0fr) minmax(0,1fr)"
@@ -256,11 +241,11 @@ function DashboardLayout() {
         />
         <div className="flex h-screen flex-col overflow-hidden bg-background">
           <div
-            className="grid flex-1 overflow-hidden transition-[grid-template-columns] ease-out"
+            className="grid flex-1 overflow-hidden transition-[grid-template-columns]"
             style={{
               gridTemplateColumns: dashboardColumns,
               transitionDuration: `${ACTIVITY_PANEL_TRANSITION_MS}ms`,
-              transitionDelay: activityExpanded ? `${ACTIVITY_MAIN_FADE_MS}ms` : "0ms",
+              transitionTimingFunction: ACTIVITY_PANEL_EASING,
             }}
           >
             <Sidebar
@@ -277,11 +262,16 @@ function DashboardLayout() {
             />
             <div
               className={[
-                "flex min-w-0 flex-col overflow-hidden transition-opacity ease-out",
-                activityMainVisible ? "opacity-100" : "pointer-events-none opacity-0",
+                "flex min-w-0 flex-col overflow-hidden transition-[opacity,transform,filter]",
+                activityExpanded
+                  ? "pointer-events-none -translate-x-3 opacity-0 blur-[1px]"
+                  : "translate-x-0 opacity-100 blur-0",
               ].join(" ")}
-              style={{ transitionDuration: `${ACTIVITY_MAIN_FADE_MS}ms` }}
-              aria-hidden={!activityMainVisible}
+              style={{
+                transitionDuration: `${ACTIVITY_PANEL_TRANSITION_MS}ms`,
+                transitionTimingFunction: ACTIVITY_PANEL_EASING,
+              }}
+              aria-hidden={activityExpanded}
             >
               <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <Toolbar
@@ -295,7 +285,11 @@ function DashboardLayout() {
                   onSourceFilterChange={setSourceFilter}
                   inboxCounts={inboxCounts}
                   capabilityViewMode={capabilityViewMode}
-                  onCapabilityViewModeChange={setCapabilityViewMode}
+                  onCapabilityViewModeChange={(mode) => {
+                    if (isCapabilityView(activeView)) {
+                      void navigate({ to: getCapabilityPath(activeView, mode) });
+                    }
+                  }}
                   agentModelFilter={agentModelFilter}
                   onAgentModelFilterChange={setAgentModelFilter}
                   agentModelCounts={agentModelCounts}

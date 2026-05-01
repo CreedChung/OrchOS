@@ -1,55 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { AgentModelTabs, type AgentModelFilter } from "@/components/layout/AgentModelTabs";
+import { CapabilityModeTabs } from "@/components/layout/CapabilityModeTabs";
+import { InboxSourceTabs, type SourceFilter } from "@/components/layout/InboxSourceTabs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Search01Icon,
   Cancel01Icon,
   PanelRight,
   PanelLeft,
-  Menu01Icon,
-  GitPullRequestIcon,
-  SquareIcon,
-  InformationCircleIcon,
-  CodeIcon,
-  CloudIcon,
   ArrowReloadHorizontalIcon,
-  Wrench01Icon,
-  Store04Icon,
-  FolderLibraryIcon,
 } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
-import type { SidebarView, InboxSource } from "@/lib/types";
-
-type SourceFilter = "all" | InboxSource;
+import type { SidebarView } from "@/lib/types";
+import { isCapabilityView, type CapabilityViewMode } from "@/lib/capability-routing";
 export type ScopeFilter = "all" | "global" | "project";
-export type AgentModelFilter = "all" | "local" | "cloud";
-
-const sourceFilterConfig: Record<
-  InboxSource,
-  { icon: typeof GitPullRequestIcon; label: string; iconClassName: string }
-> =
-  {
-    github_pr: { icon: GitPullRequestIcon, label: m.prs(), iconClassName: "text-violet-500" },
-    github_issue: { icon: SquareIcon, label: m.issues(), iconClassName: "text-emerald-500" },
-    mention: { icon: InformationCircleIcon, label: m.mentions(), iconClassName: "text-sky-500" },
-    agent_request: { icon: Wrench01Icon, label: m.agents(), iconClassName: "text-amber-500" },
-  };
-
-const agentModelFilterConfig: Record<
-  Exclude<AgentModelFilter, "all">,
-  { icon: typeof CodeIcon; label: string; iconClassName: string }
-> = {
-  local: { icon: CodeIcon, label: m.model_local(), iconClassName: "text-emerald-500" },
-  cloud: { icon: CloudIcon, label: m.model_cloud(), iconClassName: "text-sky-500" },
-};
-
-const allFilterConfig = {
-  icon: Menu01Icon,
-  label: m.all(),
-  iconClassName: "text-muted-foreground/80",
-};
 
 interface ToolbarProps {
   activeView: SidebarView;
@@ -71,8 +37,8 @@ interface ToolbarProps {
   onAgentModelFilterChange: (filter: AgentModelFilter) => void;
   agentModelCounts: { all: number; local: number; cloud: number };
   onRefresh?: () => void;
-  capabilityViewMode?: "mine" | "market";
-  onCapabilityViewModeChange?: (mode: "mine" | "market") => void;
+  capabilityViewMode?: CapabilityViewMode;
+  onCapabilityViewModeChange?: (mode: CapabilityViewMode) => void;
 }
 
 export function Toolbar({
@@ -136,84 +102,16 @@ export function Toolbar({
   return (
     <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
       {activeView === "inbox" && (
-        <div className="flex items-center gap-1.5">
-          {(["all", "github_pr", "github_issue", "mention", "agent_request"] as SourceFilter[]).map(
-            (filter) => {
-              const config = filter === "all" ? allFilterConfig : sourceFilterConfig[filter];
-              return (
-                <button
-                  key={filter}
-                  onClick={() => onSourceFilterChange(filter)}
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:gap-1.5 sm:px-2.5",
-                    sourceFilter === filter
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                  )}
-                >
-                  <HugeiconsIcon icon={config.icon} className={cn("size-3", config.iconClassName)} />
-                  <span className="hidden capitalize sm:inline">{config.label || filter}</span>
-                  <span className="tabular-nums text-[10px] opacity-60">
-                    {inboxCounts[filter as keyof typeof inboxCounts]}
-                  </span>
-                </button>
-              );
-            },
-          )}
-        </div>
+        <InboxSourceTabs value={sourceFilter} counts={inboxCounts} onChange={onSourceFilterChange} />
       )}
 
       {activeView === "agents" && (
-        <div className="flex items-center gap-1.5">
-          {(["all", "local", "cloud"] as AgentModelFilter[]).map((filter) => {
-            const config = filter === "all" ? allFilterConfig : agentModelFilterConfig[filter];
-            return (
-              <button
-                key={filter}
-                onClick={() => onAgentModelFilterChange(filter)}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:gap-1.5 sm:px-2.5",
-                  agentModelFilter === filter
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                )}
-              >
-                <HugeiconsIcon icon={config.icon} className={cn("size-3", config.iconClassName)} />
-                <span className="hidden sm:inline">{config.label || filter}</span>
-                <span className="tabular-nums text-[10px] opacity-60">
-                  {agentModelCounts[filter]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <AgentModelTabs value={agentModelFilter} counts={agentModelCounts} onChange={onAgentModelFilterChange} />
       )}
 
-      {(activeView === "mcp-servers" || activeView === "skills") && (
-        <div className="flex items-center gap-1.5">
-          {onCapabilityViewModeChange ? (
-            ([
-              { key: "mine", label: "我的", icon: FolderLibraryIcon, iconClassName: "text-emerald-500" },
-              { key: "market", label: "市场", icon: Store04Icon, iconClassName: "text-sky-500" },
-            ] as const).map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => onCapabilityViewModeChange(item.key)}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors sm:gap-1.5 sm:px-2.5",
-                  capabilityViewMode === item.key
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                )}
-              >
-                <HugeiconsIcon icon={item.icon} className={cn("size-3", item.iconClassName)} />
-                <span>{item.label}</span>
-              </button>
-            ))
-          ) : null}
-        </div>
-      )}
+      {isCapabilityView(activeView) && onCapabilityViewModeChange ? (
+        <CapabilityModeTabs view={activeView} mode={capabilityViewMode} onModeChange={onCapabilityViewModeChange} />
+      ) : null}
 
       <div className="flex-1" />
 

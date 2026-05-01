@@ -18,7 +18,7 @@
 
 ## Pre-commit / Verification
 
-- Husky pre-commit runs only `bun run lint:strict`. If this fails, the commit will fail.
+- Lefthook pre-commit runs only `bun run lint:strict`. If this fails, the commit will fail.
 - `test` uses `vitest run --passWithNoTests` in both apps, so green test runs may still mean no tests executed.
 - Root `lint` is `oxlint`, not ESLint. Root `format` is `oxfmt`, not Prettier, even though Prettier is installed.
 

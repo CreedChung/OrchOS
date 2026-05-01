@@ -185,7 +185,7 @@ export function Sidebar({
         <div className="relative flex h-11 items-center border-b border-border px-2">
           <div
             className={cn(
-              "flex min-w-0 flex-1 items-center gap-2 pr-11 transition-opacity duration-300 ease-out",
+              "flex min-w-0 flex-1 items-center gap-2 pr-9 transition-opacity duration-300 ease-out",
               !showExpandedContent
                 ? "pointer-events-none absolute opacity-0 delay-0"
                 : "opacity-100 delay-180",
@@ -241,7 +241,7 @@ export function Sidebar({
           <button
             onClick={onToggleCollapse}
             className={cn(
-              "absolute right-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer",
+              "absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer",
             )}
           >
             <HugeiconsIcon icon={collapsed ? SidebarRight01Icon : SidebarLeft01Icon} className="size-4" />

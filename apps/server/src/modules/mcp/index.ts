@@ -76,7 +76,7 @@ function inferMcpCommand(source: string) {
   return { command: "git", args: ["clone", source] };
 }
 
-async function loadOfficialMcpMarket() {
+async function loadOfficialMcpMarket(options?: { enrichGithub?: boolean }) {
   const response = await fetch(AWESOME_MCP_SERVERS_URL);
   if (!response.ok) {
     throw new Error(`Failed to load MCP market: ${response.status}`);
@@ -146,7 +146,11 @@ async function loadOfficialMcpMarket() {
     });
   }
 
-  return Promise.all(items.map((item) => enrichGithubRepositoryMetadata(item)));
+  if (options?.enrichGithub) {
+    return Promise.all(items.map((item) => enrichGithubRepositoryMetadata(item)));
+  }
+
+  return items;
 }
 
 async function getOfficialMcpMarketItem(id: string) {
@@ -155,7 +159,7 @@ async function getOfficialMcpMarketItem(id: string) {
     installedServers.map((server) => `${server.command}::${server.args.join(" ")}`.toLowerCase()),
   );
   const installedNames = new Set(installedServers.map((server) => server.name.trim().toLowerCase()));
-  const allItems = await loadOfficialMcpMarket();
+  const allItems = await loadOfficialMcpMarket({ enrichGithub: true });
 
   return allItems
     .map((item) => ({
@@ -178,7 +182,7 @@ export const mcpController = new Elysia({ prefix: "/api/mcp-servers" })
         installedServers.map((server) => `${server.command}::${server.args.join(" ")}`.toLowerCase()),
       );
       const installedNames = new Set(installedServers.map((server) => server.name.trim().toLowerCase()));
-      const allItems = (await loadOfficialMcpMarket()).map((item) => ({
+       const allItems = (await loadOfficialMcpMarket()).map((item) => ({
         ...item,
         installed:
           installedKeys.has(`${item.command}::${item.args.join(" ")}`.toLowerCase()) ||

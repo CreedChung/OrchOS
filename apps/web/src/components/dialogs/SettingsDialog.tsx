@@ -112,7 +112,6 @@ function ModelBadge({ model, isLocalRuntime }: { model: string; isLocalRuntime?:
         : "local";
   // A locally installed CLI runtime that uses a cloud model is still a "local runtime"
   const showAsLocal = isLocalRuntime || modelProvider === "local";
-  const modelName = model.replace(/^(cloud|local)\//, "");
   const label = showAsLocal ? m.model_local() : m.model_cloud();
   return (
     <span
@@ -129,7 +128,6 @@ function ModelBadge({ model, isLocalRuntime }: { model: string; isLocalRuntime?:
         <HugeiconsIcon icon={CloudIcon} className="size-2.5" />
       )}
       {label}
-      {modelName && modelName !== model && <span className="opacity-60 ml-0.5">{modelName}</span>}
     </span>
   );
 }

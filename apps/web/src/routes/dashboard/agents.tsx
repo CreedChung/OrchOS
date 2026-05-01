@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AgentList } from "@/components/panels/AgentList";
 import { AgentDetailView } from "@/components/panels/AgentDetail";
 import { EditAgentDialog } from "@/components/dialogs/EditAgentDialog";
@@ -33,6 +33,10 @@ function AgentsPage() {
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(288);
 
+  useEffect(() => {
+    setActiveAgentId(null);
+  }, [setActiveAgentId]);
+
   const activeAgent = agents.find((a) => a.id === activeAgentId);
   const editingAgent = agents.find((a) => a.id === editingAgentId);
 
@@ -62,6 +66,7 @@ function AgentsPage() {
     <div className="flex flex-1 overflow-hidden">
       <AgentList
         agents={agents}
+        runtimes={runtimes}
         activeAgentId={activeAgentId}
         loading={loading}
         width={sidebarWidth}

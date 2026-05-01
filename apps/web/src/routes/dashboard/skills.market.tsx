@@ -1,24 +1,20 @@
 import { useEffect, useState } from "react";
-import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+
 import { SkillsView } from "@/components/panels/SkillsView";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useUIStore } from "@/lib/store";
 
-export const Route = createFileRoute("/dashboard/skills")({ component: SkillsPage });
+export const Route = createFileRoute("/dashboard/skills/market")({ component: SkillsMarketPage });
 
-function SkillsPage() {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+function SkillsMarketPage() {
   const { skills, projects, refreshAll } = useDashboard();
-  const { scopeFilter, capabilityViewMode, setScopeFilter, setCapabilityViewMode } = useUIStore();
+  const { scopeFilter, setScopeFilter, setCapabilityViewMode } = useUIStore();
   const [sidebarWidth, setSidebarWidth] = useState(288);
 
   useEffect(() => {
-    setCapabilityViewMode("mine");
+    setCapabilityViewMode("market");
   }, [setCapabilityViewMode]);
-
-  if (pathname !== "/dashboard/skills") {
-    return <Outlet />;
-  }
 
   return (
     <SkillsView
@@ -27,7 +23,7 @@ function SkillsPage() {
       onRefresh={refreshAll}
       scopeFilter={scopeFilter}
       onScopeFilterChange={setScopeFilter}
-      mode={capabilityViewMode}
+      mode="market"
       sidebarWidth={sidebarWidth}
       onSidebarWidthChange={setSidebarWidth}
     />

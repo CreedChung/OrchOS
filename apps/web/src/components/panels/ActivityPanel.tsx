@@ -131,8 +131,10 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
   return (
     <aside
       className={cn(
-        "flex h-full min-w-0 flex-col bg-sidebar transition-[border-color] duration-240 ease-out",
-        expanded ? "border-l border-transparent" : "border-l border-border",
+        "flex h-full min-w-0 flex-col bg-sidebar transition-[border-color,box-shadow,opacity,transform] duration-320 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]",
+        expanded
+          ? "translate-x-0 opacity-100 shadow-[-24px_0_48px_-32px_hsl(var(--foreground)/0.22)] border-l border-transparent"
+          : "translate-x-0 opacity-100 border-l border-border shadow-none",
       )}
     >
       <div className="flex h-11 items-center gap-2 border-b border-border bg-sidebar px-4">
@@ -151,7 +153,7 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
       </div>
 
       <ScrollArea className="flex-1">
-        <div className={cn("space-y-4 py-3 transition-[max-width] duration-240 ease-out", expanded && "mx-auto max-w-3xl")}>
+        <div className="space-y-4 py-3">
           {activeView === "creation" && (flowMessages.length > 0 || showPendingAssistantReply) ? (
             <section>
               <div className="space-y-4 px-3">

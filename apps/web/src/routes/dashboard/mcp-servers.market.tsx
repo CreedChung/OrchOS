@@ -1,24 +1,20 @@
 import { useEffect, useState } from "react";
-import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+
 import { McpServersView } from "@/components/panels/McpServersView";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useUIStore } from "@/lib/store";
 
-export const Route = createFileRoute("/dashboard/mcp-servers")({ component: McpServersPage });
+export const Route = createFileRoute("/dashboard/mcp-servers/market")({ component: McpServersMarketPage });
 
-function McpServersPage() {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+function McpServersMarketPage() {
   const { mcpServers, projects, refreshAll } = useDashboard();
-  const { scopeFilter, capabilityViewMode, setScopeFilter, setCapabilityViewMode } = useUIStore();
+  const { scopeFilter, setScopeFilter, setCapabilityViewMode } = useUIStore();
   const [sidebarWidth, setSidebarWidth] = useState(288);
 
   useEffect(() => {
-    setCapabilityViewMode("mine");
+    setCapabilityViewMode("market");
   }, [setCapabilityViewMode]);
-
-  if (pathname !== "/dashboard/mcp-servers") {
-    return <Outlet />;
-  }
 
   return (
     <McpServersView
@@ -27,7 +23,7 @@ function McpServersPage() {
       onRefresh={refreshAll}
       scopeFilter={scopeFilter}
       onScopeFilterChange={setScopeFilter}
-      mode={capabilityViewMode}
+      mode="market"
       sidebarWidth={sidebarWidth}
       onSidebarWidthChange={setSidebarWidth}
     />

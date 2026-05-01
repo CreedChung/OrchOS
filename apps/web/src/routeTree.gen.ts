@@ -28,7 +28,9 @@ import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
 import { Route as DashboardActivityRouteImport } from './routes/dashboard/activity'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
+import { Route as DashboardSkillsMarketRouteImport } from './routes/dashboard/skills.market'
 import { Route as DashboardSkillsSkillIdRouteImport } from './routes/dashboard/skills.$skillId'
+import { Route as DashboardMcpServersMarketRouteImport } from './routes/dashboard/mcp-servers.market'
 import { Route as DashboardMcpServersServerIdRouteImport } from './routes/dashboard/mcp-servers.$serverId'
 
 const SignUpRoute = SignUpRouteImport.update({
@@ -126,11 +128,22 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardSkillsMarketRoute = DashboardSkillsMarketRouteImport.update({
+  id: '/market',
+  path: '/market',
+  getParentRoute: () => DashboardSkillsRoute,
+} as any)
 const DashboardSkillsSkillIdRoute = DashboardSkillsSkillIdRouteImport.update({
   id: '/$skillId',
   path: '/$skillId',
   getParentRoute: () => DashboardSkillsRoute,
 } as any)
+const DashboardMcpServersMarketRoute =
+  DashboardMcpServersMarketRouteImport.update({
+    id: '/market',
+    path: '/market',
+    getParentRoute: () => DashboardMcpServersRoute,
+  } as any)
 const DashboardMcpServersServerIdRoute =
   DashboardMcpServersServerIdRouteImport.update({
     id: '/$serverId',
@@ -159,7 +172,9 @@ export interface FileRoutesByFullPath {
   '/dashboard/skills': typeof DashboardSkillsRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/mcp-servers/$serverId': typeof DashboardMcpServersServerIdRoute
+  '/dashboard/mcp-servers/market': typeof DashboardMcpServersMarketRoute
   '/dashboard/skills/$skillId': typeof DashboardSkillsSkillIdRoute
+  '/dashboard/skills/market': typeof DashboardSkillsMarketRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -181,7 +196,9 @@ export interface FileRoutesByTo {
   '/dashboard/skills': typeof DashboardSkillsRouteWithChildren
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/mcp-servers/$serverId': typeof DashboardMcpServersServerIdRoute
+  '/dashboard/mcp-servers/market': typeof DashboardMcpServersMarketRoute
   '/dashboard/skills/$skillId': typeof DashboardSkillsSkillIdRoute
+  '/dashboard/skills/market': typeof DashboardSkillsMarketRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -205,7 +222,9 @@ export interface FileRoutesById {
   '/dashboard/skills': typeof DashboardSkillsRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/mcp-servers/$serverId': typeof DashboardMcpServersServerIdRoute
+  '/dashboard/mcp-servers/market': typeof DashboardMcpServersMarketRoute
   '/dashboard/skills/$skillId': typeof DashboardSkillsSkillIdRoute
+  '/dashboard/skills/market': typeof DashboardSkillsMarketRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -230,7 +249,9 @@ export interface FileRouteTypes {
     | '/dashboard/skills'
     | '/dashboard/'
     | '/dashboard/mcp-servers/$serverId'
+    | '/dashboard/mcp-servers/market'
     | '/dashboard/skills/$skillId'
+    | '/dashboard/skills/market'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -252,7 +273,9 @@ export interface FileRouteTypes {
     | '/dashboard/skills'
     | '/dashboard'
     | '/dashboard/mcp-servers/$serverId'
+    | '/dashboard/mcp-servers/market'
     | '/dashboard/skills/$skillId'
+    | '/dashboard/skills/market'
   id:
     | '__root__'
     | '/'
@@ -275,7 +298,9 @@ export interface FileRouteTypes {
     | '/dashboard/skills'
     | '/dashboard/'
     | '/dashboard/mcp-servers/$serverId'
+    | '/dashboard/mcp-servers/market'
     | '/dashboard/skills/$skillId'
+    | '/dashboard/skills/market'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -424,12 +449,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/skills/market': {
+      id: '/dashboard/skills/market'
+      path: '/market'
+      fullPath: '/dashboard/skills/market'
+      preLoaderRoute: typeof DashboardSkillsMarketRouteImport
+      parentRoute: typeof DashboardSkillsRoute
+    }
     '/dashboard/skills/$skillId': {
       id: '/dashboard/skills/$skillId'
       path: '/$skillId'
       fullPath: '/dashboard/skills/$skillId'
       preLoaderRoute: typeof DashboardSkillsSkillIdRouteImport
       parentRoute: typeof DashboardSkillsRoute
+    }
+    '/dashboard/mcp-servers/market': {
+      id: '/dashboard/mcp-servers/market'
+      path: '/market'
+      fullPath: '/dashboard/mcp-servers/market'
+      preLoaderRoute: typeof DashboardMcpServersMarketRouteImport
+      parentRoute: typeof DashboardMcpServersRoute
     }
     '/dashboard/mcp-servers/$serverId': {
       id: '/dashboard/mcp-servers/$serverId'
@@ -443,10 +482,12 @@ declare module '@tanstack/react-router' {
 
 interface DashboardMcpServersRouteChildren {
   DashboardMcpServersServerIdRoute: typeof DashboardMcpServersServerIdRoute
+  DashboardMcpServersMarketRoute: typeof DashboardMcpServersMarketRoute
 }
 
 const DashboardMcpServersRouteChildren: DashboardMcpServersRouteChildren = {
   DashboardMcpServersServerIdRoute: DashboardMcpServersServerIdRoute,
+  DashboardMcpServersMarketRoute: DashboardMcpServersMarketRoute,
 }
 
 const DashboardMcpServersRouteWithChildren =
@@ -454,10 +495,12 @@ const DashboardMcpServersRouteWithChildren =
 
 interface DashboardSkillsRouteChildren {
   DashboardSkillsSkillIdRoute: typeof DashboardSkillsSkillIdRoute
+  DashboardSkillsMarketRoute: typeof DashboardSkillsMarketRoute
 }
 
 const DashboardSkillsRouteChildren: DashboardSkillsRouteChildren = {
   DashboardSkillsSkillIdRoute: DashboardSkillsSkillIdRoute,
+  DashboardSkillsMarketRoute: DashboardSkillsMarketRoute,
 }
 
 const DashboardSkillsRouteWithChildren = DashboardSkillsRoute._addFileChildren(

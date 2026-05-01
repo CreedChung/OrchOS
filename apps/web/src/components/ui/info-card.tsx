@@ -11,6 +11,8 @@ import {
 } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import React from "react";
 
 interface InfoCardTitleProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -113,6 +115,7 @@ function InfoCard({
 
   const [isHovered, setIsHovered] = useState(false);
   const [allImagesLoaded, setAllImagesLoaded] = useState(true);
+  const [dismissConfirmOpen, setDismissConfirmOpen] = useState(false);
   const [isDismissed, setIsDismissed] = useState(() => {
     if (typeof window === "undefined" || dismissType === "once") return false;
     return dismissType === "forever" ? localStorage.getItem(storageKey!) === "dismissed" : false;
@@ -125,6 +128,16 @@ function InfoCard({
     }
   }, [storageKey, dismissType]);
 
+  const requestDismiss = useCallback(() => {
+    setDismissConfirmOpen(true);
+  }, []);
+
+  const handleDismissButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    requestDismiss();
+  }, [requestDismiss]);
+
   const imageContextValue = useMemo(
     () => ({
       handleMediaLoad: () => {},
@@ -136,9 +149,9 @@ function InfoCard({
   const cardContextValue = useMemo(
     () => ({
       isHovered,
-      onDismiss: handleDismiss,
+      onDismiss: requestDismiss,
     }),
-    [isHovered, handleDismiss],
+    [isHovered, requestDismiss],
   );
 
   return (
@@ -163,9 +176,13 @@ function InfoCard({
               onMouseLeave={() => setIsHovered(false)}
             >
               {showDismissButton ? (
-                <button
-                  onClick={handleDismiss}
-                  className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-muted hover:text-muted-foreground"
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleDismissButtonClick}
+                  title="关闭"
+                  className="absolute top-2 right-2 shrink-0 text-muted-foreground/60 hover:text-foreground"
                 >
                   <svg
                     width="14"
@@ -181,12 +198,21 @@ function InfoCard({
                       strokeLinecap="round"
                     />
                   </svg>
-                </button>
+                </Button>
               ) : null}
               {children}
             </motion.div>
           )}
         </AnimatePresence>
+        <ConfirmDialog
+          open={dismissConfirmOpen}
+          onOpenChange={setDismissConfirmOpen}
+          title="关闭提示"
+          description={dismissType === "forever" ? "关闭后这条提示不会再次显示。" : "关闭后这条提示将在当前会话中隐藏。"}
+          onConfirm={handleDismiss}
+          confirmLabel="关闭"
+          cancelLabel="取消"
+        />
       </InfoCardImageContext.Provider>
     </InfoCardContext.Provider>
   );
@@ -221,12 +247,20 @@ const InfoCardDismiss = React.memo(
 
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       onDismiss?.();
       contextDismiss();
     };
 
     return (
-      <div className={cn("cursor-pointer", className)} onClick={handleClick} {...props}>
+      <div
+        className={cn(
+          "cursor-pointer rounded-md px-1.5 py-1 transition-colors hover:bg-accent/50 hover:text-foreground",
+          className,
+        )}
+        onClick={handleClick}
+        {...props}
+      >
         {children}
       </div>
     );

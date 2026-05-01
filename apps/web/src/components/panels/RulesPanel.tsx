@@ -211,7 +211,7 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
         className="relative flex h-full shrink-0 flex-col border-r border-border bg-background"
         style={{ width: Math.min(sidebarWidth, 288), maxWidth: "18rem" }}
       >
-        <div className="flex h-14 items-center justify-between border-b border-border px-4 py-3">
+        <div className="shrink-0 flex h-14 items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
             <HugeiconsIcon icon={Shield01Icon} className="size-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground">Rules</h2>
@@ -280,7 +280,7 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="flex h-14 items-center justify-between border-b border-border px-4 py-3">
+        <div className="shrink-0 flex h-14 items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
             <HugeiconsIcon icon={Shield01Icon} className="size-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground">
