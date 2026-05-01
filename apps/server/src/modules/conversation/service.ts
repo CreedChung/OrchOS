@@ -399,7 +399,7 @@ export abstract class ConversationService {
           }
         | undefined;
 
-      const shouldUseSandbox = !!conv.projectId && runtime?.protocol !== "acp";
+      const shouldUseSandbox = !!conv.projectId;
 
       if (shouldUseSandbox) {
         let vm = SandboxService.getRunningVMForProject(conv.projectId);
@@ -494,9 +494,8 @@ export abstract class ConversationService {
         result.metadata = {
           executionMode: "local",
           sandboxStatus: conv.projectId ? "fallback" : undefined,
-          trace: [
-            ...(result.trace ?? []),
-            ...(matchedRules.length > 0
+          trace:
+            matchedRules.length > 0
               ? [
                   {
                     kind: "tool" as const,
@@ -506,8 +505,7 @@ export abstract class ConversationService {
                     output: ruleEvaluation,
                   },
                 ]
-              : []),
-          ],
+              : undefined,
           ...projectMetadata,
         };
       }

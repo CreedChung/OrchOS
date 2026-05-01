@@ -16,14 +16,26 @@ import { RuleService } from "@/modules/rule/service";
 import { GraphService } from "@/modules/graph/service";
 import { PolicyService } from "@/modules/policy/service";
 import { ContextService } from "@/modules/context/service";
-import type { AcpTraceEvent } from "@/modules/runtime/acp";
 import type { Command, CommandStatus } from "@/types";
+
+type MessageTraceEvent =
+  | { kind: "message"; text: string }
+  | { kind: "thought"; text: string }
+  | {
+      kind: "tool";
+      toolName?: string;
+      toolCallId?: string;
+      state?: string;
+      input?: unknown;
+      output?: unknown;
+      errorText?: string;
+    };
 
 export interface DispatchResult {
   needsClarification: boolean;
   questions: string[];
   command: Command;
-  trace?: AcpTraceEvent[];
+  trace?: MessageTraceEvent[];
   goals: Array<{
     id: string;
     title: string;

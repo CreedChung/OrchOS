@@ -1,7 +1,19 @@
 import { RuntimeService } from "@/modules/runtime/service";
 import { AgentService } from "@/modules/agent/service";
-import type { AcpTraceEvent } from "@/modules/runtime/acp";
 import type { Action } from "@/types";
+
+type MessageTraceEvent =
+  | { kind: "message"; text: string }
+  | { kind: "thought"; text: string }
+  | {
+      kind: "tool";
+      toolName?: string;
+      toolCallId?: string;
+      state?: string;
+      input?: unknown;
+      output?: unknown;
+      errorText?: string;
+    };
 
 export interface PlannedGoal {
   title: string;
@@ -27,7 +39,7 @@ export interface PlanningResult {
   needsClarification: boolean;
   questions: string[];
   goals: PlannedGoal[];
-  trace?: AcpTraceEvent[];
+  trace?: MessageTraceEvent[];
 }
 
 const PLANNING_PROMPT = `You are a project planner for an AI agent orchestration system.
@@ -129,7 +141,6 @@ export abstract class PlanningService {
       return {
         ...parsed,
         goals: parsed.needsClarification ? [] : PlanningService.assignAgents(parsed.goals, availableAgents),
-        trace: result.trace,
       };
     } catch {
       return PlanningService.fallbackPlan(instruction, agentNames);
@@ -175,7 +186,6 @@ export abstract class PlanningService {
         needsClarification: false,
         questions: [],
         goals: PlanningService.assignAgents(parsed.goals, availableAgents),
-        trace: result.trace,
       };
     } catch {
       return PlanningService.fallbackPlan(instruction, agentNames);

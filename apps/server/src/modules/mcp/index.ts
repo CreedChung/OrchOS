@@ -57,6 +57,12 @@ async function enrichGithubRepositoryMetadata<T extends { source: string }>(item
   }
 }
 
+function buildMarketTags(category?: string) {
+  const normalizedCategory = category?.trim().replace(/\s+/g, " ");
+
+  return Array.from(new Set(["official", ...(normalizedCategory ? [normalizedCategory] : [])]));
+}
+
 function inferMcpCommand(source: string) {
   const lowered = source.toLowerCase();
   const repoName = source.split("/").filter(Boolean).pop() || "mcp-server";
@@ -120,17 +126,7 @@ async function loadOfficialMcpMarket(options?: { enrichGithub?: boolean }) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 120);
-    const tags = Array.from(
-      new Set([
-        "official",
-        ...(currentCategory
-          ? currentCategory
-              .toLowerCase()
-              .split(/[^a-z0-9]+/)
-              .filter(Boolean)
-          : []),
-      ]),
-    );
+    const tags = buildMarketTags(currentCategory);
 
     items.push({
       id,

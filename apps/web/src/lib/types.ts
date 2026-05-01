@@ -111,12 +111,7 @@ export interface RuntimeProfile {
   role: string;
   capabilities: string[];
   model: string;
-  protocol: "acp" | "cli";
   transport: "stdio" | "tcp";
-  acpCommand?: string;
-  acpArgs: string[];
-  acpEnv: Record<string, string>;
-  communicationMode: "acp-native" | "acp-adapter" | "cli-fallback";
   enabled: boolean;
   currentModel?: string;
   status: "idle" | "active" | "error";
@@ -127,8 +122,7 @@ export interface RuntimeProfile {
 export interface RuntimeModelsResponse {
   models: string[];
   currentModel?: string;
-  source: "acp" | "config";
-  rawOutput?: string;
+  source: "config";
 }
 
 export interface StateItem {

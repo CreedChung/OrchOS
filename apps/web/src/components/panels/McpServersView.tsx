@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   FolderGitIcon,
   Add01Icon,
-  Cancel01Icon,
   Delete02Icon,
   ToggleLeft,
   ToggleRight,
@@ -29,7 +29,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CreateMcpServerDialog } from "@/components/dialogs/CreateMcpServerDialog";
-import { McpMarketDetailView } from "@/components/panels/McpMarketDetailView";
 import { api, type McpMarketItem, type McpMarketResponse, type McpServerProfile } from "@/lib/api";
 import type { Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -57,6 +56,7 @@ export function McpServersView({
   sidebarWidth = 288,
   onSidebarWidthChange,
 }: McpServersViewProps) {
+  const navigate = useNavigate();
   const MARKET_PAGE_SIZE = 30;
   const [servers, setServers] = useState<McpServerProfile[]>(initialServers);
   const [activeServerId, setActiveServerId] = useState<string | null>(null);
@@ -69,7 +69,6 @@ export function McpServersView({
   const [marketTags, setMarketTags] = useState<string[]>([]);
   const [marketLoading, setMarketLoading] = useState(false);
   const [marketError, setMarketError] = useState<string | null>(null);
-  const [selectedMarketItem, setSelectedMarketItem] = useState<McpMarketItem | null>(null);
   const [marketSearch, setMarketSearch] = useState("");
   const [marketFilter, setMarketFilter] = useState<string>("all");
   const [selectedTag, setSelectedTag] = useState<string>("all");
@@ -343,12 +342,6 @@ export function McpServersView({
     return null;
   };
 
-  useEffect(() => {
-    setSelectedMarketItem((selected) =>
-      selected ? marketItems.find((entry) => entry.id === selected.id) ?? selected : selected,
-    );
-  }, [marketItems]);
-
   return (
     <>
       <div className="flex flex-1 overflow-hidden">
@@ -366,40 +359,6 @@ export function McpServersView({
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <div className="md:col-span-2 xl:col-span-3">
-                  {selectedMarketItem ? (
-                    <div className="mb-4 overflow-hidden rounded-xl border border-border/40 bg-card/70">
-                      <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
-                            当前预览
-                          </p>
-                          <p className="mt-1 truncate text-sm font-medium text-foreground">
-                            {selectedMarketItem.name}
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => setSelectedMarketItem(null)}
-                          title={m.dismiss()}
-                          className="shrink-0 text-muted-foreground hover:text-foreground"
-                        >
-                          <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
-                        </Button>
-                      </div>
-                      <McpMarketDetailView item={selectedMarketItem} projects={projects} onRefresh={onRefresh} embedded />
-                    </div>
-                  ) : !marketLoading ? (
-                    <div className="mb-4 rounded-xl border border-dashed border-border/50 bg-card/40 px-6 py-8 text-center">
-                      <HugeiconsIcon icon={SparklesIcon} className="mx-auto mb-3 size-7 text-muted-foreground/25" />
-                      <p className="text-sm font-medium text-foreground/80">选择一个 MCP 查看详情</p>
-                      <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                        点击下方市场卡片后，这里会展示来源、命令和安装目标。
-                      </p>
-                    </div>
-                  ) : null}
-
                   <div className="flex flex-col gap-3 rounded-xl border border-border/50 bg-card p-4">
                     <div className="relative w-full sm:max-w-sm">
                       <HugeiconsIcon icon={Search01Icon} className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
@@ -503,7 +462,7 @@ export function McpServersView({
                   return (
                   <section
                     key={item.id}
-                    onClick={() => setSelectedMarketItem(item)}
+                    onClick={() => navigate({ to: "/dashboard/mcp-servers/$serverId", params: { serverId: item.id } })}
                     className="cursor-pointer rounded-xl border border-border/50 bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-border/80 hover:shadow-md"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -517,7 +476,7 @@ export function McpServersView({
                           className="size-8 p-0"
                           onClick={(event) => {
                             event.stopPropagation();
-                            setSelectedMarketItem(item);
+                            void navigate({ to: "/dashboard/mcp-servers/$serverId", params: { serverId: item.id } });
                           }}
                         >
                           <HugeiconsIcon icon={InformationCircleIcon} className="size-4 text-muted-foreground" />

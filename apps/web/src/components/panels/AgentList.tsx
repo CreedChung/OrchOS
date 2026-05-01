@@ -1,15 +1,14 @@
-import { cn, getRuntimeIcon } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Robot02Icon, Add01Icon, Edit02Icon, Delete02Icon } from "@hugeicons/core-free-icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
-import type { AgentProfile, RuntimeProfile } from "@/lib/types";
+import type { AgentProfile } from "@/lib/types";
 
 interface AgentListProps {
   agents: AgentProfile[];
-  runtimes?: RuntimeProfile[];
   activeAgentId: string | null;
   loading?: boolean;
   width?: number;
@@ -29,7 +28,6 @@ const agentStatusColor: Record<AgentProfile["status"], string> = {
 
 export function AgentList({
   agents,
-  runtimes = [],
   activeAgentId,
   loading,
   width = 288,
@@ -96,7 +94,6 @@ export function AgentList({
                     <AgentItem
                       key={agent.id}
                       agent={agent}
-                      runtime={runtimes.find((runtime) => runtime.id === agent.runtimeId)}
                       isActive={agent.id === activeAgentId}
                       onClick={() => onSelectAgent(agent.id)}
                       onAvatarUploaded={onAgentUpdated}
@@ -118,7 +115,6 @@ export function AgentList({
                     <AgentItem
                       key={agent.id}
                       agent={agent}
-                      runtime={runtimes.find((runtime) => runtime.id === agent.runtimeId)}
                       isActive={agent.id === activeAgentId}
                       onClick={() => onSelectAgent(agent.id)}
                       onAvatarUploaded={onAgentUpdated}
@@ -166,7 +162,6 @@ export function AgentList({
 
 function AgentItem({
   agent,
-  runtime,
   isActive,
   onClick,
   onAvatarUploaded,
@@ -174,19 +169,12 @@ function AgentItem({
   onDelete,
 }: {
   agent: AgentProfile;
-  runtime?: RuntimeProfile;
   isActive: boolean;
   onClick: () => void;
   onAvatarUploaded?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
-  const runtimeIcon = getRuntimeIcon({
-    id: runtime?.registryId || runtime?.id || agent.runtimeId,
-    name: runtime?.name || agent.name,
-    command: runtime?.command || runtime?.acpCommand,
-  });
-
   return (
     <div
       onClick={onClick}
@@ -210,16 +198,13 @@ function AgentItem({
         avatarUrl={agent.avatarUrl}
         name={agent.name}
         runtimeId={agent.runtimeId}
+        runtime={runtime}
         size="sm"
         onUploaded={onAvatarUploaded}
         disableHover
       />
       <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
-        {runtimeIcon ? (
-          <img src={runtimeIcon} alt={runtime?.name || agent.name} className="size-3.5 shrink-0" />
-        ) : (
-          <div className={cn("size-2 rounded-full shrink-0", agentStatusColor[agent.status])} />
-        )}
+        <div className={cn("size-2 rounded-full shrink-0", agentStatusColor[agent.status])} />
         <p className={cn("truncate text-xs font-medium", isActive && "text-accent-foreground")}>
           {agent.name}
         </p>

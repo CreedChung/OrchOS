@@ -59,6 +59,12 @@ async function enrichGithubRepositoryMetadata<T extends { source: string; browse
   }
 }
 
+function buildMarketTags(category?: string) {
+  const normalizedCategory = category?.trim().replace(/\s+/g, " ");
+
+  return Array.from(new Set(["official", ...(normalizedCategory ? [normalizedCategory] : [])]));
+}
+
 async function loadOfficialSkillMarket() {
   const response = await fetch(AWESOME_OPENCLAW_SKILLS_URL);
   if (!response.ok) {
@@ -113,17 +119,7 @@ async function loadOfficialSkillMarket() {
       .replace(/^-+|-+$/g, "")
       .slice(0, 120);
 
-    const tags = Array.from(
-      new Set([
-        "official",
-        ...(currentCategory
-          ? currentCategory
-              .toLowerCase()
-              .split(/[^a-z0-9]+/)
-              .filter(Boolean)
-          : []),
-      ]),
-    );
+    const tags = buildMarketTags(currentCategory);
 
     items.push({
       id,

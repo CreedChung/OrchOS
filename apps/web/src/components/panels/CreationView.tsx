@@ -190,6 +190,7 @@ export function CreationView({
     updateConversation,
     deleteConversation,
     setConversationPending,
+    setPendingUserMessage,
     setConversationFlowDraft,
   } = useConversationStore();
 
@@ -199,8 +200,6 @@ export function CreationView({
   const uiMessages = useMemo(() => mapConversationMessagesToUiMessages(messages), [messages]);
 
   const [sending, setSending] = useState(false);
-  const [chatError, setChatError] = useState<string | null>(null);
-
   const enabledRuntimes = useMemo(() => runtimes.filter((r) => r.enabled), [runtimes]);
   const enabledAgents = useMemo(() => agents.filter((agent) => agent.enabled), [agents]);
   const defaultAgent = useMemo(
@@ -346,7 +345,6 @@ export function CreationView({
             isDraftConversation={!activeConversation}
             messages={uiMessages}
             sending={sending}
-            chatError={chatError}
             agents={agents}
             runtimes={enabledRuntimes}
             projects={projects}
@@ -367,8 +365,10 @@ export function CreationView({
               if (!conversation) return;
 
               setSending(true);
-              setChatError(null);
               setConversationPending(conversation.id);
+              if (content) {
+                setPendingUserMessage(conversation.id, content);
+              }
               setConversationFlowDraft(conversation.id, {
                 id: `draft-${conversation.id}`,
                 role: "assistant",
@@ -429,6 +429,7 @@ export function CreationView({
                   ],
                 });
                 await loadMessages(conversation.id, { force: true });
+                setPendingUserMessage(conversation.id, undefined);
                 if (!conversation.title && messages.length === 0) {
                   await handleUpdateConversation(conversation.id, {
                     title: content.slice(0, 60),
@@ -458,8 +459,9 @@ export function CreationView({
                     },
                   ],
                 });
+                setPendingUserMessage(conversation.id, undefined);
                 console.error("Failed to send message:", err);
-                setChatError(err instanceof Error ? err.message : "Failed to send message");
+                toast.error(err instanceof Error ? err.message : m.send_failed());
                 throw err;
               } finally {
                 setConversationPending(null);
@@ -493,7 +495,6 @@ interface ChatAreaProps {
   isDraftConversation: boolean;
   messages: UIMessage[];
   sending: boolean;
-  chatError: string | null;
   agents: AgentProfile[];
   runtimes: RuntimeProfile[];
   projects: Project[];
@@ -521,7 +522,6 @@ function ChatArea({
   isDraftConversation,
   messages,
   sending,
-  chatError,
   agents,
   runtimes,
   projects,
@@ -533,7 +533,6 @@ function ChatArea({
   onDeleteConversation,
 }: ChatAreaProps) {
   const [input, setInput] = useState("");
-  const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isConversationUpdating, setIsConversationUpdating] = useState(false);
   const [specDialogOpen, setSpecDialogOpen] = useState(false);
@@ -585,6 +584,7 @@ function ChatArea({
   const setActivityPanelOpen = useUIStore((state) => state.setActivityPanelOpen);
   const { conversations, activeConversationId, pendingConversationId, messagesByConversationId, setActiveConversationId } =
     useConversationStore();
+  const pendingUserMessage = conversation.id === "__draft__" ? null : (pendingUserMessageByConversationId[conversation.id] ?? null);
   const projectAgentsFilePath = useMemo(() => getProjectAgentsFilePath(selectedProject), [selectedProject]);
   const hasProjectSpec = projectSpec.trim().length > 0;
   const boardCards = useMemo<ConversationBoardCard[]>(() => {
@@ -646,7 +646,6 @@ function ChatArea({
   // Focus textarea on mount
   useEffect(() => {
     textareaRef.current?.focus();
-    setPendingUserMessage(null);
   }, [conversation.id]);
 
   useEffect(() => {
@@ -694,10 +693,10 @@ function ChatArea({
       (message) => message.role === "user" && message.parts.some((part) => part.type === "text" && part.text === pendingUserMessage),
     );
 
-    if (hasMatchedUserMessage) {
-      setPendingUserMessage(null);
+    if (hasMatchedUserMessage && conversation.id !== "__draft__") {
+      setPendingUserMessage(conversation.id, undefined);
     }
-  }, [messages, pendingUserMessage]);
+  }, [conversation.id, messages, pendingUserMessage, setPendingUserMessage]);
 
   useEffect(() => {
     syncTextareaHeight();
@@ -746,12 +745,10 @@ function ChatArea({
     const filesToSend = [...attachedFiles];
     setInput("");
     setAttachedFiles([]);
-    setPendingUserMessage(content);
 
     try {
       if (filesToSend.length > 0) {
         toast.error('当前模型不支持图片输入，请移除图片后重试。');
-        setPendingUserMessage(null);
         return;
       }
 
@@ -765,11 +762,10 @@ function ChatArea({
 
       await onSendMessage(content, targetConversation);
     } catch (err) {
-      setPendingUserMessage(null);
       console.error("Failed to send message:", err);
       toast.error(m.send_failed());
     }
-  }, [attachedFiles, conversation, draftAgentId, draftProjectId, draftRuntimeId, input, isDraftConversation, onCreateConversation, onSendMessage, sending]);
+  }, [attachedFiles, draftAgentId, draftProjectId, draftRuntimeId, input, isDraftConversation, onCreateConversation, onSendMessage, sending]);
 
   const handleOpenSpecDialog = useCallback(() => {
     if (!selectedProject || !projectAgentsFilePath) {
@@ -995,12 +991,6 @@ function ChatArea({
               </div>
             </div>
           ) : null}
-          {chatError && (
-            <div className="flex items-center gap-2 pr-6">
-              <span className="inline-flex size-[18px] shrink-0 items-center justify-center rounded bg-destructive/10 text-destructive text-[10px] font-semibold">!</span>
-              <span className="text-xs text-destructive">{m.send_failed()}</span>
-            </div>
-          )}
           </div>
         </div>
 
@@ -1367,7 +1357,6 @@ function RuntimeSelector({
 
       <DropdownMenuContent align="start" className="min-w-(--anchor-width)">
         {allItems.map((item) => {
-          const isSelected = selectedAgentId === item.agentId;
           const isDefault = item.agentId !== undefined && item.agentId === defaultAgentId;
 
           return (
@@ -1377,7 +1366,7 @@ function RuntimeSelector({
                 event.stopPropagation();
                 handleSelect(item);
               }}
-              className={cn("flex items-center justify-between gap-2", isSelected && "bg-accent text-accent-foreground")}
+              className="flex items-center justify-between gap-2"
             >
               <span className="truncate">{item.name}</span>
               {item.agentId !== undefined ? (

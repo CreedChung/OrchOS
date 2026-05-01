@@ -36,6 +36,7 @@ interface ConversationState {
   conversations: Conversation[];
   activeConversationId: string | null;
   pendingConversationId: string | null;
+  pendingUserMessageByConversationId: Record<string, string | undefined>;
   flowDraftByConversationId: Record<string, ConversationFlowDraft | undefined>;
   messagesByConversationId: Record<string, ConversationMessage[]>;
   hasLoadedConversations: boolean;
@@ -62,6 +63,7 @@ interface ConversationActions {
   deleteConversation: (id: string, permanent?: boolean) => Promise<void>;
   addMessage: (conversationId: string, message: ConversationMessage) => void;
   setConversationPending: (conversationId: string | null) => void;
+  setPendingUserMessage: (conversationId: string, content: string | undefined) => void;
   setConversationFlowDraft: (conversationId: string, draft: ConversationFlowDraft | undefined) => void;
   getActiveConversation: () => Conversation | null;
   getActiveMessages: () => ConversationMessage[];
@@ -71,6 +73,7 @@ export const useConversationStore = create<ConversationState & ConversationActio
   conversations: [],
   activeConversationId: null,
   pendingConversationId: null,
+  pendingUserMessageByConversationId: {},
   flowDraftByConversationId: {},
   messagesByConversationId: {},
   hasLoadedConversations: false,
@@ -185,6 +188,15 @@ export const useConversationStore = create<ConversationState & ConversationActio
 
   setConversationPending: (conversationId) => {
     set({ pendingConversationId: conversationId });
+  },
+
+  setPendingUserMessage: (conversationId, content) => {
+    set((state) => ({
+      pendingUserMessageByConversationId: {
+        ...state.pendingUserMessageByConversationId,
+        [conversationId]: content,
+      },
+    }));
   },
 
   setConversationFlowDraft: (conversationId, draft) => {

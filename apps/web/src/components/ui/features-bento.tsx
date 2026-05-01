@@ -21,12 +21,7 @@ const MOCK_RUNTIME: RuntimeProfile = {
   role: "assistant",
   capabilities: ["chat", "code", "debug"],
   model: "claude-4-sonnet",
-  protocol: "acp",
   transport: "stdio",
-  acpCommand: "orchos-acp",
-  acpArgs: [],
-  acpEnv: {},
-  communicationMode: "acp-native",
   enabled: true,
   status: "idle",
 };

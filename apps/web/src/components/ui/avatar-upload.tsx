@@ -1,14 +1,16 @@
 import { useRef, useState } from "react";
 import { cn, getRuntimeIcon } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Camera01Icon, Loading01Icon } from "@hugeicons/core-free-icons";
+import { Camera01Icon, Loading01Icon, Robot02Icon } from "@hugeicons/core-free-icons";
 import { api } from "@/lib/api";
+import type { RuntimeProfile } from "@/lib/types";
 
 interface AvatarUploadProps {
   agentId: string;
   avatarUrl?: string;
   name: string;
   runtimeId?: string;
+  runtime?: Pick<RuntimeProfile, "id" | "name" | "command" | "registryId">;
   size?: "sm" | "md" | "lg";
   onUploaded?: (avatarUrl: string) => void;
   disableHover?: boolean;
@@ -31,6 +33,7 @@ export function AvatarUpload({
   avatarUrl,
   name,
   runtimeId,
+  runtime,
   size = "md",
   onUploaded,
   disableHover,
@@ -57,6 +60,12 @@ export function AvatarUpload({
     }
   };
 
+  const runtimeIcon = getRuntimeIcon({
+    id: runtime?.registryId || runtime?.id || runtimeId,
+    name: runtime?.name || name,
+    command: runtime?.command,
+  });
+
   return (
     <button
       type="button"
@@ -73,17 +82,10 @@ export function AvatarUpload({
     >
       {avatarUrl ? (
         <img src={avatarUrl} alt={name} className="size-full object-cover" />
-      ) : getRuntimeIcon({ id: runtimeId, name }) ? (
-        <img src={getRuntimeIcon({ id: runtimeId, name })!} alt={name} className="size-full p-1" />
+      ) : runtimeIcon ? (
+        <img src={runtimeIcon} alt={name} className="size-full p-1" />
       ) : (
-        <span
-          className={cn(
-            "text-xs font-bold text-primary",
-            size === "sm" ? "text-[10px]" : size === "lg" ? "text-lg" : "",
-          )}
-        >
-          {name.charAt(0).toUpperCase()}
-        </span>
+        <HugeiconsIcon icon={Robot02Icon} className={cn("text-primary/70", iconSizeMap[size])} />
       )}
 
       {!disableHover && (

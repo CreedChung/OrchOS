@@ -60,41 +60,81 @@ function SectionHeader({ title, meta }: { title: string; meta?: string }) {
   );
 }
 
+function buildFlowMessages(
+  persistedFlowMessages: UIMessage[],
+  options: {
+    activeConversationId: string | null;
+    pendingUserMessage?: string;
+    flowDraft?: {
+      id: string;
+      role: "assistant";
+      content: string;
+      responseTime?: number;
+      trace?: Parameters<typeof mapConversationMessagesToUiMessages>[0][number]["trace"];
+    };
+  },
+) {
+  return [
+    ...persistedFlowMessages,
+    ...(options.pendingUserMessage
+      ? [
+          {
+            id: `pending-user-${options.activeConversationId ?? "draft"}`,
+            role: "user",
+            parts: [{ type: "text", text: options.pendingUserMessage }],
+          } as UIMessage,
+        ]
+      : []),
+    ...(options.flowDraft
+      ? [
+          {
+            id: options.flowDraft.id,
+            role: options.flowDraft.role,
+            metadata: {
+              responseTime: options.flowDraft.responseTime,
+            },
+            parts: mapConversationMessagesToUiMessages([
+              {
+                id: options.flowDraft.id,
+                conversationId: options.activeConversationId ?? "",
+                role: options.flowDraft.role,
+                content: options.flowDraft.content,
+                responseTime: options.flowDraft.responseTime,
+                trace: options.flowDraft.trace,
+                createdAt: new Date().toISOString(),
+              },
+            ])[0]?.parts ?? [],
+          } as UIMessage,
+        ]
+      : []),
+  ];
+}
+
 function ActivityPage() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { activities, goals, projects, problems } = useDashboard();
-  const { conversations, activeConversationId, pendingConversationId, flowDraftByConversationId, messagesByConversationId } = useConversationStore();
+  const {
+    conversations,
+    activeConversationId,
+    pendingConversationId,
+    flowDraftByConversationId,
+    messagesByConversationId,
+    pendingUserMessageByConversationId,
+  } = useConversationStore();
 
   const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) ?? null;
   const activeProjectId = activeConversation?.projectId;
   const activeProject = projects.find((project) => project.id === activeProjectId);
   const conversationMessages = activeConversationId ? (messagesByConversationId[activeConversationId] ?? []) : [];
+  const pendingUserMessage = activeConversationId ? pendingUserMessageByConversationId[activeConversationId] : undefined;
   const flowDraft = activeConversationId ? flowDraftByConversationId[activeConversationId] : undefined;
   const persistedFlowMessages = mapConversationMessagesToUiMessages(conversationMessages);
-  const flowMessages = flowDraft
-    ? [
-        ...persistedFlowMessages,
-        {
-          id: flowDraft.id,
-          role: flowDraft.role,
-          metadata: {
-            responseTime: flowDraft.responseTime,
-          },
-          parts: mapConversationMessagesToUiMessages([
-            {
-              id: flowDraft.id,
-              conversationId: activeConversationId ?? "",
-              role: flowDraft.role,
-              content: flowDraft.content,
-              responseTime: flowDraft.responseTime,
-              trace: flowDraft.trace,
-              createdAt: new Date().toISOString(),
-            },
-          ])[0]?.parts ?? [],
-        } as UIMessage,
-      ]
-    : persistedFlowMessages;
+  const flowMessages = buildFlowMessages(persistedFlowMessages, {
+    activeConversationId,
+    pendingUserMessage,
+    flowDraft,
+  });
   const showPendingAssistantReply = activeConversationId !== null && pendingConversationId === activeConversationId;
   const threadGoals = activeConversationId
     ? goals.filter((goal) => goal.commandId && goal.projectId === activeProjectId).slice(0, 6)
