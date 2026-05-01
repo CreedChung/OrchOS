@@ -1,6 +1,6 @@
 # OrchOS
 
-**AI Agent Orchestration System** — Coordinate multiple AI agents to accomplish complex development goals.
+**AI Agent Orchestration System** - Coordinate multiple AI agents to accomplish complex development goals.
 
 OrchOS provides a dashboard where you can define goals, assign agents, track progress through compatibility state projections, and execute work through a persisted execution graph with runtime policy enforcement.
 
@@ -12,6 +12,7 @@ OrchOS provides a dashboard where you can define goals, assign agents, track pro
 - **Execution Graphs** — Persist graph nodes, edges, and attempts for ordered and fallback-aware execution
 - **Policy Enforcement** — Validate plans, node execution, tool calls, and file writes before side effects happen
 - **Agent Management** — Register local or cloud-based AI agents, auto-detect installed CLIs, and assign agents to goals
+- **Native Runtime Adapters** — Execute agents through direct runtime integrations instead of a shared protocol bridge
 - **Problem Inbox** — Collect issues from GitHub PRs, test failures, lint errors, and convert them to goals
 - **Automation Rules** — Define conditions and actions to auto-fix, ignore, or assign reviewers
 - **MCP Server Management** — Manage Model Context Protocol server profiles with global or project scoping

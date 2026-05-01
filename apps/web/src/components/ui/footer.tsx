@@ -131,7 +131,7 @@ export default function StickyFooter() {
       {
         title: m.footer_resources(),
         links: [
-          { label: m.footer_documentation(), to: "#" },
+          { label: m.footer_documentation(), to: "/docs" },
           { label: m.footer_community(), to: "#" },
           { label: m.footer_help_center(), to: "#" },
         ],

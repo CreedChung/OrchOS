@@ -2,6 +2,7 @@ import * as React from "react";
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { playInteractionSound } from "@/lib/audio";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -53,9 +54,17 @@ function Button({
   asChild = false,
   children,
   nativeButton,
+  onClick,
   ...props
 }: ButtonProps) {
   const resolvedClassName = cn(buttonVariants({ variant, size, className }));
+  const handleClick: React.MouseEventHandler<HTMLElement> = (event) => {
+    onClick?.(event);
+
+    if (!event.defaultPrevented) {
+      playInteractionSound("button");
+    }
+  };
 
   if (asChild) {
     const child = React.Children.only(children);
@@ -72,6 +81,7 @@ function Button({
         className={resolvedClassName}
         nativeButton={nativeButton ?? isNativeButton}
         render={child}
+        onClick={handleClick}
         {...props}
       />
     );
@@ -82,6 +92,7 @@ function Button({
       data-slot="button"
       className={resolvedClassName}
       nativeButton={nativeButton}
+      onClick={handleClick}
       {...props}
     >
       {children}

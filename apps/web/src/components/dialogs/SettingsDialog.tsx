@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLocale } from "@/lib/useI18n";
 import { AVAILABLE_LOCALES } from "@/lib/i18n";
+import { playUiSound } from "@/lib/audio";
 import { m } from "@/paraglide/messages";
 import type { ControlSettings, NotificationEvent, SoundId } from "@/lib/types";
 import { NOTIFICATION_EVENTS, AVAILABLE_SOUNDS } from "@/lib/types";
@@ -245,8 +246,7 @@ export function SettingsDialog({
   const playSound = (soundId: SoundId) => {
     const sound = AVAILABLE_SOUNDS.find((s) => s.id === soundId);
     if (sound) {
-      const audio = new Audio(sound.file);
-      void audio.play();
+      void playUiSound(sound.id, sound.file || undefined);
     }
   };
 

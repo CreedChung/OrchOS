@@ -229,28 +229,11 @@ function migrate(sqlite: Database) {
   } catch {}
   try {
     sqlite.run(
-      "CREATE TABLE IF NOT EXISTS runtimes (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, command TEXT NOT NULL, version TEXT, path TEXT, role TEXT NOT NULL, capabilities TEXT NOT NULL DEFAULT '[]', model TEXT NOT NULL, protocol TEXT NOT NULL DEFAULT 'cli', transport TEXT NOT NULL DEFAULT 'stdio', acp_command TEXT, acp_args TEXT NOT NULL DEFAULT '[]', acp_env TEXT NOT NULL DEFAULT '{}', communication_mode TEXT NOT NULL DEFAULT 'cli-fallback', enabled TEXT NOT NULL DEFAULT 'true', current_model TEXT, status TEXT NOT NULL DEFAULT 'idle', registry_id TEXT)",
+      "CREATE TABLE IF NOT EXISTS runtimes (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, command TEXT NOT NULL, version TEXT, path TEXT, role TEXT NOT NULL, capabilities TEXT NOT NULL DEFAULT '[]', model TEXT NOT NULL, transport TEXT NOT NULL DEFAULT 'stdio', enabled TEXT NOT NULL DEFAULT 'true', current_model TEXT, status TEXT NOT NULL DEFAULT 'idle', registry_id TEXT)",
     );
-  } catch {}
-  try {
-    sqlite.run("ALTER TABLE runtimes ADD COLUMN protocol TEXT NOT NULL DEFAULT 'cli'");
   } catch {}
   try {
     sqlite.run("ALTER TABLE runtimes ADD COLUMN transport TEXT NOT NULL DEFAULT 'stdio'");
-  } catch {}
-  try {
-    sqlite.run("ALTER TABLE runtimes ADD COLUMN acp_command TEXT");
-  } catch {}
-  try {
-    sqlite.run("ALTER TABLE runtimes ADD COLUMN acp_args TEXT NOT NULL DEFAULT '[]'");
-  } catch {}
-  try {
-    sqlite.run("ALTER TABLE runtimes ADD COLUMN acp_env TEXT NOT NULL DEFAULT '{}'");
-  } catch {}
-  try {
-    sqlite.run(
-      "ALTER TABLE runtimes ADD COLUMN communication_mode TEXT NOT NULL DEFAULT 'cli-fallback'",
-    );
   } catch {}
   try {
     sqlite.run(
@@ -423,7 +406,7 @@ function migrate(sqlite: Database) {
         .all();
       for (const agent of runtimeAgents as any[]) {
         sqlite.run(
-          "INSERT OR IGNORE INTO runtimes (id, name, command, role, capabilities, model, protocol, transport, acp_args, acp_env, communication_mode, enabled, current_model, status, registry_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT OR IGNORE INTO runtimes (id, name, command, role, capabilities, model, transport, enabled, current_model, status, registry_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
             agent.id,
             agent.name,
@@ -431,11 +414,7 @@ function migrate(sqlite: Database) {
             agent.role,
             agent.capabilities,
             agent.model,
-            "cli",
             "stdio",
-            "[]",
-            "{}",
-            "cli-fallback",
             agent.enabled,
             agent.current_model,
             agent.status,

@@ -2,6 +2,7 @@ import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ReactNode } from "react";
 
+import { playInteractionSound } from "@/lib/audio";
 import { cn } from "@/lib/utils";
 
 function Tabs({ className, orientation = "horizontal", ...props }: TabsPrimitive.Root.Props) {
@@ -65,6 +66,14 @@ function TabsList({
 }
 
 function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
+  const handleClick: TabsPrimitive.Tab.Props["onClick"] = (event) => {
+    props.onClick?.(event);
+
+    if (!event.defaultPrevented && !props.disabled) {
+      playInteractionSound("tab");
+    }
+  };
+
   return (
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
@@ -73,6 +82,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "data-active:text-foreground",
         className,
       )}
+      onClick={handleClick}
       {...props}
     />
   );

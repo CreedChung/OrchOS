@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useUser } from "@clerk/clerk-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowDown01Icon,
@@ -33,7 +34,7 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn, getRuntimeIcon } from "@/lib/utils";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
@@ -131,6 +132,33 @@ function formatConversationTime(value?: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(timestamp));
+}
+
+function ConversationActorChip({
+  imageUrl,
+  fallback,
+  label,
+  iconSrc,
+}: {
+  imageUrl?: string;
+  fallback: string;
+  label: string;
+  iconSrc?: string;
+}) {
+  return (
+    <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-border/40 bg-muted/35 px-2 py-1 text-[11px] text-muted-foreground">
+      <span className="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background text-[10px] font-semibold text-foreground/70">
+        {imageUrl ? (
+          <img src={imageUrl} alt={label} className="size-full object-cover" />
+        ) : iconSrc ? (
+          <img src={iconSrc} alt={label} className="size-full object-cover p-0.5" />
+        ) : (
+          fallback
+        )}
+      </span>
+      <span className="truncate">{label}</span>
+    </div>
+  );
 }
 
 function resolveConversationBoardColumn(
@@ -532,6 +560,7 @@ function ChatArea({
   onSendMessage,
   onDeleteConversation,
 }: ChatAreaProps) {
+  const { user } = useUser();
   const [input, setInput] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isConversationUpdating, setIsConversationUpdating] = useState(false);
@@ -581,9 +610,18 @@ function ChatArea({
     () => projects.find((p) => p.id === effectiveProjectId),
     [effectiveProjectId, projects],
   );
+  const displayUserName = user?.fullName || user?.username || user?.primaryEmailAddress?.emailAddress || "User";
+  const displayUserAvatarUrl = user?.imageUrl;
   const setActivityPanelOpen = useUIStore((state) => state.setActivityPanelOpen);
-  const { conversations, activeConversationId, pendingConversationId, messagesByConversationId, setActiveConversationId } =
-    useConversationStore();
+  const {
+    conversations,
+    activeConversationId,
+    pendingConversationId,
+    pendingUserMessageByConversationId,
+    messagesByConversationId,
+    setActiveConversationId,
+    setPendingUserMessage,
+  } = useConversationStore();
   const pendingUserMessage = conversation.id === "__draft__" ? null : (pendingUserMessageByConversationId[conversation.id] ?? null);
   const projectAgentsFilePath = useMemo(() => getProjectAgentsFilePath(selectedProject), [selectedProject]);
   const hasProjectSpec = projectSpec.trim().length > 0;
@@ -1100,6 +1138,16 @@ function ChatArea({
                       {columnCards.map((card) => (
                           (() => {
                             const isRenameDialogOpen = renameCardId === card.conversation.id;
+                            const cardAgent = agents.find((agent) => agent.id === card.conversation.agentId);
+                            const cardRuntime = runtimes.find((runtime) => runtime.id === card.conversation.runtimeId)
+                              ?? runtimes.find((runtime) => runtime.id === cardAgent?.runtimeId);
+                            const cardAgentIcon = cardAgent
+                              ? getRuntimeIcon({
+                                  id: cardRuntime?.registryId || cardRuntime?.id || cardAgent.runtimeId,
+                                  name: cardRuntime?.name || cardAgent.name,
+                                  command: cardRuntime?.command,
+                                })
+                              : undefined;
 
                             return (
                           <div
@@ -1173,11 +1221,25 @@ function ChatArea({
                                       </div>
                                    </div>
 
-                                <InfoCardDescription className="line-clamp-2 text-xs leading-relaxed text-muted-foreground/60">
-                                  {card.summary}
-                                </InfoCardDescription>
+                                 <InfoCardDescription className="line-clamp-2 text-xs leading-relaxed text-muted-foreground/60">
+                                   {card.summary}
+                                 </InfoCardDescription>
 
-                                 <div className="flex items-center justify-between gap-2 border-t border-border/15 pt-2">
+                                 <div className="flex flex-wrap items-center gap-2">
+                                   <ConversationActorChip
+                                     imageUrl={displayUserAvatarUrl}
+                                     fallback={(displayUserName.trim()[0] || "U").toUpperCase()}
+                                     label={displayUserName}
+                                   />
+                                   <ConversationActorChip
+                                     imageUrl={cardAgent?.avatarUrl}
+                                     iconSrc={cardAgentIcon}
+                                     fallback="AI"
+                                     label={cardAgent?.name || "未指定 Agent"}
+                                   />
+                                 </div>
+
+                                  <div className="flex items-center justify-between gap-2 border-t border-border/15 pt-2">
                                    <div className="flex items-center gap-2">
                                      <div className="inline-flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground/80">
                                        <HugeiconsIcon icon={Folder01Icon} className="size-3 text-amber-500/80" />
