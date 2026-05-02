@@ -1,5 +1,17 @@
 import { db } from "@/db";
-import { projects } from "@/db/schema";
+import {
+  commands,
+  conversations,
+  inboxMessages,
+  goals,
+  inboxThreads,
+  mcpServers,
+  messages,
+  projects,
+  rules,
+  sandboxes,
+  skills,
+} from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { generateId, timestamp } from "@/utils";
 import type { Project, ProjectPreviewStatus } from "@/types";
@@ -168,6 +180,24 @@ export abstract class ProjectService {
   static delete(id: string): boolean {
     const existing = ProjectService.get(id);
     if (!existing) return false;
+
+    db.delete(rules).where(eq(rules.projectId, id)).run();
+    db.delete(mcpServers).where(eq(mcpServers.projectId, id)).run();
+    db.delete(skills).where(eq(skills.projectId, id)).run();
+    db.delete(sandboxes).where(eq(sandboxes.projectId, id)).run();
+
+    db.update(inboxThreads).set({ projectId: null }).where(eq(inboxThreads.projectId, id)).run();
+    db.update(conversations).set({ projectId: null }).where(eq(conversations.projectId, id)).run();
+    db.update(messages).set({ projectId: null, projectName: null }).where(eq(messages.projectId, id)).run();
+
+    const projectGoals = db.select({ id: goals.id }).from(goals).where(eq(goals.projectId, id)).all();
+    for (const goal of projectGoals) {
+      db.update(commands).set({ goalId: null }).where(eq(commands.goalId, goal.id)).run();
+      db.update(inboxThreads).set({ primaryGoalId: null }).where(eq(inboxThreads.primaryGoalId, goal.id)).run();
+      db.update(inboxMessages).set({ goalId: null }).where(eq(inboxMessages.goalId, goal.id)).run();
+    }
+
+    db.delete(goals).where(eq(goals.projectId, id)).run();
     db.delete(projects).where(eq(projects.id, id)).run();
     return true;
   }

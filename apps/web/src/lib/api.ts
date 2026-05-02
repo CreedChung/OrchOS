@@ -1015,6 +1015,10 @@ export const api = {
     const result = await client.api.organizations.get();
     return assertData(result);
   },
+  createOrganization: (data: { name: string }): Promise<Organization> => {
+    const client = createEdenClient();
+    return client.api.organizations.post(data).then(assertData);
+  },
   updateOrganization: (id: string, data: { name?: string }): Promise<Organization> => {
     const client = createEdenClient();
     return client.api.organizations({ id }).patch(data).then(assertData);

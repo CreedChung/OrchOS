@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import {
-  CreateOrganization,
-  OrganizationProfile,
   useClerk,
   useOrganization,
+  useOrganizationList,
   useUser,
 } from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
@@ -45,15 +44,29 @@ import {
   Chat01Icon,
   SidebarLeft01Icon,
   SidebarRight01Icon,
+  Add01Icon,
+  Mail01Icon,
+  UserGroupIcon,
+  UserAdd02Icon,
 } from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RenameDialog } from "@/components/dialogs/RenameDialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -61,6 +74,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { m } from "@/paraglide/messages";
 import type { Organization, Problem, SidebarView } from "@/lib/types";
 import { isInboxItem } from "@/lib/types";
+import { toast } from "sonner";
+
+const TEAM_PAGE_SIZE = 8;
+
+type TeamDialogTab = "members" | "invitations" | "invite" | "organization";
+
+const teamManagementCache = new Map<string, { members: any[]; invitations: any[]; updatedAt: number }>();
 
 interface SidebarSection {
   label: string;
@@ -83,6 +103,7 @@ interface SidebarProps {
   collapsed: boolean;
   onOpenSettings: () => void;
   onOrganizationChange: (id: string) => void;
+  onOrganizationCreate: (name: string) => Promise<void>;
   onOrganizationRename: (id: string, name: string) => void;
   onOrganizationDelete: (id: string) => void;
   onToggleCollapse: () => void;
@@ -96,18 +117,25 @@ export function Sidebar({
   collapsed,
   onOpenSettings,
   onOrganizationChange,
+  onOrganizationCreate,
   onOrganizationRename,
   onOrganizationDelete,
   onToggleCollapse,
 }: SidebarProps) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [createOrgOpen, setCreateOrgOpen] = useState(false);
+  const [orgSearch, setOrgSearch] = useState("");
   const [isMac, setIsMac] = useState(false);
   const [showExpandedContent, setShowExpandedContent] = useState(!collapsed);
   const openInboxCount = problems.filter((p) => p.status === "open" && isInboxItem(p)).length;
   const criticalCount = problems.filter(
     (p) => p.status === "open" && isInboxItem(p) && p.priority === "critical",
   ).length;
+  const activeOrganization = organizations.find((o) => o.id === activeOrganizationId) ?? null;
+  const filteredOrganizations = organizations.filter((org) =>
+    org.name.toLowerCase().includes(orgSearch.trim().toLowerCase()),
+  );
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad|iPod/.test(window.navigator.platform));
@@ -208,9 +236,28 @@ export function Sidebar({
                   </span>
                   <HugeiconsIcon icon={ChevronDown} className="ml-auto size-3 shrink-0 opacity-50" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="min-w-48">
-                  {organizations.length > 0 ? (
-                    organizations.map((org) => (
+                <DropdownMenuContent align="start" className="min-w-64">
+                  <div className="p-2">
+                    <Input
+                      value={orgSearch}
+                      onChange={(e) => setOrgSearch(e.target.value)}
+                      placeholder={m.org_launcher_search_placeholder()}
+                      className="h-8"
+                    />
+                  </div>
+                  {activeOrganization ? (
+                    <>
+                      <DropdownMenuLabel>{m.org_launcher_current()}</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => onOrganizationChange(activeOrganization.id)}>
+                        <span className="flex-1">{activeOrganization.name}</span>
+                        <HugeiconsIcon icon={Tick02Icon} className="size-4 text-primary" />
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  ) : null}
+                  <DropdownMenuLabel>{m.org_launcher_all()}</DropdownMenuLabel>
+                  {filteredOrganizations.length > 0 ? (
+                    filteredOrganizations.map((org) => (
                       <DropdownMenuItem key={org.id} onClick={() => onOrganizationChange(org.id)}>
                         <span className="flex-1">{org.name}</span>
                         {org.id === activeOrganizationId && (
@@ -223,6 +270,12 @@ export function Sidebar({
                       {m.no_organizations()}
                     </div>
                   )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>{m.team_create_organization()}</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => setCreateOrgOpen(true)}>
+                    <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+                    {m.team_create_organization()}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               {activeOrganizationId && (
@@ -392,6 +445,19 @@ export function Sidebar({
         </div>
 
         <RenameDialog
+          open={createOrgOpen}
+          title={m.team_create_organization()}
+          initialValue=""
+          placeholder={m.team_create_organization_placeholder()}
+          onClose={() => setCreateOrgOpen(false)}
+          onSubmit={async (name) => {
+            await onOrganizationCreate(name);
+            toast.success(m.org_launcher_created());
+            setCreateOrgOpen(false);
+          }}
+        />
+
+        <RenameDialog
           open={renameOpen}
           title={m.rename_organization()}
           initialValue={organizations.find((o) => o.id === activeOrganizationId)?.name ?? ""}
@@ -523,15 +589,10 @@ function ClerkAuthenticatedProfile({
   showExpandedContent: boolean;
 }) {
   const { user, isLoaded } = useUser();
-  const { membership, organization, isLoaded: isOrganizationLoaded } = useOrganization();
+  const { isLoaded: isOrganizationLoaded } = useOrganization();
   const { signOut } = useClerk();
   const [profileOpen, setProfileOpen] = useState(false);
   const [teamManagementOpen, setTeamManagementOpen] = useState(false);
-
-  const canManageTeam =
-    isOrganizationLoaded &&
-    !!organization &&
-    (membership?.role === "org:admin" || membership?.role === "org:owner");
 
   if (!isLoaded) {
     if (collapsed) {
@@ -675,7 +736,7 @@ function ClerkAuthenticatedProfile({
             <HugeiconsIcon icon={UserCircleIcon} className="size-3.5" />
             {m.profile_settings()}
           </DropdownMenuItem>
-          {canManageTeam ? (
+          {isOrganizationLoaded ? (
             <DropdownMenuItem onClick={() => setTeamManagementOpen(true)}>
               <HugeiconsIcon icon={Shield01Icon} className="size-3.5" />
               {m.team_management()}
@@ -715,47 +776,563 @@ function TeamManagementDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { organization, membership, isLoaded } = useOrganization();
+  const { setActive, createOrganization } = useOrganizationList();
+  const [members, setMembers] = useState<any[]>([]);
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+  const [createName, setCreateName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("org:member");
+  const [activeTab, setActiveTab] = useState<TeamDialogTab>("members");
+  const [memberQuery, setMemberQuery] = useState("");
+  const [invitationQuery, setInvitationQuery] = useState("");
+  const [memberPage, setMemberPage] = useState(1);
+  const [invitationPage, setInvitationPage] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<any | null>(null);
+  const [pendingRoleChange, setPendingRoleChange] = useState<{ userId: string; role: string } | null>(null);
 
   const canManageTeam =
     !!organization && (membership?.role === "org:admin" || membership?.role === "org:owner");
+
+  const roleOptions = useMemo(() => {
+    const options = [{ value: "org:member", label: m.team_role_member() }];
+    if (membership?.role === "org:owner") {
+      options.unshift({ value: "org:admin", label: m.team_role_admin() });
+    }
+    return options;
+  }, [membership?.role]);
+
+  const filteredMembers = useMemo(() => {
+    const query = memberQuery.trim().toLowerCase();
+    if (!query) return members;
+    return members.filter((member) => {
+      const user = member.publicUserData;
+      const haystack = [user?.firstName, user?.lastName, user?.identifier, user?.userId, member.role]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [members, memberQuery]);
+
+  const filteredInvitations = useMemo(() => {
+    const query = invitationQuery.trim().toLowerCase();
+    if (!query) return invitations;
+    return invitations.filter((invitation) => {
+      const haystack = [invitation.emailAddress, invitation.roleName, invitation.role]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [invitations, invitationQuery]);
+
+  const pagedMembers = useMemo(() => {
+    const start = (memberPage - 1) * TEAM_PAGE_SIZE;
+    return filteredMembers.slice(start, start + TEAM_PAGE_SIZE);
+  }, [filteredMembers, memberPage]);
+
+  const pagedInvitations = useMemo(() => {
+    const start = (invitationPage - 1) * TEAM_PAGE_SIZE;
+    return filteredInvitations.slice(start, start + TEAM_PAGE_SIZE);
+  }, [filteredInvitations, invitationPage]);
+
+  const totalMemberPages = Math.max(1, Math.ceil(filteredMembers.length / TEAM_PAGE_SIZE));
+  const totalInvitationPages = Math.max(1, Math.ceil(filteredInvitations.length / TEAM_PAGE_SIZE));
+  const pendingRoleChangeTarget =
+    pendingRoleChange && members.find((member) => member.publicUserData?.userId === pendingRoleChange.userId);
+  const organizationId = organization?.id || null;
+  const cacheKey = organization?.id || "__no_org__";
+
+  const teamTabDefs: { id: TeamDialogTab; icon: IconSvgElement; label: string }[] = [
+    { id: "members", icon: UserGroupIcon, label: m.team_members() },
+    { id: "invitations", icon: Mail01Icon, label: m.team_pending_invitations() },
+    { id: "invite", icon: UserAdd02Icon, label: m.team_invite_member() },
+    { id: "organization", icon: Add01Icon, label: m.team_create_organization() },
+  ];
+
+  useEffect(() => {
+    if (!open || !organization || !organizationId || !canManageTeam) return;
+
+    let cancelled = false;
+    const cached = teamManagementCache.get(cacheKey);
+    if (cached) {
+      setMembers(cached.members);
+      setInvitations(cached.invitations);
+      setMemberPage(1);
+      setInvitationPage(1);
+      setLoadingData(false);
+    } else {
+      setLoadingData(true);
+    }
+    setError(null);
+
+    void Promise.all([
+      organization.getMemberships({ limit: 100 }),
+      organization.getInvitations({ limit: 100, status: ["pending"] }),
+    ])
+      .then(([membershipResult, invitationResult]) => {
+        if (cancelled) return;
+        setMembers(membershipResult.data);
+        setInvitations(invitationResult.data);
+        setMemberPage(1);
+        setInvitationPage(1);
+        teamManagementCache.set(cacheKey, {
+          members: membershipResult.data,
+          invitations: invitationResult.data,
+          updatedAt: Date.now(),
+        });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : m.team_failed_load());
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingData(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, organizationId, canManageTeam, cacheKey]);
+
+  useEffect(() => {
+    if (!open) return;
+    setActiveTab(organization ? "members" : "organization");
+  }, [open, organizationId]);
+
+  useEffect(() => {
+    setMemberPage(1);
+  }, [memberQuery]);
+
+  useEffect(() => {
+    setInvitationPage(1);
+  }, [invitationQuery]);
+
+  const handleCreateOrganization = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createName.trim() || !createOrganization) return;
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      const created = await createOrganization({ name: createName.trim() });
+      await setActive?.({ organization: created.id });
+      setCreateName("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : m.team_failed_create_org());
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleInviteMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!organization || !inviteEmail.trim()) return;
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      await organization.inviteMember({
+        emailAddress: inviteEmail.trim(),
+        role: inviteRole,
+      });
+      const invitationResult = await organization.getInvitations({ limit: 100, status: ["pending"] });
+      setInvitations(invitationResult.data);
+      teamManagementCache.set(cacheKey, {
+        members,
+        invitations: invitationResult.data,
+        updatedAt: Date.now(),
+      });
+      setInviteEmail("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : m.team_failed_invite_member());
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const applyMemberRoleChange = async (userId: string, role: string) => {
+    if (!organization) return;
+    setError(null);
+    try {
+      await organization.updateMember({ userId, role });
+      const membershipResult = await organization.getMemberships({ limit: 100 });
+      setMembers(membershipResult.data);
+      teamManagementCache.set(cacheKey, {
+        members: membershipResult.data,
+        invitations,
+        updatedAt: Date.now(),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : m.team_failed_update_member_role());
+    }
+  };
+
+  const handleUpdateMemberRole = (member: any, userId: string, role: string) => {
+    if (member.role === role) return;
+    if (!canManageRole(member)) return;
+    setPendingRoleChange({ userId, role });
+  };
+
+  const handleRemoveMember = async (member: any) => {
+    if (!organization) return;
+    const userId = member.publicUserData?.userId;
+    if (!userId) return;
+    if (membership?.publicUserData?.userId === userId) {
+      setError(m.team_cannot_remove_self());
+      return;
+    }
+    if (membership?.role === "org:admin" && member.role === "org:owner") {
+      setError(m.team_owner_protected());
+      return;
+    }
+    setMemberToRemove(member);
+  };
+
+  const applyRemoveMember = async () => {
+    if (!organization || !memberToRemove) return;
+    const userId = memberToRemove.publicUserData?.userId;
+    if (!userId) return;
+    setError(null);
+    try {
+      await organization.removeMember(userId);
+      const membershipResult = await organization.getMemberships({ limit: 100 });
+      setMembers(membershipResult.data);
+      teamManagementCache.set(cacheKey, {
+        members: membershipResult.data,
+        invitations,
+        updatedAt: Date.now(),
+      });
+      setMemberToRemove(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : m.team_failed_remove_member());
+    }
+  };
+
+  const handleRevokeInvitation = async (invitation: any) => {
+    setError(null);
+    try {
+      await invitation.revoke();
+      setInvitations((prev) => {
+        const nextInvitations = prev.filter((item) => item.id !== invitation.id);
+        teamManagementCache.set(cacheKey, {
+          members,
+          invitations: nextInvitations,
+          updatedAt: Date.now(),
+        });
+        return nextInvitations;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : m.team_failed_revoke_invitation());
+    }
+  };
+
+  const canManageRole = (member: any) => {
+    if (!membership) return false;
+    if (membership.role === "org:owner") return true;
+    return membership.role === "org:admin" && member.role !== "org:owner";
+  };
+
+  const canRemoveMember = (member: any) => {
+    const userId = member.publicUserData?.userId;
+    if (!membership || !userId) return false;
+    if (userId === membership.publicUserData?.userId) return false;
+    if (membership.role === "org:owner") return true;
+    return membership.role === "org:admin" && member.role !== "org:owner";
+  };
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <DialogPrimitive.Popup className="relative z-50 flex h-[min(90vh,840px)] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
-            <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
-              <div className="min-w-0">
-                <DialogPrimitive.Title className="text-sm font-semibold text-foreground">
-                  {m.team_management()}
-                </DialogPrimitive.Title>
-                <DialogPrimitive.Description className="mt-1 text-xs text-muted-foreground">
-                  {m.team_management_desc()}
-                </DialogPrimitive.Description>
+          <DialogPrimitive.Popup className="relative z-50 flex h-[720px] w-full max-w-6xl overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+            <div className="flex w-56 shrink-0 flex-col border-r border-border bg-muted/30">
+              <div className="flex h-12 items-center px-4">
+                <HugeiconsIcon icon={Shield01Icon} className="mr-2 size-4 text-muted-foreground" />
+                <span className="text-sm font-semibold text-foreground">{m.team_management()}</span>
               </div>
-              <DialogPrimitive.Close className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-                <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
-              </DialogPrimitive.Close>
+              <div className="px-4 pb-4 text-xs text-muted-foreground">{m.team_management_desc()}</div>
+              <nav className="flex-1 space-y-0.5 px-2 py-1">
+                {teamTabDefs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      activeTab === tab.id
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                    )}
+                  >
+                    <HugeiconsIcon icon={tab.icon} className="size-4" />
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+              <div className="mt-auto border-t border-border p-4">
+                <div className="rounded-lg border border-border/50 bg-card px-3 py-3">
+                  <p className="truncate text-sm font-medium text-foreground">{organization?.name || m.select_organization()}</p>
+                  <p className="truncate text-xs text-muted-foreground">{membership?.role || ""}</p>
+                </div>
+              </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-auto bg-muted/20 p-4 sm:p-6">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex h-12 items-center justify-between border-b border-border px-6">
+                <div>
+                  <DialogPrimitive.Title className="text-sm font-semibold text-foreground">
+                    {m.team_management()}
+                  </DialogPrimitive.Title>
+                  <DialogPrimitive.Description className="sr-only">
+                    {m.team_management_desc()}
+                  </DialogPrimitive.Description>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onOpenChange(false)}
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-scroll bg-muted/20 p-4 sm:p-6">
               {!isLoaded ? (
                 <div className="flex h-full min-h-64 items-center justify-center text-sm text-muted-foreground">
                   {m.loading()}
                 </div>
               ) : canManageTeam ? (
-                <div className="overflow-hidden rounded-xl border border-border bg-background">
-                  <OrganizationProfile
-                    appearance={{
-                      elements: {
-                        rootBox: "w-full",
-                        card: "shadow-none border-0 rounded-none w-full",
-                        navbar: "hidden",
-                        pageScrollBox: "p-0",
-                      },
-                    }}
-                  />
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                  <div className="space-y-4">
+                    <section className={cn("rounded-xl border border-border bg-background p-4", activeTab !== "members" && "hidden")}>
+                      <div className="flex items-center gap-2">
+                        <HugeiconsIcon icon={UserGroupIcon} className="size-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold text-foreground">{m.team_members()}</h3>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {m.team_members_desc()}
+                      </p>
+                      <Input
+                        value={memberQuery}
+                        onChange={(e) => setMemberQuery(e.target.value)}
+                        placeholder={m.team_search_members_placeholder()}
+                        className="mt-4"
+                      />
+                      <div className="mt-4 space-y-3">
+                        {loadingData ? (
+                          <div className="space-y-3">
+                            <p className="text-sm text-muted-foreground">{m.team_loading_members()}</p>
+                            {[1, 2, 3].map((item) => (
+                              <div key={item} className="flex items-center gap-3 rounded-lg border border-border/50 bg-background p-3">
+                                <div className="size-9 rounded-full bg-muted animate-pulse" />
+                                <div className="flex-1 space-y-2">
+                                  <div className="h-3 w-32 rounded bg-muted animate-pulse" />
+                                  <div className="h-2.5 w-48 rounded bg-muted animate-pulse" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : pagedMembers.length > 0 ? (
+                          pagedMembers.map((member) => {
+                            const user = member.publicUserData;
+                            const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.identifier || m.team_unknown_user();
+                            const initials = displayName
+                              .split(" ")
+                              .filter(Boolean)
+                              .slice(0, 2)
+                              .map((part) => part[0]?.toUpperCase())
+                              .join("") || "U";
+                            const roleLabel =
+                              member.role === "org:owner"
+                                ? m.team_role_owner()
+                                : member.role === "org:admin"
+                                  ? m.team_role_admin()
+                                  : m.team_role_member();
+                            return (
+                              <div key={member.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/50 p-3">
+                                <div className="flex min-w-0 flex-1 items-center gap-3">
+                                  {user?.imageUrl ? (
+                                    <img src={user.imageUrl} alt={displayName} className="size-9 rounded-full bg-muted object-cover" />
+                                  ) : (
+                                    <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                                      {initials}
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
+                                    <p className="truncate text-xs text-muted-foreground">{user?.identifier || user?.userId}</p>
+                                  </div>
+                                </div>
+                                <Select
+                                  value={member.role}
+                                  onValueChange={(value) => handleUpdateMemberRole(member, user?.userId, value)}
+                                  disabled={!canManageRole(member)}
+                                >
+                                  <SelectTrigger className="h-8 min-w-28">
+                                    <SelectValue>{roleLabel}</SelectValue>
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      {member.role === "org:owner" ? (
+                                        <SelectItem value="org:owner">{m.team_role_owner()}</SelectItem>
+                                      ) : null}
+                                      {roleOptions.map((role) => (
+                                        <SelectItem key={role.value} value={role.value}>
+                                          {role.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                                <span className="text-xs text-muted-foreground">{roleLabel}</span>
+                                <Button size="sm" variant="outline" onClick={() => handleRemoveMember(member)} disabled={!canRemoveMember(member)}>
+                                  {m.team_remove()}
+                                </Button>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <p className="text-sm text-muted-foreground">{m.team_no_members()}</p>
+                        )}
+                        {filteredMembers.length > TEAM_PAGE_SIZE ? (
+                          <div className="flex items-center justify-between pt-2">
+                            <Button size="sm" variant="outline" onClick={() => setMemberPage((page) => Math.max(1, page - 1))} disabled={memberPage === 1}>
+                              {m.team_previous()}
+                            </Button>
+                            <span className="text-xs text-muted-foreground">{memberPage} / {totalMemberPages}</span>
+                            <Button size="sm" variant="outline" onClick={() => setMemberPage((page) => Math.min(totalMemberPages, page + 1))} disabled={memberPage === totalMemberPages}>
+                              {m.team_next()}
+                            </Button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </section>
+
+                    <section className={cn("rounded-xl border border-border bg-background p-4", activeTab !== "invitations" && "hidden")}>
+                      <div className="flex items-center gap-2">
+                        <HugeiconsIcon icon={Mail01Icon} className="size-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold text-foreground">{m.team_pending_invitations()}</h3>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {m.team_pending_invitations_desc()}
+                      </p>
+                      <Input
+                        value={invitationQuery}
+                        onChange={(e) => setInvitationQuery(e.target.value)}
+                        placeholder={m.team_search_invitations_placeholder()}
+                        className="mt-4"
+                      />
+                      <div className="mt-4 space-y-3">
+                        {loadingData ? (
+                          <div className="space-y-3">
+                            <p className="text-sm text-muted-foreground">{m.team_loading_invitations()}</p>
+                            {[1, 2].map((item) => (
+                              <div key={item} className="rounded-lg border border-border/50 bg-background p-3">
+                                <div className="space-y-2">
+                                  <div className="h-3 w-40 rounded bg-muted animate-pulse" />
+                                  <div className="h-2.5 w-24 rounded bg-muted animate-pulse" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : pagedInvitations.length > 0 ? (
+                          pagedInvitations.map((invitation) => (
+                            <div key={invitation.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/50 p-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-foreground">{invitation.emailAddress}</p>
+                                <p className="text-xs text-muted-foreground">{invitation.role === "org:admin" ? m.team_role_admin() : m.team_role_member()}</p>
+                              </div>
+                              <Button size="sm" variant="outline" onClick={() => handleRevokeInvitation(invitation)}>
+                                {m.team_revoke()}
+                              </Button>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-muted-foreground">{m.team_no_pending_invitations()}</p>
+                        )}
+                        {filteredInvitations.length > TEAM_PAGE_SIZE ? (
+                          <div className="flex items-center justify-between pt-2">
+                            <Button size="sm" variant="outline" onClick={() => setInvitationPage((page) => Math.max(1, page - 1))} disabled={invitationPage === 1}>
+                              {m.team_previous()}
+                            </Button>
+                            <span className="text-xs text-muted-foreground">{invitationPage} / {totalInvitationPages}</span>
+                            <Button size="sm" variant="outline" onClick={() => setInvitationPage((page) => Math.min(totalInvitationPages, page + 1))} disabled={invitationPage === totalInvitationPages}>
+                              {m.team_next()}
+                            </Button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </section>
+                  </div>
+
+                  <div className="space-y-4">
+                    <section className={cn("rounded-xl border border-border bg-background p-4", activeTab !== "invite" && "hidden")}>
+                      <div className="flex items-center gap-2">
+                        <HugeiconsIcon icon={UserAdd02Icon} className="size-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold text-foreground">{m.team_invite_member()}</h3>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {m.team_invite_member_desc()}
+                      </p>
+                      <form className="mt-4 space-y-3" onSubmit={handleInviteMember}>
+                        <input
+                          type="email"
+                          value={inviteEmail}
+                          onChange={(e) => setInviteEmail(e.target.value)}
+                          placeholder={m.team_invite_email_placeholder()}
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                        />
+                        <Select value={inviteRole} onValueChange={setInviteRole}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue>
+                              {roleOptions.find((role) => role.value === inviteRole)?.label || m.team_role_member()}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {roleOptions.map((role) => (
+                                <SelectItem key={role.value} value={role.value}>
+                                  {role.label}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                        <Button type="submit" disabled={submitting || !inviteEmail.trim()} className="w-full">
+                          {m.team_invite_member()}
+                        </Button>
+                      </form>
+                    </section>
+
+                    <section className={cn("rounded-xl border border-border bg-background p-4", activeTab !== "organization" && "hidden")}>
+                      <div className="flex items-center gap-2">
+                        <HugeiconsIcon icon={Add01Icon} className="size-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold text-foreground">{m.team_create_organization()}</h3>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {m.team_create_organization_desc()}
+                      </p>
+                      <form className="mt-4 space-y-3" onSubmit={handleCreateOrganization}>
+                        <input
+                          type="text"
+                          value={createName}
+                          onChange={(e) => setCreateName(e.target.value)}
+                          placeholder={m.team_create_organization_placeholder()}
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                        />
+                        <Button type="submit" disabled={submitting || !createName.trim()} className="w-full" variant="outline">
+                          {m.team_create_organization()}
+                        </Button>
+                      </form>
+                    </section>
+
+                    {error ? <p className="text-sm text-destructive">{error}</p> : null}
+                  </div>
                 </div>
               ) : (
                 <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background px-6 py-12 text-center">
@@ -766,24 +1343,41 @@ function TeamManagementDialog({
                   <p className="mt-2 text-sm text-muted-foreground">
                     {organization ? m.team_management_admin_only() : m.team_management_create_org()}
                   </p>
-                  {!organization ? (
-                    <div className="mt-6 overflow-hidden rounded-xl border border-border bg-background">
-                      <CreateOrganization
-                        appearance={{
-                          elements: {
-                            rootBox: "w-full",
-                            card: "shadow-none border-0",
-                          },
-                        }}
-                      />
-                    </div>
-                  ) : null}
                 </div>
               )}
+              </div>
             </div>
           </DialogPrimitive.Popup>
         </div>
       </DialogPrimitive.Portal>
+      <ConfirmDialog
+        open={!!pendingRoleChange}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPendingRoleChange(null);
+        }}
+        title={m.team_confirm_role_change_title()}
+        description={`${m.team_confirm_role_change_desc()} ${pendingRoleChangeTarget?.publicUserData?.identifier || ""}`.trim()}
+        onConfirm={() => {
+          if (pendingRoleChange) {
+            void applyMemberRoleChange(pendingRoleChange.userId, pendingRoleChange.role);
+          }
+          setPendingRoleChange(null);
+        }}
+        confirmLabel={m.save()}
+      />
+      <ConfirmDialog
+        open={!!memberToRemove}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setMemberToRemove(null);
+        }}
+        title={m.team_confirm_remove_member_title()}
+        description={`${m.team_confirm_remove_member_desc()} ${memberToRemove?.publicUserData?.identifier || ""}`.trim()}
+        onConfirm={() => {
+          void applyRemoveMember();
+        }}
+        confirmLabel={m.team_remove()}
+        variant="destructive"
+      />
     </DialogPrimitive.Root>
   );
 }

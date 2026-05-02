@@ -68,11 +68,14 @@ export interface AgentCLIDefinition {
     cmd: string;
     extractLines?: boolean;
     parseJsonField?: string;
+    staticModels?: string[];
   };
   configModelQuery?: {
     path: string;
     format: "json" | "jsonc";
     field: string;
+    fromGlobLatest?: boolean;
+    globPattern?: string;
   };
 }
 
@@ -105,7 +108,7 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
     ],
     modelListQuery: {
       cmd: "zsh -lic 'pi --list-models 2>&1'",
-      extractLines: true,
+      parseJsonField: "pi-table-models",
     },
   },
   {
@@ -134,9 +137,11 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
       },
     ],
     configModelQuery: {
-      path: "~/.claude/telemetry",
+      path: "~/.claude/projects",
       format: "json",
-      field: "event_data.model",
+      field: "message.model",
+      fromGlobLatest: true,
+      globPattern: "*.jsonl",
     },
   },
   {
@@ -224,6 +229,9 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
         args: ["-p", "$PROMPT"],
       },
     ],
+    modelListQuery: {
+      staticModels: ["smart", "rush", "large", "deep"],
+    },
   },
   {
     id: "gemini-cli",
@@ -251,9 +259,11 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
       },
     ],
     configModelQuery: {
-      path: "~/.gemini/settings.json",
+      path: "~/.gemini/tmp",
       format: "json",
-      field: "model.name",
+      field: "model",
+      fromGlobLatest: true,
+      globPattern: "*.jsonl",
     },
   },
 
@@ -395,6 +405,17 @@ function looksLikeModelIdentifier(value: string): boolean {
   return /[\w-]+(?:\/[\w.-]+)?/.test(normalized) && !/\s{2,}/.test(normalized);
 }
 
+function extractPiTableModels(payload: string): string[] {
+  const lines = payload.split("\n").map((line) => line.trimEnd()).filter(Boolean);
+  const rows = lines.filter((line) => !/^provider\s+model\s+context/i.test(line));
+  return uniqueNonEmpty(
+    rows.map((line) => {
+      const match = line.match(/^\S+\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+$/);
+      return match?.[1];
+    }),
+  );
+}
+
 function extractJsonFieldValues(payload: string, field: string): string[] {
   try {
     const data = JSON.parse(payload) as Record<string, unknown>;
@@ -409,6 +430,7 @@ function extractJsonFieldValues(payload: string, field: string): string[] {
         }),
       );
     }
+
   } catch {
     return [];
   }
@@ -446,18 +468,49 @@ async function readConfigModelValue(
   query: NonNullable<AgentCLIDefinition["configModelQuery"]>,
 ): Promise<{ model?: string; rawOutput?: string }> {
   const filePath = expandHomePath(query.path);
-  const result = await run(`cat "${filePath}" 2>/dev/null || echo ""`);
+  const readCommand = query.fromGlobLatest
+    ? `python3 - <<'PY'
+from pathlib import Path
+path = Path(${JSON.stringify(filePath)})
+pattern = ${JSON.stringify(query.globPattern || "*")}
+files = sorted([p for p in path.rglob(pattern) if p.is_file()], key=lambda p: p.stat().st_mtime, reverse=True)
+for file in files[:20]:
+    try:
+        print(file.read_text())
+        break
+    except Exception:
+        continue
+PY`
+    : `cat "${filePath}" 2>/dev/null || echo ""`;
+  const result = await run(readCommand);
   if (!result.success || !result.output.trim()) {
     return { model: undefined, rawOutput: result.output.trim() };
   }
 
+  const rawOutput = result.output.trim();
+
+  for (const line of rawOutput.split("\n").reverse()) {
+    const candidate = line.trim();
+    if (!candidate.startsWith("{")) continue;
+    try {
+      const normalized = query.format === "jsonc" ? stripJsonComments(candidate) : candidate;
+      const parsed = JSON.parse(normalized) as unknown;
+      const model = getNestedFieldValue(parsed, query.field);
+      if (model) {
+        return { model, rawOutput };
+      }
+    } catch {
+      continue;
+    }
+  }
+
   try {
-    const normalized = query.format === "jsonc" ? stripJsonComments(result.output) : result.output;
+    const normalized = query.format === "jsonc" ? stripJsonComments(rawOutput) : rawOutput;
     const parsed = JSON.parse(normalized) as unknown;
     const model = getNestedFieldValue(parsed, query.field);
-    return { model, rawOutput: result.output.trim() };
+    return { model, rawOutput };
   } catch {
-    return { model: undefined, rawOutput: result.output.trim() };
+    return { model: undefined, rawOutput };
   }
 }
 
@@ -902,10 +955,22 @@ export const executor = {
 
     if (agent.modelListQuery) {
       try {
+        if (agent.modelListQuery.staticModels?.length) {
+          const models = uniqueNonEmpty(agent.modelListQuery.staticModels);
+          return {
+            models,
+            currentModel: undefined,
+            source: "config",
+            rawOutput: models.join("\n"),
+          };
+        }
+
         const result = await this.run(agent.modelListQuery.cmd);
         const rawOutput = `${result.output}${result.error ? `\n${result.error}` : ""}`.trim();
         if (result.success && rawOutput) {
-          const models = agent.modelListQuery.parseJsonField
+          const models = agent.modelListQuery.parseJsonField === "pi-table-models"
+            ? extractPiTableModels(rawOutput)
+            : agent.modelListQuery.parseJsonField
             ? extractJsonFieldValues(rawOutput, agent.modelListQuery.parseJsonField)
             : agent.modelListQuery.extractLines
               ? uniqueNonEmpty(rawOutput.split("\n").filter(looksLikeModelIdentifier))

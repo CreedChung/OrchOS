@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { cn, getRuntimeIcon } from "@/lib/utils";
+import { cn, getRuntimeIconComponent } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Camera01Icon, Loading01Icon, Robot02Icon } from "@hugeicons/core-free-icons";
+import { Camera01Icon, Robot02Icon } from "@hugeicons/core-free-icons";
 import { api } from "@/lib/api";
 import type { RuntimeProfile } from "@/lib/types";
+import { Spinner } from "@/components/ui/spinner";
 
 interface AvatarUploadProps {
   agentId: string;
@@ -60,7 +61,7 @@ export function AvatarUpload({
     }
   };
 
-  const runtimeIcon = getRuntimeIcon({
+  const RuntimeIcon = getRuntimeIconComponent({
     id: runtime?.registryId || runtime?.id || runtimeId,
     name: runtime?.name || name,
     command: runtime?.command,
@@ -82,8 +83,8 @@ export function AvatarUpload({
     >
       {avatarUrl ? (
         <img src={avatarUrl} alt={name} className="size-full object-cover" />
-      ) : runtimeIcon ? (
-        <img src={runtimeIcon} alt={name} className="size-full p-1" />
+      ) : RuntimeIcon ? (
+        <HugeiconsIcon icon={RuntimeIcon} className={cn("text-primary/70", iconSizeMap[size])} />
       ) : (
         <HugeiconsIcon icon={Robot02Icon} className={cn("text-primary/70", iconSizeMap[size])} />
       )}
@@ -95,12 +96,9 @@ export function AvatarUpload({
             !uploading && "group-hover:opacity-100",
             uploading && "opacity-100",
           )}
-        >
-          {uploading ? (
-            <HugeiconsIcon
-              icon={Loading01Icon}
-              className={cn(iconSizeMap[size], "text-background animate-spin")}
-            />
+          >
+            {uploading ? (
+            <Spinner size="sm" className="text-background" />
           ) : (
             <HugeiconsIcon icon={Camera01Icon} className={cn(iconSizeMap[size], "text-background")} />
           )}
@@ -108,10 +106,7 @@ export function AvatarUpload({
       )}
       {disableHover && uploading && (
         <div className="absolute inset-0 flex items-center justify-center bg-foreground/40">
-          <HugeiconsIcon
-            icon={Loading01Icon}
-            className={cn(iconSizeMap[size], "text-background animate-spin")}
-          />
+          <Spinner size="sm" className="text-background" />
         </div>
       )}
 

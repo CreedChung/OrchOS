@@ -7,7 +7,10 @@ import type { RuntimeProfile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { AppDialog } from "@/components/ui/app-dialog";
 import { api, type SkillProfile } from "@/lib/api";
-import { CAPABILITY_COLORS, getCapabilityOptions } from "@/components/agents/capability-options";
+import {
+  CAPABILITY_COLORS,
+  getCapabilityOptions,
+} from "@/components/agents/capability-options";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
@@ -37,17 +40,29 @@ function getRuntimeDisplayKind(runtime: RuntimeProfile): "local" | "cloud" {
   return runtime.transport === "stdio" ? "local" : "cloud";
 }
 
-export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }: CreateAgentDialogProps) {
+export function CreateAgentDialog({
+  open,
+  onClose,
+  runtimes,
+  skills,
+  onSubmit,
+}: CreateAgentDialogProps) {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [runtimeId, setRuntimeId] = useState<string | null>(null);
-  const [selectedCapabilities, setSelectedCapabilities] = useState<string[]>([]);
+  const [selectedCapabilities, setSelectedCapabilities] = useState<string[]>(
+    [],
+  );
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState("");
   const [loadingModels, setLoadingModels] = useState(false);
 
   const selectedRuntime = runtimes.find((r) => r.id === runtimeId);
-  const selectedRuntimeDisplayKind = selectedRuntime ? getRuntimeDisplayKind(selectedRuntime) : null;
+  const selectedRuntimeDisplayKind = selectedRuntime
+    ? getRuntimeDisplayKind(selectedRuntime)
+    : null;
+  const isAmpRuntime =
+    selectedRuntime?.registryId === "amp" || selectedRuntime?.command === "amp";
   const { builtinOptions, marketOptions } = getCapabilityOptions(skills);
 
   const handleRuntimeChange = (id: string) => {
@@ -78,9 +93,16 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
       .then((result) => {
         if (cancelled) return;
 
-        const models = result.models.length > 0 ? result.models : fallbackModel ? [fallbackModel] : [];
+        const models =
+          result.models.length > 0
+            ? result.models
+            : fallbackModel
+              ? [fallbackModel]
+              : [];
         const nextSelected =
-          (result.currentModel && models.includes(result.currentModel) && result.currentModel) ||
+          (result.currentModel &&
+            models.includes(result.currentModel) &&
+            result.currentModel) ||
           (fallbackModel && models.includes(fallbackModel) && fallbackModel) ||
           models[0] ||
           "";
@@ -169,9 +191,15 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
         </>
       }
     >
-      <form id="create-agent-form" onSubmit={handleSubmit} className="space-y-4">
+      <form
+        id="create-agent-form"
+        onSubmit={handleSubmit}
+        className="space-y-4"
+      >
         <div>
-          <label className="text-xs text-muted-foreground">{m.agent_name()}</label>
+          <label className="text-xs text-muted-foreground">
+            {m.agent_name()}
+          </label>
           <input
             type="text"
             value={name}
@@ -183,7 +211,9 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
         </div>
 
         <div>
-          <label className="text-xs text-muted-foreground">{m.agent_role()}</label>
+          <label className="text-xs text-muted-foreground">
+            {m.agent_role()}
+          </label>
           <input
             type="text"
             value={role}
@@ -194,13 +224,15 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
         </div>
 
         <div>
-          <label className="text-xs text-muted-foreground">{m.agent_runtime()}</label>
+          <label className="text-xs text-muted-foreground">
+            {m.agent_runtime()}
+          </label>
           {runtimes.length > 0 ? (
             <Select
               value={runtimeId ?? ""}
               onValueChange={(value) => handleRuntimeChange(value ?? "")}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <span className="flex items-center gap-1.5 flex-1 text-start truncate">
                   {selectedRuntime ? (
                     <>
@@ -250,17 +282,23 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
             </Select>
           ) : (
             <div className="rounded-md border border-dashed border-border/50 bg-muted/20 px-3 py-3 text-center">
-              <p className="text-xs text-muted-foreground">{m.no_runtimes_registered()}</p>
+              <p className="text-xs text-muted-foreground">
+                {m.no_runtimes_registered()}
+              </p>
               <p className="text-[10px] text-muted-foreground/60 mt-0.5">
                 {m.no_runtimes_registered_desc()}
               </p>
             </div>
           )}
-          <p className="mt-1 text-[10px] text-muted-foreground/60">{m.create_agent_hint()}</p>
+          <p className="mt-1 text-[10px] text-muted-foreground/60">
+            {m.create_agent_hint()}
+          </p>
         </div>
 
         <div>
-          <label className="text-xs text-muted-foreground">{m.agent_capabilities()}</label>
+          <label className="text-xs text-muted-foreground">
+            {m.agent_capabilities()}
+          </label>
           <div className="flex flex-wrap gap-1.5">
             {builtinOptions.map((cap) => {
               const colors = CAPABILITY_COLORS[cap.value];
@@ -314,17 +352,21 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
         </div>
 
         <div>
-          <label className="text-xs text-muted-foreground">{m.agent_model()}</label>
+          <label className="text-xs text-muted-foreground">
+            {isAmpRuntime ? "Mode" : m.agent_model()}
+          </label>
           <Select
             value={selectedModel}
             onValueChange={(value) => setSelectedModel(value ?? "")}
-            disabled={!selectedRuntime || loadingModels || availableModels.length === 0}
+            disabled={
+              !selectedRuntime || loadingModels || availableModels.length === 0
+            }
           >
             <SelectTrigger className="w-full">
               {loadingModels ? (
                 <span className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Spinner size="sm" name="helix" />
-                  Models...
+                  {isAmpRuntime ? "Modes..." : "Models..."}
                 </span>
               ) : (
                 <SelectValue>
@@ -345,11 +387,15 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
               </SelectGroup>
             </SelectContent>
           </Select>
-          {!loadingModels && selectedRuntime && availableModels.length === 0 && (
-            <p className="mt-1 text-[10px] text-muted-foreground/60">
-              No models reported by runtime.
-            </p>
-          )}
+          {!loadingModels &&
+            selectedRuntime &&
+            availableModels.length === 0 && (
+              <p className="mt-1 text-[10px] text-muted-foreground/60">
+                {isAmpRuntime
+                  ? "No modes reported by runtime."
+                  : "No models reported by runtime."}
+              </p>
+            )}
         </div>
       </form>
     </AppDialog>

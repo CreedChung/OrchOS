@@ -183,6 +183,7 @@ interface DashboardContextType {
   handleGoalRename: (goalId: string, name: string) => Promise<void>;
 
   // Organization actions
+  handleOrganizationCreate: (name: string) => Promise<void>;
   handleOrganizationRename: (orgId: string, name: string) => Promise<void>;
   handleOrganizationDelete: (orgId: string) => Promise<void>;
 
@@ -946,6 +947,19 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   );
 
   // Organization actions
+  const handleOrganizationCreate = useCallback(
+    async (name: string) => {
+      try {
+        const created = await api.createOrganization({ name });
+        setActiveOrganizationId(created.id);
+        await refreshAll();
+      } catch (err) {
+        console.error("Failed to create organization:", err);
+      }
+    },
+    [refreshAll, setActiveOrganizationId],
+  );
+
   const handleOrganizationRename = useCallback(
     async (orgId: string, name: string) => {
       try {
@@ -1072,6 +1086,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     handleResumeGoal,
     handleDeleteGoal,
     handleGoalRename,
+    handleOrganizationCreate,
     handleOrganizationRename,
     handleOrganizationDelete,
     handleCreateAgent,

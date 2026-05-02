@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { FolderIcon, ArrowLeft01Icon, Home01Icon, Loading01Icon } from "@hugeicons/core-free-icons";
+import { FolderIcon, ArrowLeft01Icon, Home01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -112,10 +113,7 @@ export function DirectoryPickerDialog({
             <div className="h-72 overflow-y-auto p-1">
               {loading ? (
                 <div className="flex items-center justify-center h-full">
-                  <HugeiconsIcon
-                    icon={Loading01Icon}
-                    className="size-5 text-muted-foreground animate-spin"
-                  />
+                  <Spinner className="text-muted-foreground" />
                 </div>
               ) : directories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">

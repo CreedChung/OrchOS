@@ -6,6 +6,8 @@ import {
   Alert01Icon,
   Cancel01Icon,
   CheckmarkCircle02Icon,
+  Delete02Icon,
+  Edit02Icon,
   Folder01Icon,
   FolderIcon,
   Link01Icon,
@@ -18,7 +20,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { DirectoryPickerDialog } from "@/components/ui/directory-picker-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { api, type InboxThread } from "@/lib/api";
+import { useDashboard } from "@/lib/dashboard-context";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
@@ -76,6 +80,7 @@ export function ProjectsView({
   onSidebarWidthChange,
 }: ProjectsViewProps) {
   const navigate = useNavigate();
+  const { refreshAll } = useDashboard();
   const {
     conversations,
     loadConversations,
@@ -88,6 +93,13 @@ export function ProjectsView({
   const [showDirectoryPicker, setShowDirectoryPicker] = useState(false);
   const [creatingProject, setCreatingProject] = useState(false);
   const [formData, setFormData] = useState({ name: "", path: "", repositoryUrl: "" });
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingProjectData, setEditingProjectData] = useState({ name: "", path: "", repositoryUrl: "" });
+  const [savingProject, setSavingProject] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
+  const [deletingProjectPending, setDeletingProjectPending] = useState(false);
   const [previewStatus, setPreviewStatus] = useState<ProjectPreviewStatus | null>(null);
   const [startingPreview, setStartingPreview] = useState(false);
 
@@ -141,6 +153,8 @@ export function ProjectsView({
   }, [projects, activeProjectId]);
 
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
+  const editingProject = projects.find((project) => project.id === editingProjectId) ?? null;
+  const deletingProjectItem = projects.find((project) => project.id === deletingProjectId) ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -192,7 +206,7 @@ export function ProjectsView({
       const nextProjects = await api.listProjects();
       const nextProject = nextProjects.find((p) => p.name === formData.name.trim());
       if (nextProject) setActiveProjectId(nextProject.id);
-      window.location.reload();
+      await refreshAll();
     } catch (err) {
       console.error("Failed to create project:", err);
     } finally {
@@ -219,6 +233,52 @@ export function ProjectsView({
     };
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProjectId(project.id);
+    setEditingProjectData({
+      name: project.name,
+      path: project.path,
+      repositoryUrl: project.repositoryUrl ?? "",
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveProject = async () => {
+    if (!editingProjectId || !editingProjectData.name.trim() || !editingProjectData.path.trim()) return;
+    setSavingProject(true);
+    try {
+      await api.updateProject(editingProjectId, {
+        name: editingProjectData.name.trim(),
+        path: editingProjectData.path.trim(),
+        repositoryUrl: editingProjectData.repositoryUrl.trim() || undefined,
+      });
+      setEditDialogOpen(false);
+      await refreshAll();
+    } catch (err) {
+      console.error("Failed to update project:", err);
+    } finally {
+      setSavingProject(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!deletingProjectId) return;
+    setDeletingProjectPending(true);
+    try {
+      await api.deleteProject(deletingProjectId);
+      if (activeProjectId === deletingProjectId) {
+        setActiveProjectId(null);
+      }
+      toast.success("项目已删除");
+      await refreshAll();
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+      toast.error(err instanceof Error ? err.message : "项目删除失败");
+    } finally {
+      setDeletingProjectPending(false);
+    }
   };
 
   const handleOpenPreview = async () => {
@@ -276,11 +336,20 @@ export function ProjectsView({
                 const isActive = project.id === activeProjectId;
                 const count = projectCounts.get(project.id) ?? 0;
                 return (
-                  <button
+                  <div
                     key={project.id}
                     onClick={() => setActiveProjectId(project.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setActiveProjectId(project.id);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
                     className={cn(
-                      "flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
+                      "group relative flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
+                      "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                       isActive
                         ? "bg-accent text-accent-foreground"
                         : "text-foreground/80 hover:bg-accent/50",
@@ -295,7 +364,7 @@ export function ProjectsView({
                         isActive ? "text-primary" : "text-foreground/30",
                       )} />
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 pr-14">
                       <p className={cn(
                         "truncate text-xs font-medium",
                         isActive && "text-accent-foreground",
@@ -305,14 +374,46 @@ export function ProjectsView({
                       <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
                         {project.path}
                       </p>
+
                     </div>
                     {count > 0 && (
                       <span className={cn(
-                        "inline-flex size-4 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold tabular-nums",
-                        isActive ? "bg-primary/10 text-primary/60" : "bg-foreground/5 text-muted-foreground/40",
-                      )}>{count}</span>
+                        "absolute top-2 right-2 inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[9px] font-semibold tabular-nums transition-opacity group-hover:opacity-0",
+                        isActive ? "bg-primary/10 text-primary/70" : "bg-foreground/5 text-muted-foreground/50",
+                      )}>
+                        {count}
+                      </span>
                     )}
-                  </button>
+                    <div className="pointer-events-none absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-0.5 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleEditProject(project);
+                        }}
+                        title={m.edit()}
+                        className="hover:bg-muted"
+                      >
+                        <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setDeletingProjectId(project.id);
+                          setDeleteConfirmOpen(true);
+                        }}
+                        title={m.delete()}
+                        className="hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
                 );
               })}
 
@@ -555,11 +656,84 @@ export function ProjectsView({
         </div>
       </AppDialog>
 
+      <AppDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        title={editingProject ? `${m.edit()} ${editingProject.name}` : `${m.edit()} ${m.project()}`}
+        description="Update the project name, local path, or repository URL."
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              {m.cancel()}
+            </Button>
+            <Button onClick={() => void handleSaveProject()} disabled={savingProject || !editingProjectData.name.trim() || !editingProjectData.path.trim()}>
+              {savingProject ? "Saving..." : m.save()}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-foreground/80">Project Name</label>
+            <Input
+              value={editingProjectData.name}
+              onChange={(event) => setEditingProjectData((prev) => ({ ...prev, name: event.target.value }))}
+              placeholder="TermoraX"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-foreground/80">Project Path</label>
+            <div className="flex gap-2">
+              <Input
+                value={editingProjectData.path}
+                onChange={(event) => setEditingProjectData((prev) => ({ ...prev, path: event.target.value }))}
+                placeholder="/root/Projects/TermoraX"
+              />
+              <Button type="button" variant="outline" onClick={() => setShowDirectoryPicker(true)}>
+                <HugeiconsIcon icon={Folder01Icon} className="size-3.5" />
+                Browse
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-foreground/80">Repository URL</label>
+            <div className="relative">
+              <HugeiconsIcon icon={Link01Icon} className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={editingProjectData.repositoryUrl}
+                onChange={(event) => setEditingProjectData((prev) => ({ ...prev, repositoryUrl: event.target.value }))}
+                placeholder="https://github.com/owner/repo.git"
+                className="pl-9"
+              />
+            </div>
+          </div>
+        </div>
+      </AppDialog>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title={m.delete()}
+        description={deletingProjectItem ? `Delete project "${deletingProjectItem.name}"? This action cannot be undone.` : "Delete this project? This action cannot be undone."}
+        onConfirm={() => void handleDeleteProject()}
+        confirmLabel={deletingProjectPending ? "Deleting..." : m.delete()}
+        cancelLabel={m.cancel()}
+        variant="destructive"
+      />
+
       <DirectoryPickerDialog
         open={showDirectoryPicker}
         onOpenChange={setShowDirectoryPicker}
-        currentPath={formData.path || undefined}
-        onSelect={(path) => setFormData((prev) => ({ ...prev, path }))}
+        currentPath={(editDialogOpen ? editingProjectData.path : formData.path) || undefined}
+        onSelect={(path) => {
+          if (editDialogOpen) {
+            setEditingProjectData((prev) => ({ ...prev, path }));
+            return;
+          }
+          setFormData((prev) => ({ ...prev, path }));
+        }}
       />
     </>
   );

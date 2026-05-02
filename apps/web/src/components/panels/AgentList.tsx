@@ -202,15 +202,17 @@ function AgentItem({
         onUploaded={onAvatarUploaded}
         disableHover
       />
-      <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
-        <div className={cn("size-2 rounded-full shrink-0", agentStatusColor[agent.status])} />
-        <p className={cn("truncate text-xs font-medium", isActive && "text-accent-foreground")}>
-          {agent.name}
+      <div className="min-w-0 flex-1 pr-14 text-left">
+        <div className="flex items-center gap-2">
+          <div className={cn("size-2 shrink-0 rounded-full", agentStatusColor[agent.status])} />
+          <p className={cn("truncate text-xs font-medium", isActive && "text-accent-foreground")}>
+            {agent.name}
+          </p>
+        </div>
+        <p className="mt-0.5 truncate text-[10px] text-muted-foreground/60">
+          {agent.model}
         </p>
       </div>
-      <p className="pointer-events-none absolute right-2.5 max-w-[calc(100%-7rem)] truncate text-[10px] text-muted-foreground/60 transition-opacity group-hover:opacity-0">
-        {agent.model}
-      </p>
       <div className="ml-auto flex items-center gap-0.5 shrink-0">
         <div className="w-0 overflow-hidden opacity-0 transition-all group-hover:w-auto group-hover:opacity-100">
           <div className="flex items-center gap-0.5">

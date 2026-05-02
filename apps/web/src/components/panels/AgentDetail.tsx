@@ -115,6 +115,7 @@ export function AgentDetailView({
 }) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
+  const isAmpAgent = agent.cliCommand === "amp";
 
   const handleDeleteClick = (id: string) => {
     setRuleToDelete(id);
@@ -174,6 +175,9 @@ export function AgentDetailView({
                 <span className="text-border">|</span>
                 <div className="flex items-center gap-1.5">
                   <HugeiconsIcon icon={CpuIcon} className="size-3.5" />
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground/80">
+                    {isAmpAgent ? "Mode" : "Model"}
+                  </span>
                   <span className="font-mono text-xs">{agent.model}</span>
                 </div>
               </div>

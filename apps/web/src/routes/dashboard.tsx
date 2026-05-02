@@ -15,6 +15,7 @@ import { I18nProvider } from "@/lib/useI18n";
 import { useUIStore } from "@/lib/store";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
 import { AuthTransitionOverlay } from "@/components/ui/auth-transition-overlay";
+import { Spinner } from "@/components/ui/spinner";
 import type { SidebarView } from "@/lib/types";
 import { getCapabilityModeFromPath, getCapabilityPath, isCapabilityView } from "@/lib/capability-routing";
 
@@ -57,7 +58,7 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-0 bg-background/72 backdrop-blur-[2px]" />
           <div className="relative flex h-full items-center justify-center">
             <div className="flex items-center gap-3 rounded-full border border-white/15 bg-black/20 px-4 py-2 text-white/85 shadow-lg backdrop-blur-md">
-              <div className="size-4 animate-spin rounded-full border-2 border-white/80 border-t-transparent" />
+              <Spinner size="sm" className="text-white/85" />
               <span className="text-sm" suppressHydrationWarning>
                 Checking authentication...
               </span>
@@ -68,7 +69,7 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
     }
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="size-5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
+        <Spinner className="text-muted-foreground/70" />
       </div>
     );
   }
@@ -142,6 +143,7 @@ function DashboardLayout() {
     handleCommand,
     handleCreateRule,
     handleCreateAgent,
+    handleOrganizationCreate,
     handleOrganizationRename,
     handleOrganizationDelete,
     showCreateDialog,
@@ -256,6 +258,7 @@ function DashboardLayout() {
               collapsed={sidebarCollapsed}
               onOpenSettings={() => setShowSettingsDialog(true)}
               onOrganizationChange={setActiveOrganizationId}
+              onOrganizationCreate={handleOrganizationCreate}
               onOrganizationRename={handleOrganizationRename}
               onOrganizationDelete={handleOrganizationDelete}
               onToggleCollapse={toggleSidebar}

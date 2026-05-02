@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Spinner } from "@/components/ui/spinner";
 import { CreateSkillDialog } from "@/components/dialogs/CreateSkillDialog";
 import { api, type SkillMarketItem, type SkillProfile, type SkillMarketResponse } from "@/lib/api";
 import { useConversationStore } from "@/lib/stores/conversation";
@@ -536,7 +537,7 @@ export function SkillsView({
                   {marketLoading && (
                     <div className="sm:col-span-2 xl:col-span-3 flex items-center justify-center rounded-xl border border-border/30 bg-card/50 py-20">
                       <div className="flex flex-col items-center gap-3">
-                        <div className="size-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+                        <Spinner size="lg" className="text-primary" />
                         <p className="text-sm text-muted-foreground">Loading skills...</p>
                       </div>
                     </div>

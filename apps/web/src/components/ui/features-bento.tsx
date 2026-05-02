@@ -7,11 +7,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowUp01Icon,
   Cancel01Icon,
-  Loading01Icon,
   Robot02Icon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import type { RuntimeProfile } from "@/lib/types";
+import { Spinner } from "@/components/ui/spinner";
 
 const MOCK_RUNTIME: RuntimeProfile = {
   id: "mock-runtime-01",
@@ -343,7 +343,7 @@ export function FeaturesBento() {
                 {sending ? (
                   <div className="mr-12 rounded-xl bg-muted px-4 py-3 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <HugeiconsIcon icon={Loading01Icon} className="size-4 animate-spin" />
+                      <Spinner size="sm" className="text-muted-foreground" />
                       <span className="text-xs">{m.thinking()}</span>
                     </div>
                   </div>
@@ -387,7 +387,7 @@ export function FeaturesBento() {
                     className="mb-1 shrink-0"
                   >
                     {sending ? (
-                      <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                      <Spinner size="sm" className="text-current" />
                     ) : (
                       <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
                     )}

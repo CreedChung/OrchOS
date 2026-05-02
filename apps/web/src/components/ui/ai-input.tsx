@@ -14,10 +14,10 @@ import {
   Server,
   CloudIcon,
   Robot02Icon,
-  Loading01Icon,
   ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -322,7 +322,7 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
               {sending && (
                 <div className="rounded-lg bg-muted px-3 py-2 text-xs mr-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                    <Spinner size="sm" className="text-current" />
                     Thinking...
                   </div>
                 </div>
@@ -355,7 +355,7 @@ function InputForm({ runtimes }: { runtimes: RuntimeProfile[] }) {
                   className="shrink-0"
                 >
                   {sending ? (
-                    <HugeiconsIcon icon={Loading01Icon} className="size-3.5 animate-spin" />
+                    <Spinner size="sm" className="text-current" />
                   ) : (
                     <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
                   )}

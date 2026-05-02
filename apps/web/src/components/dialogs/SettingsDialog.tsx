@@ -20,7 +20,7 @@ import {
   UnfoldMoreIcon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
-import { cn, getRuntimeIcon } from "@/lib/utils";
+import { cn, getRuntimeIconComponent } from "@/lib/utils";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -776,24 +776,23 @@ export function SettingsDialog({
                                 : "bg-muted/50 dark:bg-white/10",
                             )}
                           >
-                            {getRuntimeIcon(agent) ? (
-                              <img
-                                src={getRuntimeIcon(agent)}
-                                alt={agent.name}
-                                className="size-5"
-                              />
-                            ) : (
-                              <span
-                                className={cn(
-                                  "text-sm font-bold",
-                                  isRegistered
-                                    ? "text-muted-foreground"
-                                    : "text-emerald-600 dark:text-emerald-400",
-                                )}
-                              >
-                                {agent.name.charAt(0).toUpperCase()}
-                              </span>
-                            )}
+                            {(() => {
+                              const RuntimeIcon = getRuntimeIconComponent(agent);
+                              return RuntimeIcon ? (
+                                <HugeiconsIcon icon={RuntimeIcon} className="size-5" />
+                              ) : (
+                                <span
+                                  className={cn(
+                                    "text-sm font-bold",
+                                    isRegistered
+                                      ? "text-muted-foreground"
+                                      : "text-emerald-600 dark:text-emerald-400",
+                                  )}
+                                >
+                                  {agent.name.charAt(0).toUpperCase()}
+                                </span>
+                              );
+                            })()}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
@@ -848,17 +847,16 @@ export function SettingsDialog({
                         className="flex items-center gap-3 rounded-lg border border-border/30 bg-muted/20 px-4 py-2.5 opacity-50"
                       >
                         <div className="flex size-8 items-center justify-center rounded-md bg-muted/50 dark:bg-white/10">
-                          {getRuntimeIcon(agent) ? (
-                            <img
-                              src={getRuntimeIcon(agent)}
-                              alt={agent.name}
-                              className="size-5 opacity-50"
-                            />
-                          ) : (
-                            <span className="text-sm font-bold text-muted-foreground">
-                              {agent.name.charAt(0).toUpperCase()}
-                            </span>
-                          )}
+                           {(() => {
+                             const RuntimeIcon = getRuntimeIconComponent(agent);
+                             return RuntimeIcon ? (
+                               <HugeiconsIcon icon={RuntimeIcon} className="size-5 opacity-50" />
+                             ) : (
+                               <span className="text-sm font-bold text-muted-foreground">
+                                 {agent.name.charAt(0).toUpperCase()}
+                               </span>
+                             );
+                           })()}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">

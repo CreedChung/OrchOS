@@ -51,6 +51,7 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
 
   const selectedRuntime = runtimes.find((r) => r.id === runtimeId);
   const selectedRuntimeDisplayKind = selectedRuntime ? getRuntimeDisplayKind(selectedRuntime) : null;
+  const isAmpRuntime = selectedRuntime?.registryId === "amp" || selectedRuntime?.command === "amp";
   const { builtinOptions, marketOptions } = getCapabilityOptions(skills);
 
   useEffect(() => {
@@ -257,7 +258,9 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">{m.agent_model()}</label>
+          <label className="text-xs font-medium text-muted-foreground">
+            {isAmpRuntime ? "Mode" : m.agent_model()}
+          </label>
           <Select
             value={selectedModel}
             onValueChange={(value) => setSelectedModel(value ?? "")}
@@ -267,7 +270,7 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
               {loadingModels ? (
                 <span className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Spinner size="sm" name="helix" />
-                  Models...
+                  {isAmpRuntime ? "Modes..." : "Models..."}
                 </span>
               ) : (
                 <SelectValue>
