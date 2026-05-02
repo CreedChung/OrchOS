@@ -67,7 +67,7 @@ export const RuntimeModel = {
   modelsResponse: t.Object({
     models: t.Array(t.String()),
     currentModel: t.Optional(t.String()),
-    source: t.Literal("config"),
+    source: t.Union([t.Literal("cli"), t.Literal("config"), t.Literal("registry")]),
   }),
   chatBody: t.Object({
     prompt: t.String(),

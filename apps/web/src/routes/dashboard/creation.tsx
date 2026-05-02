@@ -6,13 +6,14 @@ import { useUIStore } from "@/lib/store";
 export const Route = createFileRoute("/dashboard/creation")({ component: CreationPage });
 
 function CreationPage() {
-  const { agents, runtimes, projects } = useDashboard();
+  const { agents, runtimes, projects, commands } = useDashboard();
   const settings = useUIStore((s) => s.settings);
   const setSettings = useUIStore((s) => s.setSettings);
 
   return (
     <CreationView
       agents={agents}
+      commands={commands}
       runtimes={runtimes}
       projects={projects}
       settings={settings}

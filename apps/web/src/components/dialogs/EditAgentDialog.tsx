@@ -35,6 +35,10 @@ interface EditAgentDialogProps {
   }>) => Promise<void>;
 }
 
+function getRuntimeDisplayKind(runtime: RuntimeProfile): "local" | "cloud" {
+  return runtime.transport === "stdio" ? "local" : "cloud";
+}
+
 export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubmit }: EditAgentDialogProps) {
   const [name, setName] = useState(agent.name);
   const [role, setRole] = useState(agent.role);
@@ -46,6 +50,7 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
   const [saving, setSaving] = useState(false);
 
   const selectedRuntime = runtimes.find((r) => r.id === runtimeId);
+  const selectedRuntimeDisplayKind = selectedRuntime ? getRuntimeDisplayKind(selectedRuntime) : null;
   const { builtinOptions, marketOptions } = getCapabilityOptions(skills);
 
   useEffect(() => {
@@ -64,24 +69,40 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
     }
 
     let cancelled = false;
-    const fallbackModel = selectedRuntime.currentModel || selectedRuntime.model;
+    const fallbackModel = selectedRuntime.currentModel || "";
+    const initialModels = [agent.model, fallbackModel].filter(
+      (model, index, models): model is string => Boolean(model) && models.indexOf(model) === index,
+    );
 
     setLoadingModels(true);
-    setAvailableModels(fallbackModel ? [fallbackModel] : []);
+    setAvailableModels(initialModels);
+    setSelectedModel((current) => current || agent.model || fallbackModel || "");
 
     void api
       .listRuntimeModels(selectedRuntime.id)
       .then((result) => {
         if (cancelled) return;
 
-        const models =
-          result.models.length > 0 ? result.models : fallbackModel ? [fallbackModel] : [];
+        const runtimeModels = result.models.length > 0 ? result.models : initialModels;
+        const models = [agent.model, ...runtimeModels].filter(
+          (model, index, entries): model is string =>
+            Boolean(model) && entries.indexOf(model) === index,
+        );
+        const nextSelected =
+          (agent.model && models.includes(agent.model) && agent.model) ||
+          (result.currentModel && models.includes(result.currentModel) && result.currentModel) ||
+          (fallbackModel && models.includes(fallbackModel) && fallbackModel) ||
+          models[0] ||
+          "";
 
         setAvailableModels(models);
+        setSelectedModel(nextSelected);
       })
       .catch(() => {
         if (cancelled) return;
-        setAvailableModels(fallbackModel ? [fallbackModel] : []);
+
+        setAvailableModels(initialModels);
+        setSelectedModel(agent.model || fallbackModel || "");
       })
       .finally(() => {
         if (!cancelled) {
@@ -92,7 +113,7 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
     return () => {
       cancelled = true;
     };
-  }, [selectedRuntime]);
+  }, [selectedRuntime, agent.model]);
 
   if (!open) return null;
 
@@ -184,12 +205,12 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
                 <span className="flex items-center gap-1.5 flex-1 text-start truncate">
                   {selectedRuntime ? (
                     <>
-                      {selectedRuntime.model.startsWith("local/") ? (
+                      {selectedRuntimeDisplayKind === "local" ? (
                         <HugeiconsIcon
                           icon={Server}
                           className="size-3.5 text-blue-500 dark:text-blue-400"
                         />
-                      ) : selectedRuntime.model.startsWith("cloud/") ? (
+                      ) : selectedRuntimeDisplayKind === "cloud" ? (
                         <HugeiconsIcon
                           icon={CloudIcon}
                           className="size-3.5 text-violet-500 dark:text-violet-400"
@@ -205,17 +226,16 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
               <SelectContent>
                 <SelectGroup>
                   {runtimes.map((rt) => {
-                    const isLocal = rt.model.startsWith("local/");
-                    const isCloud = rt.model.startsWith("cloud/");
+                    const displayKind = getRuntimeDisplayKind(rt);
                     return (
                       <SelectItem key={rt.id} value={rt.id}>
                         <span className="flex items-center gap-2">
-                          {isLocal ? (
+                          {displayKind === "local" ? (
                             <HugeiconsIcon
                               icon={Server}
                               className="size-3.5 text-blue-500 dark:text-blue-400"
                             />
-                          ) : isCloud ? (
+                          ) : displayKind === "cloud" ? (
                             <HugeiconsIcon
                               icon={CloudIcon}
                               className="size-3.5 text-violet-500 dark:text-violet-400"

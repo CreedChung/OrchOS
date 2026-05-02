@@ -226,7 +226,7 @@ export interface RuntimeProfile {
 export interface RuntimeModelsResponse {
   models: string[];
   currentModel?: string;
-  source: "config";
+  source: "cli" | "config" | "registry";
 }
 
 export interface SkillMarketItem {

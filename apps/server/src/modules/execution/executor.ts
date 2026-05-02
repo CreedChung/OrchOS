@@ -57,11 +57,23 @@ export interface AgentCLIDefinition {
   modelQuery?: {
     cmd: string;
     extractPattern?: string;
+    currentOnly?: boolean;
   };
   modelQueries?: Array<{
     cmd: string;
     extractPattern?: string;
+    currentOnly?: boolean;
   }>;
+  modelListQuery?: {
+    cmd: string;
+    extractLines?: boolean;
+    parseJsonField?: string;
+  };
+  configModelQuery?: {
+    path: string;
+    format: "json" | "jsonc";
+    field: string;
+  };
 }
 
 const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
@@ -91,6 +103,10 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
         stdinTemplate: "$PROMPT",
       },
     ],
+    modelListQuery: {
+      cmd: "zsh -lic 'pi --list-models 2>&1'",
+      extractLines: true,
+    },
   },
   {
     id: "claude-code",
@@ -117,16 +133,11 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
         stdinTemplate: "$PROMPT",
       },
     ],
-    modelQueries: [
-      {
-        cmd: "claude --version 2>&1",
-        extractPattern: "Claude Code",
-      },
-      {
-        cmd: "claude version 2>&1",
-        extractPattern: "Claude Code",
-      },
-    ],
+    configModelQuery: {
+      path: "~/.claude/telemetry",
+      format: "json",
+      field: "event_data.model",
+    },
   },
   {
     id: "codex",
@@ -153,7 +164,10 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
         args: ["-p", "$PROMPT"],
       },
     ],
-    modelQueries: [{ cmd: "codex --version 2>&1" }, { cmd: "codex version 2>&1" }],
+    modelListQuery: {
+      cmd: "zsh -lic 'codex debug models'",
+      parseJsonField: "models[].slug",
+    },
   },
   {
     id: "opencode",
@@ -180,7 +194,10 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
         args: ["-p", "$PROMPT"],
       },
     ],
-    modelQueries: [{ cmd: "opencode --version 2>&1" }, { cmd: "opencode version 2>&1" }],
+    modelListQuery: {
+      cmd: "zsh -lic 'opencode models'",
+      extractLines: true,
+    },
   },
   {
     id: "amp",
@@ -207,7 +224,6 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
         args: ["-p", "$PROMPT"],
       },
     ],
-    modelQueries: [{ cmd: "amp --version 2>&1" }, { cmd: "amp version 2>&1" }],
   },
   {
     id: "gemini-cli",
@@ -234,7 +250,11 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
         stdinTemplate: "$PROMPT",
       },
     ],
-    modelQueries: [{ cmd: "gemini --version 2>&1" }, { cmd: "gemini version 2>&1" }],
+    configModelQuery: {
+      path: "~/.gemini/settings.json",
+      format: "json",
+      field: "model.name",
+    },
   },
 
   {
@@ -262,7 +282,18 @@ const AGENT_CLI_REGISTRY: AgentCLIDefinition[] = [
         stdinTemplate: "$PROMPT",
       },
     ],
-    modelQueries: [{ cmd: "qwen --version 2>&1" }, { cmd: "qwen version 2>&1" }],
+    modelQueries: [
+      {
+        cmd: "zsh -lic \"script -qec 'timeout 5 qwen /model' /dev/null\"",
+        extractPattern: "Current model:\\s*([^\\r\\n]+)",
+        currentOnly: true,
+      },
+    ],
+    configModelQuery: {
+      path: "~/.qwen/settings.json",
+      format: "json",
+      field: "model.name",
+    },
   },
 ];
 
@@ -344,6 +375,90 @@ function getModelQueries(
   if (agent.modelQueries?.length) return agent.modelQueries;
   if (agent.modelQuery) return [agent.modelQuery];
   return [];
+}
+
+function uniqueNonEmpty(values: Array<string | undefined>): string[] {
+  return Array.from(new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value))));
+}
+
+function looksLikeModelIdentifier(value: string): boolean {
+  const normalized = value.trim();
+  if (!normalized) return false;
+  if (/^current model:/i.test(normalized)) return false;
+  if (/^no models available/i.test(normalized)) return false;
+  if (/^use \/login/i.test(normalized)) return false;
+  if (/^see:/i.test(normalized)) return false;
+  if (normalized.includes("docs/")) return false;
+  if (/^\d+(?:\.\d+){1,}/.test(normalized)) return false;
+  if (/\(released /i.test(normalized)) return false;
+  if (/ code$/i.test(normalized)) return false;
+  return /[\w-]+(?:\/[\w.-]+)?/.test(normalized) && !/\s{2,}/.test(normalized);
+}
+
+function extractJsonFieldValues(payload: string, field: string): string[] {
+  try {
+    const data = JSON.parse(payload) as Record<string, unknown>;
+
+    if (field === "models[].slug") {
+      const models = Array.isArray(data.models) ? data.models : [];
+      return uniqueNonEmpty(
+        models.map((model) => {
+          if (!model || typeof model !== "object") return undefined;
+          const slug = (model as Record<string, unknown>).slug;
+          return typeof slug === "string" ? slug : undefined;
+        }),
+      );
+    }
+  } catch {
+    return [];
+  }
+
+  return [];
+}
+
+function stripJsonComments(payload: string): string {
+  return payload
+    .replace(/^\s*\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+}
+
+function getNestedFieldValue(data: unknown, field: string): string | undefined {
+  const parts = field.split(".");
+  let current: unknown = data;
+
+  for (const part of parts) {
+    if (!current || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+
+  return typeof current === "string" ? current : undefined;
+}
+
+function expandHomePath(filePath: string): string {
+  if (filePath.startsWith("~/")) {
+    return path.join(process.env.HOME || "/root", filePath.slice(2));
+  }
+  return filePath;
+}
+
+async function readConfigModelValue(
+  run: (command: SpawnCommand, config?: ExecutorConfig) => Promise<ExecutionResult>,
+  query: NonNullable<AgentCLIDefinition["configModelQuery"]>,
+): Promise<{ model?: string; rawOutput?: string }> {
+  const filePath = expandHomePath(query.path);
+  const result = await run(`cat "${filePath}" 2>/dev/null || echo ""`);
+  if (!result.success || !result.output.trim()) {
+    return { model: undefined, rawOutput: result.output.trim() };
+  }
+
+  try {
+    const normalized = query.format === "jsonc" ? stripJsonComments(result.output) : result.output;
+    const parsed = JSON.parse(normalized) as unknown;
+    const model = getNestedFieldValue(parsed, query.field);
+    return { model, rawOutput: result.output.trim() };
+  } catch {
+    return { model: undefined, rawOutput: result.output.trim() };
+  }
 }
 
 export const executor = {
@@ -734,15 +849,19 @@ export const executor = {
       try {
         for (const modelQuery of modelQueries) {
           const result = await this.run(modelQuery.cmd);
-          if (result.success && result.output.trim()) {
-            let modelOutput = result.output.trim().split("\n")[0].trim();
+          const rawOutput = `${result.output}${result.error ? `\n${result.error}` : ""}`.trim();
+          if (result.success && rawOutput) {
+            let modelOutput = rawOutput.split("\n")[0].trim();
             if (modelQuery.extractPattern) {
-              const match = result.output.match(new RegExp(modelQuery.extractPattern, "i"));
+              const match = rawOutput.match(new RegExp(modelQuery.extractPattern, "i"));
               if (match) {
-                modelOutput = match[0].trim();
+                modelOutput = match[1]?.trim() || match[0].trim();
               }
             }
-            return { model: modelOutput, source: "cli", rawOutput: result.output.trim() };
+
+            if (modelOutput) {
+              return { model: modelOutput, source: "cli", rawOutput };
+            }
           }
         }
       } catch {
@@ -750,25 +869,82 @@ export const executor = {
       }
     }
 
-    // Check for config file patterns
-    const configPatterns: Record<string, string> = {
-      "claude-code": "~/.claude/config.json",
-      codex: "~/.codex/config.yaml",
-    };
-    const configPath = configPatterns[agent.id];
-    if (configPath) {
-      const configResult = await this.run(`cat ${configPath} 2>/dev/null || echo ""`);
-      if (configResult.success && configResult.output.trim()) {
+    if (agent.configModelQuery) {
+      const configResult = await readConfigModelValue(this.run.bind(this), agent.configModelQuery);
+      if (configResult.model && looksLikeModelIdentifier(configResult.model)) {
         return {
-          model: configResult.output.trim(),
+          model: configResult.model,
           source: "config",
-          rawOutput: configResult.output.trim(),
+          rawOutput: configResult.rawOutput,
         };
       }
     }
 
     // Fall back to registry default
     return { model: agent.model, source: "registry" };
+  },
+
+  async getAgentAvailableModels(agentId: string): Promise<{
+    models: string[];
+    currentModel?: string;
+    source: "cli" | "config" | "registry";
+    rawOutput?: string;
+  }> {
+    const agent = AGENT_CLI_REGISTRY.find((a) => a.id === agentId);
+    if (!agent) {
+      return {
+        models: [],
+        currentModel: undefined,
+        source: "registry",
+        rawOutput: `Unknown agent: ${agentId}`,
+      };
+    }
+
+    if (agent.modelListQuery) {
+      try {
+        const result = await this.run(agent.modelListQuery.cmd);
+        const rawOutput = `${result.output}${result.error ? `\n${result.error}` : ""}`.trim();
+        if (result.success && rawOutput) {
+          const models = agent.modelListQuery.parseJsonField
+            ? extractJsonFieldValues(rawOutput, agent.modelListQuery.parseJsonField)
+            : agent.modelListQuery.extractLines
+              ? uniqueNonEmpty(rawOutput.split("\n").filter(looksLikeModelIdentifier))
+              : uniqueNonEmpty([rawOutput]);
+
+          if (models.length > 0) {
+            const current = await this.getAgentCurrentModel(agentId);
+            const currentModel =
+              (current.model && models.includes(current.model) && current.model) || undefined;
+
+            return {
+              models,
+              currentModel,
+              source: "cli",
+              rawOutput,
+            };
+          }
+        }
+      } catch {
+        // Fall through to config and registry
+      }
+    }
+
+    const current = await this.getAgentCurrentModel(agentId);
+    if (current.source !== "registry" && current.model) {
+      return {
+        models: [current.model],
+        currentModel: current.model,
+        source: current.source,
+        rawOutput: current.rawOutput,
+      };
+    }
+
+    return {
+      models: [],
+      currentModel: current.source === "registry" ? undefined : current.model,
+      source: current.source === "registry" ? "registry" : current.source,
+      rawOutput: current.rawOutput,
+    };
   },
 
   async runTests(cwd?: string): Promise<ExecutionResult> {

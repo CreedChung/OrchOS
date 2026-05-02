@@ -24,7 +24,7 @@ import { RenameDialog } from "@/components/dialogs/RenameDialog";
 import { BorderBeam } from "border-beam";
 import { Star } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
-import { InfoCard, InfoCardContent, InfoCardDescription, InfoCardTitle } from "@/components/ui/info-card";
+import { InfoCard, InfoCardContent, InfoCardDescription } from "@/components/ui/info-card";
 import {
   Select,
   SelectContent,
@@ -35,8 +35,8 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn, getRuntimeIcon } from "@/lib/utils";
-import { api, type Conversation, type ConversationMessage } from "@/lib/api";
-import type { AgentProfile, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
+import { api, type Conversation, type ConversationMessage, type InboxThread } from "@/lib/api";
+import type { AgentProfile, Command, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { useUIStore } from "@/lib/store";
 import { m } from "@/paraglide/messages";
@@ -46,6 +46,7 @@ import { mapConversationMessagesToUiMessages } from "@/components/chat/Conversat
 
 interface CreationViewProps {
   agents: AgentProfile[];
+  commands: Command[];
   runtimes: RuntimeProfile[];
   projects: Project[];
   settings: ControlSettings | null;
@@ -146,17 +147,74 @@ function ConversationActorChip({
   iconSrc?: string;
 }) {
   return (
-    <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-border/40 bg-muted/35 px-2 py-1 text-[11px] text-muted-foreground">
-      <span className="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background text-[10px] font-semibold text-foreground/70">
+    <div className="flex min-w-0 items-center gap-2 text-[11px] text-muted-foreground/80 transition-colors hover:text-foreground">
+      <div className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted/50 text-[10px] font-semibold text-foreground/70">
         {imageUrl ? (
           <img src={imageUrl} alt={label} className="size-full object-cover" />
         ) : iconSrc ? (
-          <img src={iconSrc} alt={label} className="size-full object-cover p-0.5" />
+          <img src={iconSrc} alt={label} className="size-3 object-contain" />
         ) : (
           fallback
         )}
-      </span>
-      <span className="truncate">{label}</span>
+      </div>
+      <div className="truncate">{label}</div>
+    </div>
+  );
+}
+
+function buildConversationLookup(threads: InboxThread[]) {
+  const byConversationId = new Map<string, string>();
+  for (const thread of threads) {
+    if (thread.commandId && thread.conversationId && !byConversationId.has(thread.conversationId)) {
+      byConversationId.set(thread.conversationId, thread.commandId);
+    }
+  }
+  return byConversationId;
+}
+
+function AgentParticipantGroup({
+  participants,
+}: {
+  participants: Array<{
+    id: string;
+    name: string;
+    avatarUrl?: string;
+    iconSrc?: string;
+    fallback: string;
+  }>;
+}) {
+  const visibleParticipants = participants.slice(0, 3);
+  const extraCount = Math.max(participants.length - visibleParticipants.length, 0);
+  const countLabel = `${participants.length} Agent${participants.length > 1 ? "s" : ""}`;
+
+  return (
+    <div className="flex min-w-0 items-center gap-2 text-[11px] text-muted-foreground/80 transition-colors hover:text-foreground">
+      <div className="flex shrink-0 items-center">
+        {visibleParticipants.map((participant, index) => (
+          <div
+            key={participant.id}
+            className={cn(
+              "flex size-5 items-center justify-center overflow-hidden rounded-full border border-background bg-muted/50 text-[10px] font-semibold text-foreground/70",
+              index > 0 && "-ml-1.5",
+            )}
+            title={participant.name}
+          >
+            {participant.iconSrc ? (
+              <img src={participant.iconSrc} alt={participant.name} className="size-3 object-contain" />
+            ) : participant.avatarUrl ? (
+              <img src={participant.avatarUrl} alt={participant.name} className="size-full object-cover" />
+            ) : (
+              <HugeiconsIcon icon={Robot02Icon} className="size-3 text-foreground/70" />
+            )}
+          </div>
+        ))}
+        {extraCount > 0 ? (
+          <div className="-ml-1.5 flex size-5 items-center justify-center rounded-full border border-background bg-muted text-[9px] font-semibold text-muted-foreground">
+            +{extraCount}
+          </div>
+        ) : null}
+      </div>
+      <div className="truncate">{countLabel}</div>
     </div>
   );
 }
@@ -196,6 +254,7 @@ function resolveConversationBoardColumn(
 
 export function CreationView({
   agents,
+  commands,
   runtimes,
   projects,
   settings,
@@ -374,6 +433,7 @@ export function CreationView({
             messages={uiMessages}
             sending={sending}
             agents={agents}
+            commands={commands}
             runtimes={enabledRuntimes}
             projects={projects}
             defaultAgentId={settings?.defaultAgentId}
@@ -524,6 +584,7 @@ interface ChatAreaProps {
   messages: UIMessage[];
   sending: boolean;
   agents: AgentProfile[];
+  commands: Command[];
   runtimes: RuntimeProfile[];
   projects: Project[];
   defaultAgentId?: string;
@@ -551,6 +612,7 @@ function ChatArea({
   messages,
   sending,
   agents,
+  commands,
   runtimes,
   projects,
   defaultAgentId,
@@ -573,6 +635,7 @@ function ChatArea({
   const [inputCollapsed, setInputCollapsed] = useState(false);
   const [renameCardId, setRenameCardId] = useState<string | null>(null);
   const [renameCardTitle, setRenameCardTitle] = useState("");
+  const [threads, setThreads] = useState<InboxThread[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const specFileInputRef = useRef<HTMLInputElement>(null);
@@ -606,6 +669,8 @@ function ChatArea({
     () => runtimes.find((r) => r.id === effectiveRuntimeId),
     [effectiveRuntimeId, runtimes],
   );
+  const commandById = useMemo(() => new Map(commands.map((command) => [command.id, command])), [commands]);
+  const conversationToCommandId = useMemo(() => buildConversationLookup(threads), [threads]);
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === effectiveProjectId),
     [effectiveProjectId, projects],
@@ -685,6 +750,29 @@ function ChatArea({
   useEffect(() => {
     textareaRef.current?.focus();
   }, [conversation.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadThreads = async () => {
+      try {
+        const result = await api.listInboxThreads();
+        if (!cancelled) {
+          setThreads(result);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Failed to load conversation thread mapping:", err);
+        }
+      }
+    };
+
+    void loadThreads();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1131,7 +1219,7 @@ function ChatArea({
                           ? "flex items-center justify-center"
                           : cn(
                               "grid content-start auto-rows-max gap-3 overflow-y-auto",
-                              boardFilter === "all" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-5",
+                              boardFilter === "all" ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5",
                             ),
                       )}
                     >
@@ -1141,6 +1229,8 @@ function ChatArea({
                             const cardAgent = agents.find((agent) => agent.id === card.conversation.agentId);
                             const cardRuntime = runtimes.find((runtime) => runtime.id === card.conversation.runtimeId)
                               ?? runtimes.find((runtime) => runtime.id === cardAgent?.runtimeId);
+                            const commandId = conversationToCommandId.get(card.conversation.id);
+                            const cardCommand = commandId ? commandById.get(commandId) : undefined;
                             const cardAgentIcon = cardAgent
                               ? getRuntimeIcon({
                                   id: cardRuntime?.registryId || cardRuntime?.id || cardAgent.runtimeId,
@@ -1148,6 +1238,35 @@ function ChatArea({
                                   command: cardRuntime?.command,
                                 })
                               : undefined;
+                            const participantNames = cardCommand?.agentNames?.filter((name, index, list) => name && list.indexOf(name) === index) ?? [];
+                            const participantAgents = participantNames
+                              .map((name) => agents.find((agent) => agent.name === name))
+                              .filter((agent): agent is AgentProfile => !!agent);
+                            const fallbackParticipant = cardAgent
+                              ? [{
+                                  id: cardAgent.id,
+                                  name: cardAgent.name,
+                                  avatarUrl: cardAgent.avatarUrl,
+                                  iconSrc: cardAgentIcon,
+                                  fallback: "AI",
+                                }]
+                              : [];
+                            const agentParticipants = participantAgents.length > 0
+                              ? participantAgents.map((agent) => {
+                                  const runtime = runtimes.find((item) => item.id === agent.runtimeId);
+                                  return {
+                                    id: agent.id,
+                                    name: agent.name,
+                                    avatarUrl: agent.avatarUrl,
+                                    iconSrc: getRuntimeIcon({
+                                      id: runtime?.registryId || runtime?.id || agent.runtimeId,
+                                      name: runtime?.name || agent.name,
+                                      command: runtime?.command,
+                                    }),
+                                    fallback: "AI",
+                                  };
+                                })
+                              : fallbackParticipant;
 
                             return (
                           <div
@@ -1174,16 +1293,18 @@ function ChatArea({
                              )}
                             >
                                <InfoCardContent className="gap-3">
-                                    <div className="min-w-0 flex-1 flex items-start justify-between gap-2">
-                                      <div className="min-w-0 flex-1">
-                                        <InfoCardTitle className="mb-0 line-clamp-2 text-[13px] font-semibold leading-snug text-foreground/85 group-hover/card:text-foreground">
-                                          {card.title}
-                                        </InfoCardTitle>
-                                      </div>
-                                       <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover/card:opacity-100">
-                                         <Button
-                                          type="button"
-                                          variant="ghost"
+                                     <div className="relative min-w-0 flex-1">
+                                        <div className="min-w-0 flex items-center gap-2">
+                                         <ConversationActorChip
+                                           imageUrl={displayUserAvatarUrl}
+                                           fallback={(displayUserName.trim()[0] || "U").toUpperCase()}
+                                           label={displayUserName}
+                                         />
+                                        </div>
+                                         <div className="pointer-events-none absolute top-1/2 right-0 flex -translate-y-1/2 items-center gap-1 opacity-0 transition-opacity group-hover/card:pointer-events-auto group-hover/card:opacity-100">
+                                          <Button
+                                           type="button"
+                                           variant="ghost"
                                           size="icon-xs"
                                           title="重命名会话"
                                           onMouseDown={(e) => {
@@ -1225,29 +1346,18 @@ function ChatArea({
                                    {card.summary}
                                  </InfoCardDescription>
 
-                                 <div className="flex flex-wrap items-center gap-2">
-                                   <ConversationActorChip
-                                     imageUrl={displayUserAvatarUrl}
-                                     fallback={(displayUserName.trim()[0] || "U").toUpperCase()}
-                                     label={displayUserName}
-                                   />
-                                   <ConversationActorChip
-                                     imageUrl={cardAgent?.avatarUrl}
-                                     iconSrc={cardAgentIcon}
-                                     fallback="AI"
-                                     label={cardAgent?.name || "未指定 Agent"}
-                                   />
-                                 </div>
-
-                                  <div className="flex items-center justify-between gap-2 border-t border-border/15 pt-2">
-                                   <div className="flex items-center gap-2">
-                                     <div className="inline-flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground/80">
-                                       <HugeiconsIcon icon={Folder01Icon} className="size-3 text-amber-500/80" />
-                                       {card.projectName || "临时会话"}
-                                     </div>
-                                     {activeConversationId !== card.conversation.id && (
-                                       <span className="text-[11px] text-muted-foreground/40">{column.label}</span>
-                                     )}
+                                   <div className="flex items-center justify-between gap-2 border-t border-border/15 pt-2">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                      <div className="inline-flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground/80">
+                                        <HugeiconsIcon icon={Folder01Icon} className="size-3 text-amber-500/80" />
+                                        {card.projectName || "临时会话"}
+                                      </div>
+                                      {agentParticipants.length > 0 || fallbackParticipant.length > 0 ? (
+                                        <AgentParticipantGroup participants={agentParticipants.length > 0 ? agentParticipants : fallbackParticipant} />
+                                      ) : null}
+                                      {activeConversationId !== card.conversation.id && (
+                                        <span className="text-[11px] text-muted-foreground/40">{column.label}</span>
+                                      )}
                                    </div>
                                    <span className="text-[11px] tabular-nums text-muted-foreground/45">
                                      {formatConversationTime(card.updatedAt)}
@@ -1408,10 +1518,12 @@ function RuntimeSelector({
     <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
         onClick={(e) => e.stopPropagation()}
-        className="inline-flex h-7 w-36 items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent px-2.5 text-xs text-foreground transition-colors outline-none hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="flex h-7 w-36 cursor-default items-center justify-between gap-1.5 rounded-full border border-input bg-transparent py-2 pe-2 ps-2.5 text-xs whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
       >
         <span className="flex min-w-0 items-center gap-1.5">
-          <HugeiconsIcon icon={Robot02Icon} className="size-3 shrink-0" />
+          <span className="inline-flex size-4 shrink-0 items-center justify-center overflow-hidden text-foreground/70">
+            <HugeiconsIcon icon={Robot02Icon} className="size-3 shrink-0" />
+          </span>
           <span className="truncate">{selectedAgent?.name || m.no_agent()}</span>
         </span>
         <HugeiconsIcon icon={UnfoldMoreIcon} className="size-3 shrink-0 text-muted-foreground" />

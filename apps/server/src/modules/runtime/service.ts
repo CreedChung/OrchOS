@@ -20,6 +20,14 @@ const MULTIMODAL_MODEL_PATTERNS = [
   /llava/i,
 ];
 
+function looksLikePersistedModel(model: string): boolean {
+  if (/^local\//i.test(model) || /^cloud\//i.test(model)) return false;
+  if (/^\d+(?:\.\d+){1,}/.test(model)) return false;
+  if (/\(released /i.test(model)) return false;
+  if (/ code$/i.test(model)) return false;
+  return true;
+}
+
 function checkMultimodalSupport(model: string): boolean {
   const modelName = model.replace(/^(cloud|local)\//, "").toLowerCase();
   return MULTIMODAL_MODEL_PATTERNS.some((pattern) => pattern.test(modelName));
@@ -236,21 +244,41 @@ export abstract class RuntimeService {
   static async getAvailableModels(runtimeId: string): Promise<{
     models: string[];
     currentModel?: string;
-    source: "config";
+    source: "cli" | "config" | "registry";
   }> {
     const runtime = RuntimeService.getByRegistryId(runtimeId) || RuntimeService.get(runtimeId);
 
     if (!runtime) {
-      return { models: [], currentModel: undefined, source: "config" };
+      return { models: [], currentModel: undefined, source: "registry" };
+    }
+
+    const result = await executor.getAgentAvailableModels(runtime.registryId || runtimeId);
+
+    if (runtime.id && result.currentModel && result.source === "cli") {
+      db.update(runtimes)
+        .set({ currentModel: result.currentModel })
+        .where(eq(runtimes.id, runtime.id))
+        .run();
+    }
+
+    if (result.models.length > 0 || result.currentModel) {
+      return {
+        models: result.models,
+        currentModel: result.currentModel,
+        source: result.source,
+      };
     }
 
     const configuredModels = Array.from(
-      new Set([runtime.currentModel, runtime.model].filter(Boolean)),
+      new Set([runtime.currentModel].filter((model): model is string => Boolean(model && looksLikePersistedModel(model)))),
     );
     return {
       models: configuredModels,
-      currentModel: runtime.currentModel || runtime.model,
-      source: "config",
+      currentModel:
+        runtime.currentModel && looksLikePersistedModel(runtime.currentModel)
+          ? runtime.currentModel
+          : undefined,
+      source: configuredModels.length > 0 ? "config" : "registry",
     };
   }
 

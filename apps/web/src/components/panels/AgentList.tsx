@@ -198,7 +198,6 @@ function AgentItem({
         avatarUrl={agent.avatarUrl}
         name={agent.name}
         runtimeId={agent.runtimeId}
-        runtime={runtime}
         size="sm"
         onUploaded={onAvatarUploaded}
         disableHover

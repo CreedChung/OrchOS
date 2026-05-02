@@ -33,6 +33,10 @@ interface CreateAgentDialogProps {
   }) => void;
 }
 
+function getRuntimeDisplayKind(runtime: RuntimeProfile): "local" | "cloud" {
+  return runtime.transport === "stdio" ? "local" : "cloud";
+}
+
 export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }: CreateAgentDialogProps) {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -43,6 +47,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
   const [loadingModels, setLoadingModels] = useState(false);
 
   const selectedRuntime = runtimes.find((r) => r.id === runtimeId);
+  const selectedRuntimeDisplayKind = selectedRuntime ? getRuntimeDisplayKind(selectedRuntime) : null;
   const { builtinOptions, marketOptions } = getCapabilityOptions(skills);
 
   const handleRuntimeChange = (id: string) => {
@@ -62,7 +67,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
     }
 
     let cancelled = false;
-    const fallbackModel = selectedRuntime.currentModel || selectedRuntime.model;
+    const fallbackModel = selectedRuntime.currentModel || "";
 
     setLoadingModels(true);
     setAvailableModels(fallbackModel ? [fallbackModel] : []);
@@ -73,8 +78,7 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
       .then((result) => {
         if (cancelled) return;
 
-        const models =
-          result.models.length > 0 ? result.models : fallbackModel ? [fallbackModel] : [];
+        const models = result.models.length > 0 ? result.models : fallbackModel ? [fallbackModel] : [];
         const nextSelected =
           (result.currentModel && models.includes(result.currentModel) && result.currentModel) ||
           (fallbackModel && models.includes(fallbackModel) && fallbackModel) ||
@@ -200,12 +204,12 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
                 <span className="flex items-center gap-1.5 flex-1 text-start truncate">
                   {selectedRuntime ? (
                     <>
-                      {selectedRuntime.model.startsWith("local/") ? (
+                      {selectedRuntimeDisplayKind === "local" ? (
                         <HugeiconsIcon
                           icon={Server}
                           className="size-3.5 text-blue-500 dark:text-blue-400"
                         />
-                      ) : selectedRuntime.model.startsWith("cloud/") ? (
+                      ) : selectedRuntimeDisplayKind === "cloud" ? (
                         <HugeiconsIcon
                           icon={CloudIcon}
                           className="size-3.5 text-violet-500 dark:text-violet-400"
@@ -221,17 +225,16 @@ export function CreateAgentDialog({ open, onClose, runtimes, skills, onSubmit }:
               <SelectContent>
                 <SelectGroup>
                   {runtimes.map((rt) => {
-                    const isLocal = rt.model.startsWith("local/");
-                    const isCloud = rt.model.startsWith("cloud/");
+                    const displayKind = getRuntimeDisplayKind(rt);
                     return (
                       <SelectItem key={rt.id} value={rt.id}>
                         <span className="flex items-center gap-2">
-                          {isLocal ? (
+                          {displayKind === "local" ? (
                             <HugeiconsIcon
                               icon={Server}
                               className="size-3.5 text-blue-500 dark:text-blue-400"
                             />
-                          ) : isCloud ? (
+                          ) : displayKind === "cloud" ? (
                             <HugeiconsIcon
                               icon={CloudIcon}
                               className="size-3.5 text-violet-500 dark:text-violet-400"

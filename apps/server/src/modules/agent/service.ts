@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { agents } from "@/db/schema";
+import { agents, conversations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateId } from "@/utils";
 import type { AgentProfile, Action, ControlSettings } from "@/types";
@@ -94,6 +94,7 @@ export abstract class AgentService {
   }
 
   static remove(id: string): boolean {
+    db.update(conversations).set({ agentId: null }).where(eq(conversations.agentId, id)).run();
     const result = db.delete(agents).where(eq(agents.id, id)).run();
     return result.changes > 0;
   }

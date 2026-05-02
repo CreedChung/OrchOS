@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
-import { useUser, useClerk } from "@clerk/clerk-react";
+import {
+  CreateOrganization,
+  OrganizationProfile,
+  useClerk,
+  useOrganization,
+  useUser,
+} from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -517,8 +523,15 @@ function ClerkAuthenticatedProfile({
   showExpandedContent: boolean;
 }) {
   const { user, isLoaded } = useUser();
+  const { membership, organization, isLoaded: isOrganizationLoaded } = useOrganization();
   const { signOut } = useClerk();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [teamManagementOpen, setTeamManagementOpen] = useState(false);
+
+  const canManageTeam =
+    isOrganizationLoaded &&
+    !!organization &&
+    (membership?.role === "org:admin" || membership?.role === "org:owner");
 
   if (!isLoaded) {
     if (collapsed) {
@@ -662,6 +675,12 @@ function ClerkAuthenticatedProfile({
             <HugeiconsIcon icon={UserCircleIcon} className="size-3.5" />
             {m.profile_settings()}
           </DropdownMenuItem>
+          {canManageTeam ? (
+            <DropdownMenuItem onClick={() => setTeamManagementOpen(true)}>
+              <HugeiconsIcon icon={Shield01Icon} className="size-3.5" />
+              {m.team_management()}
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuItem onClick={onOpenSettings}>
             <HugeiconsIcon icon={Settings02Icon} className="size-3.5" />
             {m.settings()}
@@ -683,7 +702,89 @@ function ClerkAuthenticatedProfile({
         fallbackName={displayName}
         fallbackEmail={email}
       />
+      <TeamManagementDialog open={teamManagementOpen} onOpenChange={setTeamManagementOpen} />
     </>
+  );
+}
+
+function TeamManagementDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { organization, membership, isLoaded } = useOrganization();
+
+  const canManageTeam =
+    !!organization && (membership?.role === "org:admin" || membership?.role === "org:owner");
+
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <DialogPrimitive.Popup className="relative z-50 flex h-[min(90vh,840px)] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+            <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
+              <div className="min-w-0">
+                <DialogPrimitive.Title className="text-sm font-semibold text-foreground">
+                  {m.team_management()}
+                </DialogPrimitive.Title>
+                <DialogPrimitive.Description className="mt-1 text-xs text-muted-foreground">
+                  {m.team_management_desc()}
+                </DialogPrimitive.Description>
+              </div>
+              <DialogPrimitive.Close className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+              </DialogPrimitive.Close>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-auto bg-muted/20 p-4 sm:p-6">
+              {!isLoaded ? (
+                <div className="flex h-full min-h-64 items-center justify-center text-sm text-muted-foreground">
+                  {m.loading()}
+                </div>
+              ) : canManageTeam ? (
+                <div className="overflow-hidden rounded-xl border border-border bg-background">
+                  <OrganizationProfile
+                    appearance={{
+                      elements: {
+                        rootBox: "w-full",
+                        card: "shadow-none border-0 rounded-none w-full",
+                        navbar: "hidden",
+                        pageScrollBox: "p-0",
+                      },
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background px-6 py-12 text-center">
+                  <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <HugeiconsIcon icon={Shield01Icon} className="size-5" />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground">{m.team_management_unavailable()}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {organization ? m.team_management_admin_only() : m.team_management_create_org()}
+                  </p>
+                  {!organization ? (
+                    <div className="mt-6 overflow-hidden rounded-xl border border-border bg-background">
+                      <CreateOrganization
+                        appearance={{
+                          elements: {
+                            rootBox: "w-full",
+                            card: "shadow-none border-0",
+                          },
+                        }}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          </DialogPrimitive.Popup>
+        </div>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
 
