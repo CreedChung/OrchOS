@@ -6,10 +6,12 @@ import {
   Alert01Icon,
   Cancel01Icon,
   CheckmarkCircle02Icon,
+  Download01Icon,
   Delete02Icon,
   Edit02Icon,
   Folder01Icon,
   FolderIcon,
+  GitBranchIcon,
   Link01Icon,
   PlayCircleIcon,
   PauseIcon,
@@ -21,12 +23,28 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { DirectoryPickerDialog } from "@/components/ui/directory-picker-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api, type InboxThread } from "@/lib/api";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
-import type { Command, Goal, Problem, Project, ProjectPreviewStatus } from "@/lib/types";
+import type {
+  Command,
+  Goal,
+  Problem,
+  Project,
+  ProjectCommitActivity,
+  ProjectGitStatus,
+  ProjectPreviewStatus,
+} from "@/lib/types";
 import { toast } from "sonner";
 
 interface ProjectsViewProps {
@@ -71,6 +89,14 @@ function getGoalStatus(goal: Goal, relatedProblems: Problem[]): string {
   return "in_progress";
 }
 
+function getHeatmapLevelClass(level: number) {
+  if (level >= 4) return "bg-emerald-500";
+  if (level === 3) return "bg-emerald-500/75";
+  if (level === 2) return "bg-emerald-500/50";
+  if (level === 1) return "bg-emerald-500/25";
+  return "bg-muted";
+}
+
 export function ProjectsView({
   projects,
   goals,
@@ -80,7 +106,7 @@ export function ProjectsView({
   onSidebarWidthChange,
 }: ProjectsViewProps) {
   const navigate = useNavigate();
-  const { refreshAll } = useDashboard();
+  const { refreshAll, handleCommand, runtimes } = useDashboard();
   const {
     conversations,
     loadConversations,
@@ -102,6 +128,13 @@ export function ProjectsView({
   const [deletingProjectPending, setDeletingProjectPending] = useState(false);
   const [previewStatus, setPreviewStatus] = useState<ProjectPreviewStatus | null>(null);
   const [startingPreview, setStartingPreview] = useState(false);
+  const [gitStatus, setGitStatus] = useState<ProjectGitStatus | null>(null);
+  const [gitStatusLoading, setGitStatusLoading] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<string>("");
+  const [switchingBranch, setSwitchingBranch] = useState(false);
+  const [sendingInstallCommand, setSendingInstallCommand] = useState(false);
+  const [commitActivity, setCommitActivity] = useState<ProjectCommitActivity | null>(null);
+  const [commitActivityLoading, setCommitActivityLoading] = useState(false);
 
   useEffect(() => {
     void loadConversations();
@@ -172,6 +205,78 @@ export function ProjectsView({
     };
     void loadPreviewStatus();
     return () => { cancelled = true; };
+  }, [activeProjectId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadGitStatus = async () => {
+      if (!activeProjectId) {
+        setGitStatus(null);
+        setSelectedBranch("");
+        return;
+      }
+      setGitStatusLoading(true);
+      try {
+        const status = await api.getProjectGitStatus(activeProjectId);
+        if (!cancelled) {
+          setGitStatus(status);
+          setSelectedBranch(status.branch);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setGitStatus({
+            projectId: activeProjectId,
+            branch: "unknown",
+            branches: [],
+            modified: [],
+            staged: [],
+            untracked: [],
+            isGitRepo: false,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      } finally {
+        if (!cancelled) setGitStatusLoading(false);
+      }
+    };
+    void loadGitStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeProjectId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCommitActivity = async () => {
+      if (!activeProjectId) {
+        setCommitActivity(null);
+        return;
+      }
+      setCommitActivityLoading(true);
+      try {
+        const activity = await api.getProjectCommitActivity(activeProjectId);
+        if (!cancelled) setCommitActivity(activity);
+      } catch (error) {
+        if (!cancelled) {
+          setCommitActivity({
+            projectId: activeProjectId,
+            totalCommits: 0,
+            activeDays: 0,
+            maxCommitsPerDay: 0,
+            days: [],
+            recentCommits: [],
+            isGitRepo: false,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      } finally {
+        if (!cancelled) setCommitActivityLoading(false);
+      }
+    };
+    void loadCommitActivity();
+    return () => {
+      cancelled = true;
+    };
   }, [activeProjectId]);
 
   const projectGoals = useMemo(() => {
@@ -308,6 +413,49 @@ export function ProjectsView({
       toast.error(error instanceof Error ? error.message : "项目预览启动失败");
     } finally {
       setStartingPreview(false);
+    }
+  };
+
+  const handleSwitchBranch = async (branch: string) => {
+    if (!activeProjectId || !branch || branch === gitStatus?.branch) return;
+    setSelectedBranch(branch);
+    setSwitchingBranch(true);
+    try {
+      const result = await api.switchProjectBranch(activeProjectId, branch);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to switch branch");
+      }
+      toast.success(`已切换到 ${branch}`);
+      const [nextGitStatus, nextCommitActivity] = await Promise.all([
+        api.getProjectGitStatus(activeProjectId),
+        api.getProjectCommitActivity(activeProjectId),
+      ]);
+      setGitStatus(nextGitStatus);
+      setSelectedBranch(nextGitStatus.branch);
+      setCommitActivity(nextCommitActivity);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "分支切换失败");
+      setSelectedBranch(gitStatus?.branch ?? "");
+    } finally {
+      setSwitchingBranch(false);
+    }
+  };
+
+  const handleInstallDependencies = async () => {
+    if (!activeProjectId) return;
+    setSendingInstallCommand(true);
+    try {
+      const enabledRuntimeNames = runtimes.filter((runtime) => runtime.enabled).map((runtime) => runtime.name);
+      await handleCommand({
+        instruction: "Install this project's dependencies using the appropriate package manager lockfile, verify install completes successfully, and report any issues blocking local development.",
+        agentNames: enabledRuntimeNames,
+        projectIds: [activeProjectId],
+      });
+      toast.success("已发送依赖安装任务给 agent");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "发送依赖安装任务失败");
+    } finally {
+      setSendingInstallCommand(false);
     }
   };
 
@@ -491,6 +639,10 @@ export function ProjectsView({
                       </div>
                     )}
                     <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <Button type="button" variant="outline" onClick={() => void handleInstallDependencies()} disabled={sendingInstallCommand}>
+                        {sendingInstallCommand ? <Spinner size="sm" className="text-current" /> : <HugeiconsIcon icon={Download01Icon} className="mr-1.5 size-4" />}
+                        {sendingInstallCommand ? "Sending to Agent..." : "Ask Agent to Install Dependencies"}
+                      </Button>
                       <Button type="button" onClick={() => void handleOpenPreview()} disabled={startingPreview}>
                         <HugeiconsIcon icon={PlayCircleIcon} className="mr-1.5 size-4" />
                         {startingPreview ? "Starting..." : previewStatus?.running ? "Open Preview" : "Start Preview"}
@@ -512,6 +664,110 @@ export function ProjectsView({
                         {previewStatus.error && <p className="text-red-500">{previewStatus.error}</p>}
                       </div>
                     )}
+
+                    <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+                      <section className="rounded-xl border border-border/40 bg-card/60 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-semibold text-foreground">Git Branch</h3>
+                            <p className="mt-1 text-xs text-muted-foreground">切换项目分支，并查看当前工作区改动。</p>
+                          </div>
+                          {gitStatusLoading && <Spinner size="sm" className="text-muted-foreground" />}
+                        </div>
+                        {gitStatus?.isGitRepo ? (
+                          <>
+                            <div className="mt-4 flex flex-wrap items-center gap-3">
+                              <div className="inline-flex items-center gap-2 rounded-md border border-border/50 bg-background px-3 py-2 text-xs text-foreground/80">
+                                <HugeiconsIcon icon={GitBranchIcon} className="size-3.5 text-primary" />
+                                <span className="font-medium">{gitStatus.branch}</span>
+                              </div>
+                              <Select value={selectedBranch} onValueChange={(value) => void handleSwitchBranch(value)}>
+                                <SelectTrigger size="sm" className="min-w-52">
+                                  <SelectValue placeholder="Select branch" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {gitStatus.branches.map((branch) => (
+                                    <SelectItem key={branch.name} value={branch.name}>
+                                      {branch.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {switchingBranch && <Spinner size="sm" className="text-muted-foreground" />}
+                            </div>
+                            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                              <div className="rounded-lg border border-border/40 bg-background/70 px-3 py-2 text-xs">
+                                <p className="text-muted-foreground">Staged</p>
+                                <p className="mt-1 text-sm font-semibold text-foreground">{gitStatus.staged.length}</p>
+                              </div>
+                              <div className="rounded-lg border border-border/40 bg-background/70 px-3 py-2 text-xs">
+                                <p className="text-muted-foreground">Modified</p>
+                                <p className="mt-1 text-sm font-semibold text-foreground">{gitStatus.modified.length}</p>
+                              </div>
+                              <div className="rounded-lg border border-border/40 bg-background/70 px-3 py-2 text-xs">
+                                <p className="text-muted-foreground">Untracked</p>
+                                <p className="mt-1 text-sm font-semibold text-foreground">{gitStatus.untracked.length}</p>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="mt-4 rounded-lg border border-dashed border-border/40 bg-background/50 px-4 py-4 text-sm text-muted-foreground">
+                            {gitStatus?.error || "This project is not a Git repository yet."}
+                          </div>
+                        )}
+                      </section>
+
+                      <section className="rounded-xl border border-border/40 bg-card/60 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-semibold text-foreground">Commit Activity</h3>
+                            <p className="mt-1 text-xs text-muted-foreground">最近 12 周提交热力图和最近提交记录。</p>
+                          </div>
+                          {commitActivityLoading && <Spinner size="sm" className="text-muted-foreground" />}
+                        </div>
+                        {commitActivity?.isGitRepo ? (
+                          <>
+                            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                              <span>{commitActivity.totalCommits} commits</span>
+                              <span>{commitActivity.activeDays} active days</span>
+                              <span>max/day {commitActivity.maxCommitsPerDay}</span>
+                            </div>
+                            <div className="mt-4 grid grid-cols-7 gap-1 sm:grid-cols-12">
+                              {commitActivity.days.map((day) => (
+                                <div
+                                  key={day.date}
+                                  title={`${day.date}: ${day.count} commits`}
+                                  className={cn("h-4 rounded-sm", getHeatmapLevelClass(day.level))}
+                                />
+                              ))}
+                            </div>
+                            <div className="mt-4 space-y-2">
+                              {commitActivity.recentCommits.map((commit) => (
+                                <div key={`${commit.hash}-${commit.date}`} className="rounded-lg border border-border/30 bg-background/60 px-3 py-2">
+                                  <div className="flex items-center justify-between gap-3 text-xs">
+                                    <span className="font-mono text-primary">{commit.hash}</span>
+                                    <span className="text-muted-foreground">{commit.date}</span>
+                                  </div>
+                                  <p className="mt-1 text-sm text-foreground">{commit.message}</p>
+                                  <p className="mt-1 text-xs text-muted-foreground">{commit.author}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="mt-4 rounded-lg border border-dashed border-border/40 bg-background/50 px-4 py-4 text-sm text-muted-foreground">
+                            {commitActivity?.error || "No commit activity available."}
+                          </div>
+                        )}
+                      </section>
+                    </div>
+
+                    <section className="mt-4 rounded-xl border border-border/40 bg-card/60 p-4">
+                      <h3 className="text-sm font-semibold text-foreground">Dependency Setup</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        依赖安装不会在当前页面本地直接执行，而是作为项目任务发送给 agent，由 agent 在这个项目上下文里处理。
+                      </p>
+                    </section>
                   </div>
                 </div>
 

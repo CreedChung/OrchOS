@@ -97,4 +97,46 @@ export const projectController = new Elysia({ prefix: "/api/projects" })
       params: t.Object({ id: t.String() }),
       response: ProjectModel.previewStartResponse,
     },
+  )
+  .get(
+    "/:id/git",
+    async ({ params: { id } }) => {
+      return await ProjectService.getGitStatus(id);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      response: ProjectModel.gitStatusResponse,
+    },
+  )
+  .post(
+    "/:id/git/checkout",
+    async ({ params: { id }, body }) => {
+      return await ProjectService.switchBranch(id, body.branch);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      body: ProjectModel.switchBranchBody,
+      response: ProjectModel.commandResultResponse,
+    },
+  )
+  .post(
+    "/:id/install",
+    async ({ params: { id } }) => {
+      return await ProjectService.installDependencies(id);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      response: ProjectModel.commandResultResponse,
+    },
+  )
+  .get(
+    "/:id/commits",
+    async ({ params: { id }, query }) => {
+      return await ProjectService.getCommitActivity(id, query.days);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      query: t.Object({ days: t.Optional(t.Numeric()) }),
+      response: ProjectModel.commitActivityResponse,
+    },
   );

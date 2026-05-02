@@ -63,9 +63,10 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
   }, [agent]);
 
   useEffect(() => {
-    if (!selectedRuntime) {
+    if (!open || !selectedRuntime) {
       setLoadingModels(false);
       setAvailableModels([]);
+      setSelectedModel("");
       return;
     }
 
@@ -77,7 +78,11 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
 
     setLoadingModels(true);
     setAvailableModels(initialModels);
-    setSelectedModel((current) => current || agent.model || fallbackModel || "");
+    setSelectedModel(
+      initialModels.includes(agent.model)
+        ? agent.model
+        : fallbackModel || initialModels[0] || "",
+    );
 
     void api
       .listRuntimeModels(selectedRuntime.id)
@@ -85,12 +90,11 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
         if (cancelled) return;
 
         const runtimeModels = result.models.length > 0 ? result.models : initialModels;
-        const models = [agent.model, ...runtimeModels].filter(
+        const models = runtimeModels.filter(
           (model, index, entries): model is string =>
             Boolean(model) && entries.indexOf(model) === index,
         );
         const nextSelected =
-          (agent.model && models.includes(agent.model) && agent.model) ||
           (result.currentModel && models.includes(result.currentModel) && result.currentModel) ||
           (fallbackModel && models.includes(fallbackModel) && fallbackModel) ||
           models[0] ||
@@ -103,7 +107,7 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
         if (cancelled) return;
 
         setAvailableModels(initialModels);
-        setSelectedModel(agent.model || fallbackModel || "");
+        setSelectedModel(fallbackModel || initialModels[0] || "");
       })
       .finally(() => {
         if (!cancelled) {
@@ -114,7 +118,7 @@ export function EditAgentDialog({ open, onClose, agent, runtimes, skills, onSubm
     return () => {
       cancelled = true;
     };
-  }, [selectedRuntime, agent.model]);
+  }, [open, selectedRuntime?.id, agent.model]);
 
   if (!open) return null;
 

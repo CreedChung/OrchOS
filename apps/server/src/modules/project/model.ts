@@ -42,6 +42,61 @@ export const ProjectModel = {
     logs: t.Optional(t.String()),
     error: t.Optional(t.String()),
   }),
+  gitBranchInfo: t.Object({
+    name: t.String(),
+    current: t.Boolean(),
+  }),
+  gitStatusResponse: t.Object({
+    projectId: t.String(),
+    branch: t.String(),
+    branches: t.Array(
+      t.Object({
+        name: t.String(),
+        current: t.Boolean(),
+      }),
+    ),
+    modified: t.Array(t.String()),
+    staged: t.Array(t.String()),
+    untracked: t.Array(t.String()),
+    isGitRepo: t.Boolean(),
+    error: t.Optional(t.String()),
+  }),
+  switchBranchBody: t.Object({
+    branch: t.String(),
+  }),
+  commandResultResponse: t.Object({
+    success: t.Boolean(),
+    output: t.String(),
+    error: t.Optional(t.String()),
+  }),
+  commitActivityDay: t.Object({
+    date: t.String(),
+    count: t.Number(),
+    level: t.Number(),
+  }),
+  commitActivityResponse: t.Object({
+    projectId: t.String(),
+    totalCommits: t.Number(),
+    activeDays: t.Number(),
+    maxCommitsPerDay: t.Number(),
+    days: t.Array(
+      t.Object({
+        date: t.String(),
+        count: t.Number(),
+        level: t.Number(),
+      }),
+    ),
+    recentCommits: t.Array(
+      t.Object({
+        hash: t.String(),
+        message: t.String(),
+        author: t.String(),
+        date: t.String(),
+      }),
+    ),
+    isGitRepo: t.Boolean(),
+    error: t.Optional(t.String()),
+  }),
 } as const;
 
 export type ProjectModel = {

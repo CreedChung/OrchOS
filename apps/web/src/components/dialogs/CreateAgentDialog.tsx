@@ -74,7 +74,7 @@ export function CreateAgentDialog({
   };
 
   useEffect(() => {
-    if (!selectedRuntime) {
+    if (!open || !selectedRuntime) {
       setLoadingModels(false);
       setAvailableModels([]);
       setSelectedModel("");
@@ -124,7 +124,7 @@ export function CreateAgentDialog({
     return () => {
       cancelled = true;
     };
-  }, [selectedRuntime]);
+  }, [open, selectedRuntime?.id]);
 
   if (!open) return null;
 

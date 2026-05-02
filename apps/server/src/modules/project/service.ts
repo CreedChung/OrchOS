@@ -33,6 +33,28 @@ type ProjectPreviewProcess = {
   error?: string;
 };
 
+type ProjectGitStatus = {
+  projectId: string;
+  branch: string;
+  branches: { name: string; current: boolean }[];
+  modified: string[];
+  staged: string[];
+  untracked: string[];
+  isGitRepo: boolean;
+  error?: string;
+};
+
+type ProjectCommitActivity = {
+  projectId: string;
+  totalCommits: number;
+  activeDays: number;
+  maxCommitsPerDay: number;
+  days: { date: string; count: number; level: number }[];
+  recentCommits: { hash: string; message: string; author: string; date: string }[];
+  isGitRepo: boolean;
+  error?: string;
+};
+
 const activePreviewProcesses = new Map<string, ProjectPreviewProcess>();
 const MAX_LOG_LINES = 120;
 
@@ -47,6 +69,10 @@ function appendLog(entry: ProjectPreviewProcess, chunk: string) {
 
 function getLocalIpAddress() {
   return process.env.PUBLIC_DEV_HOST || process.env.PREVIEW_HOST || "100.93.216.63";
+}
+
+function toIsoDate(value: Date) {
+  return value.toISOString().slice(0, 10);
 }
 
 export abstract class ProjectService {
@@ -112,6 +138,27 @@ export abstract class ProjectService {
       return { cmd: ["yarn", "dev", "--host", "0.0.0.0", "--port", String(port)], env, command: `yarn dev --host 0.0.0.0 --port ${port}` };
     }
     return { cmd: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", String(port)], env, command: `npm run dev -- --host 0.0.0.0 --port ${port}` };
+  }
+
+  private static detectInstallCommand(projectPath: string) {
+    if (existsSync(join(projectPath, "bun.lock")) || existsSync(join(projectPath, "bun.lockb"))) {
+      return { cmd: ["bun", "install"], command: "bun install" };
+    }
+    if (existsSync(join(projectPath, "pnpm-lock.yaml"))) {
+      return { cmd: ["pnpm", "install"], command: "pnpm install" };
+    }
+    if (existsSync(join(projectPath, "yarn.lock"))) {
+      return { cmd: ["yarn", "install"], command: "yarn install" };
+    }
+    if (existsSync(join(projectPath, "package-lock.json")) || existsSync(join(projectPath, "package.json"))) {
+      return { cmd: ["npm", "install"], command: "npm install" };
+    }
+    return null;
+  }
+
+  private static async isGitRepository(projectPath: string) {
+    const result = await executor.git("rev-parse --is-inside-work-tree", projectPath);
+    return result.success && result.output.trim() === "true";
   }
 
   private static mapPreviewStatus(projectId: string, entry?: ProjectPreviewProcess): ProjectPreviewStatus {
@@ -341,6 +388,136 @@ export abstract class ProjectService {
         error: error instanceof Error ? error.message : String(error),
       };
     }
+  }
+
+  static async getGitStatus(id: string): Promise<ProjectGitStatus> {
+    const project = ProjectService.get(id);
+    if (!project) {
+      return { projectId: id, branch: "unknown", branches: [], modified: [], staged: [], untracked: [], isGitRepo: false, error: "Project not found" };
+    }
+    if (!existsSync(project.path)) {
+      return { projectId: id, branch: "unknown", branches: [], modified: [], staged: [], untracked: [], isGitRepo: false, error: `Project path does not exist: ${project.path}` };
+    }
+    if (!(await ProjectService.isGitRepository(project.path))) {
+      return { projectId: id, branch: "unknown", branches: [], modified: [], staged: [], untracked: [], isGitRepo: false, error: "Not a Git repository" };
+    }
+
+    try {
+      const status = await executor.gitStatus(project.path);
+      const branchResult = await executor.git("branch --format='%(refname:short)|%(HEAD)'", project.path);
+      const branches = branchResult.success
+        ? branchResult.output
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line) => {
+              const [name, currentMarker] = line.replace(/^'+|'+$/g, "").split("|");
+              return { name, current: currentMarker === "*" };
+            })
+        : [];
+
+      return {
+        projectId: id,
+        branch: status.branch,
+        branches,
+        modified: status.modified,
+        staged: status.staged,
+        untracked: status.untracked,
+        isGitRepo: true,
+      };
+    } catch (error) {
+      return {
+        projectId: id,
+        branch: "unknown",
+        branches: [],
+        modified: [],
+        staged: [],
+        untracked: [],
+        isGitRepo: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  static async switchBranch(id: string, branch: string) {
+    const project = ProjectService.get(id);
+    if (!project) {
+      return { success: false, output: "", error: "Project not found" };
+    }
+    if (!existsSync(project.path)) {
+      return { success: false, output: "", error: `Project path does not exist: ${project.path}` };
+    }
+    return executor.git(`checkout ${JSON.stringify(branch)}`, project.path);
+  }
+
+  static async installDependencies(id: string) {
+    const project = ProjectService.get(id);
+    if (!project) {
+      return { success: false, output: "", error: "Project not found" };
+    }
+    if (!existsSync(project.path)) {
+      return { success: false, output: "", error: `Project path does not exist: ${project.path}` };
+    }
+    const install = ProjectService.detectInstallCommand(project.path);
+    if (!install) {
+      return { success: false, output: "", error: "No supported dependency manifest or lockfile found" };
+    }
+    return executor.run({ cmd: install.cmd }, { cwd: project.path, timeout: 1200000 });
+  }
+
+  static async getCommitActivity(id: string, days: number = 84): Promise<ProjectCommitActivity> {
+    const project = ProjectService.get(id);
+    if (!project) {
+      return { projectId: id, totalCommits: 0, activeDays: 0, maxCommitsPerDay: 0, days: [], recentCommits: [], isGitRepo: false, error: "Project not found" };
+    }
+    if (!existsSync(project.path)) {
+      return { projectId: id, totalCommits: 0, activeDays: 0, maxCommitsPerDay: 0, days: [], recentCommits: [], isGitRepo: false, error: `Project path does not exist: ${project.path}` };
+    }
+    if (!(await ProjectService.isGitRepository(project.path))) {
+      return { projectId: id, totalCommits: 0, activeDays: 0, maxCommitsPerDay: 0, days: [], recentCommits: [], isGitRepo: false, error: "Not a Git repository" };
+    }
+
+    const logResult = await executor.git(`log --date=short --pretty=format:%ad --since='${days} days ago'`, project.path);
+    const recentCommits = await executor.gitLog(project.path, 7);
+    if (!logResult.success) {
+      return { projectId: id, totalCommits: 0, activeDays: 0, maxCommitsPerDay: 0, days: [], recentCommits, isGitRepo: true, error: logResult.error || "git log failed" };
+    }
+
+    const counts = new Map<string, number>();
+    for (const line of logResult.output.split("\n").map((item) => item.trim()).filter(Boolean)) {
+      counts.set(line, (counts.get(line) ?? 0) + 1);
+    }
+
+    const series: { date: string; count: number; level: number }[] = [];
+    const today = new Date();
+    for (let offset = days - 1; offset >= 0; offset -= 1) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - offset);
+      const isoDate = toIsoDate(date);
+      const count = counts.get(isoDate) ?? 0;
+      series.push({ date: isoDate, count, level: 0 });
+    }
+
+    const maxCommitsPerDay = Math.max(0, ...series.map((item) => item.count));
+    const daysWithLevel = series.map((item) => ({
+      ...item,
+      level:
+        item.count === 0
+          ? 0
+          : maxCommitsPerDay <= 1
+            ? 4
+            : Math.min(4, Math.ceil((item.count / maxCommitsPerDay) * 4)),
+    }));
+
+    return {
+      projectId: id,
+      totalCommits: daysWithLevel.reduce((sum, item) => sum + item.count, 0),
+      activeDays: daysWithLevel.filter((item) => item.count > 0).length,
+      maxCommitsPerDay,
+      days: daysWithLevel,
+      recentCommits,
+      isGitRepo: true,
+    };
   }
 
   static mapRow(row: typeof projects.$inferSelect): Project {

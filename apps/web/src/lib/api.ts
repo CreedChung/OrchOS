@@ -185,6 +185,45 @@ export interface ProjectPreviewStatus {
   error?: string;
 }
 
+export interface ProjectGitBranchInfo {
+  name: string;
+  current: boolean;
+}
+
+export interface ProjectGitStatus {
+  projectId: string;
+  branch: string;
+  branches: ProjectGitBranchInfo[];
+  modified: string[];
+  staged: string[];
+  untracked: string[];
+  isGitRepo: boolean;
+  error?: string;
+}
+
+export interface ProjectCommandResult {
+  success: boolean;
+  output: string;
+  error?: string;
+}
+
+export interface ProjectCommitActivityDay {
+  date: string;
+  count: number;
+  level: number;
+}
+
+export interface ProjectCommitActivity {
+  projectId: string;
+  totalCommits: number;
+  activeDays: number;
+  maxCommitsPerDay: number;
+  days: ProjectCommitActivityDay[];
+  recentCommits: { hash: string; message: string; author: string; date: string }[];
+  isGitRepo: boolean;
+  error?: string;
+}
+
 export interface HistoryEntry {
   id: string;
   type: string;
@@ -915,6 +954,28 @@ export const api = {
   startProjectPreview: async (id: string): Promise<ProjectPreviewStatus> => {
     const client = createEdenClient();
     const result = await client.api.projects({ id }).preview.post(undefined);
+    return assertData(result);
+  },
+  getProjectGitStatus: async (id: string): Promise<ProjectGitStatus> => {
+    const client = createEdenClient();
+    const result = await client.api.projects({ id }).git.get();
+    return assertData(result);
+  },
+  switchProjectBranch: async (id: string, branch: string): Promise<ProjectCommandResult> => {
+    const client = createEdenClient();
+    const result = await client.api.projects({ id }).git.checkout.post({ branch });
+    return assertData(result);
+  },
+  installProjectDependencies: async (id: string): Promise<ProjectCommandResult> => {
+    const client = createEdenClient();
+    const result = await client.api.projects({ id }).install.post(undefined);
+    return assertData(result);
+  },
+  getProjectCommitActivity: async (id: string, days = 84): Promise<ProjectCommitActivity> => {
+    const client = createEdenClient();
+    const result = await client.api.projects({ id }).commits.get({
+      query: { days },
+    });
     return assertData(result);
   },
 

@@ -16,7 +16,6 @@ import {
   type SkillProfile,
   type RuntimeProfile,
 } from "@/lib/api";
-import { useWebSocket } from "@/lib/hooks";
 import { useUIStore } from "@/lib/store";
 import { useDashboardCache } from "@/lib/dashboard-cache";
 import type {
@@ -33,8 +32,6 @@ import type {
   Command,
   ControlSettings,
 } from "@/lib/types";
-
-const WS_REFRESH_DEBOUNCE_MS = 150;
 
 type RefreshResults = {
   goals?: Goal[];
@@ -293,6 +290,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const refreshInFlightRef = useRef<Promise<void> | null>(null);
   const refreshQueuedRef = useRef(false);
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initializedViewsRef = useRef<Set<DashboardView>>(new Set());
   const [loading, setLoading] = useState(() => {
     return (
       initialCache.goals.length === 0 &&
@@ -377,7 +375,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const shouldLoadRules = activeView === "agents" || activeView === "rules";
   const shouldLoadCommands = activeView === "projects";
   const shouldLoadMcpServers = activeView === "mcp-servers";
-  const shouldLoadSkills = activeView === "skills" || activeView === "agents";
+  const shouldLoadSkills = activeView === "skills";
 
   const applyOrganizationResult = useCallback(
     (nextOrganizations: Organization[]) => {
@@ -489,20 +487,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     return run;
   }, [executeRefreshAll]);
 
-  const scheduleRefreshAll = useCallback(() => {
-    if (refreshTimerRef.current) {
-      clearTimeout(refreshTimerRef.current);
+  const initializeViewData = useCallback(async () => {
+    if (initializedViewsRef.current.has(activeView)) {
+      return;
     }
 
-    refreshTimerRef.current = setTimeout(() => {
-      refreshTimerRef.current = null;
-      void refreshAll();
-    }, WS_REFRESH_DEBOUNCE_MS);
-  }, [refreshAll]);
-
-  const initializeViewData = useCallback(async () => {
-    const hasCache = hasCachedDashboardData();
-    if (!hasCache) setLoading(true);
+    initializedViewsRef.current.add(activeView);
 
     if (activeView === "creation") {
       const criticalResults = await Promise.allSettled([
@@ -562,10 +552,15 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }, [
     activeView,
     applyRefreshResults,
-    hasCachedDashboardData,
     refreshAll,
     shouldLoadAgents,
     shouldLoadProjects,
+    shouldLoadGoals,
+    shouldLoadProblems,
+    shouldLoadRules,
+    shouldLoadCommands,
+    shouldLoadMcpServers,
+    shouldLoadSkills,
   ]);
 
   const refreshGoalData = useCallback(async (goalId: string | null) => {
@@ -594,98 +589,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         clearTimeout(refreshTimerRef.current);
       }
     };
-  }, []);
-
-  useEffect(() => {
-    if (!shouldLoadGoals) {
-      setGoals([]);
-    }
-    if (!shouldLoadProjects) {
-      setProjects([]);
-    }
-    if (!shouldLoadProblems) {
-      setProblems([]);
-    }
-    if (!shouldLoadAgents) {
-      setAgents([]);
-    }
-    if (!shouldLoadRules) {
-      setRules([]);
-    }
-    if (!shouldLoadCommands) {
-      setCommands([]);
-    }
-    if (!shouldLoadMcpServers) {
-      setMcpServers([]);
-    }
-    if (!shouldLoadSkills) {
-      setSkills([]);
-    }
-  }, [
-    shouldLoadGoals,
-    shouldLoadProjects,
-    shouldLoadProblems,
-    shouldLoadAgents,
-    shouldLoadRules,
-    shouldLoadCommands,
-    shouldLoadMcpServers,
-    shouldLoadSkills,
-  ]);
-
-  useEffect(() => {
-    refreshGoalData(activeGoalId);
-  }, [activeGoalId, refreshGoalData]);
-
-  useEffect(() => {
-    if (!activeGoalId) {
-      setStates([]);
-      setArtifacts([]);
-      setActivities([]);
-    }
-  }, [activeGoalId]);
-
-  useWebSocket((event) => {
-    const eventGoalId = typeof event.goalId === "string" ? event.goalId : null;
-    const eventType = typeof event.type === "string" ? event.type : null;
-    const touchesActiveGoal = Boolean(activeGoalId && eventGoalId === activeGoalId);
-    const touchesGoalCollections =
-      eventType === "goal_created" ||
-      eventType === "goal_completed" ||
-      eventType === "state_changed" ||
-      eventType === "command_sent";
-
-    if (touchesActiveGoal) {
-      void refreshGoalData(activeGoalId);
-      if (shouldLoadGoals || shouldLoadCommands || shouldLoadProblems) {
-        scheduleRefreshAll();
-      }
-      return;
-    }
-
-    if (
-      !eventGoalId &&
-      touchesGoalCollections &&
-      (shouldLoadGoals || shouldLoadCommands || shouldLoadProblems)
-    ) {
-      scheduleRefreshAll();
-      return;
-    }
-
-    if (activeView === "inbox" || activeView === "observability") {
-      scheduleRefreshAll();
-    }
-  });
-
-  // Keyboard shortcut: Cmd+K or Ctrl+K to open command bar
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setShowCommandBar(true);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Problem actions

@@ -79,6 +79,39 @@ export interface ProjectPreviewStatus {
   error?: string;
 }
 
+export interface ProjectGitBranchInfo {
+  name: string;
+  current: boolean;
+}
+
+export interface ProjectGitStatus {
+  projectId: string;
+  branch: string;
+  branches: ProjectGitBranchInfo[];
+  modified: string[];
+  staged: string[];
+  untracked: string[];
+  isGitRepo: boolean;
+  error?: string;
+}
+
+export interface ProjectCommitActivityDay {
+  date: string;
+  count: number;
+  level: number;
+}
+
+export interface ProjectCommitActivity {
+  projectId: string;
+  totalCommits: number;
+  activeDays: number;
+  maxCommitsPerDay: number;
+  days: ProjectCommitActivityDay[];
+  recentCommits: { hash: string; message: string; author: string; date: string }[];
+  isGitRepo: boolean;
+  error?: string;
+}
+
 export interface HistoryEntry {
   id: string;
   type: string;

@@ -1107,9 +1107,9 @@ function TeamManagementDialog({
                   {m.loading()}
                 </div>
               ) : canManageTeam ? (
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-                  <div className="space-y-4">
-                    <section className={cn("rounded-xl border border-border bg-background p-4", activeTab !== "members" && "hidden")}>
+                <div className="mx-auto w-full max-w-4xl">
+                  {activeTab === "members" ? (
+                    <section className="rounded-xl border border-border bg-background p-4">
                       <div className="flex items-center gap-2">
                         <HugeiconsIcon icon={UserGroupIcon} className="size-4 text-muted-foreground" />
                         <h3 className="text-sm font-semibold text-foreground">{m.team_members()}</h3>
@@ -1212,8 +1212,10 @@ function TeamManagementDialog({
                         ) : null}
                       </div>
                     </section>
+                  ) : null}
 
-                    <section className={cn("rounded-xl border border-border bg-background p-4", activeTab !== "invitations" && "hidden")}>
+                  {activeTab === "invitations" ? (
+                    <section className="rounded-xl border border-border bg-background p-4">
                       <div className="flex items-center gap-2">
                         <HugeiconsIcon icon={Mail01Icon} className="size-4 text-muted-foreground" />
                         <h3 className="text-sm font-semibold text-foreground">{m.team_pending_invitations()}</h3>
@@ -1268,10 +1270,10 @@ function TeamManagementDialog({
                         ) : null}
                       </div>
                     </section>
-                  </div>
+                  ) : null}
 
-                  <div className="space-y-4">
-                    <section className={cn("rounded-xl border border-border bg-background p-4", activeTab !== "invite" && "hidden")}>
+                  {activeTab === "invite" ? (
+                    <section className="rounded-xl border border-border bg-background p-4">
                       <div className="flex items-center gap-2">
                         <HugeiconsIcon icon={UserAdd02Icon} className="size-4 text-muted-foreground" />
                         <h3 className="text-sm font-semibold text-foreground">{m.team_invite_member()}</h3>
@@ -1308,8 +1310,10 @@ function TeamManagementDialog({
                         </Button>
                       </form>
                     </section>
+                  ) : null}
 
-                    <section className={cn("rounded-xl border border-border bg-background p-4", activeTab !== "organization" && "hidden")}>
+                  {activeTab === "organization" ? (
+                    <section className="rounded-xl border border-border bg-background p-4">
                       <div className="flex items-center gap-2">
                         <HugeiconsIcon icon={Add01Icon} className="size-4 text-muted-foreground" />
                         <h3 className="text-sm font-semibold text-foreground">{m.team_create_organization()}</h3>
@@ -1330,9 +1334,9 @@ function TeamManagementDialog({
                         </Button>
                       </form>
                     </section>
+                  ) : null}
 
-                    {error ? <p className="text-sm text-destructive">{error}</p> : null}
-                  </div>
+                  {error ? <p className="mt-4 text-sm text-destructive">{error}</p> : null}
                 </div>
               ) : (
                 <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background px-6 py-12 text-center">
