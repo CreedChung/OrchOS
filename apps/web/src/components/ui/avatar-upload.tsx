@@ -1,10 +1,12 @@
 import { useRef, useState } from "react";
+import Avatar from "react-nice-avatar";
 import { cn, getRuntimeIconComponent } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Camera01Icon, Robot02Icon } from "@hugeicons/core-free-icons";
 import { api } from "@/lib/api";
 import type { RuntimeProfile } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
+import { decodeNiceAvatar } from "@/lib/avatar";
 
 interface AvatarUploadProps {
   agentId: string;
@@ -66,6 +68,7 @@ export function AvatarUpload({
     name: runtime?.name || name,
     command: runtime?.command,
   });
+  const niceAvatarConfig = decodeNiceAvatar(avatarUrl);
 
   return (
     <button
@@ -81,7 +84,9 @@ export function AvatarUpload({
       title="Upload avatar"
       disabled={uploading}
     >
-      {avatarUrl ? (
+      {niceAvatarConfig ? (
+        <Avatar className="size-full" {...niceAvatarConfig} />
+      ) : avatarUrl ? (
         <img src={avatarUrl} alt={name} className="size-full object-cover" />
       ) : RuntimeIcon ? (
         <HugeiconsIcon icon={RuntimeIcon} className={cn("text-primary/70", iconSizeMap[size])} />

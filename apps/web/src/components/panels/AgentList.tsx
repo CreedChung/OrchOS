@@ -202,7 +202,7 @@ function AgentItem({
         onUploaded={onAvatarUploaded}
         disableHover
       />
-      <div className="min-w-0 flex-1 pr-14 text-left">
+      <div className="min-w-0 flex-1 pr-2 group-hover:pr-14 text-left">
         <div className="flex items-center gap-2">
           <div className={cn("size-2 shrink-0 rounded-full", agentStatusColor[agent.status])} />
           <p className={cn("truncate text-xs font-medium", isActive && "text-accent-foreground")}>

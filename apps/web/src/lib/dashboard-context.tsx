@@ -192,6 +192,7 @@ interface DashboardContextType {
     model: string;
     cliCommand?: string;
     runtimeId?: string;
+    avatarUrl?: string;
   }) => Promise<void>;
   handleUpdateAgent: (
     id: string,
@@ -357,12 +358,26 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   );
 
   const agentModelCounts = useMemo<AgentModelCounts>(
-    () => ({
-      all: runtimes.length,
-      local: runtimes.filter((r) => r.model.startsWith("local/")).length,
-      cloud: runtimes.filter((r) => !r.model.startsWith("local/")).length,
-    }),
-    [runtimes],
+    () => {
+      const runtimeById = new Map(runtimes.map((runtime) => [runtime.id, runtime]));
+
+      return agents.reduce<AgentModelCounts>(
+        (counts, agent) => {
+          counts.all += 1;
+
+          const runtime = agent.runtimeId ? runtimeById.get(agent.runtimeId) : undefined;
+          if (runtime?.transport === "stdio") {
+            counts.local += 1;
+          } else {
+            counts.cloud += 1;
+          }
+
+          return counts;
+        },
+        { all: 0, local: 0, cloud: 0 },
+      );
+    },
+    [agents, runtimes],
   );
 
   const shouldLoadGoals = activeView === "projects" || activeView === "observability";
@@ -900,6 +915,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       model: string;
       cliCommand?: string;
       runtimeId?: string;
+      avatarUrl?: string;
     }) => {
       try {
         await api.createAgent(data);

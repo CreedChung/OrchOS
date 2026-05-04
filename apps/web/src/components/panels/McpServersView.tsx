@@ -20,14 +20,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { CreateMcpServerDialog } from "@/components/dialogs/CreateMcpServerDialog";
 import { api, type McpMarketItem, type McpMarketResponse, type McpServerProfile } from "@/lib/api";
 import type { Project } from "@/lib/types";
@@ -48,7 +40,6 @@ interface McpServersViewProps {
 
 export function McpServersView({
   servers: initialServers,
-  projects = [],
   onRefresh,
   scopeFilter = "all",
   onScopeFilterChange,
@@ -79,9 +70,6 @@ export function McpServersView({
     total: 0,
     totalPages: 1,
   });
-  const [marketInstallScope, setMarketInstallScope] = useState<"global" | "project">("global");
-  const [marketProjectId, setMarketProjectId] = useState<string>(projects[0]?.id ?? "");
-
   useEffect(() => {
     setServers(initialServers);
   }, [initialServers]);
@@ -130,12 +118,6 @@ export function McpServersView({
       cancelled = true;
     };
   }, [MARKET_PAGE_SIZE, marketFilter, marketPage, marketSearch, mode, selectedTag]);
-
-  useEffect(() => {
-    if (marketInstallScope === "project" && !marketProjectId && projects[0]?.id) {
-      setMarketProjectId(projects[0].id);
-    }
-  }, [marketInstallScope, marketProjectId, projects]);
 
   const handleCreated = async () => {
     setLoading(false);
@@ -305,11 +287,6 @@ export function McpServersView({
   }, [marketFilter, marketItems]);
 
   const handleInstallMarketServer = async (item: McpMarketItem) => {
-    if (marketInstallScope === "project" && !marketProjectId) {
-      toast.error("Please select a project target first");
-      return;
-    }
-
     setInstallingMarketId(item.id);
     try {
       await api.createMcpServer({
@@ -317,8 +294,7 @@ export function McpServersView({
         command: item.command,
         args: item.args,
         env: {},
-        scope: marketInstallScope,
-        projectId: marketInstallScope === "project" ? marketProjectId : undefined,
+        scope: "global",
       });
       toast.success(`Installed ${item.name}`);
       onRefresh();
@@ -420,38 +396,6 @@ export function McpServersView({
                           {tag}
                         </button>
                       ))}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Select value={marketInstallScope} onValueChange={(value) => setMarketInstallScope(value as "global" | "project") }>
-                        <SelectTrigger className="h-9 min-w-32 text-sm">
-                          <SelectValue>{marketInstallScope === "global" ? "Global" : "Project"}</SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="global">Global</SelectItem>
-                            <SelectItem value="project">Project</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-
-                      {marketInstallScope === "project" ? (
-                        <Select value={marketProjectId} onValueChange={(value) => setMarketProjectId(value ?? "") }>
-                          <SelectTrigger className="h-9 min-w-40 text-sm" disabled={projects.length === 0}>
-                            <SelectValue>
-                              {projects.find((project) => project.id === marketProjectId)?.name || "Select project"}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              {projects.map((project) => (
-                                <SelectItem key={project.id} value={project.id}>
-                                  {project.name}
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      ) : null}
                     </div>
                   </div>
                 </div>

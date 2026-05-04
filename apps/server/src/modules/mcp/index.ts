@@ -63,6 +63,10 @@ function buildMarketTags(category?: string) {
   return Array.from(new Set(["official", ...(normalizedCategory ? [normalizedCategory] : [])]));
 }
 
+function cleanMarkdownHeadingText(value: string) {
+  return value.replace(/<[^>]+>/g, "").trim().replace(/\s+/g, " ");
+}
+
 function inferMcpCommand(source: string) {
   const lowered = source.toLowerCase();
   const repoName = source.split("/").filter(Boolean).pop() || "mcp-server";
@@ -107,9 +111,9 @@ async function loadOfficialMcpMarket(options?: { enrichGithub?: boolean }) {
   for (const rawLine of lines) {
     const line = rawLine.trim();
 
-    const categoryMatch = /^###\s+(?:[^<]+<a[^>]*><\/a>)?(.+)$/.exec(line);
+    const categoryMatch = /^###\s+(.+)$/.exec(line);
     if (categoryMatch) {
-      currentCategory = categoryMatch[1].trim();
+      currentCategory = cleanMarkdownHeadingText(categoryMatch[1]);
       continue;
     }
 

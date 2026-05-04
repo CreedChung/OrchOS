@@ -65,6 +65,10 @@ function buildMarketTags(category?: string) {
   return Array.from(new Set(["official", ...(normalizedCategory ? [normalizedCategory] : [])]));
 }
 
+function cleanMarkdownHeadingText(value: string) {
+  return value.replace(/<[^>]+>/g, "").trim().replace(/\s+/g, " ");
+}
+
 async function loadOfficialSkillMarket() {
   const response = await fetch(AWESOME_OPENCLAW_SKILLS_URL);
   if (!response.ok) {
@@ -93,7 +97,7 @@ async function loadOfficialSkillMarket() {
 
     const categoryMatch = /^###\s+(.+)$/.exec(line);
     if (categoryMatch) {
-      currentCategory = categoryMatch[1].trim();
+      currentCategory = cleanMarkdownHeadingText(categoryMatch[1]);
       continue;
     }
 

@@ -30,6 +30,7 @@ export const agentController = new Elysia({ prefix: "/api/agents" })
         enabled: true,
         cliCommand: body.cliCommand,
         runtimeId: body.runtimeId,
+        avatarUrl: body.avatarUrl,
       });
       return agent;
     },

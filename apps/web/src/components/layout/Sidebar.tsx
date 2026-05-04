@@ -1101,44 +1101,42 @@ function TeamManagementDialog({
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-scroll bg-muted/20 p-4 sm:p-6">
+              <div className="flex-1 overflow-y-auto p-6">
               {!isLoaded ? (
                 <div className="flex h-full min-h-64 items-center justify-center text-sm text-muted-foreground">
                   {m.loading()}
                 </div>
               ) : canManageTeam ? (
-                <div className="mx-auto w-full max-w-4xl">
+                <div className="space-y-4">
                   {activeTab === "members" ? (
-                    <section className="rounded-xl border border-border bg-background p-4">
-                      <div className="flex items-center gap-2">
-                        <HugeiconsIcon icon={UserGroupIcon} className="size-4 text-muted-foreground" />
-                        <h3 className="text-sm font-semibold text-foreground">{m.team_members()}</h3>
+                    <>
+                      <div className="space-y-2 rounded-lg border border-border/50 p-4">
+                        <div className="mb-1">
+                          <p className="text-sm font-medium text-foreground">{m.team_members()}</p>
+                          <p className="text-xs text-muted-foreground">{m.team_members_desc()}</p>
+                        </div>
+                        <Input
+                          value={memberQuery}
+                          onChange={(e) => setMemberQuery(e.target.value)}
+                          placeholder={m.team_search_members_placeholder()}
+                        />
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {m.team_members_desc()}
-                      </p>
-                      <Input
-                        value={memberQuery}
-                        onChange={(e) => setMemberQuery(e.target.value)}
-                        placeholder={m.team_search_members_placeholder()}
-                        className="mt-4"
-                      />
-                      <div className="mt-4 space-y-3">
-                        {loadingData ? (
-                          <div className="space-y-3">
-                            <p className="text-sm text-muted-foreground">{m.team_loading_members()}</p>
-                            {[1, 2, 3].map((item) => (
-                              <div key={item} className="flex items-center gap-3 rounded-lg border border-border/50 bg-background p-3">
-                                <div className="size-9 rounded-full bg-muted animate-pulse" />
-                                <div className="flex-1 space-y-2">
-                                  <div className="h-3 w-32 rounded bg-muted animate-pulse" />
-                                  <div className="h-2.5 w-48 rounded bg-muted animate-pulse" />
-                                </div>
+                      {loadingData ? (
+                        <div className="space-y-2 rounded-lg border border-border/50 p-4">
+                          {[1, 2, 3].map((item) => (
+                            <div key={item} className="flex items-center gap-3 rounded-lg py-2.5">
+                              <div className="size-9 shrink-0 rounded-full bg-muted animate-pulse" />
+                              <div className="flex-1 space-y-2">
+                                <div className="h-3 w-28 rounded bg-muted animate-pulse" />
+                                <div className="h-2.5 w-40 rounded bg-muted animate-pulse" />
                               </div>
-                            ))}
-                          </div>
-                        ) : pagedMembers.length > 0 ? (
-                          pagedMembers.map((member) => {
+                              <div className="h-5 w-16 rounded bg-muted animate-pulse" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : pagedMembers.length > 0 ? (
+                        <div className="rounded-lg border border-border/50 p-2">
+                          {pagedMembers.map((member) => {
                             const user = member.publicUserData;
                             const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.identifier || m.team_unknown_user();
                             const initials = displayName
@@ -1153,13 +1151,19 @@ function TeamManagementDialog({
                                 : member.role === "org:admin"
                                   ? m.team_role_admin()
                                   : m.team_role_member();
+                            const roleBadgeClass =
+                              member.role === "org:owner"
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                : member.role === "org:admin"
+                                  ? "bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                                  : "bg-muted text-muted-foreground";
                             return (
-                              <div key={member.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/50 p-3">
-                                <div className="flex min-w-0 flex-1 items-center gap-3">
+                              <div key={member.id} className="group flex items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/50">
+                                <div className="flex min-w-0 items-center gap-3">
                                   {user?.imageUrl ? (
-                                    <img src={user.imageUrl} alt={displayName} className="size-9 rounded-full bg-muted object-cover" />
+                                    <img src={user.imageUrl} alt={displayName} className="size-9 shrink-0 rounded-full bg-muted object-cover" />
                                   ) : (
-                                    <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                                       {initials}
                                     </div>
                                   )}
@@ -1168,183 +1172,215 @@ function TeamManagementDialog({
                                     <p className="truncate text-xs text-muted-foreground">{user?.identifier || user?.userId}</p>
                                   </div>
                                 </div>
-                                <Select
-                                  value={member.role}
-                                  onValueChange={(value) => handleUpdateMemberRole(member, user?.userId, value)}
-                                  disabled={!canManageRole(member)}
-                                >
-                                  <SelectTrigger className="h-8 min-w-28">
-                                    <SelectValue>{roleLabel}</SelectValue>
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      {member.role === "org:owner" ? (
-                                        <SelectItem value="org:owner">{m.team_role_owner()}</SelectItem>
-                                      ) : null}
-                                      {roleOptions.map((role) => (
-                                        <SelectItem key={role.value} value={role.value}>
-                                          {role.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </Select>
-                                <span className="text-xs text-muted-foreground">{roleLabel}</span>
-                                <Button size="sm" variant="outline" onClick={() => handleRemoveMember(member)} disabled={!canRemoveMember(member)}>
-                                  {m.team_remove()}
-                                </Button>
+                                <div className="flex shrink-0 items-center gap-2">
+                                  {canManageRole(member) ? (
+                                    <Select
+                                      value={member.role}
+                                      onValueChange={(value) => handleUpdateMemberRole(member, user?.userId, value)}
+                                    >
+                                      <SelectTrigger className={`h-8 min-w-24 rounded-md border-0 px-2.5 text-[10px] font-medium shadow-none ${roleBadgeClass}`}>
+                                        <SelectValue>{roleLabel}</SelectValue>
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectGroup>
+                                          {member.role === "org:owner" ? (
+                                            <SelectItem value="org:owner">{m.team_role_owner()}</SelectItem>
+                                          ) : null}
+                                          {roleOptions.map((role) => (
+                                            <SelectItem key={role.value} value={role.value}>
+                                              {role.label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectGroup>
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${roleBadgeClass}`}>
+                                      {roleLabel}
+                                    </span>
+                                  )}
+                                  {canRemoveMember(member) ? (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleRemoveMember(member)}
+                                      className="h-7 gap-1 px-2 text-xs text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                                    >
+                                      {m.team_remove()}
+                                    </Button>
+                                  ) : null}
+                                </div>
                               </div>
                             );
-                          })
-                        ) : (
+                          })}
+                          {filteredMembers.length > TEAM_PAGE_SIZE ? (
+                            <div className="flex items-center justify-between border-t border-border/50 px-3 pt-2">
+                              <Button size="sm" variant="outline" onClick={() => setMemberPage((page) => Math.max(1, page - 1))} disabled={memberPage === 1} className="h-7 text-xs">
+                                {m.team_previous()}
+                              </Button>
+                              <span className="text-xs tabular-nums text-muted-foreground">{memberPage} / {totalMemberPages}</span>
+                              <Button size="sm" variant="outline" onClick={() => setMemberPage((page) => Math.min(totalMemberPages, page + 1))} disabled={memberPage === totalMemberPages} className="h-7 text-xs">
+                                {m.team_next()}
+                              </Button>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center rounded-lg border border-border/50 py-8 text-center">
                           <p className="text-sm text-muted-foreground">{m.team_no_members()}</p>
-                        )}
-                        {filteredMembers.length > TEAM_PAGE_SIZE ? (
-                          <div className="flex items-center justify-between pt-2">
-                            <Button size="sm" variant="outline" onClick={() => setMemberPage((page) => Math.max(1, page - 1))} disabled={memberPage === 1}>
-                              {m.team_previous()}
-                            </Button>
-                            <span className="text-xs text-muted-foreground">{memberPage} / {totalMemberPages}</span>
-                            <Button size="sm" variant="outline" onClick={() => setMemberPage((page) => Math.min(totalMemberPages, page + 1))} disabled={memberPage === totalMemberPages}>
-                              {m.team_next()}
-                            </Button>
-                          </div>
-                        ) : null}
-                      </div>
-                    </section>
+                        </div>
+                      )}
+                    </>
                   ) : null}
 
                   {activeTab === "invitations" ? (
-                    <section className="rounded-xl border border-border bg-background p-4">
-                      <div className="flex items-center gap-2">
-                        <HugeiconsIcon icon={Mail01Icon} className="size-4 text-muted-foreground" />
-                        <h3 className="text-sm font-semibold text-foreground">{m.team_pending_invitations()}</h3>
+                    <>
+                      <div className="space-y-2 rounded-lg border border-border/50 p-4">
+                        <div className="mb-1">
+                          <p className="text-sm font-medium text-foreground">{m.team_pending_invitations()}</p>
+                          <p className="text-xs text-muted-foreground">{m.team_pending_invitations_desc()}</p>
+                        </div>
+                        <Input
+                          value={invitationQuery}
+                          onChange={(e) => setInvitationQuery(e.target.value)}
+                          placeholder={m.team_search_invitations_placeholder()}
+                        />
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {m.team_pending_invitations_desc()}
-                      </p>
-                      <Input
-                        value={invitationQuery}
-                        onChange={(e) => setInvitationQuery(e.target.value)}
-                        placeholder={m.team_search_invitations_placeholder()}
-                        className="mt-4"
-                      />
-                      <div className="mt-4 space-y-3">
-                        {loadingData ? (
-                          <div className="space-y-3">
-                            <p className="text-sm text-muted-foreground">{m.team_loading_invitations()}</p>
-                            {[1, 2].map((item) => (
-                              <div key={item} className="rounded-lg border border-border/50 bg-background p-3">
-                                <div className="space-y-2">
-                                  <div className="h-3 w-40 rounded bg-muted animate-pulse" />
-                                  <div className="h-2.5 w-24 rounded bg-muted animate-pulse" />
+                      {loadingData ? (
+                        <div className="space-y-2 rounded-lg border border-border/50 p-4">
+                          {[1, 2].map((item) => (
+                            <div key={item} className="flex items-center gap-3 rounded-lg py-2.5">
+                              <div className="size-9 shrink-0 rounded-full bg-muted animate-pulse" />
+                              <div className="flex-1 space-y-2">
+                                <div className="h-3 w-40 rounded bg-muted animate-pulse" />
+                                <div className="h-2.5 w-24 rounded bg-muted animate-pulse" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : pagedInvitations.length > 0 ? (
+                        <div className="rounded-lg border border-border/50 p-2">
+                          {pagedInvitations.map((invitation) => {
+                            const invitationRoleLabel = invitation.role === "org:admin" ? m.team_role_admin() : m.team_role_member();
+                            const invitationRoleBadgeClass =
+                              invitation.role === "org:admin"
+                                ? "bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                                : "bg-muted text-muted-foreground";
+                            return (
+                              <div key={invitation.id} className="group flex items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/50">
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-medium text-foreground">{invitation.emailAddress}</p>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${invitationRoleBadgeClass}`}>
+                                      {invitationRoleLabel}
+                                    </span>
+                                    <span className="text-[11px] text-muted-foreground">·</span>
+                                    <span className="text-[11px] text-muted-foreground">Pending</span>
+                                  </div>
                                 </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleRevokeInvitation(invitation)}
+                                  className="h-7 gap-1 px-2 text-xs text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                                >
+                                  {m.team_revoke()}
+                                </Button>
                               </div>
-                            ))}
-                          </div>
-                        ) : pagedInvitations.length > 0 ? (
-                          pagedInvitations.map((invitation) => (
-                            <div key={invitation.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/50 p-3">
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium text-foreground">{invitation.emailAddress}</p>
-                                <p className="text-xs text-muted-foreground">{invitation.role === "org:admin" ? m.team_role_admin() : m.team_role_member()}</p>
-                              </div>
-                              <Button size="sm" variant="outline" onClick={() => handleRevokeInvitation(invitation)}>
-                                {m.team_revoke()}
+                            );
+                          })}
+                          {filteredInvitations.length > TEAM_PAGE_SIZE ? (
+                            <div className="flex items-center justify-between border-t border-border/50 px-3 pt-2">
+                              <Button size="sm" variant="outline" onClick={() => setInvitationPage((page) => Math.max(1, page - 1))} disabled={invitationPage === 1} className="h-7 text-xs">
+                                {m.team_previous()}
+                              </Button>
+                              <span className="text-xs tabular-nums text-muted-foreground">{invitationPage} / {totalInvitationPages}</span>
+                              <Button size="sm" variant="outline" onClick={() => setInvitationPage((page) => Math.min(totalInvitationPages, page + 1))} disabled={invitationPage === totalInvitationPages} className="h-7 text-xs">
+                                {m.team_next()}
                               </Button>
                             </div>
-                          ))
-                        ) : (
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center rounded-lg border border-border/50 py-8 text-center">
+                          <HugeiconsIcon icon={Mail01Icon} className="mb-2 size-5 text-muted-foreground/30" />
                           <p className="text-sm text-muted-foreground">{m.team_no_pending_invitations()}</p>
-                        )}
-                        {filteredInvitations.length > TEAM_PAGE_SIZE ? (
-                          <div className="flex items-center justify-between pt-2">
-                            <Button size="sm" variant="outline" onClick={() => setInvitationPage((page) => Math.max(1, page - 1))} disabled={invitationPage === 1}>
-                              {m.team_previous()}
-                            </Button>
-                            <span className="text-xs text-muted-foreground">{invitationPage} / {totalInvitationPages}</span>
-                            <Button size="sm" variant="outline" onClick={() => setInvitationPage((page) => Math.min(totalInvitationPages, page + 1))} disabled={invitationPage === totalInvitationPages}>
-                              {m.team_next()}
-                            </Button>
-                          </div>
-                        ) : null}
-                      </div>
-                    </section>
+                        </div>
+                      )}
+                    </>
                   ) : null}
 
                   {activeTab === "invite" ? (
-                    <section className="rounded-xl border border-border bg-background p-4">
-                      <div className="flex items-center gap-2">
-                        <HugeiconsIcon icon={UserAdd02Icon} className="size-4 text-muted-foreground" />
-                        <h3 className="text-sm font-semibold text-foreground">{m.team_invite_member()}</h3>
+                    <div className="space-y-2 rounded-lg border border-border/50 p-4">
+                      <div className="mb-1">
+                        <p className="text-sm font-medium text-foreground">{m.team_invite_member()}</p>
+                        <p className="text-xs text-muted-foreground">{m.team_invite_member_desc()}</p>
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {m.team_invite_member_desc()}
-                      </p>
-                      <form className="mt-4 space-y-3" onSubmit={handleInviteMember}>
-                        <input
-                          type="email"
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                          placeholder={m.team_invite_email_placeholder()}
-                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                        />
-                        <Select value={inviteRole} onValueChange={setInviteRole}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue>
-                              {roleOptions.find((role) => role.value === inviteRole)?.label || m.team_role_member()}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              {roleOptions.map((role) => (
-                                <SelectItem key={role.value} value={role.value}>
-                                  {role.label}
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
+                      <form className="space-y-3 pt-1" onSubmit={handleInviteMember}>
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-medium text-foreground">{m.team_invite_email_placeholder()}</label>
+                          <Input
+                            type="email"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                            placeholder={m.team_invite_email_placeholder()}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-medium text-foreground">{m.team_role_member()}</label>
+                          <Select value={inviteRole} onValueChange={setInviteRole}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue>
+                                {roleOptions.find((role) => role.value === inviteRole)?.label || m.team_role_member()}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                {roleOptions.map((role) => (
+                                  <SelectItem key={role.value} value={role.value}>
+                                    {role.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
                         <Button type="submit" disabled={submitting || !inviteEmail.trim()} className="w-full">
                           {m.team_invite_member()}
                         </Button>
                       </form>
-                    </section>
+                    </div>
                   ) : null}
 
                   {activeTab === "organization" ? (
-                    <section className="rounded-xl border border-border bg-background p-4">
-                      <div className="flex items-center gap-2">
-                        <HugeiconsIcon icon={Add01Icon} className="size-4 text-muted-foreground" />
-                        <h3 className="text-sm font-semibold text-foreground">{m.team_create_organization()}</h3>
+                    <div className="space-y-2 rounded-lg border border-border/50 p-4">
+                      <div className="mb-1">
+                        <p className="text-sm font-medium text-foreground">{m.team_create_organization()}</p>
+                        <p className="text-xs text-muted-foreground">{m.team_create_organization_desc()}</p>
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {m.team_create_organization_desc()}
-                      </p>
-                      <form className="mt-4 space-y-3" onSubmit={handleCreateOrganization}>
-                        <input
-                          type="text"
-                          value={createName}
-                          onChange={(e) => setCreateName(e.target.value)}
-                          placeholder={m.team_create_organization_placeholder()}
-                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                        />
+                      <form className="space-y-3 pt-1" onSubmit={handleCreateOrganization}>
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-medium text-foreground">{m.team_create_organization_placeholder()}</label>
+                          <Input
+                            type="text"
+                            value={createName}
+                            onChange={(e) => setCreateName(e.target.value)}
+                            placeholder={m.team_create_organization_placeholder()}
+                          />
+                        </div>
                         <Button type="submit" disabled={submitting || !createName.trim()} className="w-full" variant="outline">
                           {m.team_create_organization()}
                         </Button>
                       </form>
-                    </section>
+                    </div>
                   ) : null}
 
-                  {error ? <p className="mt-4 text-sm text-destructive">{error}</p> : null}
+                  {error ? <p className="text-sm text-destructive">{error}</p> : null}
                 </div>
               ) : (
-                <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background px-6 py-12 text-center">
-                  <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <HugeiconsIcon icon={Shield01Icon} className="size-5" />
-                  </div>
-                  <h3 className="text-base font-semibold text-foreground">{m.team_management_unavailable()}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                <div className="mx-auto flex max-w-xl flex-col items-center justify-center rounded-lg border border-dashed border-border/50 px-6 py-12 text-center">
+                  <p className="text-sm font-medium text-foreground">{m.team_management_unavailable()}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {organization ? m.team_management_admin_only() : m.team_management_create_org()}
                   </p>
                 </div>

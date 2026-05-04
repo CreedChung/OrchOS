@@ -811,6 +811,7 @@ export const api = {
     model: string;
     cliCommand?: string;
     runtimeId?: string;
+    avatarUrl?: string;
   }): Promise<AgentProfile> => {
     const client = createEdenClient();
     return client.api.agents.post(data).then(assertData);

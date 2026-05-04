@@ -884,13 +884,20 @@ export function ProjectsView({
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-foreground/80">Project Path</label>
-            <div className="flex gap-2">
+            <div className="relative">
               <Input
                 value={formData.path}
                 onChange={(event) => setFormData((prev) => ({ ...prev, path: event.target.value }))}
                 placeholder="/root/Projects/TermoraX"
+                className="pr-24"
               />
-              <Button type="button" variant="outline" onClick={() => setShowDirectoryPicker(true)}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDirectoryPicker(true)}
+                className="absolute right-1 top-1 h-8"
+              >
                 <HugeiconsIcon icon={Folder01Icon} className="size-3.5" />
                 Browse
               </Button>
@@ -940,13 +947,20 @@ export function ProjectsView({
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-foreground/80">Project Path</label>
-            <div className="flex gap-2">
+            <div className="relative">
               <Input
                 value={editingProjectData.path}
                 onChange={(event) => setEditingProjectData((prev) => ({ ...prev, path: event.target.value }))}
                 placeholder="/root/Projects/TermoraX"
+                className="pr-24"
               />
-              <Button type="button" variant="outline" onClick={() => setShowDirectoryPicker(true)}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDirectoryPicker(true)}
+                className="absolute right-1 top-1 h-8"
+              >
                 <HugeiconsIcon icon={Folder01Icon} className="size-3.5" />
                 Browse
               </Button>

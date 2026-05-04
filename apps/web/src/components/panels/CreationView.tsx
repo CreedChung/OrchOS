@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
+import Avatar from "react-nice-avatar";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowDown01Icon,
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { decodeNiceAvatar } from "@/lib/avatar";
 import { cn, getRuntimeIcon } from "@/lib/utils";
 import { api, type Conversation, type ConversationMessage, type InboxThread } from "@/lib/api";
 import type { AgentProfile, Command, ControlSettings, Project, RuntimeProfile } from "@/lib/types";
@@ -201,11 +203,16 @@ function AgentParticipantGroup({
           >
             {participant.iconSrc ? (
               <img src={participant.iconSrc} alt={participant.name} className="size-3 object-contain" />
-            ) : participant.avatarUrl ? (
-              <img src={participant.avatarUrl} alt={participant.name} className="size-full object-cover" />
-            ) : (
-              <HugeiconsIcon icon={Robot02Icon} className="size-3 text-foreground/70" />
-            )}
+            ) : (() => {
+              const niceAvatarConfig = decodeNiceAvatar(participant.avatarUrl);
+              if (niceAvatarConfig) {
+                return <Avatar className="size-full" {...niceAvatarConfig} />;
+              }
+              if (participant.avatarUrl) {
+                return <img src={participant.avatarUrl} alt={participant.name} className="size-full object-cover" />;
+              }
+              return <HugeiconsIcon icon={Robot02Icon} className="size-3 text-foreground/70" />;
+            })()}
           </div>
         ))}
         {extraCount > 0 ? (

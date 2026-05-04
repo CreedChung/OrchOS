@@ -8,6 +8,7 @@ export const AgentModel = {
     model: t.String(),
     cliCommand: t.Optional(t.String()),
     runtimeId: t.Optional(t.String()),
+    avatarUrl: t.Optional(t.String()),
   }),
   updateBody: t.Object({
     name: t.Optional(t.String()),

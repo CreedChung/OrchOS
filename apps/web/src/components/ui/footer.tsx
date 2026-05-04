@@ -170,21 +170,6 @@ export default function StickyFooter() {
               }}
             />
 
-            <motion.div
-              variants={backgroundVariants}
-              className="absolute bottom-0 left-0 w-48 h-48 md:w-96 md:h-96 bg-secondary/5 rounded-full blur-3xl"
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.2, 0.5, 0.2],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "easeInOut" as const,
-                delay: 1,
-              }}
-            />
-
             <motion.div variants={containerVariants} className="relative z-10">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-12 lg:gap-20">
                 {footerData.sections.map((section, index) => (

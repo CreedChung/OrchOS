@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
+import NiceAvatarPkg from "react-nice-avatar";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CloudIcon, Server } from "@hugeicons/core-free-icons";
+import { ArrowReloadHorizontalIcon, CloudIcon, Server } from "@hugeicons/core-free-icons";
+import { encodeNiceAvatar } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import type { RuntimeProfile } from "@/lib/types";
@@ -21,6 +23,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const { default: Avatar, genConfig } = NiceAvatarPkg as {
+  default: ComponentType<Record<string, unknown>>;
+  genConfig: (seed?: string) => Record<string, unknown>;
+};
+
+type AvatarFullConfig = Record<string, unknown>;
+
 interface CreateAgentDialogProps {
   open: boolean;
   onClose: () => void;
@@ -33,6 +42,7 @@ interface CreateAgentDialogProps {
     model: string;
     cliCommand?: string;
     runtimeId?: string;
+    avatarUrl?: string;
   }) => void;
 }
 
@@ -48,7 +58,6 @@ export function CreateAgentDialog({
   onSubmit,
 }: CreateAgentDialogProps) {
   const [name, setName] = useState("");
-  const [role, setRole] = useState("");
   const [runtimeId, setRuntimeId] = useState<string | null>(null);
   const [selectedCapabilities, setSelectedCapabilities] = useState<string[]>(
     [],
@@ -56,6 +65,8 @@ export function CreateAgentDialog({
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState("");
   const [loadingModels, setLoadingModels] = useState(false);
+  const [avatarSeed, setAvatarSeed] = useState(() => Math.random().toString(36).slice(2, 10));
+  const [avatarConfig, setAvatarConfig] = useState<AvatarFullConfig>(() => genConfig());
 
   const selectedRuntime = runtimes.find((r) => r.id === runtimeId);
   const selectedRuntimeDisplayKind = selectedRuntime
@@ -64,6 +75,13 @@ export function CreateAgentDialog({
   const isAmpRuntime =
     selectedRuntime?.registryId === "amp" || selectedRuntime?.command === "amp";
   const { builtinOptions, marketOptions } = getCapabilityOptions(skills);
+  const avatarUrl = useMemo(() => {
+    return encodeNiceAvatar(avatarConfig);
+  }, [avatarConfig]);
+
+  useEffect(() => {
+    setAvatarConfig(genConfig(name.trim() || avatarSeed));
+  }, [avatarSeed, name]);
 
   const handleRuntimeChange = (id: string) => {
     setRuntimeId(id);
@@ -138,7 +156,6 @@ export function CreateAgentDialog({
     e.preventDefault();
     if (
       !name.trim() ||
-      !role.trim() ||
       !selectedRuntime ||
       !selectedModel ||
       selectedCapabilities.length === 0
@@ -146,18 +163,20 @@ export function CreateAgentDialog({
       return;
     onSubmit({
       name: name.trim(),
-      role: role.trim(),
+      role: selectedRuntime.role,
       capabilities: selectedCapabilities,
       model: selectedModel,
       cliCommand: selectedRuntime?.command,
       runtimeId: runtimeId ?? undefined,
+      avatarUrl,
     });
     setName("");
-    setRole("");
     setRuntimeId(null);
     setSelectedCapabilities([]);
     setAvailableModels([]);
     setSelectedModel("");
+    setAvatarSeed(Math.random().toString(36).slice(2, 10));
+    setAvatarConfig(genConfig());
   };
 
   return (
@@ -180,7 +199,6 @@ export function CreateAgentDialog({
             form="create-agent-form"
             disabled={
               !name.trim() ||
-              !role.trim() ||
               !selectedRuntime ||
               !selectedModel ||
               selectedCapabilities.length === 0
@@ -200,27 +218,34 @@ export function CreateAgentDialog({
           <label className="text-xs text-muted-foreground">
             {m.agent_name()}
           </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={m.agent_name_placeholder()}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            autoFocus
-          />
-        </div>
-
-        <div>
-          <label className="text-xs text-muted-foreground">
-            {m.agent_role()}
-          </label>
-          <input
-            type="text"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            placeholder={m.agent_role_placeholder()}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          />
+          <div className="mt-2 relative flex items-center gap-4 rounded-xl border border-border bg-muted/20 p-4">
+            <div className="group/avatar relative size-16 shrink-0">
+              <Avatar className="size-16 rounded-xl border border-border bg-background" {...avatarConfig} />
+              <button
+                type="button"
+                onClick={() => {
+                  setAvatarSeed(Math.random().toString(36).slice(2, 10));
+                  setAvatarConfig(genConfig());
+                }}
+                className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover/avatar:opacity-100"
+              >
+                <HugeiconsIcon icon={ArrowReloadHorizontalIcon} className="size-4 text-white" />
+              </button>
+            </div>
+            <div className="min-w-0 flex-1">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={m.agent_name_placeholder()}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                autoFocus
+              />
+            </div>
+            <p className="absolute bottom-2 right-4 text-[10px] text-muted-foreground/70">
+              Powered by react-nice-avatar
+            </p>
+          </div>
         </div>
 
         <div>
