@@ -851,37 +851,55 @@ export const api = {
 
   // Runtimes
   listRuntimes: async (): Promise<RuntimeProfile[]> => {
-    const client = createEdenClient();
-    const result = await client.api.runtimes.get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/runtimes"), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as RuntimeProfile[];
   },
   detectRuntimes: async (): Promise<DetectRuntimesResponse> => {
-    const client = createEdenClient();
-    const result = await client.api.runtimes.detect.get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/runtimes/detect"), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as DetectRuntimesResponse;
   },
   
   // Integrations
   listIntegrations: async (): Promise<Integration[]> => {
-    const client = createEdenClient();
-    const result = await client.api.integrations.get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/integrations"), {
+      credentials: "include",
+    });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as Integration[];
   },
   connectIntegration: async (
     id: "github" | "gitlab",
     data: { accessToken: string; apiUrl?: string },
   ): Promise<Integration> => {
-    const client = createEdenClient();
-    const result = await client.api.integrations({ id }).connect.post(data);
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/integrations/${id}/connect`), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as Integration;
   },
   connectGoogleIntegration: async (
     id: "google-calendar" | "gmail",
     data: { clientId: string; clientSecret: string; refreshToken: string; label?: string },
   ): Promise<Integration> => {
-    const client = createEdenClient();
-    const result = await client.api.integrations.google({ id }).accounts.post(data);
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/integrations/google/${id}/accounts`), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as Integration;
   },
   createSmtpImapAccount: async (data: {
     email: string;
@@ -891,26 +909,50 @@ export const api = {
     smtp: { host: string; port: number; secure: boolean };
     imap: { host: string; port: number; secure: boolean };
   }): Promise<Integration> => {
-    const client = createEdenClient();
-    const result = await client.api.integrations["smtp-imap"].accounts.post(data);
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/integrations/smtp-imap/accounts"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as Integration;
   },
   deleteIntegrationAccount: async (id: string, accountId: string): Promise<Integration> => {
-    const client = createEdenClient();
-    const result = await client.api.integrations({ id }).accounts({ accountId }).delete();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/integrations/${id}/accounts/${accountId}`), {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as Integration;
   },
   disconnectIntegration: async (id: string): Promise<{ success: boolean }> => {
-    const client = createEdenClient();
-    const result = await client.api.integrations({ id }).disconnect.post(undefined);
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/integrations/${id}/disconnect`), {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as { success: boolean };
   },
   registerDetectedRuntimes: (data: {
     runtimeIds?: string[];
     registerAll?: boolean;
   }): Promise<RegisterRuntimesResponse> => {
-    const client = createEdenClient();
-    return client.api.runtimes.detect.register.post(data).then(assertData);
+    return fetch(resolveApiUrl("/api/runtimes/detect/register"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as RegisterRuntimesResponse;
+    });
   },
   updateRuntime: (
     id: string,
@@ -920,17 +962,22 @@ export const api = {
       transport?: RuntimeProfile["transport"];
     },
   ): Promise<RuntimeProfile> => {
-    const client = createEdenClient();
-    return client.api.runtimes({ id }).patch(data).then(assertData);
+    return fetch(resolveApiUrl(`/api/runtimes/${id}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as RuntimeProfile;
+    });
   },
   healthCheckRuntime: async (runtimeId: string, level?: "basic" | "ping" | "full") => {
-    const client = createEdenClient();
-    const result = await client.api.runtimes({ runtimeId }).health.get({
-      query: {
-        level,
-      },
-    });
-    return assertData(result) as {
+    const url = new URL(resolveApiUrl(`/api/runtimes/${runtimeId}/health`));
+    if (level) url.searchParams.set("level", level);
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as {
       healthy: boolean;
       level: string;
       output: string;
@@ -942,21 +989,28 @@ export const api = {
     };
   },
   listRuntimeModels: async (runtimeId: string) => {
-    const client = createEdenClient();
-    const result = await client.api.runtimes({ runtimeId }).models.get();
-    return assertData(result) as RuntimeModelsResponse;
+    const response = await fetch(resolveApiUrl(`/api/runtimes/${runtimeId}/model`), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as RuntimeModelsResponse;
   },
 
   // Runtime Chat
   chatWithRuntime: (runtimeId: string, prompt: string) => {
-    const client = createEdenClient();
-    return client.api.runtimes({ runtimeId }).chat.post({ prompt }).then(assertData) as Promise<{
-      success: boolean;
-      output: string;
-      error?: string;
-      agentName: string;
-      responseTime: number;
-    }>;
+    return fetch(resolveApiUrl(`/api/runtimes/${runtimeId}/chat`), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ prompt }),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as {
+        success: boolean;
+        output: string;
+        error?: string;
+        agentName: string;
+        responseTime: number;
+      };
+    });
   },
 
   // Projects
@@ -1027,39 +1081,45 @@ export const api = {
 
   // Filesystem
   browseDirectory: async (path?: string) => {
-    const client = createEdenClient();
-    const result = await client.api.filesystem.browse.get({
-      query: {
-        path,
-      },
-    });
-    return assertData(result) as {
+    const url = new URL(resolveApiUrl("/api/filesystem/browse"));
+    if (path) {
+      url.searchParams.set("path", path);
+    }
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as {
       currentPath: string;
       parentPath?: string;
       directories: { name: string; path: string }[];
     };
   },
   readWorkspaceFile: async (path: string) => {
-    const client = createEdenClient();
-    const result = await client.api.filesystem.file.get({
-      query: {
-        path,
-      },
-    });
-
-    return assertData(result) as {
+    const url = new URL(resolveApiUrl("/api/filesystem/file"));
+    url.searchParams.set("path", path);
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as {
       path: string;
       content: string | null;
     };
   },
   writeWorkspaceFile: async (path: string, content: string) => {
-    const client = createEdenClient();
-    const result = await client.api.filesystem.file.put({
-      path,
-      content,
+    const response = await fetch(resolveApiUrl("/api/filesystem/file"), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ path, content }),
     });
-
-    return assertData(result) as {
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as {
       path: string;
       content: string;
     };
@@ -1094,14 +1154,27 @@ export const api = {
 
   // Settings
   getSettings: async (): Promise<ControlSettings> => {
-    const client = createEdenClient();
-    const result = await client.api.settings.get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/settings"), {
+      credentials: "include",
+    });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as ControlSettings;
   },
   updateSettings: async (data: Partial<ControlSettings>): Promise<ControlSettings> => {
-    const client = createEdenClient();
-    const result = await client.api.settings.patch(data);
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/settings"), {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as ControlSettings;
   },
 
   // Events
@@ -1118,22 +1191,38 @@ export const api = {
 
   // Organizations
   listOrganizations: async (): Promise<Organization[]> => {
-    const client = createEdenClient();
-    const result = await client.api.organizations.get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/organizations"), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as Organization[];
   },
   createOrganization: (data: { name: string }): Promise<Organization> => {
-    const client = createEdenClient();
-    return client.api.organizations.post(data).then(assertData);
+    return fetch(resolveApiUrl("/api/organizations"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as Organization;
+    });
   },
   updateOrganization: (id: string, data: { name?: string }): Promise<Organization> => {
-    const client = createEdenClient();
-    return client.api.organizations({ id }).patch(data).then(assertData);
+    return fetch(resolveApiUrl(`/api/organizations/${id}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as Organization;
+    });
   },
   deleteOrganization: async (id: string): Promise<void> => {
-    const client = createEdenClient();
-    const result = await client.api.organizations({ id }).delete();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/organizations/${id}`), {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
   },
 
   // Problems
@@ -1499,14 +1588,14 @@ export const api = {
 
   // Conversations
   listConversations: async (): Promise<Conversation[]> => {
-    const client = createEdenClient();
-    const result = await client.api.conversations.get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/conversations"), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as Conversation[];
   },
   getConversation: async (id: string): Promise<Conversation> => {
-    const client = createEdenClient();
-    const result = await client.api.conversations({ id }).get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/conversations/${id}`), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as Conversation;
   },
   createConversation: (data: {
     title?: string;
@@ -1514,7 +1603,16 @@ export const api = {
     agentId?: string;
     runtimeId?: string;
     deleted?: boolean;
-  }): Promise<Conversation> => createEdenClient().api.conversations.post(data).then(assertData),
+  }): Promise<Conversation> =>
+    fetch(resolveApiUrl("/api/conversations"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as Conversation;
+    }),
   updateConversation: (
     id: string,
     data: {
@@ -1526,32 +1624,46 @@ export const api = {
       deleted?: boolean;
     },
   ): Promise<Conversation> => {
-    const client = createEdenClient();
-    return client.api.conversations({ id }).patch(data).then(assertData);
+    return fetch(resolveApiUrl(`/api/conversations/${id}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as Conversation;
+    });
   },
   deleteConversation: async (id: string, options?: { permanent?: boolean }): Promise<void> => {
-    const client = createEdenClient();
-    const result = await client.api.conversations({ id }).delete({
-      query: {
-        permanent: options?.permanent ? "true" : undefined,
-      },
-    });
-    return assertData(result);
+    const url = new URL(resolveApiUrl(`/api/conversations/${id}`));
+    if (options?.permanent) {
+      url.searchParams.set("permanent", "true");
+    }
+    const response = await fetch(url, { method: "DELETE", credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
   },
   clearDeletedConversations: async (): Promise<{ count: number }> => {
-    const client = createEdenClient();
-    const result = await client.api.conversations.deleted.delete();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/conversations/deleted"), {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as { count: number };
   },
   getConversationMessages: async (id: string): Promise<ConversationMessage[]> => {
-    const client = createEdenClient();
-    const result = await client.api.conversations({ id }).messages.get();
-    return assertData(result).map(normalizeConversationMessage);
+    const response = await fetch(resolveApiUrl(`/api/conversations/${id}/messages`), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return ((await response.json()) as unknown[]).map(normalizeConversationMessage);
   },
   sendConversationMessage: async (id: string, content: string): Promise<ConversationMessage> => {
-    const client = createEdenClient();
-    const result = await client.api.conversations({ id }).messages.post({ content });
-    return normalizeConversationMessage(assertData(result));
+    const response = await fetch(resolveApiUrl(`/api/conversations/${id}/messages`), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ content }),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return normalizeConversationMessage(await response.json());
   },
 
   createGoalsFromConversation: async (

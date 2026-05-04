@@ -1,4 +1,4 @@
-import { readdirSync, statSync, existsSync, readFileSync } from "fs";
+import { readdirSync, statSync, existsSync, readFileSync, writeFileSync } from "fs";
 import { resolve, join } from "path";
 import { homedir } from "os";
 
@@ -70,5 +70,11 @@ export abstract class FilesystemService {
     } catch {
       return { path: resolvedPath, content: null };
     }
+  }
+
+  static writeFile(filePath: string, content: string): { path: string; content: string } {
+    const resolvedPath = FilesystemService.resolvePath(filePath);
+    writeFileSync(resolvedPath, content, "utf8");
+    return { path: resolvedPath, content };
   }
 }

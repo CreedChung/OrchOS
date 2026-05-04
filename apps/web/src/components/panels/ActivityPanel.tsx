@@ -10,8 +10,7 @@ import {
   Robot02Icon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
-import { m } from "@/paraglide/messages";
-import type { ActivityEntry, Goal, Problem, Project, SidebarView } from "@/lib/types";
+import type { ActivityEntry, Goal, Problem, SidebarView } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
 import { MessageBubble, mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
@@ -19,7 +18,6 @@ import { MessageBubble, mapConversationMessagesToUiMessages } from "@/components
 interface ActivityPanelProps {
   activities: ActivityEntry[];
   goals: Goal[];
-  projects: Project[];
   problems: Problem[];
   collapsed: boolean;
   expanded?: boolean;
@@ -89,25 +87,16 @@ function formatTime(value?: string) {
   return `${date.toISOString().split("T")[0]} ${date.toISOString().split("T")[1]?.slice(0, 5) ?? ""}`;
 }
 
-function getProjectTaskGroups(goals: Goal[], activeProjectId?: string) {
-  const scopedGoals = activeProjectId ? goals.filter((goal) => goal.projectId === activeProjectId) : goals;
-
+function getTaskGroups(goals: Goal[]) {
   return {
-    current: scopedGoals.filter((goal) => goal.status === "active").slice(0, 6),
-    completed: scopedGoals.filter((goal) => goal.status === "completed").slice(0, 4),
-    paused: scopedGoals.filter((goal) => goal.status === "paused").slice(0, 4),
+    current: goals.filter((goal) => goal.status === "active").slice(0, 6),
+    completed: goals.filter((goal) => goal.status === "completed").slice(0, 4),
+    paused: goals.filter((goal) => goal.status === "paused").slice(0, 4),
   };
 }
 
-function getAttentionItems(problems: Problem[], goals: Goal[], activeProjectId?: string) {
-  const scopedProblems = activeProjectId
-    ? problems.filter((problem) => {
-        const goal = goals.find((item) => item.id === problem.goalId);
-        return goal?.projectId === activeProjectId;
-      })
-    : problems;
-
-  return scopedProblems.filter((problem) => problem.status === "open").slice(0, 8);
+function getAttentionItems(problems: Problem[]) {
+  return problems.filter((problem) => problem.status === "open").slice(0, 8);
 }
 
 function SectionHeader({ title, meta }: { title: string; meta?: string }) {
@@ -122,10 +111,9 @@ function SectionHeader({ title, meta }: { title: string; meta?: string }) {
   );
 }
 
-export function ActivityPanel({ activities, goals, projects, problems, collapsed, expanded, activeView }: ActivityPanelProps) {
+export function ActivityPanel({ activities, goals, problems, collapsed, expanded, activeView }: ActivityPanelProps) {
   const { user } = useUser();
   const {
-    conversations,
     activeConversationId,
     pendingConversationId,
     flowDraftByConversationId,
@@ -137,9 +125,6 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
     return null;
   }
 
-  const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) ?? null;
-  const activeProjectId = activeConversation?.projectId;
-  const activeProject = projects.find((project) => project.id === activeProjectId);
   const conversationMessages = activeConversationId ? (messagesByConversationId[activeConversationId] ?? []) : [];
   const pendingUserMessage = activeConversationId ? pendingUserMessageByConversationId[activeConversationId] : undefined;
   const flowDraft = activeConversationId ? flowDraftByConversationId[activeConversationId] : undefined;
@@ -151,18 +136,16 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
   });
   const showPendingAssistantReply = activeConversationId !== null && pendingConversationId === activeConversationId;
   const threadGoals = activeConversationId
-    ? goals.filter((goal) => goal.commandId && goal.projectId === activeProjectId).slice(0, 6)
+    ? goals.filter((goal) => goal.commandId).slice(0, 6)
     : [];
-  const projectGroups = getProjectTaskGroups(goals, activeProjectId);
-  const attentionItems = getAttentionItems(problems, goals, activeProjectId);
+  const projectGroups = getTaskGroups(goals);
+  const attentionItems = getAttentionItems(problems);
   const recentActivities = activities.slice(0, 8);
   const hasProjectTasks =
     projectGroups.current.length > 0 || projectGroups.paused.length > 0 || projectGroups.completed.length > 0;
-  const panelContext = activeProject
-    ? `${activeProject.name} · ${m.project()}`
-    : activeView === "creation"
-      ? "当前线程与项目态势"
-      : "当前页面上下文态势";
+  const panelContext = activeView === "creation"
+    ? "当前线程与任务态势"
+    : "当前页面上下文态势";
 
   return (
     <aside
@@ -214,8 +197,8 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
           {hasProjectTasks ? (
             <section>
               <SectionHeader
-                title="Project Tasks"
-                meta={activeProject ? activeProject.name : projects.length > 0 ? `${projects.length} projects` : undefined}
+                title="Task Snapshot"
+                meta={`${goals.length} goals`}
               />
               <div className="space-y-3 px-3">
                 {projectGroups.current.length > 0 ? (

@@ -292,7 +292,6 @@ function DashboardLayout() {
             <ActivityPanel
               activities={activities}
               goals={goals}
-              projects={projects}
               problems={problems}
               collapsed={!activityPanelOpen}
               activeView={activeView}

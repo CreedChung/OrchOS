@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { InfoCard, InfoCardContent, InfoCardDescription } from "@/components/ui/info-card";
 import { RenameDialog } from "@/components/dialogs/RenameDialog";
 import { cn, getRuntimeIcon } from "@/lib/utils";
-import { api, type Conversation, type ConversationMessage, type InboxThread } from "@/lib/api";
+import { type Conversation, type ConversationMessage } from "@/lib/api";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { m } from "@/paraglide/messages";
@@ -119,26 +119,15 @@ function resolveConversationBoardColumn(
   return "in_progress";
 }
 
-function buildConversationLookup(threads: InboxThread[]) {
-  const byConversationId = new Map<string, string>();
-  for (const thread of threads) {
-    if (thread.commandId && thread.conversationId && !byConversationId.has(thread.conversationId)) {
-      byConversationId.set(thread.conversationId, thread.commandId);
-    }
-  }
-  return byConversationId;
-}
-
 interface BoardViewProps {
   boardFilter: ConversationBoardFilter;
 }
 
 export function BoardView({ boardFilter }: BoardViewProps) {
   const navigate = useNavigate();
-  const { commands, runtimes } = useDashboard();
+  const { runtimes } = useDashboard();
   const [renameCardId, setRenameCardId] = useState<string | null>(null);
   const [renameCardTitle, setRenameCardTitle] = useState("");
-  const [threads, setThreads] = useState<InboxThread[]>([]);
 
   const {
     conversations,
@@ -149,9 +138,6 @@ export function BoardView({ boardFilter }: BoardViewProps) {
     updateConversation,
     deleteConversation,
   } = useConversationStore();
-
-  const commandById = useMemo(() => new Map(commands.map((command) => [command.id, command])), [commands]);
-  const conversationToCommandId = useMemo(() => buildConversationLookup(threads), [threads]);
 
   const boardCards = useMemo<ConversationBoardCard[]>(() => {
     return conversations
@@ -172,29 +158,6 @@ export function BoardView({ boardFilter }: BoardViewProps) {
       .filter((card) => card.hasUserMessage)
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
   }, [conversations, messagesByConversationId, pendingConversationId, boardFilter]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadThreads = async () => {
-      try {
-        const result = await api.listInboxThreads();
-        if (!cancelled) {
-          setThreads(result);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          console.error("Failed to load conversation thread mapping:", err);
-        }
-      }
-    };
-
-    void loadThreads();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background px-4 py-4 md:px-6">
@@ -240,8 +203,6 @@ export function BoardView({ boardFilter }: BoardViewProps) {
                     {columnCards.map((card) => {
                       const isRenameDialogOpen = renameCardId === card.conversation.id;
                       const cardRuntime = runtimes.find((runtime) => runtime.id === card.conversation.runtimeId);
-                      const commandId = conversationToCommandId.get(card.conversation.id);
-                      const cardCommand = commandId ? commandById.get(commandId) : undefined;
                       const runtimeIcon = cardRuntime
                         ? getRuntimeIcon({
                             id: cardRuntime.registryId || cardRuntime.id,
@@ -249,7 +210,7 @@ export function BoardView({ boardFilter }: BoardViewProps) {
                             command: cardRuntime.command,
                           })
                         : undefined;
-                      const runtimeLabel = cardRuntime?.name || cardCommand?.runtimeId || m.loading();
+                      const runtimeLabel = cardRuntime?.name || m.creation_placeholder();
 
                       return (
                         <div

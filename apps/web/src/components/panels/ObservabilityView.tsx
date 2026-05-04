@@ -38,10 +38,10 @@ import {
   type ObservabilityMetrics,
   type ReflectionRecord,
 } from "@/lib/api";
-import type { AgentProfile, Goal, Problem } from "@/lib/types";
+import type { Goal, Problem, RuntimeProfile } from "@/lib/types";
 
 interface ObservabilityViewProps {
-  agents: AgentProfile[];
+  runtimes: RuntimeProfile[];
   goals: Goal[];
   problems: Problem[];
 }
@@ -110,7 +110,7 @@ const operationsPieConfig = {
 const AGENT_STATUS_COLORS = ["var(--chart-2)", "var(--chart-1)", "var(--chart-5)"];
 const OPS_PIE_COLORS = ["var(--chart-2)", "var(--chart-5)", "var(--chart-1)"];
 
-export function ObservabilityView({ agents, goals, problems }: ObservabilityViewProps) {
+export function ObservabilityView({ runtimes, goals, problems }: ObservabilityViewProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("24h");
   const [throughputApiData, setThroughputApiData] = useState<TimeSeriesPoint[]>([]);
   const [goalApiData, setGoalApiData] = useState<GoalTimeSeriesPoint[]>([]);
@@ -126,9 +126,9 @@ export function ObservabilityView({ agents, goals, problems }: ObservabilityView
     api.listReflections().then(setReflections).catch(console.error);
   }, [timeRange]);
 
-  const activeAgents = agents.filter((a) => a.status === "active").length;
-  const idleAgents = agents.filter((a) => a.status === "idle").length;
-  const errorAgents = agents.filter((a) => a.status === "error").length;
+  const activeAgents = runtimes.filter((runtime) => runtime.status === "active").length;
+  const idleAgents = runtimes.filter((runtime) => runtime.status === "idle").length;
+  const errorAgents = runtimes.filter((runtime) => runtime.status === "error").length;
   const activeGoals = goals.filter((g) => g.status === "active").length;
   const completedGoals = goals.filter((g) => g.status === "completed").length;
   const openProblems = problems.filter((p) => p.status === "open").length;

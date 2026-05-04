@@ -23,10 +23,31 @@ import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
 import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
 import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
 import { Route as DashboardBoardRouteImport } from './routes/dashboard/board'
-import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
 import { Route as DashboardActivityRouteImport } from './routes/dashboard/activity'
+import { Route as ApiSettingsRouteImport } from './routes/api.settings'
+import { Route as ApiRuntimesRouteImport } from './routes/api.runtimes'
+import { Route as ApiOrganizationsRouteImport } from './routes/api.organizations'
+import { Route as ApiIntegrationsRouteImport } from './routes/api.integrations'
+import { Route as ApiConversationsRouteImport } from './routes/api.conversations'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
+import { Route as ApiRuntimesDetectRouteImport } from './routes/api.runtimes.detect'
+import { Route as ApiRuntimesIdRouteImport } from './routes/api.runtimes.$id'
+import { Route as ApiOrganizationsIdRouteImport } from './routes/api.organizations.$id'
+import { Route as ApiFilesystemFileRouteImport } from './routes/api.filesystem.file'
+import { Route as ApiFilesystemBrowseRouteImport } from './routes/api.filesystem.browse'
+import { Route as ApiConversationsDeletedRouteImport } from './routes/api.conversations.deleted'
+import { Route as ApiConversationsIdRouteImport } from './routes/api.conversations.$id'
+import { Route as ApiRuntimesDetectRegisterRouteImport } from './routes/api.runtimes.detect.register'
+import { Route as ApiRuntimesRuntimeIdModelRouteImport } from './routes/api.runtimes.$runtimeId.model'
+import { Route as ApiRuntimesRuntimeIdHealthRouteImport } from './routes/api.runtimes.$runtimeId.health'
+import { Route as ApiRuntimesRuntimeIdChatRouteImport } from './routes/api.runtimes.$runtimeId.chat'
+import { Route as ApiIntegrationsSmtpImapAccountsRouteImport } from './routes/api.integrations.smtp-imap.accounts'
+import { Route as ApiIntegrationsIdDisconnectRouteImport } from './routes/api.integrations.$id.disconnect'
+import { Route as ApiIntegrationsIdConnectRouteImport } from './routes/api.integrations.$id.connect'
+import { Route as ApiConversationsIdMessagesRouteImport } from './routes/api.conversations.$id.messages'
+import { Route as ApiIntegrationsGoogleIdAccountsRouteImport } from './routes/api.integrations.google.$id.accounts'
+import { Route as ApiIntegrationsIdAccountsAccountIdRouteImport } from './routes/api.integrations.$id.accounts.$accountId'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -98,15 +119,35 @@ const DashboardBoardRoute = DashboardBoardRouteImport.update({
   path: '/board',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardAgentsRoute = DashboardAgentsRouteImport.update({
-  id: '/agents',
-  path: '/agents',
-  getParentRoute: () => DashboardRoute,
-} as any)
 const DashboardActivityRoute = DashboardActivityRouteImport.update({
   id: '/activity',
   path: '/activity',
   getParentRoute: () => DashboardRoute,
+} as any)
+const ApiSettingsRoute = ApiSettingsRouteImport.update({
+  id: '/api/settings',
+  path: '/api/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRuntimesRoute = ApiRuntimesRouteImport.update({
+  id: '/api/runtimes',
+  path: '/api/runtimes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOrganizationsRoute = ApiOrganizationsRouteImport.update({
+  id: '/api/organizations',
+  path: '/api/organizations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiIntegrationsRoute = ApiIntegrationsRouteImport.update({
+  id: '/api/integrations',
+  path: '/api/integrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConversationsRoute = ApiConversationsRouteImport.update({
+  id: '/api/conversations',
+  path: '/api/conversations',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
@@ -118,6 +159,101 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRuntimesDetectRoute = ApiRuntimesDetectRouteImport.update({
+  id: '/detect',
+  path: '/detect',
+  getParentRoute: () => ApiRuntimesRoute,
+} as any)
+const ApiRuntimesIdRoute = ApiRuntimesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiRuntimesRoute,
+} as any)
+const ApiOrganizationsIdRoute = ApiOrganizationsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiOrganizationsRoute,
+} as any)
+const ApiFilesystemFileRoute = ApiFilesystemFileRouteImport.update({
+  id: '/api/filesystem/file',
+  path: '/api/filesystem/file',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFilesystemBrowseRoute = ApiFilesystemBrowseRouteImport.update({
+  id: '/api/filesystem/browse',
+  path: '/api/filesystem/browse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConversationsDeletedRoute = ApiConversationsDeletedRouteImport.update({
+  id: '/deleted',
+  path: '/deleted',
+  getParentRoute: () => ApiConversationsRoute,
+} as any)
+const ApiConversationsIdRoute = ApiConversationsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiConversationsRoute,
+} as any)
+const ApiRuntimesDetectRegisterRoute =
+  ApiRuntimesDetectRegisterRouteImport.update({
+    id: '/register',
+    path: '/register',
+    getParentRoute: () => ApiRuntimesDetectRoute,
+  } as any)
+const ApiRuntimesRuntimeIdModelRoute =
+  ApiRuntimesRuntimeIdModelRouteImport.update({
+    id: '/$runtimeId/model',
+    path: '/$runtimeId/model',
+    getParentRoute: () => ApiRuntimesRoute,
+  } as any)
+const ApiRuntimesRuntimeIdHealthRoute =
+  ApiRuntimesRuntimeIdHealthRouteImport.update({
+    id: '/$runtimeId/health',
+    path: '/$runtimeId/health',
+    getParentRoute: () => ApiRuntimesRoute,
+  } as any)
+const ApiRuntimesRuntimeIdChatRoute =
+  ApiRuntimesRuntimeIdChatRouteImport.update({
+    id: '/$runtimeId/chat',
+    path: '/$runtimeId/chat',
+    getParentRoute: () => ApiRuntimesRoute,
+  } as any)
+const ApiIntegrationsSmtpImapAccountsRoute =
+  ApiIntegrationsSmtpImapAccountsRouteImport.update({
+    id: '/smtp-imap/accounts',
+    path: '/smtp-imap/accounts',
+    getParentRoute: () => ApiIntegrationsRoute,
+  } as any)
+const ApiIntegrationsIdDisconnectRoute =
+  ApiIntegrationsIdDisconnectRouteImport.update({
+    id: '/$id/disconnect',
+    path: '/$id/disconnect',
+    getParentRoute: () => ApiIntegrationsRoute,
+  } as any)
+const ApiIntegrationsIdConnectRoute =
+  ApiIntegrationsIdConnectRouteImport.update({
+    id: '/$id/connect',
+    path: '/$id/connect',
+    getParentRoute: () => ApiIntegrationsRoute,
+  } as any)
+const ApiConversationsIdMessagesRoute =
+  ApiConversationsIdMessagesRouteImport.update({
+    id: '/messages',
+    path: '/messages',
+    getParentRoute: () => ApiConversationsIdRoute,
+  } as any)
+const ApiIntegrationsGoogleIdAccountsRoute =
+  ApiIntegrationsGoogleIdAccountsRouteImport.update({
+    id: '/google/$id/accounts',
+    path: '/google/$id/accounts',
+    getParentRoute: () => ApiIntegrationsRoute,
+  } as any)
+const ApiIntegrationsIdAccountsAccountIdRoute =
+  ApiIntegrationsIdAccountsAccountIdRouteImport.update({
+    id: '/$id/accounts/$accountId',
+    path: '/$id/accounts/$accountId',
+    getParentRoute: () => ApiIntegrationsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -129,8 +265,12 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/conversations': typeof ApiConversationsRouteWithChildren
+  '/api/integrations': typeof ApiIntegrationsRouteWithChildren
+  '/api/organizations': typeof ApiOrganizationsRouteWithChildren
+  '/api/runtimes': typeof ApiRuntimesRouteWithChildren
+  '/api/settings': typeof ApiSettingsRoute
   '/dashboard/activity': typeof DashboardActivityRoute
-  '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
@@ -138,6 +278,23 @@ export interface FileRoutesByFullPath {
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
+  '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
+  '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
+  '/api/filesystem/file': typeof ApiFilesystemFileRoute
+  '/api/organizations/$id': typeof ApiOrganizationsIdRoute
+  '/api/runtimes/$id': typeof ApiRuntimesIdRoute
+  '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
+  '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
+  '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
+  '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
+  '/api/integrations/smtp-imap/accounts': typeof ApiIntegrationsSmtpImapAccountsRoute
+  '/api/runtimes/$runtimeId/chat': typeof ApiRuntimesRuntimeIdChatRoute
+  '/api/runtimes/$runtimeId/health': typeof ApiRuntimesRuntimeIdHealthRoute
+  '/api/runtimes/$runtimeId/model': typeof ApiRuntimesRuntimeIdModelRoute
+  '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
+  '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
+  '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -148,8 +305,12 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/conversations': typeof ApiConversationsRouteWithChildren
+  '/api/integrations': typeof ApiIntegrationsRouteWithChildren
+  '/api/organizations': typeof ApiOrganizationsRouteWithChildren
+  '/api/runtimes': typeof ApiRuntimesRouteWithChildren
+  '/api/settings': typeof ApiSettingsRoute
   '/dashboard/activity': typeof DashboardActivityRoute
-  '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
@@ -157,6 +318,23 @@ export interface FileRoutesByTo {
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
+  '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
+  '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
+  '/api/filesystem/file': typeof ApiFilesystemFileRoute
+  '/api/organizations/$id': typeof ApiOrganizationsIdRoute
+  '/api/runtimes/$id': typeof ApiRuntimesIdRoute
+  '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
+  '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
+  '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
+  '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
+  '/api/integrations/smtp-imap/accounts': typeof ApiIntegrationsSmtpImapAccountsRoute
+  '/api/runtimes/$runtimeId/chat': typeof ApiRuntimesRuntimeIdChatRoute
+  '/api/runtimes/$runtimeId/health': typeof ApiRuntimesRuntimeIdHealthRoute
+  '/api/runtimes/$runtimeId/model': typeof ApiRuntimesRuntimeIdModelRoute
+  '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
+  '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
+  '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -169,8 +347,12 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/conversations': typeof ApiConversationsRouteWithChildren
+  '/api/integrations': typeof ApiIntegrationsRouteWithChildren
+  '/api/organizations': typeof ApiOrganizationsRouteWithChildren
+  '/api/runtimes': typeof ApiRuntimesRouteWithChildren
+  '/api/settings': typeof ApiSettingsRoute
   '/dashboard/activity': typeof DashboardActivityRoute
-  '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
@@ -178,6 +360,23 @@ export interface FileRoutesById {
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
+  '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
+  '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
+  '/api/filesystem/file': typeof ApiFilesystemFileRoute
+  '/api/organizations/$id': typeof ApiOrganizationsIdRoute
+  '/api/runtimes/$id': typeof ApiRuntimesIdRoute
+  '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
+  '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
+  '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
+  '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
+  '/api/integrations/smtp-imap/accounts': typeof ApiIntegrationsSmtpImapAccountsRoute
+  '/api/runtimes/$runtimeId/chat': typeof ApiRuntimesRuntimeIdChatRoute
+  '/api/runtimes/$runtimeId/health': typeof ApiRuntimesRuntimeIdHealthRoute
+  '/api/runtimes/$runtimeId/model': typeof ApiRuntimesRuntimeIdModelRoute
+  '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
+  '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
+  '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,8 +390,12 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/api/$'
     | '/api/chat'
+    | '/api/conversations'
+    | '/api/integrations'
+    | '/api/organizations'
+    | '/api/runtimes'
+    | '/api/settings'
     | '/dashboard/activity'
-    | '/dashboard/agents'
     | '/dashboard/board'
     | '/dashboard/calendar'
     | '/dashboard/creation'
@@ -200,6 +403,23 @@ export interface FileRouteTypes {
     | '/dashboard/mail'
     | '/dashboard/observability'
     | '/dashboard/'
+    | '/api/conversations/$id'
+    | '/api/conversations/deleted'
+    | '/api/filesystem/browse'
+    | '/api/filesystem/file'
+    | '/api/organizations/$id'
+    | '/api/runtimes/$id'
+    | '/api/runtimes/detect'
+    | '/api/conversations/$id/messages'
+    | '/api/integrations/$id/connect'
+    | '/api/integrations/$id/disconnect'
+    | '/api/integrations/smtp-imap/accounts'
+    | '/api/runtimes/$runtimeId/chat'
+    | '/api/runtimes/$runtimeId/health'
+    | '/api/runtimes/$runtimeId/model'
+    | '/api/runtimes/detect/register'
+    | '/api/integrations/$id/accounts/$accountId'
+    | '/api/integrations/google/$id/accounts'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,8 +430,12 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/api/$'
     | '/api/chat'
+    | '/api/conversations'
+    | '/api/integrations'
+    | '/api/organizations'
+    | '/api/runtimes'
+    | '/api/settings'
     | '/dashboard/activity'
-    | '/dashboard/agents'
     | '/dashboard/board'
     | '/dashboard/calendar'
     | '/dashboard/creation'
@@ -219,6 +443,23 @@ export interface FileRouteTypes {
     | '/dashboard/mail'
     | '/dashboard/observability'
     | '/dashboard'
+    | '/api/conversations/$id'
+    | '/api/conversations/deleted'
+    | '/api/filesystem/browse'
+    | '/api/filesystem/file'
+    | '/api/organizations/$id'
+    | '/api/runtimes/$id'
+    | '/api/runtimes/detect'
+    | '/api/conversations/$id/messages'
+    | '/api/integrations/$id/connect'
+    | '/api/integrations/$id/disconnect'
+    | '/api/integrations/smtp-imap/accounts'
+    | '/api/runtimes/$runtimeId/chat'
+    | '/api/runtimes/$runtimeId/health'
+    | '/api/runtimes/$runtimeId/model'
+    | '/api/runtimes/detect/register'
+    | '/api/integrations/$id/accounts/$accountId'
+    | '/api/integrations/google/$id/accounts'
   id:
     | '__root__'
     | '/'
@@ -230,8 +471,12 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/api/$'
     | '/api/chat'
+    | '/api/conversations'
+    | '/api/integrations'
+    | '/api/organizations'
+    | '/api/runtimes'
+    | '/api/settings'
     | '/dashboard/activity'
-    | '/dashboard/agents'
     | '/dashboard/board'
     | '/dashboard/calendar'
     | '/dashboard/creation'
@@ -239,6 +484,23 @@ export interface FileRouteTypes {
     | '/dashboard/mail'
     | '/dashboard/observability'
     | '/dashboard/'
+    | '/api/conversations/$id'
+    | '/api/conversations/deleted'
+    | '/api/filesystem/browse'
+    | '/api/filesystem/file'
+    | '/api/organizations/$id'
+    | '/api/runtimes/$id'
+    | '/api/runtimes/detect'
+    | '/api/conversations/$id/messages'
+    | '/api/integrations/$id/connect'
+    | '/api/integrations/$id/disconnect'
+    | '/api/integrations/smtp-imap/accounts'
+    | '/api/runtimes/$runtimeId/chat'
+    | '/api/runtimes/$runtimeId/health'
+    | '/api/runtimes/$runtimeId/model'
+    | '/api/runtimes/detect/register'
+    | '/api/integrations/$id/accounts/$accountId'
+    | '/api/integrations/google/$id/accounts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -251,6 +513,13 @@ export interface RootRouteChildren {
   SignUpRoute: typeof SignUpRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiConversationsRoute: typeof ApiConversationsRouteWithChildren
+  ApiIntegrationsRoute: typeof ApiIntegrationsRouteWithChildren
+  ApiOrganizationsRoute: typeof ApiOrganizationsRouteWithChildren
+  ApiRuntimesRoute: typeof ApiRuntimesRouteWithChildren
+  ApiSettingsRoute: typeof ApiSettingsRoute
+  ApiFilesystemBrowseRoute: typeof ApiFilesystemBrowseRoute
+  ApiFilesystemFileRoute: typeof ApiFilesystemFileRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -353,19 +622,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBoardRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/agents': {
-      id: '/dashboard/agents'
-      path: '/agents'
-      fullPath: '/dashboard/agents'
-      preLoaderRoute: typeof DashboardAgentsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
     '/dashboard/activity': {
       id: '/dashboard/activity'
       path: '/activity'
       fullPath: '/dashboard/activity'
       preLoaderRoute: typeof DashboardActivityRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/api/settings': {
+      id: '/api/settings'
+      path: '/api/settings'
+      fullPath: '/api/settings'
+      preLoaderRoute: typeof ApiSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/runtimes': {
+      id: '/api/runtimes'
+      path: '/api/runtimes'
+      fullPath: '/api/runtimes'
+      preLoaderRoute: typeof ApiRuntimesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/organizations': {
+      id: '/api/organizations'
+      path: '/api/organizations'
+      fullPath: '/api/organizations'
+      preLoaderRoute: typeof ApiOrganizationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/integrations': {
+      id: '/api/integrations'
+      path: '/api/integrations'
+      fullPath: '/api/integrations'
+      preLoaderRoute: typeof ApiIntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conversations': {
+      id: '/api/conversations'
+      path: '/api/conversations'
+      fullPath: '/api/conversations'
+      preLoaderRoute: typeof ApiConversationsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
       id: '/api/chat'
@@ -381,12 +678,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/runtimes/detect': {
+      id: '/api/runtimes/detect'
+      path: '/detect'
+      fullPath: '/api/runtimes/detect'
+      preLoaderRoute: typeof ApiRuntimesDetectRouteImport
+      parentRoute: typeof ApiRuntimesRoute
+    }
+    '/api/runtimes/$id': {
+      id: '/api/runtimes/$id'
+      path: '/$id'
+      fullPath: '/api/runtimes/$id'
+      preLoaderRoute: typeof ApiRuntimesIdRouteImport
+      parentRoute: typeof ApiRuntimesRoute
+    }
+    '/api/organizations/$id': {
+      id: '/api/organizations/$id'
+      path: '/$id'
+      fullPath: '/api/organizations/$id'
+      preLoaderRoute: typeof ApiOrganizationsIdRouteImport
+      parentRoute: typeof ApiOrganizationsRoute
+    }
+    '/api/filesystem/file': {
+      id: '/api/filesystem/file'
+      path: '/api/filesystem/file'
+      fullPath: '/api/filesystem/file'
+      preLoaderRoute: typeof ApiFilesystemFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/filesystem/browse': {
+      id: '/api/filesystem/browse'
+      path: '/api/filesystem/browse'
+      fullPath: '/api/filesystem/browse'
+      preLoaderRoute: typeof ApiFilesystemBrowseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/conversations/deleted': {
+      id: '/api/conversations/deleted'
+      path: '/deleted'
+      fullPath: '/api/conversations/deleted'
+      preLoaderRoute: typeof ApiConversationsDeletedRouteImport
+      parentRoute: typeof ApiConversationsRoute
+    }
+    '/api/conversations/$id': {
+      id: '/api/conversations/$id'
+      path: '/$id'
+      fullPath: '/api/conversations/$id'
+      preLoaderRoute: typeof ApiConversationsIdRouteImport
+      parentRoute: typeof ApiConversationsRoute
+    }
+    '/api/runtimes/detect/register': {
+      id: '/api/runtimes/detect/register'
+      path: '/register'
+      fullPath: '/api/runtimes/detect/register'
+      preLoaderRoute: typeof ApiRuntimesDetectRegisterRouteImport
+      parentRoute: typeof ApiRuntimesDetectRoute
+    }
+    '/api/runtimes/$runtimeId/model': {
+      id: '/api/runtimes/$runtimeId/model'
+      path: '/$runtimeId/model'
+      fullPath: '/api/runtimes/$runtimeId/model'
+      preLoaderRoute: typeof ApiRuntimesRuntimeIdModelRouteImport
+      parentRoute: typeof ApiRuntimesRoute
+    }
+    '/api/runtimes/$runtimeId/health': {
+      id: '/api/runtimes/$runtimeId/health'
+      path: '/$runtimeId/health'
+      fullPath: '/api/runtimes/$runtimeId/health'
+      preLoaderRoute: typeof ApiRuntimesRuntimeIdHealthRouteImport
+      parentRoute: typeof ApiRuntimesRoute
+    }
+    '/api/runtimes/$runtimeId/chat': {
+      id: '/api/runtimes/$runtimeId/chat'
+      path: '/$runtimeId/chat'
+      fullPath: '/api/runtimes/$runtimeId/chat'
+      preLoaderRoute: typeof ApiRuntimesRuntimeIdChatRouteImport
+      parentRoute: typeof ApiRuntimesRoute
+    }
+    '/api/integrations/smtp-imap/accounts': {
+      id: '/api/integrations/smtp-imap/accounts'
+      path: '/smtp-imap/accounts'
+      fullPath: '/api/integrations/smtp-imap/accounts'
+      preLoaderRoute: typeof ApiIntegrationsSmtpImapAccountsRouteImport
+      parentRoute: typeof ApiIntegrationsRoute
+    }
+    '/api/integrations/$id/disconnect': {
+      id: '/api/integrations/$id/disconnect'
+      path: '/$id/disconnect'
+      fullPath: '/api/integrations/$id/disconnect'
+      preLoaderRoute: typeof ApiIntegrationsIdDisconnectRouteImport
+      parentRoute: typeof ApiIntegrationsRoute
+    }
+    '/api/integrations/$id/connect': {
+      id: '/api/integrations/$id/connect'
+      path: '/$id/connect'
+      fullPath: '/api/integrations/$id/connect'
+      preLoaderRoute: typeof ApiIntegrationsIdConnectRouteImport
+      parentRoute: typeof ApiIntegrationsRoute
+    }
+    '/api/conversations/$id/messages': {
+      id: '/api/conversations/$id/messages'
+      path: '/messages'
+      fullPath: '/api/conversations/$id/messages'
+      preLoaderRoute: typeof ApiConversationsIdMessagesRouteImport
+      parentRoute: typeof ApiConversationsIdRoute
+    }
+    '/api/integrations/google/$id/accounts': {
+      id: '/api/integrations/google/$id/accounts'
+      path: '/google/$id/accounts'
+      fullPath: '/api/integrations/google/$id/accounts'
+      preLoaderRoute: typeof ApiIntegrationsGoogleIdAccountsRouteImport
+      parentRoute: typeof ApiIntegrationsRoute
+    }
+    '/api/integrations/$id/accounts/$accountId': {
+      id: '/api/integrations/$id/accounts/$accountId'
+      path: '/$id/accounts/$accountId'
+      fullPath: '/api/integrations/$id/accounts/$accountId'
+      preLoaderRoute: typeof ApiIntegrationsIdAccountsAccountIdRouteImport
+      parentRoute: typeof ApiIntegrationsRoute
+    }
   }
 }
 
 interface DashboardRouteChildren {
   DashboardActivityRoute: typeof DashboardActivityRoute
-  DashboardAgentsRoute: typeof DashboardAgentsRoute
   DashboardBoardRoute: typeof DashboardBoardRoute
   DashboardCalendarRoute: typeof DashboardCalendarRoute
   DashboardCreationRoute: typeof DashboardCreationRoute
@@ -398,7 +813,6 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardActivityRoute: DashboardActivityRoute,
-  DashboardAgentsRoute: DashboardAgentsRoute,
   DashboardBoardRoute: DashboardBoardRoute,
   DashboardCalendarRoute: DashboardCalendarRoute,
   DashboardCreationRoute: DashboardCreationRoute,
@@ -412,6 +826,93 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface ApiConversationsIdRouteChildren {
+  ApiConversationsIdMessagesRoute: typeof ApiConversationsIdMessagesRoute
+}
+
+const ApiConversationsIdRouteChildren: ApiConversationsIdRouteChildren = {
+  ApiConversationsIdMessagesRoute: ApiConversationsIdMessagesRoute,
+}
+
+const ApiConversationsIdRouteWithChildren =
+  ApiConversationsIdRoute._addFileChildren(ApiConversationsIdRouteChildren)
+
+interface ApiConversationsRouteChildren {
+  ApiConversationsIdRoute: typeof ApiConversationsIdRouteWithChildren
+  ApiConversationsDeletedRoute: typeof ApiConversationsDeletedRoute
+}
+
+const ApiConversationsRouteChildren: ApiConversationsRouteChildren = {
+  ApiConversationsIdRoute: ApiConversationsIdRouteWithChildren,
+  ApiConversationsDeletedRoute: ApiConversationsDeletedRoute,
+}
+
+const ApiConversationsRouteWithChildren =
+  ApiConversationsRoute._addFileChildren(ApiConversationsRouteChildren)
+
+interface ApiIntegrationsRouteChildren {
+  ApiIntegrationsIdConnectRoute: typeof ApiIntegrationsIdConnectRoute
+  ApiIntegrationsIdDisconnectRoute: typeof ApiIntegrationsIdDisconnectRoute
+  ApiIntegrationsSmtpImapAccountsRoute: typeof ApiIntegrationsSmtpImapAccountsRoute
+  ApiIntegrationsIdAccountsAccountIdRoute: typeof ApiIntegrationsIdAccountsAccountIdRoute
+  ApiIntegrationsGoogleIdAccountsRoute: typeof ApiIntegrationsGoogleIdAccountsRoute
+}
+
+const ApiIntegrationsRouteChildren: ApiIntegrationsRouteChildren = {
+  ApiIntegrationsIdConnectRoute: ApiIntegrationsIdConnectRoute,
+  ApiIntegrationsIdDisconnectRoute: ApiIntegrationsIdDisconnectRoute,
+  ApiIntegrationsSmtpImapAccountsRoute: ApiIntegrationsSmtpImapAccountsRoute,
+  ApiIntegrationsIdAccountsAccountIdRoute:
+    ApiIntegrationsIdAccountsAccountIdRoute,
+  ApiIntegrationsGoogleIdAccountsRoute: ApiIntegrationsGoogleIdAccountsRoute,
+}
+
+const ApiIntegrationsRouteWithChildren = ApiIntegrationsRoute._addFileChildren(
+  ApiIntegrationsRouteChildren,
+)
+
+interface ApiOrganizationsRouteChildren {
+  ApiOrganizationsIdRoute: typeof ApiOrganizationsIdRoute
+}
+
+const ApiOrganizationsRouteChildren: ApiOrganizationsRouteChildren = {
+  ApiOrganizationsIdRoute: ApiOrganizationsIdRoute,
+}
+
+const ApiOrganizationsRouteWithChildren =
+  ApiOrganizationsRoute._addFileChildren(ApiOrganizationsRouteChildren)
+
+interface ApiRuntimesDetectRouteChildren {
+  ApiRuntimesDetectRegisterRoute: typeof ApiRuntimesDetectRegisterRoute
+}
+
+const ApiRuntimesDetectRouteChildren: ApiRuntimesDetectRouteChildren = {
+  ApiRuntimesDetectRegisterRoute: ApiRuntimesDetectRegisterRoute,
+}
+
+const ApiRuntimesDetectRouteWithChildren =
+  ApiRuntimesDetectRoute._addFileChildren(ApiRuntimesDetectRouteChildren)
+
+interface ApiRuntimesRouteChildren {
+  ApiRuntimesIdRoute: typeof ApiRuntimesIdRoute
+  ApiRuntimesDetectRoute: typeof ApiRuntimesDetectRouteWithChildren
+  ApiRuntimesRuntimeIdChatRoute: typeof ApiRuntimesRuntimeIdChatRoute
+  ApiRuntimesRuntimeIdHealthRoute: typeof ApiRuntimesRuntimeIdHealthRoute
+  ApiRuntimesRuntimeIdModelRoute: typeof ApiRuntimesRuntimeIdModelRoute
+}
+
+const ApiRuntimesRouteChildren: ApiRuntimesRouteChildren = {
+  ApiRuntimesIdRoute: ApiRuntimesIdRoute,
+  ApiRuntimesDetectRoute: ApiRuntimesDetectRouteWithChildren,
+  ApiRuntimesRuntimeIdChatRoute: ApiRuntimesRuntimeIdChatRoute,
+  ApiRuntimesRuntimeIdHealthRoute: ApiRuntimesRuntimeIdHealthRoute,
+  ApiRuntimesRuntimeIdModelRoute: ApiRuntimesRuntimeIdModelRoute,
+}
+
+const ApiRuntimesRouteWithChildren = ApiRuntimesRoute._addFileChildren(
+  ApiRuntimesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -422,6 +923,13 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRoute: SignUpRoute,
   ApiSplatRoute: ApiSplatRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiConversationsRoute: ApiConversationsRouteWithChildren,
+  ApiIntegrationsRoute: ApiIntegrationsRouteWithChildren,
+  ApiOrganizationsRoute: ApiOrganizationsRouteWithChildren,
+  ApiRuntimesRoute: ApiRuntimesRouteWithChildren,
+  ApiSettingsRoute: ApiSettingsRoute,
+  ApiFilesystemBrowseRoute: ApiFilesystemBrowseRoute,
+  ApiFilesystemFileRoute: ApiFilesystemFileRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

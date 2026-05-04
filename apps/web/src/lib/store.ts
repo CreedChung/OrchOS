@@ -13,7 +13,6 @@ type ThemeMode = "light" | "dark" | "auto";
 interface UIState {
   // Navigation & selection
   activeGoalId: string | null;
-  activeAgentId: string | null;
   activeInboxId: string | null;
   activeOrganizationId: string | null;
 
@@ -41,7 +40,6 @@ interface UIState {
 
 interface UIActions {
   setActiveGoalId: (id: string | null) => void;
-  setActiveAgentId: (id: string | null) => void;
   setActiveInboxId: (id: string | null) => void;
   setActiveOrganizationId: (id: string | null) => void;
   setSourceFilter: (filter: SourceFilter) => void;
@@ -78,7 +76,6 @@ export const useUIStore = create<UIState & UIActions>()(
     (set) => ({
       // Navigation & selection
       activeGoalId: null,
-      activeAgentId: null,
       activeInboxId: null,
       activeOrganizationId: null,
 
@@ -104,7 +101,6 @@ export const useUIStore = create<UIState & UIActions>()(
       settings: defaultSettings,
 
       setActiveGoalId: (id) => set({ activeGoalId: id }),
-      setActiveAgentId: (id) => set({ activeAgentId: id }),
       setActiveInboxId: (id) => set({ activeInboxId: id }),
       setActiveOrganizationId: (id) => set({ activeOrganizationId: id }),
       setSourceFilter: (filter) => set({ sourceFilter: filter }),

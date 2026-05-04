@@ -23,7 +23,6 @@ import type {
   StateItem,
   Artifact,
   ActivityEntry,
-  AgentProfile,
   Project,
   Organization,
   Problem,
@@ -41,7 +40,6 @@ type RefreshResults = {
   organizations?: Organization[];
   problemSummary?: ProblemSummary;
   problems?: Problem[];
-  agents?: AgentProfile[];
   rules?: Rule[];
   commands?: Command[];
   mcpServers?: McpServerProfile[];
@@ -52,7 +50,6 @@ type DashboardView =
   | "inbox"
   | "creation"
   | "board"
-  | "agents"
   | "calendar"
   | "mail"
   | "observability";
@@ -63,7 +60,6 @@ function getViewFromPath(pathname: string): DashboardView {
     "inbox",
     "creation",
     "board",
-    "agents",
     "calendar",
     "mail",
     "observability",
@@ -109,7 +105,6 @@ interface AgentModelCounts {
 interface DashboardContextType {
   // Server data
   goals: Goal[];
-  agents: AgentProfile[];
   runtimes: RuntimeProfile[];
   projects: Project[];
   organizations: Organization[];
@@ -182,32 +177,6 @@ interface DashboardContextType {
   handleOrganizationRename: (orgId: string, name: string) => Promise<void>;
   handleOrganizationDelete: (orgId: string) => Promise<void>;
 
-  // Agent actions
-  handleCreateAgent: (data: {
-    name: string;
-    role: string;
-    capabilities: string[];
-    model: string;
-    cliCommand?: string;
-    runtimeId?: string;
-    avatarUrl?: string;
-  }) => Promise<void>;
-  handleUpdateAgent: (
-    id: string,
-    data: Partial<{
-      name: string;
-      role: string;
-      capabilities: string[];
-      status: AgentProfile["status"];
-      model: string;
-      enabled: boolean;
-      cliCommand: string;
-      runtimeId: string;
-      avatarUrl: string;
-    }>,
-  ) => Promise<void>;
-  handleDeleteAgent: (id: string) => Promise<void>;
-
   // Command actions
   handleCommand: (data: {
     instruction: string;
@@ -224,8 +193,6 @@ interface DashboardContextType {
   setShowSettingsDialog: (open: boolean) => void;
   showCreateRuleDialog: boolean;
   setShowCreateRuleDialog: (open: boolean) => void;
-  showCreateAgentDialog: boolean;
-  setShowCreateAgentDialog: (open: boolean) => void;
   ruleFromProblem: Problem | null;
 
   // Search & filter
@@ -263,7 +230,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   // Server data (hydrated from cache, then refreshed from API)
   const [goals, setGoals] = useState<Goal[]>(() => initialCache.goals);
-  const [agents, setAgents] = useState<AgentProfile[]>(() => initialCache.agents);
   const [runtimes, setRuntimes] = useState<RuntimeProfile[]>(() => initialCache.runtimes);
   const [projects, setProjects] = useState<Project[]>(() => initialCache.projects);
   const [organizations, setOrganizations] = useState<Organization[]>(() => initialCache.organizations);
@@ -282,7 +248,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [showCommandBar, setShowCommandBar] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showCreateRuleDialog, setShowCreateRuleDialog] = useState(false);
-  const [showCreateAgentDialog, setShowCreateAgentDialog] = useState(false);
   const [ruleFromProblem, setRuleFromProblem] = useState<Problem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [agentModelFilter, setAgentModelFilter] = useState<"all" | "local" | "cloud">("all");
@@ -355,28 +320,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     [skills],
   );
 
-  const agentModelCounts = useMemo<AgentModelCounts>(
-    () => {
-      const runtimeById = new Map(runtimes.map((runtime) => [runtime.id, runtime]));
-
-      return agents.reduce<AgentModelCounts>(
-        (counts, agent) => {
-          counts.all += 1;
-
-          const runtime = agent.runtimeId ? runtimeById.get(agent.runtimeId) : undefined;
-          if (runtime?.transport === "stdio") {
-            counts.local += 1;
-          } else {
-            counts.cloud += 1;
-          }
-
-          return counts;
-        },
-        { all: 0, local: 0, cloud: 0 },
-      );
-    },
-    [agents, runtimes],
-  );
+  const agentModelCounts = useMemo<AgentModelCounts>(() => ({ all: 0, local: 0, cloud: 0 }), []);
 
   const shouldLoadGoals = activeView === "observability";
   const shouldLoadProjects =
@@ -385,14 +329,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     activeView === "calendar" ||
     activeView === "mail";
   const shouldLoadProblems = activeView === "inbox" || activeView === "observability";
-  const shouldLoadAgents =
-    activeView === "agents" ||
-    activeView === "creation" ||
-    activeView === "board" ||
-    activeView === "calendar" ||
-    activeView === "mail" ||
-    activeView === "observability";
-  const shouldLoadRules = activeView === "agents";
+  const shouldLoadAgents = activeView === "observability";
+  const shouldLoadRules = false;
   const shouldLoadCommands = activeView === "board";
   const shouldLoadMcpServers = false;
   const shouldLoadSkills = false;
@@ -417,7 +355,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       if (results.organizations) applyOrganizationResult(results.organizations);
       if (results.problemSummary) setProblemSummary(results.problemSummary);
       if (results.problems) setProblems(results.problems);
-      if (results.agents) setAgents(results.agents);
       if (results.rules) setRules(results.rules);
       if (results.commands) setCommands(results.commands);
       if (results.mcpServers) setMcpServers(results.mcpServers);
@@ -445,7 +382,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       api.listOrganizations(),
       api.getProblemSummary(),
       shouldLoadProblems ? api.listProblems() : Promise.resolve<Problem[]>([]),
-      shouldLoadAgents ? api.listAgents() : Promise.resolve<AgentProfile[]>([]),
+      Promise.resolve([]),
       shouldLoadRules ? api.listRules() : Promise.resolve<Rule[]>([]),
       shouldLoadCommands ? api.listCommands() : Promise.resolve<Command[]>([]),
       shouldLoadMcpServers ? api.listMcpServers() : Promise.resolve<McpServerProfile[]>([]),
@@ -461,7 +398,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
     if (results[5].status === "fulfilled") fresh.problemSummary = results[5].value;
     if (results[6].status === "fulfilled") fresh.problems = results[6].value;
-    if (results[7].status === "fulfilled") fresh.agents = results[7].value;
     if (results[8].status === "fulfilled") fresh.rules = results[8].value;
     if (results[9].status === "fulfilled") fresh.commands = results[9].value;
     if (results[10].status === "fulfilled") fresh.mcpServers = results[10].value;
@@ -525,7 +461,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         shouldLoadProjects ? api.listProjects() : Promise.resolve<Project[]>([]),
         api.getSettings(),
         api.listOrganizations(),
-        shouldLoadAgents ? api.listAgents() : Promise.resolve<AgentProfile[]>([]),
+        Promise.resolve([]),
       ]);
 
       if (criticalResults[0].status === "fulfilled") {
@@ -550,12 +486,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         applyRefreshResults({ organizations: criticalResults[3].value });
       } else {
         console.error("Failed to fetch organizations:", criticalResults[3].reason);
-      }
-
-      if (criticalResults[4].status === "fulfilled") {
-        applyRefreshResults({ agents: criticalResults[4].value });
-      } else {
-        console.error("Failed to fetch agents:", criticalResults[4].reason);
       }
 
       setLoading(false);
@@ -916,68 +846,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     [activeOrganizationId, organizations, refreshAll, setActiveOrganizationId],
   );
 
-  // Agent actions
-  const handleCreateAgent = useCallback(
-    async (data: {
-      name: string;
-      role: string;
-      capabilities: string[];
-      model: string;
-      cliCommand?: string;
-      runtimeId?: string;
-      avatarUrl?: string;
-    }) => {
-      try {
-        await api.createAgent(data);
-        setShowCreateAgentDialog(false);
-        await refreshAll();
-      } catch (err) {
-        console.error("Failed to create agent:", err);
-      }
-    },
-    [refreshAll],
-  );
-
-  const handleUpdateAgent = useCallback(
-    async (
-      id: string,
-      data: Partial<{
-        name: string;
-        role: string;
-        capabilities: string[];
-        status: AgentProfile["status"];
-        model: string;
-        enabled: boolean;
-        cliCommand: string;
-        runtimeId: string;
-        avatarUrl: string;
-      }>,
-    ) => {
-      try {
-        await api.updateAgent(id, data);
-        await refreshAll();
-      } catch (err) {
-        console.error("Failed to update agent:", err);
-      }
-    },
-    [refreshAll],
-  );
-
-  const handleDeleteAgent = useCallback(
-    async (id: string) => {
-      try {
-        await api.deleteAgent(id);
-        await refreshAll();
-      } catch (err) {
-        console.error("Failed to delete agent:", err);
-      }
-    },
-    [refreshAll],
-  );
-
   const value: DashboardContextType = {
     goals,
-    agents,
     runtimes,
     projects,
     organizations,
@@ -1018,9 +888,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     handleOrganizationCreate,
     handleOrganizationRename,
     handleOrganizationDelete,
-    handleCreateAgent,
-    handleUpdateAgent,
-    handleDeleteAgent,
     handleCommand,
     showCreateDialog,
     setShowCreateDialog,
@@ -1030,8 +897,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setShowSettingsDialog,
     showCreateRuleDialog,
     setShowCreateRuleDialog,
-    showCreateAgentDialog,
-    setShowCreateAgentDialog,
     ruleFromProblem,
     searchQuery,
     setSearchQuery,

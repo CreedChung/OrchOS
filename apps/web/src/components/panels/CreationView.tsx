@@ -420,6 +420,7 @@ export function CreationView({
             messages={uiMessages}
             sending={sending}
             runtimes={enabledRuntimes}
+            defaultRuntimeId={settings?.defaultRuntimeId}
             onUpdateConversation={handleUpdateConversation}
             onCreateConversation={handleCreateConversation}
             onSetDefaultRuntime={(runtimeId) => {
@@ -576,6 +577,7 @@ interface ChatAreaProps {
   messages: UIMessage[];
   sending: boolean;
   runtimes: RuntimeProfile[];
+  defaultRuntimeId?: string;
   onCreateConversation: (data: {
     runtimeId?: string;
   }) => Promise<Conversation>;
@@ -602,6 +604,7 @@ function ChatArea({
   messages,
   sending,
   runtimes,
+  defaultRuntimeId,
   onCreateConversation,
   onUpdateConversation,
   onSetDefaultRuntime,
@@ -855,7 +858,7 @@ function ChatArea({
                     <RuntimeSelector
                       runtimes={runtimes.filter((runtime) => runtime.enabled)}
                       selectedRuntimeId={effectiveRuntimeId ?? undefined}
-                      defaultRuntimeId={settings?.defaultRuntimeId}
+                      defaultRuntimeId={defaultRuntimeId}
                       onSelect={(runtimeId) =>
                         queueConversationUpdate({ runtimeId })
                       }
