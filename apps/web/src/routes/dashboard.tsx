@@ -1,12 +1,9 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Outlet, useLocation, Navigate, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ActivityPanel } from "@/components/panels/ActivityPanel";
-import { CommandBar } from "@/components/panels/CommandBar";
-import { CreateGoalDialog } from "@/components/dialogs/CreateGoalDialog";
-import { CreateRuleDialog } from "@/components/dialogs/CreateRuleDialog";
 import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toolbar } from "@/components/layout/Toolbar";
@@ -17,10 +14,6 @@ import { AuthTransitionOverlay } from "@/components/ui/auth-transition-overlay";
 import { Spinner } from "@/components/ui/spinner";
 import type { SidebarView } from "@/lib/types";
 import { getCapabilityModeFromPath, getCapabilityPath, isCapabilityView } from "@/lib/capability-routing";
-
-const MorphPanel = lazy(() =>
-  import("@/components/ui/ai-input").then((module) => ({ default: module.MorphPanel })),
-);
 
 const ACTIVITY_PANEL_TRANSITION_MS = 320;
 const ACTIVITY_PANEL_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
@@ -121,41 +114,24 @@ function DashboardLayout() {
   const capabilityViewMode = isCapabilityView(activeView)
     ? getCapabilityModeFromPath(dashboardPath, activeView)
     : "mine";
-  const [showMorphPanel, setShowMorphPanel] = useState(false);
   const [showAuthTransition, setShowAuthTransition] = useState(() => isAuthTransition());
   const [startDashboardReveal, setStartDashboardReveal] = useState(false);
   const revealTriggeredRef = useRef(false);
 
   const {
-    goals,
     runtimes,
-    projects,
     organizations,
     problems,
-    activities,
     settings,
     refreshAll,
-    handleCreateGoal,
-    handleCommand,
-    handleCreateRule,
     handleOrganizationCreate,
     handleOrganizationRename,
     handleOrganizationDelete,
-    showCreateDialog,
-    setShowCreateDialog,
-    showCommandBar,
-    setShowCommandBar,
     showSettingsDialog,
     setShowSettingsDialog,
-    showCreateRuleDialog,
-    setShowCreateRuleDialog,
-    ruleFromProblem,
     searchQuery,
     setSearchQuery,
-    agentModelFilter,
-    setAgentModelFilter,
     inboxCounts,
-    agentModelCounts,
     loading,
   } = useDashboard();
 
@@ -176,22 +152,6 @@ function DashboardLayout() {
   const dashboardColumns = activityExpanded
     ? "auto minmax(0,0fr) minmax(0,1fr)"
     : `auto minmax(0,1fr) ${activityPanelOpen ? "20rem" : "0px"}`;
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const enableMorphPanel = () => {
-      if (!cancelled) {
-        setShowMorphPanel(true);
-      }
-    };
-
-    const timeoutId = globalThis.setTimeout(enableMorphPanel, 300);
-    return () => {
-      cancelled = true;
-      globalThis.clearTimeout(timeoutId);
-    };
-  }, []);
 
   useEffect(() => {
     if (revealTriggeredRef.current || loading) {
@@ -273,7 +233,6 @@ function DashboardLayout() {
                   onSourceFilterChange={setSourceFilter}
                   boardFilter={boardFilter}
                   onBoardFilterChange={setBoardFilter}
-                  onOpenCreateGoal={() => setShowCreateDialog(true)}
                   inboxCounts={inboxCounts}
                   capabilityViewMode={capabilityViewMode}
                   onCapabilityViewModeChange={(mode) => {
@@ -281,47 +240,17 @@ function DashboardLayout() {
                       void navigate({ to: getCapabilityPath(activeView, mode) });
                     }
                   }}
-                  agentModelFilter={agentModelFilter}
-                  onAgentModelFilterChange={setAgentModelFilter}
-                  agentModelCounts={agentModelCounts}
                   onRefresh={refreshAll}
                 />
                 <Outlet />
               </div>
             </div>
             <ActivityPanel
-              activities={activities}
-              goals={goals}
               problems={problems}
               collapsed={!activityPanelOpen}
               activeView={activeView}
             />
           </div>
-          {showCommandBar && (
-            <CommandBar
-              runtimes={runtimes}
-              projects={projects}
-              open={showCommandBar}
-              onSubmit={handleCommand}
-              onClose={() => setShowCommandBar(false)}
-            />
-          )}
-          {showCreateDialog && (
-            <CreateGoalDialog
-              open={showCreateDialog}
-              onClose={() => setShowCreateDialog(false)}
-              projects={projects}
-              onSubmit={handleCreateGoal}
-            />
-          )}
-          {showCreateRuleDialog && (
-            <CreateRuleDialog
-              open={showCreateRuleDialog}
-              onClose={() => setShowCreateRuleDialog(false)}
-              problem={ruleFromProblem}
-              onSubmit={handleCreateRule}
-            />
-          )}
           {showSettingsDialog && (
             <SettingsDialog
               open={showSettingsDialog}
@@ -331,11 +260,6 @@ function DashboardLayout() {
               onRuntimesRefresh={refreshAll}
               registeredRuntimes={runtimes}
             />
-          )}
-          {showMorphPanel && (
-            <Suspense fallback={null}>
-              <MorphPanel runtimes={runtimes} />
-            </Suspense>
           )}
         </div>
       </>

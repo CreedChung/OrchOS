@@ -1,14 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createEventBus } from "@/server/modules/event/event-bus";
-import { ExecutionService } from "@/server/modules/execution/service";
+import { SettingsService } from "@/server/modules/settings/service";
 import { getLocalDb } from "@/server/runtime/local-db";
 
-let settingsServicePromise: Promise<ExecutionService> | null = null;
+let settingsServicePromise: Promise<SettingsService> | null = null;
 
 function getSettingsService() {
   if (!settingsServicePromise) {
     const db = getLocalDb();
-    settingsServicePromise = ExecutionService.create(db, createEventBus(db));
+    settingsServicePromise = SettingsService.create(db);
   }
 
   return settingsServicePromise;
@@ -28,7 +27,7 @@ export const Route = createFileRoute("/api/settings")({
           modelStrategy?: "local-first" | "cloud-first" | "adaptive";
         };
         const service = await getSettingsService();
-        const updated = await service.updateSettings(patch);
+        const updated = await service.update(patch);
         return Response.json(updated);
       },
     },

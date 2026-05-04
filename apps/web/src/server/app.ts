@@ -4,9 +4,7 @@ import { cors } from "@elysiajs/cors";
 import { createDbPlugin } from "./plugins/db";
 import { createAuthPlugin } from "./modules/auth";
 import { createOrganizationController } from "./modules/organization";
-import { type StorageAdapter } from "./modules/agent";
 import type { AppDb } from "./db/types";
-import type { ObjectStorageAdapter } from "./cloudflare/object-storage";
 
 import { createRuntimeController } from "./modules/runtime";
 import { createProblemController } from "./modules/problem";
@@ -16,8 +14,6 @@ import { createConversationController } from "./modules/conversation";
 export interface AppOptions {
   db: AppDb;
   jwtKey?: string;
-  storage?: StorageAdapter;
-  artifactStorage?: ObjectStorageAdapter;
 }
 
 export function createApp(options: AppOptions) {

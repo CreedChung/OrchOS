@@ -5,7 +5,7 @@ import { useDashboard } from "@/lib/dashboard-context";
 export const Route = createFileRoute("/dashboard/observability")({ component: ObservabilityPage });
 
 function ObservabilityPage() {
-  const { runtimes, goals, problems } = useDashboard();
+  const { runtimes, problems } = useDashboard();
 
-  return <ObservabilityView runtimes={runtimes} goals={goals} problems={problems} />;
+  return <ObservabilityView runtimes={runtimes} problems={problems} />;
 }

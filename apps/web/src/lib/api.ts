@@ -1,5 +1,21 @@
-import { API_BASE, createEdenClient, getServerBaseUrl } from "./eden";
+import { createEdenClient } from "./eden";
 import type { ControlSettings as ControlSettingsType } from "./types";
+
+const RAW_API_BASE =
+  import.meta.env.VITE_API_BASE_URL?.trim() ?? import.meta.env.VITE_API_BASE?.trim() ?? "";
+const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
+
+function getServerBaseUrl() {
+  if (API_BASE) {
+    return API_BASE;
+  }
+
+  if (typeof window === "undefined") {
+    return "http://127.0.0.1:3000";
+  }
+
+  return window.location.origin;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -135,36 +151,8 @@ function normalizeInboxThread(thread: unknown): InboxThread {
 }
 
 // Types aligned with server
-export type Status = "success" | "failed" | "error" | "pending" | "running" | "warning";
-export type Action = "write_code" | "run_tests" | "fix_bug" | "commit" | "review";
 export type ProblemPriority = "critical" | "warning" | "info";
 export type ProblemStatus = "open" | "fixed" | "ignored" | "assigned";
-export type CommandStatus = "sent" | "executing" | "completed" | "failed";
-
-export interface Command {
-  id: string;
-  instruction: string;
-  agentNames: string[];
-  projectIds: string[];
-  goalId?: string;
-  status: CommandStatus;
-  createdAt: string;
-}
-
-export interface Goal {
-  id: string;
-  title: string;
-  description?: string;
-  successCriteria: string[];
-  constraints: string[];
-  status: "active" | "completed" | "paused";
-  projectId?: string;
-  commandId?: string;
-  watchers: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface Project {
   id: string;
   name: string;
@@ -224,28 +212,6 @@ export interface ProjectCommitActivity {
   error?: string;
 }
 
-export interface HistoryEntry {
-  id: string;
-  type: string;
-  goalId?: string;
-  detail: Record<string, unknown>;
-  timestamp: string;
-}
-
-export interface AgentProfile {
-  id: string;
-  name: string;
-  role: string;
-  capabilities: Action[];
-  status: "idle" | "active" | "error";
-  model: string;
-  enabled: boolean;
-  cliCommand?: string;
-  currentModel?: string;
-  runtimeId?: string;
-  avatarUrl?: string;
-}
-
 export interface RuntimeProfile {
   id: string;
   name: string;
@@ -266,61 +232,6 @@ export interface RuntimeModelsResponse {
   models: string[];
   currentModel?: string;
   source: "cli" | "config" | "registry";
-}
-
-export interface SkillMarketItem {
-  id: string;
-  name: string;
-  description: string;
-  source: string;
-  browseUrl?: string;
-  installSource?: string;
-  category?: string;
-  installable: boolean;
-  installed: boolean;
-  owner?: string;
-  repo?: string;
-  stars?: number;
-  homepage?: string;
-  lastUpdatedAt?: string;
-  sourceType: "official";
-  tags: string[];
-}
-
-export interface SkillMarketResponse {
-  items: SkillMarketItem[];
-  tags: string[];
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-}
-
-export interface McpMarketItem {
-  id: string;
-  name: string;
-  description: string;
-  command: string;
-  args: string[];
-  source: string;
-  category?: string;
-  installed: boolean;
-  owner?: string;
-  repo?: string;
-  stars?: number;
-  homepage?: string;
-  lastUpdatedAt?: string;
-  sourceType: "official";
-  tags: string[];
-}
-
-export interface McpMarketResponse {
-  items: McpMarketItem[];
-  tags: string[];
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
 }
 
 export interface DetectedRuntime {
@@ -362,11 +273,8 @@ export interface IntegrationRepo {
 }
 
 export interface ObservabilityMetrics {
-  goals: { total: number; active: number; completed: number; paused: number };
-  activities: { total: number };
   events: { total: number };
-   graphs: { total: number };
-   runtime: { avgLatencyMs: number; totalCostUsd: number };
+  runtime: { avgLatencyMs: number; totalCostUsd: number };
 }
 
 export interface TimeSeriesPoint {
@@ -376,49 +284,11 @@ export interface TimeSeriesPoint {
   successes: number;
 }
 
-export interface GoalTimeSeriesPoint {
-  time: number;
-  label: string;
-  completed: number;
-  active: number;
-}
-
-export interface StateEntry {
-  id: string;
-  goalId: string;
-  label: string;
-  status: Status;
-  actions?: string[];
-  updatedAt: string;
-}
-
-export interface Artifact {
-  id: string;
-  goalId: string;
-  name: string;
-  type: "file" | "pr" | "test" | "log";
-  status: Status;
-  detail?: string;
-  updatedAt: string;
-}
-
-export interface ActivityEntry {
-  id: string;
-  goalId: string;
-  timestamp: string;
-  agent: string;
-  action: string;
-  detail?: string;
-  reasoning?: string;
-  diff?: string;
-}
-
 export type ControlSettings = ControlSettingsType;
 
 export interface Event {
   id: string;
   type: string;
-  goalId?: string;
   payload: Record<string, unknown>;
   timestamp: string;
 }
@@ -434,159 +304,17 @@ export interface Problem {
   priority: ProblemPriority;
   source?: string;
   context?: string;
-  goalId?: string;
-  stateId?: string;
   status: ProblemStatus;
   actions: string[];
   createdAt: string;
   updatedAt: string;
 }
 
-export interface Rule {
-  id: string;
-  name: string;
-  condition: string;
-  action: string;
-  scope: "global" | "project";
-  projectId?: string;
-  targetAgentIds: string[];
-  pathPatterns: string[];
-  taskTypes: string[];
-  instruction: string;
-  priority: "low" | "normal" | "high";
-  enabled: boolean;
-  createdAt: string;
-}
-
-export interface McpServerProfile {
-  id: string;
-  name: string;
-  command: string;
-  args: string[];
-  env: Record<string, string>;
-  enabled: boolean;
-  scope: "global" | "project";
-  projectId?: string;
-  organizationId?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SkillProfile {
-  id: string;
-  name: string;
-  description?: string;
-  enabled: boolean;
-  scope: "global" | "project";
-  projectId?: string;
-  organizationId?: string;
-  sourceType: "manual" | "repository";
-  sourceUrl?: string;
-  installPath?: string;
-  manifestPath?: string;
-  executionCount?: number;
-  successCount?: number;
-  successRate?: number;
-  applicability?: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface GraphAttemptTrace {
-  id: string;
-  nodeId: string;
-  attemptNumber: number;
-  strategy: string;
-  status: string;
-  traceId?: string;
-  inputSnapshotId?: string;
-  outputSnapshotId?: string;
-  latencyMs?: number;
-  tokenUsage?: { input: number; output: number; total: number };
-  costEstimateUsd?: number;
-  errorCode?: string;
-  errorText?: string;
-  startedAt: string;
-  finishedAt?: string;
-}
-
-export interface ExecutionGraphSummary {
-  id: string;
-  status: string;
-  traceId?: string;
-  contextSnapshotId?: string;
-  attemptCount: number;
-  avgLatencyMs: number;
-}
-
-export interface ReflectionRecord {
-  id: string;
-  graphId?: string;
-  nodeId?: string;
-  attemptId?: string;
-  kind: string;
-  summary: string;
-  details?: Record<string, unknown>;
-  createdAt: string;
-}
-
-export interface GraphReplayResponse {
-  graph: Record<string, unknown>;
-  attempts: GraphAttemptTrace[];
-  context?: Record<string, unknown>;
-  reflections: ReflectionRecord[];
-  handoffs: Array<Record<string, unknown>>;
-  conflicts: Array<Record<string, unknown>>;
-}
-
-export interface SkillRepositoryCandidate {
-  name: string;
-  description?: string;
-  relativePath: string;
-}
-
-export interface SkillRepositoryAnalysis {
-  analysisId: string;
-  source: string;
-  riskLevel: "low" | "medium" | "high";
-  safeToInstall: boolean;
-  summary: string;
-  warnings: string[];
-  installTarget: string;
-  installableSkills: SkillRepositoryCandidate[];
-}
-
-export interface SkillRepositoryInstallResponse {
-  installed: SkillProfile[];
-  installTarget: string;
-  warnings: string[];
-  riskLevel: "low" | "medium" | "high";
-}
-
-export interface DispatchResult {
-  needsClarification: boolean;
-  questions: string[];
-  command: {
-    id: string;
-    instruction: string;
-    agentNames: string[];
-    projectIds: string[];
-    goalId: string | null;
-    status: string;
-    createdAt: string;
-  };
-  goals: Array<{
-    id: string;
-    title: string;
-    assignedAgentName?: string;
-  }>;
-}
 
 export interface Conversation {
   id: string;
   title?: string;
   projectId?: string;
-  agentId?: string;
   runtimeId?: string;
   archived: boolean;
   deleted: boolean;
@@ -675,8 +403,6 @@ export interface InboxThread {
   summary?: string;
   projectId?: string;
   conversationId?: string;
-  commandId?: string;
-  primaryGoalId?: string;
   createdByType: "user" | "agent" | "system";
   createdById?: string;
   createdByName: string;
@@ -697,157 +423,13 @@ export interface InboxMessage {
   body: string;
   to: string[];
   cc: string[];
-  goalId?: string;
-  stateId?: string;
   problemId?: string;
   metadata?: Record<string, unknown>;
   createdAt: string;
 }
 
-const EMPTY_PROBLEM_SUMMARY: ProblemSummary = {
-  status: {
-    open: 0,
-    fixed: 0,
-    ignored: 0,
-    assigned: 0,
-  },
-  inbox: {
-    all: 0,
-    github_pr: 0,
-    github_issue: 0,
-    mention: 0,
-    agent_request: 0,
-  },
-  system: {
-    critical: 0,
-    warning: 0,
-    info: 0,
-  },
-};
-
 // API functions
 export const api = {
-  // Goals
-  listGoals: async (): Promise<Goal[]> => {
-    const client = createEdenClient();
-    const result = await client.api.goals.get();
-    return assertData(result);
-  },
-  getGoal: async (id: string): Promise<Goal> => {
-    const client = createEdenClient();
-    const result = await client.api.goals({ goalId: id }).get();
-    return assertData(result);
-  },
-  createGoal: (data: {
-    title: string;
-    description?: string;
-    successCriteria: string[];
-    constraints?: string[];
-    projectId?: string;
-    commandId?: string;
-    watchers?: string[];
-  }): Promise<Goal> => {
-    const client = createEdenClient();
-    return client.api.goals.post(data).then(assertData);
-  },
-  updateGoal: (
-    id: string,
-    data: Partial<
-      Pick<
-        Goal,
-        "title" | "description" | "successCriteria" | "constraints" | "status" | "watchers"
-      > & { projectId?: string; commandId?: string }
-    >,
-  ): Promise<Goal> => {
-    const client = createEdenClient();
-    return client.api.goals({ goalId: id }).patch(data).then(assertData);
-  },
-  deleteGoal: async (id: string): Promise<void> => {
-    const client = createEdenClient();
-    const result = await client.api.goals({ goalId: id }).delete();
-    return assertData(result);
-  },
-
-  // States
-  getStates: async (goalId: string): Promise<StateEntry[]> => {
-    const client = createEdenClient();
-    const result = await client.api.goals({ goalId }).states.get();
-    return assertData(result);
-  },
-  updateState: (id: string, status: Status): Promise<StateEntry> => {
-    const client = createEdenClient();
-    return client.api.states({ id }).patch({ status }).then(assertData);
-  },
-
-  // Artifacts
-  getArtifacts: async (goalId: string): Promise<Artifact[]> => {
-    const client = createEdenClient();
-    const result = await client.api.goals({ goalId }).artifacts.get();
-    return assertData(result);
-  },
-
-  // Activities
-  getActivities: async (goalId: string): Promise<ActivityEntry[]> => {
-    const client = createEdenClient();
-    const result = await client.api.goals({ goalId }).activities.get();
-    return assertData(result);
-  },
-  getAllActivities: async (): Promise<ActivityEntry[]> => {
-    const client = createEdenClient();
-    const result = await client.api.activities.get();
-    return assertData(result);
-  },
-
-  // Agents
-  listAgents: async (): Promise<AgentProfile[]> => {
-    const client = createEdenClient();
-    const result = await client.api.agents.get();
-    return assertData(result);
-  },
-  createAgent: (data: {
-    name: string;
-    role: string;
-    capabilities: string[];
-    model: string;
-    cliCommand?: string;
-    runtimeId?: string;
-    avatarUrl?: string;
-  }): Promise<AgentProfile> => {
-    const client = createEdenClient();
-    return client.api.agents.post(data).then(assertData);
-  },
-  updateAgent: (
-    id: string,
-    data: {
-      name?: string;
-      role?: string;
-      capabilities?: string[];
-      status?: AgentProfile["status"];
-      model?: string;
-      enabled?: boolean;
-      cliCommand?: string;
-      runtimeId?: string;
-      avatarUrl?: string;
-    },
-  ): Promise<AgentProfile> => {
-    const client = createEdenClient();
-    return client.api.agents({ id }).patch(data).then(assertData);
-  },
-  uploadAgentAvatar: async (id: string, file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await fetch(resolveApiUrl(`/api/agents/${id}/avatar`), {
-      method: "POST",
-      body: formData,
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    return res.json() as Promise<AgentProfile>;
-  },
-  deleteAgent: async (id: string): Promise<void> => {
-    const client = createEdenClient();
-    const result = await client.api.agents({ id }).delete();
-    return assertData(result);
-  },
 
   // Runtimes
   listRuntimes: async (): Promise<RuntimeProfile[]> => {
@@ -1015,28 +597,42 @@ export const api = {
 
   // Projects
   listProjects: async (): Promise<Project[]> => {
-    const client = createEdenClient();
-    const result = await client.api.projects.get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/projects"), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as Project[];
   },
   getProject: async (id: string): Promise<Project> => {
-    const client = createEdenClient();
-    const result = await client.api.projects({ id }).get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/projects/${id}`), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as Project;
   },
   createProject: (data: { name: string; path: string; repositoryUrl?: string }): Promise<Project> =>
-    createEdenClient().api.projects.post(data).then(assertData),
+    fetch(resolveApiUrl("/api/projects"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as Project;
+    }),
   updateProject: (
     id: string,
     data: Partial<Pick<Project, "name" | "path" | "repositoryUrl">>,
   ): Promise<Project> => {
-    const client = createEdenClient();
-    return client.api.projects({ id }).patch(data).then(assertData);
+    return fetch(resolveApiUrl(`/api/projects/${id}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as Project;
+    });
   },
   deleteProject: async (id: string): Promise<void> => {
-    const client = createEdenClient();
-    const result = await client.api.projects({ id }).delete();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/projects/${id}`), { method: "DELETE", credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
   },
   cloneProject: async (
     id: string,
@@ -1125,33 +721,6 @@ export const api = {
     };
   },
 
-  // History
-  getHistory: async (goalId?: string, limit?: number): Promise<HistoryEntry[]> => {
-    const client = createEdenClient();
-    const result = await client.api.history.get({
-      query: {
-        goalId,
-        limit,
-      },
-    });
-    return assertData(result);
-  },
-
-  // Execution
-  triggerAction: (
-    goalId: string,
-    action: Action,
-    stateId?: string,
-    agentId?: string,
-  ): Promise<{ success: boolean }> => {
-    const client = createEdenClient();
-    return client.api.goals({ goalId }).actions.post({ action, stateId, agentId }).then(assertData);
-  },
-  runLoop: (goalId: string): Promise<{ success: boolean }> => {
-    const client = createEdenClient();
-    return client.api.goals({ goalId }).loop.post(undefined).then(assertData);
-  },
-
   // Settings
   getSettings: async (): Promise<ControlSettings> => {
     const response = await fetch(resolveApiUrl("/api/settings"), {
@@ -1230,33 +799,22 @@ export const api = {
     status?: ProblemStatus;
     priority?: ProblemPriority;
   }): Promise<Problem[]> => {
-    const client = createEdenClient();
-    const result = await client.api.problems.get({
-      query: {
-        status: filters?.status,
-        priority: filters?.priority,
-      },
-    });
-    return assertData(result);
+    const url = new URL(resolveApiUrl("/api/problems"));
+    if (filters?.status) url.searchParams.set("status", filters.status);
+    if (filters?.priority) url.searchParams.set("priority", filters.priority);
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as Problem[];
   },
   getProblemCounts: async (): Promise<Record<ProblemStatus, number>> => {
-    const client = createEdenClient();
-    const result = await client.api.problems.counts.get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/problems/counts"), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as Record<ProblemStatus, number>;
   },
   getProblemSummary: async (): Promise<ProblemSummary> => {
-    const client = createEdenClient();
-    try {
-      const result = await client.api.problems.summary.get();
-      return assertData(result);
-    } catch {
-      const countsResult = await client.api.problems.counts.get();
-      const counts = assertData(countsResult) as Record<ProblemStatus, number>;
-      return {
-        ...EMPTY_PROBLEM_SUMMARY,
-        status: counts,
-      };
-    }
+    const response = await fetch(resolveApiUrl("/api/problems/summary"), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as ProblemSummary;
   },
   createProblem: (data: {
     title: string;
@@ -1266,28 +824,46 @@ export const api = {
     goalId?: string;
     actions?: string[];
   }): Promise<Problem> => {
-    const client = createEdenClient();
-    return client.api.problems.post(data).then(assertData);
+    return fetch(resolveApiUrl("/api/problems"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as Problem;
+    });
   },
   updateProblem: (
     id: string,
     data: Partial<Pick<Problem, "title" | "priority" | "status" | "source" | "context">>,
   ): Promise<Problem> => {
-    const client = createEdenClient();
-    return client.api.problems({ id }).patch(data).then(assertData);
+    return fetch(resolveApiUrl(`/api/problems/${id}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return (await response.json()) as Problem;
+    });
   },
   deleteProblem: async (id: string): Promise<void> => {
-    const client = createEdenClient();
-    const result = await client.api.problems({ id }).delete();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/problems/${id}`), { method: "DELETE", credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
   },
   bulkUpdateProblems: async (
     ids: string[],
     status: ProblemStatus,
   ): Promise<{ updated: number }> => {
-    const client = createEdenClient();
-    const result = await client.api.problems.bulk.post({ ids, status });
-    return assertData(result);
+    const response = await fetch(resolveApiUrl("/api/problems/bulk"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ ids, status }),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as { updated: number };
   },
 
   // Inbox
@@ -1352,237 +928,6 @@ export const api = {
   ): Promise<InboxMessage> => {
     const client = createEdenClient();
     const result = await client.api.inbox.threads({ id: threadId }).messages.post(data);
-    return assertData(result);
-  },
-
-  // Rules
-  listRules: async (): Promise<Rule[]> => {
-    const client = createEdenClient();
-    const result = await client.api.rules.get();
-    return assertData(result);
-  },
-  createRule: (data: {
-    name: string;
-    condition: string;
-    action: string;
-    scope?: Rule["scope"];
-    projectId?: string;
-    targetAgentIds?: string[];
-    pathPatterns?: string[];
-    taskTypes?: string[];
-    instruction?: string;
-    priority?: Rule["priority"];
-    enabled?: boolean;
-  }): Promise<Rule> => createEdenClient().api.rules.post(data).then(assertData),
-  updateRule: (
-    id: string,
-    data: Partial<Pick<Rule, "name" | "condition" | "action" | "scope" | "projectId" | "targetAgentIds" | "pathPatterns" | "taskTypes" | "instruction" | "priority" | "enabled">>,
-  ): Promise<Rule> => {
-    const client = createEdenClient();
-    return client.api.rules({ id }).patch(data).then(assertData);
-  },
-  deleteRule: async (id: string): Promise<void> => {
-    const client = createEdenClient();
-    const result = await client.api.rules({ id }).delete();
-    return assertData(result);
-  },
-
-  // Commands
-  listCommands: async (): Promise<Command[]> => {
-    const client = createEdenClient();
-    const result = await client.api.commands.get();
-    return assertData(result);
-  },
-  createCommand: (data: {
-    instruction: string;
-    agentNames?: string[];
-    projectIds?: string[];
-  }): Promise<Command> => createEdenClient().api.commands.post(data).then(assertData),
-  getCommand: async (id: string): Promise<Command> => {
-    const client = createEdenClient();
-    const result = await client.api.commands({ id }).get();
-    return assertData(result);
-  },
-  updateCommand: (
-    id: string,
-    data: { status?: CommandStatus; goalId?: string },
-  ): Promise<Command> => {
-    const client = createEdenClient();
-    return client.api.commands({ id }).patch(data).then(assertData);
-  },
-  deleteCommand: async (id: string): Promise<void> => {
-    const client = createEdenClient();
-    const result = await client.api.commands({ id }).delete();
-    return assertData(result);
-  },
-
-  // MCP Servers
-  listMcpServers: async (options?: {
-    projectId?: string;
-    organizationId?: string;
-    scope?: "global" | "project";
-  }): Promise<McpServerProfile[]> => {
-    const client = createEdenClient();
-    const result = await client.api["mcp-servers"].get({
-      query: {
-        projectId: options?.projectId,
-        organizationId: options?.organizationId,
-        scope: options?.scope,
-      },
-    });
-    return assertData(result);
-  },
-  listMcpServersGlobal: async (): Promise<McpServerProfile[]> => {
-    const client = createEdenClient();
-    const result = await client.api["mcp-servers"].global.get();
-    return assertData(result);
-  },
-  listMcpServersByProject: async (projectId: string): Promise<McpServerProfile[]> => {
-    const client = createEdenClient();
-    const result = await client.api["mcp-servers"].project({ projectId }).get();
-    return assertData(result);
-  },
-  getMcpServer: async (id: string): Promise<McpServerProfile> => {
-    const client = createEdenClient();
-    const result = await client.api["mcp-servers"]({ id }).get();
-    return assertData(result);
-  },
-  createMcpServer: (data: {
-    name: string;
-    command: string;
-    args?: string[];
-    env?: Record<string, string>;
-    scope?: "global" | "project";
-    projectId?: string;
-    organizationId?: string;
-  }): Promise<McpServerProfile> =>
-    createEdenClient().api["mcp-servers"].post(data).then(assertData),
-  updateMcpServer: (
-    id: string,
-    data: Partial<
-      Pick<McpServerProfile, "name" | "command" | "args" | "env" | "enabled" | "scope">
-    >,
-  ): Promise<McpServerProfile> => {
-    const client = createEdenClient();
-    return client.api["mcp-servers"]({ id }).patch(data).then(assertData);
-  },
-  deleteMcpServer: async (id: string): Promise<void> => {
-    const client = createEdenClient();
-    const result = await client.api["mcp-servers"]({ id }).delete();
-    return assertData(result);
-  },
-  toggleMcpServer: (id: string, enabled: boolean): Promise<McpServerProfile> => {
-    const client = createEdenClient();
-    return client.api["mcp-servers"]({ id }).toggle.post({ enabled }).then(assertData);
-  },
-  getMcpMarketItem: async (id: string): Promise<McpMarketItem> => {
-    const client = createEdenClient();
-    const result = await client.api["mcp-servers"].market({ id }).get();
-    return assertData(result);
-  },
-
-  // Skills
-  listSkills: async (options?: {
-    projectId?: string;
-    organizationId?: string;
-    scope?: "global" | "project";
-  }): Promise<SkillProfile[]> => {
-    const client = createEdenClient();
-    const result = await client.api.skills.get({
-      query: {
-        projectId: options?.projectId,
-        organizationId: options?.organizationId,
-        scope: options?.scope,
-      },
-    });
-    return assertData(result);
-  },
-  getSkill: async (id: string): Promise<SkillProfile> => {
-    const client = createEdenClient();
-    const result = await client.api.skills({ id }).get();
-    return assertData(result);
-  },
-  listSkillMarket: async (options?: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    filter?: "all" | "official" | "installed";
-    tag?: string;
-  }): Promise<SkillMarketResponse> => {
-    const client = createEdenClient();
-    const result = await client.api.skills.market.get({
-      query: {
-        page: options?.page ? String(options.page) : undefined,
-        pageSize: options?.pageSize ? String(options.pageSize) : undefined,
-        search: options?.search,
-        filter: options?.filter,
-        tag: options?.tag,
-      },
-    });
-    return assertData(result);
-  },
-  getSkillMarketItem: async (id: string): Promise<SkillMarketItem> => {
-    const client = createEdenClient();
-    const result = await client.api.skills.market({ id }).get();
-    return assertData(result);
-  },
-  createSkill: (data: {
-    name: string;
-    description?: string;
-    scope?: "global" | "project";
-    projectId?: string;
-    organizationId?: string;
-    sourceType?: "manual" | "repository";
-    sourceUrl?: string;
-    installPath?: string;
-    manifestPath?: string;
-  }): Promise<SkillProfile> => createEdenClient().api.skills.post(data).then(assertData),
-  updateSkill: (
-    id: string,
-    data: Partial<Pick<SkillProfile, "name" | "description" | "enabled" | "scope">>,
-  ): Promise<SkillProfile> => {
-    const client = createEdenClient();
-    return client.api.skills({ id }).patch(data).then(assertData);
-  },
-  deleteSkill: async (id: string): Promise<void> => {
-    const client = createEdenClient();
-    const result = await client.api.skills({ id }).delete();
-    return assertData(result);
-  },
-  toggleSkill: (id: string, enabled: boolean): Promise<SkillProfile> => {
-    const client = createEdenClient();
-    return client.api.skills({ id }).toggle.post({ enabled }).then(assertData);
-  },
-  analyzeSkillRepository: (data: {
-    source: string;
-    scope?: "global" | "project";
-    projectId?: string;
-    organizationId?: string;
-  }): Promise<SkillRepositoryAnalysis> =>
-    createEdenClient().api.skills["analyze-repository"].post(data).then(assertData),
-  installSkillRepository: (data: {
-    analysisId: string;
-    selectedSkills?: string[];
-    allowHighRisk?: boolean;
-  }): Promise<SkillRepositoryInstallResponse> =>
-    createEdenClient().api.skills["install-repository"].post(data).then(assertData),
-  listMcpMarket: async (options?: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    filter?: "all" | "official" | "installed";
-    tag?: string;
-  }): Promise<McpMarketResponse> => {
-    const client = createEdenClient();
-    const result = await client.api["mcp-servers"].market.get({
-      query: {
-        page: options?.page ? String(options.page) : undefined,
-        pageSize: options?.pageSize ? String(options.pageSize) : undefined,
-        search: options?.search,
-        filter: options?.filter,
-        tag: options?.tag,
-      },
-    });
     return assertData(result);
   },
 
@@ -1666,94 +1011,19 @@ export const api = {
     return normalizeConversationMessage(await response.json());
   },
 
-  createGoalsFromConversation: async (
-    id: string,
-    data: {
-      instruction: string;
-      runtimeId?: string;
-      agentNames?: string[];
-      projectIds?: string[];
-    },
-  ): Promise<DispatchResult> => {
-    const client = createEdenClient();
-    const result = await client.api.conversations({ id })["create-goals"].post(data);
-    return assertData(result) as DispatchResult;
-  },
-
-  dispatchCommand: async (data: {
-    instruction: string;
-    agentNames?: string[];
-    projectIds?: string[];
-    runtimeId?: string;
-  }): Promise<DispatchResult> => {
-    const client = createEdenClient();
-    const result = await client.api.commands.dispatch.post(data);
-    return assertData(result) as DispatchResult;
-  },
-
   getObservabilityThroughput: async (_timeRange: string): Promise<TimeSeriesPoint[]> => {
-    const client = createEdenClient();
-    const result = await client.api.observability.throughput.get({
-      query: { range: _timeRange },
-    });
-    return assertData(result);
-  },
-
-  getObservabilityGoals: async (_timeRange: string): Promise<GoalTimeSeriesPoint[]> => {
-    const client = createEdenClient();
-    const result = await client.api.observability.goals.get({
-      query: { range: _timeRange },
-    });
-    return assertData(result);
+    const url = new URL(resolveApiUrl("/api/observability/throughput"));
+    url.searchParams.set("range", _timeRange);
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as TimeSeriesPoint[];
   },
 
   getObservabilityMetrics: async (timeRange: string): Promise<ObservabilityMetrics> => {
-    const client = createEdenClient();
-    const result = await client.api.observability.metrics.get({ query: { range: timeRange } });
-    return assertData(result);
-  },
-
-  getObservabilityGraphs: async (): Promise<ExecutionGraphSummary[]> => {
-    const client = createEdenClient();
-    const result = await client.api.observability.graphs.get();
-    return assertData(result) as ExecutionGraphSummary[];
-  },
-
-  getGraphReplay: async (id: string): Promise<GraphReplayResponse> => {
-    const client = createEdenClient();
-    const result = await client.api.graphs({ id }).replay.get();
-    return assertData(result) as GraphReplayResponse;
-  },
-
-  getGraphTrace: async (id: string): Promise<GraphAttemptTrace[]> => {
-    const client = createEdenClient();
-    const result = await client.api.graphs({ id }).trace.get();
-    return assertData(result) as GraphAttemptTrace[];
-  },
-
-  getAttemptDebug: async (attemptId: string): Promise<Record<string, unknown>> => {
-    const client = createEdenClient();
-    const result = await client.api.graphs.attempts({ attemptId }).debug.get();
-    return assertData(result) as Record<string, unknown>;
-  },
-
-  getContextSnapshotsByGoal: async (goalId: string): Promise<Array<Record<string, unknown>>> => {
-    const client = createEdenClient();
-    const result = await client.api.context.goals({ goalId }).snapshots.get();
-    return assertData(result) as Array<Record<string, unknown>>;
-  },
-
-  getContextDiff: async (fromSnapshotId: string, toSnapshotId: string): Promise<Record<string, unknown> | null> => {
-    const client = createEdenClient();
-    const result = await client.api.context.diff.get({
-      query: { fromSnapshotId, toSnapshotId },
-    });
-    return assertData(result) as Record<string, unknown> | null;
-  },
-
-  listReflections: async (): Promise<ReflectionRecord[]> => {
-    const client = createEdenClient();
-    const result = await client.api.reflections.get();
-    return assertData(result) as ReflectionRecord[];
+    const url = new URL(resolveApiUrl("/api/observability/metrics"));
+    url.searchParams.set("range", timeRange);
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as ObservabilityMetrics;
   },
 };

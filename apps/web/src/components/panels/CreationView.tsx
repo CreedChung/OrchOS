@@ -79,9 +79,7 @@ export function CreationView({
     createConversation,
     updateConversation,
     deleteConversation,
-    setConversationPending,
     setPendingUserMessage,
-    setConversationFlowDraft,
   } = useConversationStore();
 
   const messages = activeConversationId
@@ -435,72 +433,11 @@ export function CreationView({
               if (!conversation) return;
 
               setSending(true);
-              setConversationPending(conversation.id);
               if (content) {
                 setPendingUserMessage(conversation.id, content);
               }
-              setConversationFlowDraft(conversation.id, {
-                id: `draft-${conversation.id}`,
-                role: "assistant",
-                content: "",
-                trace: [
-                  {
-                    kind: "thought",
-                    text: "正在分析当前项目上下文并拆解执行任务。",
-                  },
-                  {
-                    kind: "tool",
-                    toolName: "dispatch_command",
-                    toolCallId: `dispatch-${conversation.id}`,
-                    state: "input-streaming",
-                    input: {
-                      instruction: content,
-                      runtimeId: conversation.runtimeId,
-                    },
-                  },
-                ],
-              });
               try {
-                const result = await api.createGoalsFromConversation(
-                  conversation.id,
-                  {
-                    instruction: content,
-                    runtimeId: conversation.runtimeId,
-                  },
-                );
-                setConversationFlowDraft(conversation.id, {
-                  id: `draft-${conversation.id}`,
-                  role: "assistant",
-                  content: result.needsClarification
-                    ? "需要更多信息后才能继续执行。"
-                    : result.goals.length > 0
-                      ? `已创建 ${result.goals.length} 个任务，右侧 Current Thread 将继续跟踪执行进度。`
-                      : "命令已提交，等待后续执行结果。",
-                  trace: [
-                    {
-                      kind: "thought",
-                      text: result.needsClarification
-                        ? "当前信息不足，先向用户澄清缺失上下文。"
-                        : "已完成需求解析，并生成可执行任务。",
-                    },
-                    {
-                      kind: "tool",
-                      toolName: "dispatch_command",
-                      toolCallId: `dispatch-${conversation.id}`,
-                      state: "output-available",
-                      input: {
-                        instruction: content,
-                        runtimeId: conversation.runtimeId,
-                      },
-                      output: {
-                        commandId: result.command.id,
-                        status: result.command.status,
-                        goalsCreated: result.goals.length,
-                        clarificationQuestions: result.questions,
-                      },
-                    },
-                  ],
-                });
+                await api.sendConversationMessage(conversation.id, content);
                 await loadMessages(conversation.id, { force: true });
                 setPendingUserMessage(conversation.id, undefined);
                 if (!conversation.title && messages.length === 0) {
@@ -510,34 +447,6 @@ export function CreationView({
                 }
                 return;
               } catch (err) {
-                setConversationFlowDraft(conversation.id, {
-                  id: `draft-${conversation.id}`,
-                  role: "assistant",
-                  content:
-                    err instanceof Error
-                      ? err.message
-                      : "Failed to send message",
-                  trace: [
-                    {
-                      kind: "thought",
-                      text: "执行过程中出现错误，未能完成任务分派。",
-                    },
-                    {
-                      kind: "tool",
-                      toolName: "dispatch_command",
-                      toolCallId: `dispatch-${conversation.id}`,
-                      state: "output-error",
-                      input: {
-                        instruction: content,
-                        runtimeId: conversation.runtimeId,
-                      },
-                      errorText:
-                        err instanceof Error
-                          ? err.message
-                          : "Failed to send message",
-                    },
-                  ],
-                });
                 setPendingUserMessage(conversation.id, undefined);
                 console.error("Failed to send message:", err);
                 toast.error(
@@ -545,7 +454,6 @@ export function CreationView({
                 );
                 throw err;
               } finally {
-                setConversationPending(null);
                 setSending(false);
               }
             }}

@@ -3,6 +3,12 @@ import { runtimes } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { generateId } from "../../utils";
 import { getRowsAffected } from "../../db/utils";
+import {
+  chatWithRuntimeCommand,
+  detectRuntimeCLIs,
+  getRuntimeCurrentModel,
+  runtimeHealthCheck,
+} from "@/server/runtime/runtime-cli";
 
 export interface RuntimeProfile {
   id: string;
@@ -144,43 +150,7 @@ export abstract class RuntimeService {
     available: DetectedRuntime[];
     unavailable: DetectedRuntime[];
   }> {
-    try {
-      const { executor } = await import("../execution/executor");
-      if (!executor) {
-        return { available: [], unavailable: [] };
-      }
-
-      const detected = await executor.detectAgentCLIs();
-      const available: DetectedRuntime[] = [];
-      const unavailable: DetectedRuntime[] = [];
-
-      for (const detectedRuntime of detected) {
-        const base = {
-          id: detectedRuntime.definition.id,
-          name: detectedRuntime.definition.name,
-          command: detectedRuntime.definition.command,
-          version: detectedRuntime.version,
-          path: detectedRuntime.path,
-          role: detectedRuntime.definition.role,
-          capabilities: detectedRuntime.definition.capabilities,
-          model: detectedRuntime.definition.model,
-          transport: "stdio" as const,
-        };
-
-        if (detectedRuntime.available) {
-          available.push(base);
-        } else {
-          unavailable.push({
-            ...base,
-            error: `${detectedRuntime.definition.command} not found in PATH`,
-          });
-        }
-      }
-
-      return { available, unavailable };
-    } catch {
-      return { available: [], unavailable: [] };
-    }
+    return detectRuntimeCLIs();
   }
 
   static async registerFromDetection(
@@ -220,31 +190,7 @@ export abstract class RuntimeService {
     runtimeId: string,
     options?: { level?: "basic" | "ping" | "full"; prompt?: string },
   ) {
-    try {
-      const { executor } = await import("../execution/executor");
-      if (!executor) {
-        return {
-          healthy: false,
-          level: "basic" as const,
-          output: "",
-          error: "Not available in Worker environment",
-          responseTime: 0,
-          agentName: runtimeId,
-          agentCommand: runtimeId,
-        };
-      }
-      return await executor.testAgentCLI(runtimeId, options);
-    } catch {
-      return {
-        healthy: false,
-        level: "basic" as const,
-        output: "",
-        error: "Not available in Worker environment",
-        responseTime: 0,
-        agentName: runtimeId,
-        agentCommand: runtimeId,
-      };
-    }
+    return runtimeHealthCheck(runtimeId, options);
   }
 
   static async getCurrentModel(
@@ -259,23 +205,15 @@ export abstract class RuntimeService {
       (await RuntimeService.getByRegistryId(db, runtimeId)) ||
       (await RuntimeService.get(db, runtimeId));
 
-    try {
-      const { executor } = await import("../execution/executor");
-      if (!executor) {
-        return { model: undefined, source: "registry" as const };
-      }
-      const result = await executor.getAgentCurrentModel(runtimeId);
-      if (runtime && result.model && result.source === "cli") {
-        await db
-          .update(runtimes)
-          .set({ currentModel: result.model })
-          .where(eq(runtimes.id, runtime.id))
-          .run();
-      }
-      return result;
-    } catch {
-      return { model: undefined, source: "registry" as const };
+    const result = await getRuntimeCurrentModel(runtimeId, runtime?.model);
+    if (runtime && result.model && result.source === "cli") {
+      await db
+        .update(runtimes)
+        .set({ currentModel: result.model })
+        .where(eq(runtimes.id, runtime.id))
+        .run();
     }
+    return result;
   }
 
   static async chat(
@@ -300,43 +238,7 @@ export abstract class RuntimeService {
       };
     }
 
-    try {
-      const { executor } = await import("../execution/executor");
-      if (!executor) {
-        return {
-          success: false,
-          output: "",
-          error: "Not available in Worker environment",
-          agentName: runtime.name,
-          responseTime: 0,
-        };
-      }
-
-      const startTime = Date.now();
-      const result = await executor.run(
-        `${runtime.command} -p '${prompt.replace(/'/g, "'\\''")}' 2>&1`,
-        {
-          timeout: 120000,
-        },
-      );
-      const responseTime = Date.now() - startTime;
-
-      return {
-        success: result.success || result.output.trim().length > 0,
-        output: result.output.trim(),
-        error: result.success ? undefined : result.error,
-        agentName: runtime.name,
-        responseTime,
-      };
-    } catch {
-      return {
-        success: false,
-        output: "",
-        error: "Not available in Worker environment",
-        agentName: runtime.name,
-        responseTime: 0,
-      };
-    }
+    return chatWithRuntimeCommand(runtime.command, prompt, runtime.name);
   }
 
   static mapRow(row: typeof runtimes.$inferSelect): RuntimeProfile {

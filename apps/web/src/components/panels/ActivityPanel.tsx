@@ -1,23 +1,18 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useUser } from "@clerk/clerk-react";
 import { type UIMessage } from "ai";
 import {
   Alert01Icon,
-  ArrowRight01Icon,
   InformationCircleIcon,
-  Robot02Icon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
-import type { ActivityEntry, Goal, Problem, SidebarView } from "@/lib/types";
+import type { Problem, SidebarView } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
 import { MessageBubble, mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
 
 interface ActivityPanelProps {
-  activities: ActivityEntry[];
-  goals: Goal[];
   problems: Problem[];
   collapsed: boolean;
   expanded?: boolean;
@@ -74,27 +69,6 @@ function buildFlowMessages(
   ];
 }
 
-function readThreadTone(status: Goal["status"]) {
-  if (status === "completed") return "bg-emerald-500";
-  if (status === "paused") return "bg-amber-500";
-  return "bg-sky-500";
-}
-
-function formatTime(value?: string) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return `${date.toISOString().split("T")[0]} ${date.toISOString().split("T")[1]?.slice(0, 5) ?? ""}`;
-}
-
-function getTaskGroups(goals: Goal[]) {
-  return {
-    current: goals.filter((goal) => goal.status === "active").slice(0, 6),
-    completed: goals.filter((goal) => goal.status === "completed").slice(0, 4),
-    paused: goals.filter((goal) => goal.status === "paused").slice(0, 4),
-  };
-}
-
 function getAttentionItems(problems: Problem[]) {
   return problems.filter((problem) => problem.status === "open").slice(0, 8);
 }
@@ -111,7 +85,7 @@ function SectionHeader({ title, meta }: { title: string; meta?: string }) {
   );
 }
 
-export function ActivityPanel({ activities, goals, problems, collapsed, expanded, activeView }: ActivityPanelProps) {
+export function ActivityPanel({ problems, collapsed, expanded, activeView }: ActivityPanelProps) {
   const { user } = useUser();
   const {
     activeConversationId,
@@ -135,16 +109,9 @@ export function ActivityPanel({ activities, goals, problems, collapsed, expanded
     flowDraft,
   });
   const showPendingAssistantReply = activeConversationId !== null && pendingConversationId === activeConversationId;
-  const threadGoals = activeConversationId
-    ? goals.filter((goal) => goal.commandId).slice(0, 6)
-    : [];
-  const projectGroups = getTaskGroups(goals);
   const attentionItems = getAttentionItems(problems);
-  const recentActivities = activities.slice(0, 8);
-  const hasProjectTasks =
-    projectGroups.current.length > 0 || projectGroups.paused.length > 0 || projectGroups.completed.length > 0;
   const panelContext = activeView === "creation"
-    ? "当前线程与任务态势"
+    ? "当前线程态势"
     : "当前页面上下文态势";
 
   return (
@@ -170,78 +137,6 @@ export function ActivityPanel({ activities, goals, problems, collapsed, expanded
                   <MessageBubble key={message.id} msg={message as UIMessage} userImageUrl={user?.imageUrl} />
                 ))}
                 {showPendingAssistantReply ? <ChatThinkingState /> : null}
-              </div>
-            </section>
-          ) : null}
-
-          {threadGoals.length > 0 ? (
-            <section>
-              <SectionHeader title="Current Thread" meta={`${threadGoals.length} goals`} />
-              <div className="space-y-2 px-3">
-                {threadGoals.map((goal) => (
-                  <div key={goal.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <span className={cn("size-1.5 shrink-0 rounded-full", readThreadTone(goal.status))} />
-                      <div className="min-w-0 flex-1 truncate text-xs font-medium text-foreground/85">{goal.title}</div>
-                      <Badge variant="outline" className="text-[9px] uppercase tracking-[0.16em]">
-                        {goal.status}
-                      </Badge>
-                    </div>
-                    <div className="mt-1 text-[11px] text-muted-foreground/70">{formatTime(goal.updatedAt)}</div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          {hasProjectTasks ? (
-            <section>
-              <SectionHeader
-                title="Task Snapshot"
-                meta={`${goals.length} goals`}
-              />
-              <div className="space-y-3 px-3">
-                {projectGroups.current.length > 0 ? (
-                  <div>
-                    <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-sky-600/80">进行中</div>
-                    <div className="space-y-2">
-                      {projectGroups.current.map((goal) => (
-                        <div key={goal.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
-                          <div className="text-xs font-medium text-foreground/85">{goal.title}</div>
-                          <div className="mt-1 text-[11px] text-muted-foreground/70">{formatTime(goal.updatedAt)}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {projectGroups.paused.length > 0 ? (
-                  <div>
-                    <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-amber-600/80">已暂停</div>
-                    <div className="space-y-2">
-                      {projectGroups.paused.map((goal) => (
-                        <div key={goal.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
-                          <div className="text-xs font-medium text-foreground/85">{goal.title}</div>
-                          <div className="mt-1 text-[11px] text-muted-foreground/70">{formatTime(goal.updatedAt)}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {projectGroups.completed.length > 0 ? (
-                  <div>
-                    <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-600/80">最近完成</div>
-                    <div className="space-y-2">
-                      {projectGroups.completed.map((goal) => (
-                        <div key={goal.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
-                          <div className="text-xs font-medium text-foreground/85">{goal.title}</div>
-                          <div className="mt-1 text-[11px] text-muted-foreground/70">{formatTime(goal.updatedAt)}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
               </div>
             </section>
           ) : null}
@@ -273,31 +168,6 @@ export function ActivityPanel({ activities, goals, problems, collapsed, expanded
             </section>
           ) : null}
 
-          {recentActivities.length > 0 ? (
-            <section>
-              <SectionHeader title="Recent Activity" meta={`${recentActivities.length} items`} />
-              <div className="space-y-2 px-3">
-                {recentActivities.map((activity) => (
-                  <div key={activity.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">
-                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground/70">
-                      <HugeiconsIcon icon={Robot02Icon} className="size-3 text-primary/70" />
-                      <span className="font-medium text-foreground/80">{activity.agent}</span>
-                      <HugeiconsIcon icon={ArrowRight01Icon} className="size-2.5" />
-                      <span>{activity.action}</span>
-                    </div>
-                    {activity.detail ? (
-                      <div className="mt-1 text-[11px] text-muted-foreground/75">{activity.detail}</div>
-                    ) : null}
-                    {activity.reasoning ? (
-                      <div className="mt-2 rounded border border-border/25 bg-muted/20 px-2.5 py-2 text-[11px] text-foreground/70">
-                        {activity.reasoning}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </section>
-          ) : null}
         </div>
       </ScrollArea>
     </aside>

@@ -1,0 +1,57 @@
+import { settings } from "@/server/db/schema";
+import type { AppDb } from "@/server/db/types";
+import type { ControlSettings } from "@/server/types";
+
+export class SettingsService {
+  private settings: ControlSettings = {
+    autoCommit: false,
+    autoFix: true,
+    modelStrategy: "adaptive",
+  };
+
+  private constructor(private db: AppDb) {}
+
+  static async create(db: AppDb) {
+    const service = new SettingsService(db);
+    await service.load();
+    return service;
+  }
+
+  private async load() {
+    const rows = (await this.db.select().from(settings).all()) as { key: string; value: string }[];
+    for (const row of rows) {
+      if (row.key === "autoCommit") this.settings.autoCommit = row.value === "true";
+      if (row.key === "autoFix") this.settings.autoFix = row.value === "true";
+      if (row.key === "modelStrategy") this.settings.modelStrategy = row.value as ControlSettings["modelStrategy"];
+    }
+  }
+
+  get() {
+    return { ...this.settings };
+  }
+
+  async update(patch: Partial<ControlSettings>) {
+    if (patch.autoCommit !== undefined) {
+      this.settings.autoCommit = patch.autoCommit;
+      await this.db.insert(settings).values({ key: "autoCommit", value: String(patch.autoCommit) }).onConflictDoUpdate({
+        target: settings.key,
+        set: { value: String(patch.autoCommit) },
+      }).run();
+    }
+    if (patch.autoFix !== undefined) {
+      this.settings.autoFix = patch.autoFix;
+      await this.db.insert(settings).values({ key: "autoFix", value: String(patch.autoFix) }).onConflictDoUpdate({
+        target: settings.key,
+        set: { value: String(patch.autoFix) },
+      }).run();
+    }
+    if (patch.modelStrategy !== undefined) {
+      this.settings.modelStrategy = patch.modelStrategy;
+      await this.db.insert(settings).values({ key: "modelStrategy", value: patch.modelStrategy }).onConflictDoUpdate({
+        target: settings.key,
+        set: { value: patch.modelStrategy },
+      }).run();
+    }
+    return { ...this.settings };
+  }
+}

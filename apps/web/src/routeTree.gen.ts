@@ -23,7 +23,6 @@ import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
 import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
 import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
 import { Route as DashboardBoardRouteImport } from './routes/dashboard/board'
-import { Route as DashboardActivityRouteImport } from './routes/dashboard/activity'
 import { Route as ApiSettingsRouteImport } from './routes/api.settings'
 import { Route as ApiRuntimesRouteImport } from './routes/api.runtimes'
 import { Route as ApiOrganizationsRouteImport } from './routes/api.organizations'
@@ -117,11 +116,6 @@ const DashboardCalendarRoute = DashboardCalendarRouteImport.update({
 const DashboardBoardRoute = DashboardBoardRouteImport.update({
   id: '/board',
   path: '/board',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardActivityRoute = DashboardActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
   getParentRoute: () => DashboardRoute,
 } as any)
 const ApiSettingsRoute = ApiSettingsRouteImport.update({
@@ -270,7 +264,6 @@ export interface FileRoutesByFullPath {
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
   '/api/runtimes': typeof ApiRuntimesRouteWithChildren
   '/api/settings': typeof ApiSettingsRoute
-  '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
@@ -310,7 +303,6 @@ export interface FileRoutesByTo {
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
   '/api/runtimes': typeof ApiRuntimesRouteWithChildren
   '/api/settings': typeof ApiSettingsRoute
-  '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
@@ -352,7 +344,6 @@ export interface FileRoutesById {
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
   '/api/runtimes': typeof ApiRuntimesRouteWithChildren
   '/api/settings': typeof ApiSettingsRoute
-  '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
@@ -395,7 +386,6 @@ export interface FileRouteTypes {
     | '/api/organizations'
     | '/api/runtimes'
     | '/api/settings'
-    | '/dashboard/activity'
     | '/dashboard/board'
     | '/dashboard/calendar'
     | '/dashboard/creation'
@@ -435,7 +425,6 @@ export interface FileRouteTypes {
     | '/api/organizations'
     | '/api/runtimes'
     | '/api/settings'
-    | '/dashboard/activity'
     | '/dashboard/board'
     | '/dashboard/calendar'
     | '/dashboard/creation'
@@ -476,7 +465,6 @@ export interface FileRouteTypes {
     | '/api/organizations'
     | '/api/runtimes'
     | '/api/settings'
-    | '/dashboard/activity'
     | '/dashboard/board'
     | '/dashboard/calendar'
     | '/dashboard/creation'
@@ -620,13 +608,6 @@ declare module '@tanstack/react-router' {
       path: '/board'
       fullPath: '/dashboard/board'
       preLoaderRoute: typeof DashboardBoardRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/activity': {
-      id: '/dashboard/activity'
-      path: '/activity'
-      fullPath: '/dashboard/activity'
-      preLoaderRoute: typeof DashboardActivityRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/api/settings': {
@@ -801,7 +782,6 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
-  DashboardActivityRoute: typeof DashboardActivityRoute
   DashboardBoardRoute: typeof DashboardBoardRoute
   DashboardCalendarRoute: typeof DashboardCalendarRoute
   DashboardCreationRoute: typeof DashboardCreationRoute
@@ -812,7 +792,6 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
-  DashboardActivityRoute: DashboardActivityRoute,
   DashboardBoardRoute: DashboardBoardRoute,
   DashboardCalendarRoute: DashboardCalendarRoute,
   DashboardCreationRoute: DashboardCreationRoute,
