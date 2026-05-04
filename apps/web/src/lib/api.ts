@@ -304,8 +304,39 @@ export interface Problem {
   priority: ProblemPriority;
   source?: string;
   context?: string;
+  suggestedGoal?: string;
   status: ProblemStatus;
   actions: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface McpServerProfile {
+  id: string;
+  name: string;
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+  enabled: boolean;
+  scope: "global" | "project";
+  projectId?: string;
+  organizationId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SkillProfile {
+  id: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  scope: "global" | "project";
+  projectId?: string;
+  organizationId?: string;
+  sourceType: "manual" | "repository";
+  sourceUrl?: string;
+  installPath?: string;
+  manifestPath?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -403,6 +434,8 @@ export interface InboxThread {
   summary?: string;
   projectId?: string;
   conversationId?: string;
+  commandId?: string;
+  primaryGoalId?: string;
   createdByType: "user" | "agent" | "system";
   createdById?: string;
   createdByName: string;
@@ -882,7 +915,7 @@ export const api = {
         conversationId: filters?.conversationId,
       },
     });
-    return assertData(result).map(normalizeInboxThread);
+    return (assertData(result) as unknown[]).map(normalizeInboxThread);
   },
   getInboxThread: async (id: string): Promise<InboxThread> => {
     const client = createEdenClient();

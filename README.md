@@ -30,8 +30,8 @@ OrchOS provides a dashboard where you can define goals, assign agents, track pro
 ```
 OrchOS/
 ├── apps/
-│   ├── web/          # React frontend (Vite + TanStack Router)
-│   └── server/       # Elysia backend (Bun runtime) — "Cortex"
+│   ├── web/          # TanStack Start app with UI and server routes
+│   └── addons/       # Optional integration assets
 ├── packages/
 │   ├── ui/           # Shared React component stubs
 │   └── typescript-config/
@@ -41,14 +41,14 @@ OrchOS/
 
 | Layer     | Technology                                    |
 | --------- | --------------------------------------------- |
-| Frontend  | React 19, Vite, TanStack Router               |
+| Frontend  | React 19, Vite, TanStack Start, TanStack Router |
 | Styling   | Tailwind CSS v4, shadcn/ui, Motion            |
 | State     | Zustand (persisted to localStorage)           |
 | i18n      | Paraglide JS (compile-time)                   |
 | Charts    | Recharts                                      |
-| Backend   | Elysia on Bun, Drizzle ORM, SQLite (WAL mode) |
+| Backend   | TanStack Start server routes on Bun, Drizzle ORM, SQLite |
 | Real-time | WebSocket event broadcasting                  |
-| Monorepo  | Turborepo, Bun workspaces                     |
+| Workspace | Bun workspaces                                |
 
 ---
 
@@ -65,23 +65,19 @@ OrchOS/
 # Install dependencies
 bun install
 
-# Start both frontend and backend
+# Start the app
 bun run dev
 ```
 
 | App      | URL                   | Description            |
 | -------- | --------------------- | ---------------------- |
-| Frontend | http://localhost:3000 | React dashboard        |
-| Backend  | http://localhost:5173 | API server + WebSocket |
+| App      | http://localhost:3000 | Dashboard + API routes |
 
 ### Run Individually
 
 ```bash
-# Backend only
-bun --filter=server dev
-
-# Frontend only
-bun --filter=web dev
+# App only
+bun run --filter=web dev
 ```
 
 ### Build
@@ -96,18 +92,18 @@ bun run build
 
 | Command               | Description                   |
 | --------------------- | ----------------------------- |
-| `bun run dev`         | Start all apps in dev mode    |
-| `bun run build`       | Build all apps for production |
-| `bun run lint`        | Lint all packages             |
-| `bun run check-types` | Type check all packages       |
-| `bun run format`      | Format code with Prettier     |
+| `bun run dev`         | Start workspace dev tasks     |
+| `bun run build`       | Build the workspace           |
+| `bun run lint`        | Lint the repository           |
+| `bun run check-types` | Type check the workspace      |
+| `bun run format`      | Format code with Oxc          |
 
 You can also target specific apps with filters:
 
 ```bash
-bun --filter=web dev
-bun --filter=server dev
-bun --filter=web build
+bun run --filter=web dev
+bun run --filter=web build
+bun run --filter=web test
 ```
 
 ---
@@ -166,7 +162,7 @@ bun --filter=web build
 
 ## Database
 
-The backend uses **SQLite** with Drizzle ORM. The database file (`cortex.db`) is stored in `apps/server/` and uses WAL mode for concurrent reads/writes.
+The app uses **SQLite** with Drizzle ORM. By default the database file is `cortex.db` at the repository root, and the runtime can override it with `CORTEX_DB_PATH`.
 
 Tables: `commands`, `goals`, `states`, `artifacts`, `activities`, `agents`, `projects`, `settings`, `events`, `organizations`, `problems`, `rules`, `mcp_servers`, `skills`, `execution_graphs`, `execution_nodes`, `execution_edges`, `execution_attempts`, `policy_decisions`, `policy_violations`
 
@@ -179,9 +175,8 @@ Tables: `commands`, `goals`, `states`, `artifacts`, `activities`, `agents`, `pro
 ### Migrations
 
 ```bash
-cd apps/server
-bun --filter=server drizzle-kit generate
-bun --filter=server drizzle-kit migrate
+bun run --filter=web drizzle-kit generate
+bun run --filter=web drizzle-kit migrate
 ```
 
 ---
@@ -209,8 +204,7 @@ apps/web/src/
 
 ## Learn More
 
-- [Turborepo](https://turborepo.dev/docs) — Monorepo task orchestration
 - [TanStack Router](https://tanstack.com/router) — File-based routing for React
-- [Elysia](https://elysiajs.com/) — Ergonomic web framework for Bun
+- [TanStack Start](https://tanstack.com/start) — Full-stack React framework
 - [Paraglide JS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) — Compile-time i18n
 - [Drizzle ORM](https://orm.drizzle.team/) — TypeScript ORM with SQLite

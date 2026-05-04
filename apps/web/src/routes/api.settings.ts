@@ -18,7 +18,7 @@ export const Route = createFileRoute("/api/settings")({
     handlers: {
       GET: async () => {
         const service = await getSettingsService();
-        return Response.json(service.getSettings());
+        return Response.json(service.get());
       },
       PATCH: async ({ request }) => {
         const patch = (await request.json()) as {

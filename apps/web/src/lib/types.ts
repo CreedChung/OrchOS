@@ -158,6 +158,57 @@ export interface ControlSettings {
   };
 }
 
+export interface Goal {
+  id: string;
+  title: string;
+  description?: string;
+  successCriteria: string[];
+  constraints: string[];
+  status: "active" | "completed" | "paused";
+  projectId?: string;
+  commandId?: string;
+  watchers: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgentProfile {
+  id: string;
+  name: string;
+  role: string;
+  capabilities: Action[];
+  status: "idle" | "active" | "error";
+  model: string;
+  enabled: boolean;
+  cliCommand?: string;
+  currentModel?: string;
+  runtimeId?: string;
+  avatarUrl?: string;
+}
+
+export interface Rule {
+  id: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  trigger: string;
+  action: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type CommandStatus = "sent" | "executing" | "completed" | "failed";
+
+export interface Command {
+  id: string;
+  instruction: string;
+  agentNames: string[];
+  projectIds: string[];
+  goalId: string | null;
+  status: CommandStatus;
+  createdAt: string;
+}
+
 export interface Organization {
   id: string;
   name: string;
@@ -169,6 +220,7 @@ export interface Problem {
   priority: ProblemPriority;
   source?: string;
   context?: string;
+  suggestedGoal?: string;
   status: ProblemStatus;
   actions: string[];
   createdAt: string;

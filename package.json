@@ -1,19 +1,19 @@
 {
-  "name": "my-turborepo",
+  "name": "orchos",
   "private": true,
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "dev:all": "turbo run dev",
+    "build": "bun run --filter=web build",
+    "dev": "bun run --filter=web dev",
+    "dev:all": "bun run --filter=web dev",
     "lint": "oxlint . --config .oxlintrc.json --ignore-path .gitignore",
     "lint:strict": "oxlint . --config .oxlintrc.json --ignore-path .gitignore --deny-warnings",
     "format": "oxfmt --write .",
-    "check-types": "turbo run check-types",
-    "test": "turbo run test",
+    "check-types": "bun run --filter=web check-types && bun run --filter=@repo/ui check-types",
+    "test": "bun run --filter=web test",
     "prepare": "lefthook install"
   },
   "devDependencies": {
@@ -21,7 +21,6 @@
     "oxfmt": "^0.45.0",
     "oxlint": "^1.60.0",
     "prettier": "^3.7.4",
-    "turbo": "^2.9.6",
     "typescript": "5.9.2"
   },
   "engines": {

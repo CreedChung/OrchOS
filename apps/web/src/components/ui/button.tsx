@@ -58,7 +58,7 @@ function Button({
   ...props
 }: ButtonProps) {
   const resolvedClassName = cn(buttonVariants({ variant, size, className }));
-  const handleClick: React.MouseEventHandler<HTMLElement> = (event) => {
+  const handleClick = (event: Parameters<NonNullable<ButtonPrimitive.Props["onClick"]>>[0]) => {
     onClick?.(event);
 
     if (!event.defaultPrevented) {

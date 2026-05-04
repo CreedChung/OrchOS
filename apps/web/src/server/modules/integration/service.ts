@@ -72,8 +72,8 @@ const defaultIntegrations: IntegrationConfig[] = [
 export class IntegrationService {
   constructor(private db: AppDb) {}
 
-  private getIntegrations(): IntegrationConfig[] {
-    const row = this.db.select().from(settings).where(eq(settings.key, INTEGRATION_KEY)).get() as
+  private async getIntegrations(): Promise<IntegrationConfig[]> {
+    const row = (await this.db.select().from(settings).where(eq(settings.key, INTEGRATION_KEY)).get()) as
       | { key: string; value: string }
       | undefined;
     if (!row) return defaultIntegrations;
@@ -99,8 +99,8 @@ export class IntegrationService {
     }
   }
 
-  private saveIntegrations(integrations: IntegrationConfig[]) {
-    const existing = this.db.select().from(settings).where(eq(settings.key, INTEGRATION_KEY)).get() as
+  private async saveIntegrations(integrations: IntegrationConfig[]) {
+    const existing = (await this.db.select().from(settings).where(eq(settings.key, INTEGRATION_KEY)).get()) as
       | { key: string; value: string }
       | undefined;
     const value = JSON.stringify(integrations);
@@ -234,12 +234,12 @@ export class IntegrationService {
     if (config.smtp.port <= 0 || config.imap.port <= 0) throw new Error("SMTP and IMAP ports must be positive numbers");
   }
 
-  listIntegrations() {
-    return this.getIntegrations().map((item) => this.sanitizeIntegration(item));
+  async listIntegrations() {
+    return (await this.getIntegrations()).map((item) => this.sanitizeIntegration(item));
   }
 
   async connectIntegration(id: "github" | "gitlab", body: { accessToken: string; apiUrl?: string }) {
-    const integrations = this.getIntegrations();
+    const integrations = await this.getIntegrations();
     const integration = this.requireIntegration(integrations, id);
 
     if (id === "github") {
@@ -258,12 +258,12 @@ export class IntegrationService {
       integration.username = result.username;
     }
 
-    this.saveIntegrations(integrations);
+    await this.saveIntegrations(integrations);
     return this.sanitizeIntegration(integration);
   }
 
   async connectGoogleIntegration(id: "google-calendar" | "gmail", body: { clientId: string; clientSecret: string; refreshToken: string; label?: string }) {
-    const integrations = this.getIntegrations();
+    const integrations = await this.getIntegrations();
     const integration = this.requireIntegration(integrations, id);
     const credentials: OAuthCredentials = {
       clientId: body.clientId.trim(),
@@ -299,11 +299,11 @@ export class IntegrationService {
     integration.accessToken = accessToken;
     integration.username = profile.email;
     this.recomputeConnectionState(integration);
-    this.saveIntegrations(integrations);
+    await this.saveIntegrations(integrations);
     return this.sanitizeIntegration(integration);
   }
 
-  createSmtpImapAccount(body: {
+  async createSmtpImapAccount(body: {
     email: string;
     displayName?: string;
     username: string;
@@ -311,7 +311,7 @@ export class IntegrationService {
     smtp: { host: string; port: number; secure: boolean };
     imap: { host: string; port: number; secure: boolean };
   }) {
-    const integrations = this.getIntegrations();
+    const integrations = await this.getIntegrations();
     const integration = this.requireIntegration(integrations, "smtp-imap");
     const account: IntegrationAccount = {
       id: this.createAccountId("smtp-imap"),
@@ -337,6 +337,10 @@ export class IntegrationService {
       },
     };
 
+    if (!account.smtpImap) {
+      throw new Error("SMTP / IMAP configuration is required");
+    }
+
     this.validateSmtpImapConfig(account.smtpImap);
     const existingIndex = integration.accounts.findIndex((item) => item.email === account.email);
     if (existingIndex >= 0) {
@@ -347,12 +351,12 @@ export class IntegrationService {
 
     integration.username = account.email;
     this.recomputeConnectionState(integration);
-    this.saveIntegrations(integrations);
+    await this.saveIntegrations(integrations);
     return this.sanitizeIntegration(integration);
   }
 
-  deleteIntegrationAccount(id: string, accountId: string) {
-    const integrations = this.getIntegrations();
+  async deleteIntegrationAccount(id: string, accountId: string) {
+    const integrations = await this.getIntegrations();
     const integration = this.requireIntegration(integrations, id);
     integration.accounts = integration.accounts.filter((account) => account.id !== accountId);
     if (integration.accounts.length === 0) {
@@ -360,19 +364,19 @@ export class IntegrationService {
       integration.username = undefined;
     }
     this.recomputeConnectionState(integration);
-    this.saveIntegrations(integrations);
+    await this.saveIntegrations(integrations);
     return this.sanitizeIntegration(integration);
   }
 
-  disconnectIntegration(id: string) {
-    const integrations = this.getIntegrations();
+  async disconnectIntegration(id: string) {
+    const integrations = await this.getIntegrations();
     const integration = this.requireIntegration(integrations, id);
     integration.connected = false;
     integration.accessToken = undefined;
     integration.apiUrl = undefined;
     integration.username = undefined;
     integration.accounts = [];
-    this.saveIntegrations(integrations);
+    await this.saveIntegrations(integrations);
     return { success: true };
   }
 }

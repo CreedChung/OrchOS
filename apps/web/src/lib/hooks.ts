@@ -33,7 +33,3 @@ export function useSettings() {
 export function useProjects() {
   return useAsyncData(() => api.listProjects());
 }
-
-export function useHistory(goalId?: string, limit?: number) {
-  return useAsyncData(() => api.getHistory(goalId, limit), [goalId, limit]);
-}

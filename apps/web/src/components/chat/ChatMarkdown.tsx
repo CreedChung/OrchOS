@@ -55,7 +55,7 @@ function FilePathInline({ path }: { path: string }) {
   );
 }
 
-function getCodeText(children: ReactNode) {
+function getCodeText(children: ReactNode): string {
   if (typeof children === "string") return children;
   if (Array.isArray(children)) return children.map((child) => getCodeText(child)).join("");
   if (children && typeof children === "object" && "props" in children) {

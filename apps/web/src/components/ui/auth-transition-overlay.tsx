@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Player } from "@remotion/player";
+import type { PlayerRef } from "@remotion/player";
 import { GridPixelateWipe } from "@/components/ui/grid-pixelate-wipe";
 
 interface AuthTransitionOverlayProps {
@@ -51,10 +52,28 @@ function AuthScene({ reveal }: { reveal: boolean }) {
 export function AuthTransitionOverlay({ active, reveal, onComplete }: AuthTransitionOverlayProps) {
   const [shouldPlay, setShouldPlay] = useState(false);
   const completedRef = useRef(false);
+  const playerRef = useRef<PlayerRef>(null);
 
   useEffect(() => {
     completedRef.current = false;
   }, [active]);
+
+  useEffect(() => {
+    if (!shouldPlay || !playerRef.current) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      if (completedRef.current) {
+        return;
+      }
+
+      completedRef.current = true;
+      onComplete?.();
+    }, (TRANSITION_DURATION_FRAMES / TRANSITION_FPS) * 1000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [onComplete, shouldPlay]);
 
   useEffect(() => {
     if (!active) {
@@ -93,6 +112,7 @@ export function AuthTransitionOverlay({ active, reveal, onComplete }: AuthTransi
   return (
     <div className="pointer-events-none fixed inset-0 z-[120] overflow-hidden" aria-hidden="true">
       <Player
+        ref={playerRef}
         component={AuthScene}
         inputProps={{ reveal }}
         durationInFrames={TRANSITION_DURATION_FRAMES}
@@ -103,14 +123,6 @@ export function AuthTransitionOverlay({ active, reveal, onComplete }: AuthTransi
         autoPlay
         clickToPlay={false}
         style={{ width: "100%", height: "100%" }}
-        onEnded={() => {
-          if (completedRef.current) {
-            return;
-          }
-
-          completedRef.current = true;
-          onComplete?.();
-        }}
       />
     </div>
   );

@@ -135,21 +135,23 @@ export const Route = createFileRoute("/api/chat")({
 
             const textPartId = `${message.id || "assistant"}-text`;
 
-            writer.write({
-              type: message.error ? "tool-output-error" : "tool-output-available",
-              toolCallId: runRuntimeToolCallId,
-              ...(message.error
-                ? {
-                    errorText: message.error,
-                  }
-                : {
-                    output: {
-                      status: "completed",
-                      responseTime: message.responseTime,
-                      textLength: (message.content || "").length,
-                    },
-                  }),
-            });
+            if (message.error) {
+              writer.write({
+                type: "tool-output-error",
+                toolCallId: runRuntimeToolCallId,
+                errorText: message.error,
+              });
+            } else {
+              writer.write({
+                type: "tool-output-available",
+                toolCallId: runRuntimeToolCallId,
+                output: {
+                  status: "completed",
+                  responseTime: message.responseTime,
+                  textLength: (message.content || "").length,
+                },
+              });
+            }
 
             writer.write({
               type: "start",

@@ -292,7 +292,7 @@ export function BoardView({ boardFilter }: BoardViewProps) {
                                 <div className="flex min-w-0 items-center gap-2">
                                   {runtimeIcon ? (
                                     <div className="inline-flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground/80">
-                                      <HugeiconsIcon icon={runtimeIcon} className="size-3 text-primary/80" />
+                                      <img src={runtimeIcon} alt="" className="size-3 object-contain" />
                                       {runtimeLabel}
                                     </div>
                                   ) : null}

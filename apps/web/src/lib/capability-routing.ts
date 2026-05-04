@@ -8,6 +8,7 @@ export function isCapabilityView(_view: SidebarView): _view is CapabilityView {
 }
 
 export function getCapabilityPath(view: CapabilityView, mode: CapabilityViewMode): string {
+  void view;
   return mode === "market" ? "/dashboard" : "/dashboard";
 }
 

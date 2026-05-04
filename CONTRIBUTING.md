@@ -67,34 +67,30 @@ cd OrchOS
 # Install dependencies
 bun install
 
-# Start development servers
+# Start the app
 bun run dev
 ```
 
 | App      | URL                   | Description            |
 | -------- | --------------------- | ---------------------- |
-| Frontend | http://localhost:3000 | React dashboard        |
-| Backend  | http://localhost:5173 | API server + WebSocket |
+| App      | http://localhost:3000 | Dashboard + API routes |
 
 ### Run Individually
 
 ```bash
-# Backend only
-bun --filter=server dev
-
-# Frontend only
-bun --filter=web dev
+# App only
+bun run --filter=web dev
 ```
 
 ### Useful Commands
 
 | Command               | Description                |
 | --------------------- | -------------------------- |
-| `bun run dev`         | Start all apps in dev mode |
-| `bun run build`       | Build all apps             |
-| `bun run lint`        | Lint all packages          |
-| `bun run check-types` | Type check all packages    |
-| `bun run format`      | Format code with Prettier  |
+| `bun run dev`         | Start workspace dev tasks |
+| `bun run build`       | Build the workspace       |
+| `bun run lint`        | Lint the repository       |
+| `bun run check-types` | Type check the workspace  |
+| `bun run format`      | Format code with Oxc      |
 
 ---
 
@@ -103,8 +99,8 @@ bun --filter=web dev
 ```
 OrchOS/
 ├── apps/
-│   ├── web/          # React frontend (Vite + TanStack Router)
-│   └── server/       # Elysia backend (Bun runtime) — "Cortex"
+│   ├── web/          # TanStack Start app with UI and server routes
+│   └── addons/       # Optional integration assets
 ├── packages/
 │   ├── ui/           # Shared React components
 │   └── typescript-config/
@@ -114,21 +110,22 @@ OrchOS/
 
 | Layer     | Technology                                    |
 | --------- | --------------------------------------------- |
-| Frontend  | React 19, Vite, TanStack Router               |
+| Frontend  | React 19, Vite, TanStack Start, TanStack Router |
 | Styling   | Tailwind CSS v4, shadcn/ui, Motion            |
 | State     | Zustand (persisted to localStorage)           |
 | i18n      | Paraglide JS (compile-time)                   |
-| Backend   | Elysia on Bun, Drizzle ORM, SQLite (WAL mode) |
+| Backend   | TanStack Start server routes on Bun, Drizzle ORM, SQLite |
 | Real-time | WebSocket event broadcasting                  |
-| Monorepo  | Turborepo, Bun workspaces                     |
+| Workspace | Bun workspaces                                |
 
 ### Key Directories
 
 - **`apps/web/src/components/`** — UI components, dialogs, layout, pages
 - **`apps/web/src/lib/`** — Utilities, API client, store, i18n, hooks
-- **`apps/web/src/routes/`** — TanStack Router file-based routes
-- **`apps/server/src/modules/`** — Backend feature modules (goal, agent, command, etc.)
-- **`apps/server/src/db/`** — Database schema, migrations, seed data
+- **`apps/web/src/routes/`** — UI pages and API route handlers
+- **`apps/web/src/server/modules/`** — Server-side feature modules
+- **`apps/web/src/server/db/`** — Database schema and shared DB types
+- **`apps/web/src/server/bun/`** — Bun runtime, DB driver, and migration wiring
 
 ---
 
@@ -181,18 +178,17 @@ git rebase upstream/main
   - Styles: use Tailwind CSS classes
 - Use **Paraglide JS** for all user-facing strings — never hardcode text
 
-### Backend (Elysia)
+### Backend
 
-- Follow the **module pattern**: each feature has `index.ts` (controller), `service.ts`, and `model.ts`
+- Follow the existing server module pattern under `apps/web/src/server/modules/`
 - Use **Drizzle ORM** for all database operations — never write raw SQL
 - Use the **EventBus** for cross-module communication
-- Use **Elysia's type system** (`t.Object`, `t.String`, etc.) for request/response validation
 - Keep service methods **static** on abstract classes (follow existing pattern)
 
 ### Database
 
-- Add new tables to `apps/server/src/db/schema.ts`
-- Add migrations to the `migrate()` function in `apps/server/src/db/index.ts`
+- Add new tables to the schema under `apps/web/src/server/db/`
+- Keep runtime migration wiring in sync under `apps/web/src/server/bun/`
 - Always add appropriate indexes for foreign keys
 
 ---

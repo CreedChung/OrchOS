@@ -20,7 +20,7 @@ import {
   UnfoldMoreIcon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
-import { cn } from "@/lib/utils";
+import { cn, getRuntimeIcon } from "@/lib/utils";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Spinner } from "@/components/ui/spinner";
 import { AppleSwitch } from "@/components/unlumen-ui/apple-switch";
@@ -860,7 +860,7 @@ export function SettingsDialog({
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">{m.server()}</span>
-                    <span className="font-medium text-foreground">Elysia</span>
+                    <span className="font-medium text-foreground">TanStack Start</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">{m.ui()}</span>

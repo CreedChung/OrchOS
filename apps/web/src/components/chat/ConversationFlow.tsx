@@ -7,16 +7,30 @@ import { ChatMarkdown } from "@/components/chat/ChatMarkdown";
 import { ChatReasoningDrawer } from "@/components/chat/ChatReasoningDrawer";
 import { ChatToolTimeline } from "@/components/chat/ChatToolTimeline";
 
+type ConversationUiPart =
+  | { type: "text"; text: string }
+  | { type: "reasoning"; text: string }
+  | { type: "clarification"; summary?: string; questions: string[] }
+  | ToolConversationUiPart;
+
+type ToolConversationUiPart = Record<string, unknown> & {
+  type: `tool-${string}`;
+  state?: string;
+  input?: unknown;
+  output?: unknown;
+  errorText?: string;
+};
+
 function prettifyToolName(name: string) {
   return name
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function buildMessageParts(message: ConversationMessage): Array<Record<string, unknown>> {
-  const parts: Array<Record<string, unknown>> = [];
+function buildMessageParts(message: ConversationMessage): ConversationUiPart[] {
+  const parts: ConversationUiPart[] = [];
   let reasoningBuffer = "";
-  const toolPartsByCallId = new Map<string, Record<string, unknown>>();
+  const toolPartsByCallId = new Map<string, ToolConversationUiPart>();
   const clarificationQuestions = message.clarificationQuestions ?? [];
 
   const flushReasoning = () => {
@@ -46,7 +60,7 @@ function buildMessageParts(message: ConversationMessage): Array<Record<string, u
         continue;
       }
 
-      const toolPart: Record<string, unknown> = {
+      const toolPart: ToolConversationUiPart = {
         id: toolCallId,
         type: `tool-${event.toolName}`,
         toolCallId,
@@ -100,6 +114,7 @@ export function mapConversationMessagesToUiMessages(messages: ConversationMessag
 
 export function MessageBubble({ msg, userImageUrl }: { msg: UIMessage; userImageUrl?: string }) {
   const isUser = msg.role === "user";
+  const parts = msg.parts as ConversationUiPart[];
   const metadata = (msg.metadata ?? {}) as {
     responseTime?: number;
     error?: string;
@@ -137,7 +152,7 @@ export function MessageBubble({ msg, userImageUrl }: { msg: UIMessage; userImage
           <span className="font-medium text-foreground/60">{isUser ? m.user() : m.assistant()}</span>
           {metadata.responseTime != null && <span className="opacity-50">{formatDuration(metadata.responseTime)}</span>}
         </div>
-        {msg.parts.map((part, index) => {
+        {parts.map((part, index) => {
           if (part.type === "text") {
             return (
               <div key={`${msg.id}-${index}`} className="text-sm leading-7 text-foreground/90">
@@ -154,8 +169,8 @@ export function MessageBubble({ msg, userImageUrl }: { msg: UIMessage; userImage
             return (
               <ChatClarificationCard
                 key={`${msg.id}-${index}`}
-                summary={typeof part.summary === "string" ? part.summary : undefined}
-                questions={Array.isArray(part.questions) ? part.questions.map(String) : []}
+                summary={part.summary}
+                questions={part.questions}
               />
             );
           }

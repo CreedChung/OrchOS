@@ -9,13 +9,20 @@ import { getRemoteExecutionAdapter } from "../../runtime/execution-adapter";
 import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
 
+type ExecutorModule = {
+  executor: {
+    cloneProject: (
+      repositoryUrl: string,
+      destinationPath: string,
+      options?: { force?: boolean },
+    ) => Promise<{ success: boolean; output: string; error?: string }>;
+    run?: (command: string) => Promise<{ success: boolean; output: string; error?: string }>;
+    git?: (command: string) => Promise<{ success: boolean; output: string; error?: string }>;
+  };
+};
+
 async function getExecutor() {
-  try {
-    const { executor } = await import("../execution/executor");
-    return executor;
-  } catch {
-    return null;
-  }
+  return null as ExecutorModule["executor"] | null;
 }
 
 export abstract class ProjectService {
@@ -163,19 +170,15 @@ export abstract class ProjectService {
     const targetPath = join(project.path, repoName);
 
     if (existsSync(targetPath)) {
-      if (options.force) {
-        await executor.run(`rm -rf "${targetPath}"`);
-      } else {
-        return {
-          success: false,
-          output: "",
-          error: `Directory "${targetPath}" already exists. Use force option to overwrite.`,
-          path: targetPath,
-        };
-      }
+      return {
+        success: false,
+        output: "",
+        error: `Directory "${targetPath}" already exists. Use force option to overwrite.`,
+        path: targetPath,
+      };
     }
 
-    const result = await executor.git(`clone "${project.repositoryUrl}" "${targetPath}"`);
+    const result = await executor.cloneProject(project.repositoryUrl, targetPath, options);
 
     return {
       success: result.success,

@@ -37,7 +37,7 @@ export const CAPABILITY_COLORS: Record<string, { bg: string; text: string; borde
 };
 
 export function getCapabilityOptions(skills: SkillProfile[]) {
-  const seen = new Set(BUILTIN_CAPABILITY_OPTIONS.map((cap) => cap.value));
+  const seen = new Set<string>(BUILTIN_CAPABILITY_OPTIONS.map((cap) => cap.value));
   const marketOptions = skills
     .filter((skill) => skill.enabled)
     .map((skill) => skill.name.trim())

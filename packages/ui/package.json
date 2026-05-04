@@ -7,7 +7,6 @@
   },
   "scripts": {
     "lint": "oxlint . --config ../../.oxlintrc.json --ignore-path ../../.gitignore",
-    "generate:component": "turbo gen react-component",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {

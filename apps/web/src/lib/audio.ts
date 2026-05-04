@@ -41,7 +41,7 @@ function ensureAudioReady() {
   audioReadyPromise ??= ensureReady().catch((error) => {
     audioReadyPromise = null;
     throw error;
-  });
+  }) as unknown as Promise<void>;
 
   return audioReadyPromise;
 }
@@ -70,5 +70,6 @@ export async function playUiSound(soundId: SoundId, fallbackFile?: string) {
   }
 
   const audio = new Audio(fallbackFile);
+  audio.currentTime = 0;
   await audio.play();
 }

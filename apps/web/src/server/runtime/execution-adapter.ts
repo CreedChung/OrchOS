@@ -1,4 +1,15 @@
-import type { ExecutionResult, ExecutorConfig } from "../modules/execution/executor";
+export interface ExecutionResult {
+  success: boolean;
+  output: string;
+  error?: string;
+  exitCode?: number;
+}
+
+export interface ExecutorConfig {
+  cwd?: string;
+  env?: Record<string, string>;
+  timeout?: number;
+}
 
 export interface ProjectExecutionTarget {
   id: string;

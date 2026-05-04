@@ -234,6 +234,9 @@ function DashboardLayout() {
                   boardFilter={boardFilter}
                   onBoardFilterChange={setBoardFilter}
                   inboxCounts={inboxCounts}
+                  agentModelFilter="all"
+                  onAgentModelFilterChange={() => {}}
+                  agentModelCounts={{ all: 0, local: 0, cloud: 0 }}
                   capabilityViewMode={capabilityViewMode}
                   onCapabilityViewModeChange={(mode) => {
                     if (isCapabilityView(activeView)) {

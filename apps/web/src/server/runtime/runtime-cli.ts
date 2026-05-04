@@ -38,7 +38,13 @@ const AGENT_CLI_REGISTRY = [
 export async function runRuntimeCommand(command: string, config: RuntimeExecutorConfig = {}): Promise<RuntimeExecutionResult> {
   const remoteAdapter = getRemoteExecutionAdapter();
   if (remoteAdapter) {
-    return remoteAdapter.run(command, config);
+    const result = await remoteAdapter.run(command, config);
+    return {
+      success: result.success,
+      output: result.output,
+      error: result.error,
+      exitCode: result.exitCode ?? (result.success ? 0 : 1),
+    };
   }
   const spawnFn = await getSpawn();
   if (!spawnFn) {
@@ -114,12 +120,13 @@ export async function runtimeHealthCheck(runtimeId: string, options?: { level?: 
 export async function getRuntimeCurrentModel(runtimeId: string, fallbackModel?: string) {
   const agent = AGENT_CLI_REGISTRY.find((a) => a.id === runtimeId);
   if (!agent) return { model: fallbackModel, source: "registry" as const };
-  if (agent.modelQuery) {
-    const result = await runRuntimeCommand(agent.modelQuery.cmd);
+  const modelQuery = "modelQuery" in agent ? agent.modelQuery : undefined;
+  if (modelQuery) {
+    const result = await runRuntimeCommand(modelQuery.cmd);
     if (result.success && result.output.trim()) {
       let modelOutput = result.output.trim().split("\n")[0]?.trim() ?? "";
-      if (agent.modelQuery.extractPattern) {
-        const match = result.output.match(new RegExp(agent.modelQuery.extractPattern, "i"));
+      if (modelQuery.extractPattern) {
+        const match = result.output.match(new RegExp(modelQuery.extractPattern, "i"));
         if (match) modelOutput = match[0].trim();
       }
       return { model: modelOutput, source: "cli" as const, rawOutput: result.output.trim() };

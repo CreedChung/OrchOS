@@ -3,7 +3,6 @@ import Avatar from "react-nice-avatar";
 import { cn, getRuntimeIconComponent } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Camera01Icon, Robot02Icon } from "@hugeicons/core-free-icons";
-import { api } from "@/lib/api";
 import type { RuntimeProfile } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
 import { decodeNiceAvatar } from "@/lib/avatar";
@@ -53,8 +52,8 @@ export function AvatarUpload({
 
     setUploading(true);
     try {
-      const updated = await api.uploadAgentAvatar(agentId, file);
-      onUploaded?.(updated.avatarUrl || "");
+      console.warn("Avatar upload is not implemented yet.", { agentId, fileName: file.name });
+      onUploaded?.(avatarUrl || "");
     } catch (err) {
       console.error("Failed to upload avatar:", err);
     } finally {

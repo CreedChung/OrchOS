@@ -14,6 +14,7 @@ import {
   type ProblemSummary,
   type RuntimeProfile,
 } from "@/lib/api";
+import type { AgentModelFilter } from "@/components/layout/Toolbar";
 import { useUIStore } from "@/lib/store";
 import { useDashboardCache } from "@/lib/dashboard-cache";
 import type {
@@ -53,8 +54,6 @@ function getViewFromPath(pathname: string): DashboardView {
   ];
   return validViews.includes(segment as DashboardView) ? (segment as DashboardView) : "inbox";
 }
-
-export type { AgentModelFilter } from "@/components/layout/Toolbar";
 
 interface InboxCounts {
   all: number;
@@ -101,6 +100,8 @@ interface DashboardContextType {
 
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  agentModelFilter: AgentModelFilter;
+  setAgentModelFilter: (filter: AgentModelFilter) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
