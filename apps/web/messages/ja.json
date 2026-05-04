@@ -97,6 +97,7 @@
   "auto_mode_off_desc": "手動モード — 各アクションを承認",
   "auto_mode_on_desc": "問題が発生するとシステムが自動修正",
   "automation_rules": "自動化ルール",
+  "agents": "Agents",
   "available": "利用可能",
   "build_failed": "ビルド失敗",
   "build_success": "ビルド成功",
@@ -594,6 +595,7 @@
   "voice_input_stop": "音声入力を停止",
   "set_as_default": "デフォルトに設定",
   "workspace": "ワークスペース",
+  "todo_list": "To-do リスト",
   "collapse_sidebar": "サイドバーを折りたたむ",
   "expand_sidebar": "サイドバーを展開"
 }

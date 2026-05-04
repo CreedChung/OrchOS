@@ -97,6 +97,7 @@
   "auto_mode_off_desc": "手动模式 — 您批准每个操作",
   "auto_mode_on_desc": "系统将自动修复出现的问题",
   "automation_rules": "自动化规则",
+  "agents": "Agents",
   "available": "可用",
   "build_failed": "构建失败",
   "build_success": "构建成功",
@@ -593,6 +594,7 @@
   "voice_input_stop": "停止语音输入",
   "set_as_default": "设为默认",
   "workspace": "工作区",
+  "todo_list": "代办清单",
   "collapse_sidebar": "收起侧边栏",
   "expand_sidebar": "展开侧边栏"
 }

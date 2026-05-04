@@ -97,6 +97,7 @@
   "auto_mode_off_desc": "手動模式 — 您批准每個操作",
   "auto_mode_on_desc": "系統將自動修復出現的問題",
   "automation_rules": "自動化規則",
+  "agents": "Agents",
   "available": "可用",
   "build_failed": "建置失敗",
   "build_success": "建置成功",
@@ -593,6 +594,7 @@
   "voice_input_stop": "停止語音輸入",
   "set_as_default": "設為預設",
   "workspace": "工作區",
+  "todo_list": "待辦清單",
   "collapse_sidebar": "收起側邊欄",
   "expand_sidebar": "展開側邊欄"
 }

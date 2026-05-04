@@ -1,5 +1,5 @@
 import { ComponentFileViewerWrapper, type ApiComponent } from "@/components/ui/file-viewer-wrapper";
-import { useLocale } from "@/lib/useI18n";
+import { useLocale } from "@/lib/reminder";
 
 function getChangelogMarkdown(locale: string) {
   if (locale === "zh-CN") {

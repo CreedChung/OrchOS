@@ -65,6 +65,8 @@ export function CreationView({
   const setCreationSidebarWidth = useUIStore((s) => s.setCreationSidebarWidth);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [convToDelete, setConvToDelete] = useState<string | null>(null);
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+  const [showExpandedContent, setShowExpandedContent] = useState(!creationSidebarCollapsed);
   const autoCreatingConversationRef = useRef(false);
 
   const {
@@ -133,6 +135,18 @@ export function CreationView({
       loadMessages(activeConversationId);
     }
   }, [activeConversationId, loadMessages]);
+
+  useEffect(() => {
+    if (creationSidebarCollapsed) {
+      const timer = window.setTimeout(() => {
+        setShowExpandedContent(false);
+      }, 180);
+
+      return () => window.clearTimeout(timer);
+    }
+
+    setShowExpandedContent(true);
+  }, [creationSidebarCollapsed]);
 
   const handleNewConversation = useCallback(async () => {
     if (
@@ -213,15 +227,17 @@ export function CreationView({
       event.preventDefault();
       const sidebarEl = event.currentTarget.parentElement;
       const sidebarLeft = sidebarEl?.getBoundingClientRect().left ?? 0;
+      setIsResizingSidebar(true);
       document.body.style.cursor = "col-resize";
       document.body.style.userSelect = "none";
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
-        const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 240), 360);
+        const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 420);
         setCreationSidebarWidth(nextWidth);
       };
 
       const handlePointerUp = () => {
+        setIsResizingSidebar(false);
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
         window.removeEventListener("pointermove", handlePointerMove);
@@ -268,11 +284,13 @@ export function CreationView({
   );
 
   return (
-    <div className="flex flex-1 overflow-hidden">
+    <div className="flex min-h-0 flex-1 overflow-hidden">
       <div
         className={cn(
-          "relative shrink-0 border-r border-border bg-card transition-[width] duration-200",
-          creationSidebarCollapsed ? "w-14" : "w-[var(--creation-sidebar-width)]",
+          "relative flex min-h-0 shrink-0 flex-col overflow-visible border-r border-border bg-card transition-[width] duration-300 ease-out",
+          creationSidebarCollapsed
+            ? "w-0 border-r-transparent"
+            : "w-[var(--creation-sidebar-width)]",
         )}
         style={
           creationSidebarCollapsed
@@ -280,9 +298,14 @@ export function CreationView({
             : ({ "--creation-sidebar-width": `${creationSidebarWidth}px` } as React.CSSProperties)
         }
       >
-        <div className="flex h-14 items-center justify-between border-b border-border px-4">
-          {!creationSidebarCollapsed ? (
-            <>
+        <div
+          className={cn(
+            "border-b border-border p-2 transition-opacity duration-300 ease-out",
+            !showExpandedContent && "pointer-events-none absolute inset-x-0 top-0 opacity-0",
+          )}
+          aria-hidden={!showExpandedContent}
+        >
+            <div className="flex h-10 items-center justify-between rounded-md px-2">
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-foreground">{m.creation()}</div>
               </div>
@@ -308,24 +331,17 @@ export function CreationView({
                   <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
                 </Button>
               </div>
-            </>
-          ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              className="absolute right-1.5 top-1/2 z-10 -translate-y-1/2 active:-translate-y-1/2"
-              onClick={toggleCreationSidebar}
-              title={m.expand_sidebar()}
-            >
-              <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-            </Button>
-          )}
+            </div>
         </div>
 
-        {!creationSidebarCollapsed ? (
-          <>
-            <ScrollArea className="h-[calc(100%-5.5rem)]">
+        <div
+          className={cn(
+            "min-h-0 flex flex-1 flex-col transition-opacity duration-300 ease-out",
+            !showExpandedContent && "pointer-events-none opacity-0",
+          )}
+          aria-hidden={!showExpandedContent}
+        >
+          <ScrollArea className="min-h-0 flex-1">
               <div className="space-y-0.5 p-1.5">
                 {availableConversations.map((conversation) => {
                   const isActive = conversation.id === activeConversationId;
@@ -373,40 +389,73 @@ export function CreationView({
                   </div>
                 ) : null}
               </div>
-            </ScrollArea>
+          </ScrollArea>
 
-            <div className="flex items-center justify-center gap-1 border-t border-border px-2 py-2.5">
-              {creationFilterButtons.map((filter) => (
-                <button
-                  key={filter.value}
-                  type="button"
-                  onClick={() => setCreationArchiveFilter(filter.value)}
-                  aria-pressed={creationArchiveFilter === filter.value}
-                  title={filter.label}
-                  className={cn(
-                    "inline-flex size-8 items-center justify-center rounded-md transition-colors",
-                    creationArchiveFilter === filter.value
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                  )}
-                >
-                  <HugeiconsIcon icon={filter.icon} className={cn("size-3.5", filter.iconClassName)} />
-                </button>
-              ))}
+          <div className="border-t border-border p-2">
+            <div className="flex h-10 items-center justify-center gap-1 rounded-md px-2">
+                {creationFilterButtons.map((filter) => (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    onClick={() => setCreationArchiveFilter(filter.value)}
+                    aria-pressed={creationArchiveFilter === filter.value}
+                    title={filter.label}
+                    className={cn(
+                      "inline-flex size-8 items-center justify-center rounded-md transition-colors",
+                      creationArchiveFilter === filter.value
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                    )}
+                  >
+                    <HugeiconsIcon icon={filter.icon} className={cn("size-3.5", filter.iconClassName)} />
+                  </button>
+                ))}
             </div>
+          </div>
 
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize creation sidebar"
+            onPointerDown={handleResizeStart}
+            className={cn(
+              "group absolute top-0 right-[-8px] z-20 flex h-full w-4 cursor-col-resize items-center justify-center",
+              isResizingSidebar && "before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-[repeating-linear-gradient(to_bottom,theme(colors.sky.500)_0_6px,transparent_6px_12px)]",
+            )}
+          >
             <div
-              role="separator"
-              aria-orientation="vertical"
-              aria-label="Resize creation sidebar"
-              onPointerDown={handleResizeStart}
-              className="absolute top-0 right-[-4px] z-10 h-full w-2 cursor-col-resize rounded-full transition-colors hover:bg-primary/15"
-            />
-          </>
-        ) : null}
+              className={cn(
+                "flex h-12 w-2 items-center justify-center rounded-full border border-border bg-card shadow-sm transition-[background-color,border-color,transform,box-shadow,opacity] duration-150 ease-out group-hover:bg-muted group-hover:scale-100 group-hover:shadow-md",
+                isResizingSidebar
+                  ? "border-border bg-muted scale-100 shadow-md"
+                  : "scale-95",
+                !showExpandedContent && "opacity-0",
+              )}
+            >
+              <div
+                className={cn(
+                  "h-7 w-px rounded-full bg-border transition-[height,background-color,opacity] duration-150 ease-out group-hover:h-8 group-hover:bg-foreground/35",
+                  isResizingSidebar && "opacity-0",
+                )}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="relative flex flex-1 flex-col overflow-hidden">
+        {creationSidebarCollapsed ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="absolute left-4 top-2 z-20 active:-translate-y-0"
+            onClick={toggleCreationSidebar}
+            title={m.expand_sidebar()}
+          >
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+          </Button>
+        ) : null}
         {!hasLoadedConversations && isLoadingConversations ? (
           <div className="flex h-full items-center justify-center">
             <Spinner className="text-muted-foreground/50" />

@@ -138,17 +138,17 @@ export function Sidebar({
           label: m.creation(),
           shortcut: `${isMac ? "Cmd" : "Ctrl"}+K`,
         },
-        {
-          id: "board",
-          to: "/dashboard/board",
-          icon: DashboardCircleIcon,
-          label: "看板",
-        },
       ],
     },
     {
       label: m.workspace(),
       items: [
+        {
+          id: "board",
+          to: "/dashboard/board",
+          icon: DashboardCircleIcon,
+          label: "To do",
+        },
         {
           id: "calendar",
           to: "/dashboard/calendar",
@@ -167,16 +167,16 @@ export function Sidebar({
       label: m.observability(),
       items: [
         {
+          id: "devices",
+          to: "/dashboard/devices",
+          icon: ComputerIcon,
+          label: m.agents(),
+        },
+        {
           id: "observability",
           to: "/dashboard/observability",
           icon: AiBrain01Icon,
           label: m.observability(),
-        },
-        {
-          id: "devices",
-          to: "/dashboard/devices",
-          icon: ComputerIcon,
-          label: "本地设备",
         },
       ],
     },

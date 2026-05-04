@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import Header from "@/components/layout/Header";
 import { m } from "@/paraglide/messages";
-import { useLocale } from "@/lib/useI18n";
+import { useLocale } from "@/lib/reminder";
 import { Button } from "@/components/ui/button";
 import { FeaturesBento } from "@/components/ui/features-bento";
 import Footer from "@/components/layout/Footer";

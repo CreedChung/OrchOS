@@ -10,7 +10,10 @@ export const Route = createFileRoute("/api/integrations")({
   server: {
     handlers: {
       GET: async () => {
-        return Response.json((await getService()).listIntegrations());
+        const service = await getService();
+        const integrations = await service.listIntegrations();
+
+        return Response.json(integrations);
       },
     },
   },

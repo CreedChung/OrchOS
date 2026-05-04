@@ -7,7 +7,7 @@ import { ActivityPanel } from "@/components/panels/ActivityPanel";
 import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toolbar } from "@/components/layout/Toolbar";
-import { I18nProvider } from "@/lib/useI18n";
+import { I18nProvider } from "@/lib/reminder";
 import { useUIStore } from "@/lib/store";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
 import { AuthTransitionOverlay } from "@/components/ui/auth-transition-overlay";

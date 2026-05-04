@@ -517,7 +517,8 @@ export const api = {
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
-    return (await response.json()) as Integration[];
+    const payload = (await response.json()) as unknown;
+    return Array.isArray(payload) ? (payload as Integration[]) : [];
   },
   connectIntegration: async (
     id: "github" | "gitlab",

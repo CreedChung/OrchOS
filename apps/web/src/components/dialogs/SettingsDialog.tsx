@@ -38,7 +38,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useLocale } from "@/lib/useI18n";
+import { useLocale } from "@/lib/reminder";
 import { AVAILABLE_LOCALES } from "@/lib/i18n";
 import { playUiSound } from "@/lib/audio";
 import { m } from "@/paraglide/messages";

@@ -80,6 +80,11 @@ function MailPage() {
 
           <ScrollArea className="h-[calc(100%-2.75rem)]">
             <div className="space-y-2 p-3">
+              <div className="rounded-lg border border-border/60 bg-muted/25 px-3 py-2.5">
+                <div className="text-sm font-semibold text-foreground">{m.mail_google_title()}</div>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{m.mail_google_desc()}</p>
+              </div>
+
               {plannedAccounts.map((account) => {
                 const isActive = account.id === activeAccount?.id;
 
@@ -180,7 +185,7 @@ function MailPage() {
                     </span>
                   </div>
 
-                  <div className="mt-5 rounded-xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
+                  <div className="mt-5 rounded-xl border border-border/60 bg-muted/25 px-4 py-8 text-center text-sm text-muted-foreground">
                     Mail integration setup UI will land here next.
                   </div>
                 </div>

@@ -97,6 +97,7 @@
   "auto_mode_off_desc": "수동 모드 — 각 작업을 직접 승인",
   "auto_mode_on_desc": "시스템이 문제 발생 시 자동으로 수정",
   "automation_rules": "자동화 규칙",
+  "agents": "Agents",
   "available": "사용 가능",
   "build_failed": "빌드 실패",
   "build_success": "빌드 성공",
@@ -594,6 +595,7 @@
   "voice_input_stop": "음성 입력 중지",
   "set_as_default": "기본값으로 설정",
   "workspace": "작업공간",
+  "todo_list": "할 일 목록",
   "collapse_sidebar": "사이드바 접기",
   "expand_sidebar": "사이드바 펼치기"
 }

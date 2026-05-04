@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { events } from "@/server/db/schema";
 import { getLocalDb } from "@/server/runtime/local-db";
 
 export const Route = createFileRoute("/api/observability/throughput")({
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/api/observability/throughput")({
         const url = new URL(request.url);
         const range = url.searchParams.get("range") || "24h";
         const db = await getLocalDb();
-        const rows = (await db.select().from((db as any)._?.schema?.events ?? ({} as any)).all?.()) ?? [];
+        const rows = await db.select().from(events).all();
         const points = Array.isArray(rows)
           ? rows.slice(0, range === "24h" ? 24 : range === "7d" ? 7 : 30).map((_, index) => ({
               time: index,

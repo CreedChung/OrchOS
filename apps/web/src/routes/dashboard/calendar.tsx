@@ -149,8 +149,8 @@ function CalendarPage() {
 
           <ScrollArea className="h-[calc(100%-2.75rem)]">
             <div className="space-y-2 p-3">
-              <div className="rounded-xl border border-dashed border-border/70 bg-background/60 p-3">
-                <div className="text-sm font-medium text-foreground">{m.calendar_google_title()}</div>
+              <div className="rounded-lg border border-border/60 bg-muted/25 px-3 py-2.5">
+                <div className="text-sm font-semibold text-foreground">{m.calendar_google_title()}</div>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
                   {m.calendar_google_desc()}
                 </p>
