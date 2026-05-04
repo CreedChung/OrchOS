@@ -1,14 +1,11 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useUser } from "@clerk/clerk-react";
 import { type UIMessage } from "ai";
 import {
   Alert01Icon,
   ArrowRight01Icon,
-  ArrowExpand01Icon,
-  ArrowShrink01Icon,
   InformationCircleIcon,
   Robot02Icon,
 } from "@hugeicons/core-free-icons";
@@ -26,7 +23,6 @@ interface ActivityPanelProps {
   problems: Problem[];
   collapsed: boolean;
   expanded?: boolean;
-  onCollapse?: () => void;
   activeView: SidebarView;
 }
 
@@ -126,7 +122,7 @@ function SectionHeader({ title, meta }: { title: string; meta?: string }) {
   );
 }
 
-export function ActivityPanel({ activities, goals, projects, problems, collapsed, expanded, onCollapse, activeView }: ActivityPanelProps) {
+export function ActivityPanel({ activities, goals, projects, problems, collapsed, expanded, activeView }: ActivityPanelProps) {
   const { user } = useUser();
   const {
     conversations,
@@ -180,16 +176,6 @@ export function ActivityPanel({ activities, goals, projects, problems, collapsed
       <div className="flex h-11 items-center gap-2 border-b border-border bg-sidebar px-4">
         <div className="truncate text-sm font-medium text-foreground">工作面板</div>
         <div className="truncate text-xs text-muted-foreground">{panelContext}</div>
-        <div className="ml-auto shrink-0">
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={onCollapse}
-            title={expanded ? "收起面板" : "展开为独立页面"}
-          >
-            <HugeiconsIcon icon={expanded ? ArrowShrink01Icon : ArrowExpand01Icon} className="size-3.5" />
-          </Button>
-        </div>
       </div>
 
       <ScrollArea className="flex-1">

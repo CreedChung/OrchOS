@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ControlSettings } from "@/lib/types";
+import type { ConversationBoardFilter } from "@/components/panels/BoardView";
 
 type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_request";
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
@@ -22,6 +23,7 @@ interface UIState {
   scopeFilter: ScopeFilter;
   creationArchiveFilter: CreationArchiveFilter;
   capabilityViewMode: CapabilityViewMode;
+  boardFilter: ConversationBoardFilter;
 
   // Panel states
   activityPanelOpen: boolean;
@@ -47,6 +49,7 @@ interface UIActions {
   setScopeFilter: (filter: ScopeFilter) => void;
   setCreationArchiveFilter: (filter: CreationArchiveFilter) => void;
   setCapabilityViewMode: (mode: CapabilityViewMode) => void;
+  setBoardFilter: (filter: ConversationBoardFilter) => void;
   setActivityPanelOpen: (open: boolean) => void;
   toggleActivityPanel: () => void;
   setActivityExpanded: (expanded: boolean) => void;
@@ -85,6 +88,7 @@ export const useUIStore = create<UIState & UIActions>()(
       scopeFilter: "all" as ScopeFilter,
       creationArchiveFilter: "all" as CreationArchiveFilter,
       capabilityViewMode: "mine" as CapabilityViewMode,
+      boardFilter: "all" as ConversationBoardFilter,
 
       // Panel states
       activityPanelOpen: false,
@@ -108,6 +112,7 @@ export const useUIStore = create<UIState & UIActions>()(
       setScopeFilter: (filter) => set({ scopeFilter: filter }),
       setCreationArchiveFilter: (filter) => set({ creationArchiveFilter: filter }),
       setCapabilityViewMode: (mode) => set({ capabilityViewMode: mode }),
+      setBoardFilter: (filter) => set({ boardFilter: filter }),
       setActivityPanelOpen: (open) => set({ activityPanelOpen: open }),
       toggleActivityPanel: () => set((s) => ({ activityPanelOpen: !s.activityPanelOpen })),
       setActivityExpanded: (expanded) => set({ activityExpanded: expanded }),

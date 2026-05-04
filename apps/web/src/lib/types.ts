@@ -288,10 +288,6 @@ export type SidebarView =
   | "creation"
   | "board"
   | "agents"
-  | "rules"
-  | "mcp-servers"
-  | "skills"
-  | "projects"
   | "calendar"
   | "mail"
   | "observability";

@@ -107,7 +107,7 @@ function DropdownMenuItem({
   inset?: boolean;
   variant?: "default" | "destructive";
 }) {
-  const handleClick: React.MouseEventHandler<HTMLElement> = (event) => {
+  const handleClick: NonNullable<MenuPrimitive.Item.Props["onClick"]> = (event) => {
     onClick?.(event);
     if (!event.defaultPrevented) {
       playInteractionSound("button");
@@ -194,7 +194,7 @@ function DropdownMenuCheckboxItem({
 }: MenuPrimitive.CheckboxItem.Props & {
   inset?: boolean;
 }) {
-  const handleClick: React.MouseEventHandler<HTMLElement> = (event) => {
+  const handleClick: NonNullable<MenuPrimitive.CheckboxItem.Props["onClick"]> = (event) => {
     onClick?.(event);
     if (!event.defaultPrevented) {
       playInteractionSound("toggle");
@@ -202,7 +202,7 @@ function DropdownMenuCheckboxItem({
   };
 
   return (
-    <MenuPrimitive.Checkbox.Item
+    <MenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
       data-inset={inset}
       className={cn(
@@ -217,12 +217,12 @@ function DropdownMenuCheckboxItem({
         className="pointer-events-none absolute end-2 flex items-center justify-center"
         data-slot="dropdown-menu-checkbox-item-indicator"
       >
-        <MenuPrimitive.Checkbox.ItemIndicator>
+        <MenuPrimitive.CheckboxItemIndicator>
           <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} />
-        </MenuPrimitive.Checkbox.ItemIndicator>
+        </MenuPrimitive.CheckboxItemIndicator>
       </span>
       {children}
-    </MenuPrimitive.Checkbox.Item>
+    </MenuPrimitive.CheckboxItem>
   );
 }
 
@@ -239,7 +239,7 @@ function DropdownMenuRadioItem({
 }: MenuPrimitive.RadioItem.Props & {
   inset?: boolean;
 }) {
-  const handleClick: React.MouseEventHandler<HTMLElement> = (event) => {
+  const handleClick: NonNullable<MenuPrimitive.RadioItem.Props["onClick"]> = (event) => {
     onClick?.(event);
     if (!event.defaultPrevented) {
       playInteractionSound("toggle");

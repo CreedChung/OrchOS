@@ -68,7 +68,7 @@ export function SkillMarketDetailView({ item, embedded = false }: SkillMarketDet
       <div className={cn("mx-auto flex w-full flex-1 flex-col overflow-y-auto p-6", !embedded && "max-w-5xl") }>
         {!embedded ? (
           <div className="mb-6 flex items-center gap-3">
-            <Button type="button" variant="outline" size="sm" onClick={() => navigate({ to: "/dashboard/skills" })}>
+            <Button type="button" variant="outline" size="sm" onClick={() => navigate({ to: "/dashboard/creation" })}>
               <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-1.5 size-3.5" />
               返回市场
             </Button>

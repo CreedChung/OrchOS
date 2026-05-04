@@ -27,7 +27,6 @@ import {
   MoreHorizontal,
   Edit02Icon,
   Delete02Icon,
-  Folder01Icon,
   AiBrain01Icon,
   UserCircleIcon,
   Logout03Icon,
@@ -57,8 +56,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { m } from "@/paraglide/messages";
-import type { Organization, Problem, SidebarView } from "@/lib/types";
-import { isInboxItem } from "@/lib/types";
+import type { Organization, SidebarView } from "@/lib/types";
 import { toast } from "sonner";
 
 interface SidebarSection {
@@ -76,7 +74,6 @@ interface SidebarSection {
 
 interface SidebarProps {
   organizations: Organization[];
-  problems: Problem[];
   activeOrganizationId: string | null;
   activeView: SidebarView;
   collapsed: boolean;
@@ -90,7 +87,6 @@ interface SidebarProps {
 
 export function Sidebar({
   organizations,
-  problems,
   activeOrganizationId,
   activeView,
   collapsed,
@@ -107,12 +103,6 @@ export function Sidebar({
   const [orgSearch, setOrgSearch] = useState("");
   const [isMac, setIsMac] = useState(false);
   const [showExpandedContent, setShowExpandedContent] = useState(!collapsed);
-  const openInboxCount = problems.filter(
-    (p) => p.status === "open" && isInboxItem(p),
-  ).length;
-  const criticalCount = problems.filter(
-    (p) => p.status === "open" && isInboxItem(p) && p.priority === "critical",
-  ).length;
   const activeOrganization =
     organizations.find((o) => o.id === activeOrganizationId) ?? null;
   const filteredOrganizations = organizations.filter((org) =>
@@ -158,14 +148,6 @@ export function Sidebar({
     {
       label: m.workspace(),
       items: [
-        {
-          id: "projects",
-          to: "/dashboard/projects",
-          icon: Folder01Icon,
-          label: m.project(),
-          badge: openInboxCount,
-          badgeCritical: criticalCount > 0,
-        },
         {
           id: "calendar",
           to: "/dashboard/calendar",
@@ -213,7 +195,7 @@ export function Sidebar({
             )}
           >
             <DropdownMenu modal={false}>
-              <DropdownMenuTrigger className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-sm font-medium text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+              <DropdownMenuTrigger className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-sm font-medium text-sidebar-foreground/80 outline-none transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <HugeiconsIcon icon={Target01Icon} className="size-3.5" />
                 </span>
@@ -287,7 +269,7 @@ export function Sidebar({
             </DropdownMenu>
             {activeOrganizationId && (
               <DropdownMenu modal={false}>
-                <DropdownMenuTrigger className="ml-1 flex size-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
+                <DropdownMenuTrigger className="ml-0.5 flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer">
                   <HugeiconsIcon icon={MoreHorizontal} className="size-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-36">
@@ -310,7 +292,8 @@ export function Sidebar({
           <button
             onClick={onToggleCollapse}
             className={cn(
-              "absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer",
+              "absolute top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer",
+              collapsed ? "left-1/2 -translate-x-1/2" : "right-1.5",
             )}
           >
             <HugeiconsIcon

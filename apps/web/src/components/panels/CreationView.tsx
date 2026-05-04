@@ -1,28 +1,23 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Robot02Icon,
+  Add01Icon,
+  Archive01Icon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Chat01Icon,
+  Clock01Icon,
   ArrowUp01Icon,
-  File02Icon,
   Mic01Icon,
   Cancel01Icon,
   UnfoldMoreIcon,
-  Folder01Icon,
   Delete02Icon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
-import { AppDialog } from "@/components/ui/app-dialog";
 import { Button } from "@/components/ui/button";
 import { BorderBeam } from "border-beam";
-import { Star } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
@@ -33,42 +28,41 @@ import {
 import { cn } from "@/lib/utils";
 import { api, type Conversation, type ConversationMessage } from "@/lib/api";
 import type {
-  AgentProfile,
-  Command,
   ControlSettings,
-  Project,
   RuntimeProfile,
 } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
+import { useUIStore } from "@/lib/store";
 import { m } from "@/paraglide/messages";
 import { toast } from "sonner";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import { mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
 
 interface CreationViewProps {
-  agents: AgentProfile[];
-  commands: Command[];
   runtimes: RuntimeProfile[];
-  projects: Project[];
   settings: ControlSettings | null;
   onSettingsChange: (settings: ControlSettings) => void;
 }
 
 const EMPTY_CONVERSATION_MESSAGES: ConversationMessage[] = [];
-const PROJECT_SPEC_FILE_ACCEPT = ".md,.txt,.spec,text/plain,text/markdown";
 
-function getProjectAgentsFilePath(project?: Project | null) {
-  if (!project?.path) return null;
-  return `${project.path.replace(/\/$/, "")}/AGENTS.md`;
-}
+const creationFilterButtons = [
+  { value: "all", label: m.all(), icon: Chat01Icon, iconClassName: "text-muted-foreground/80" },
+  { value: "active", label: m.creation_active(), icon: Clock01Icon, iconClassName: "text-sky-500" },
+  { value: "archived", label: m.creation_archived(), icon: Archive01Icon, iconClassName: "text-amber-500" },
+] as const;
 
 export function CreationView({
-  agents,
   runtimes,
-  projects,
   settings,
   onSettingsChange,
 }: CreationViewProps) {
+  const creationArchiveFilter = useUIStore((s) => s.creationArchiveFilter);
+  const setCreationArchiveFilter = useUIStore((s) => s.setCreationArchiveFilter);
+  const creationSidebarCollapsed = useUIStore((s) => s.creationSidebarCollapsed);
+  const toggleCreationSidebar = useUIStore((s) => s.toggleCreationSidebar);
+  const creationSidebarWidth = useUIStore((s) => s.creationSidebarWidth);
+  const setCreationSidebarWidth = useUIStore((s) => s.setCreationSidebarWidth);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [convToDelete, setConvToDelete] = useState<string | null>(null);
   const autoCreatingConversationRef = useRef(false);
@@ -104,15 +98,6 @@ export function CreationView({
     () => runtimes.filter((r) => r.enabled),
     [runtimes],
   );
-  const enabledAgents = useMemo(
-    () => agents.filter((agent) => agent.enabled),
-    [agents],
-  );
-  const defaultAgent = useMemo(
-    () => enabledAgents.find((agent) => agent.id === settings?.defaultAgentId),
-    [enabledAgents, settings?.defaultAgentId],
-  );
-
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
     [conversations, activeConversationId],
@@ -130,10 +115,17 @@ export function CreationView({
   );
   const displayConversation = activeConversation ?? draftConversation;
 
-  const availableConversations = useMemo(
-    () => conversations.filter((conversation) => !conversation.deleted),
-    [conversations],
-  );
+  const availableConversations = useMemo(() => {
+    if (creationArchiveFilter === "archived") {
+      return conversations.filter((conversation) => conversation.archived && !conversation.deleted);
+    }
+
+    if (creationArchiveFilter === "active") {
+      return conversations.filter((conversation) => !conversation.archived && !conversation.deleted);
+    }
+
+    return conversations.filter((conversation) => !conversation.deleted);
+  }, [conversations, creationArchiveFilter]);
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
@@ -157,9 +149,7 @@ export function CreationView({
 
     try {
       await createConversation({
-        agentId: defaultAgent?.id,
-        runtimeId:
-          defaultAgent?.runtimeId || settings?.defaultRuntimeId || undefined,
+        runtimeId: settings?.defaultRuntimeId || undefined,
       });
     } catch (err) {
       console.error("Failed to create conversation:", err);
@@ -167,8 +157,6 @@ export function CreationView({
   }, [
     activeConversation,
     createConversation,
-    defaultAgent?.id,
-    defaultAgent?.runtimeId,
     messages.length,
     setActiveConversationId,
     settings?.defaultRuntimeId,
@@ -222,16 +210,40 @@ export function CreationView({
     }
   }, []);
 
+  const handleResizeStart = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const sidebarEl = event.currentTarget.parentElement;
+      const sidebarLeft = sidebarEl?.getBoundingClientRect().left ?? 0;
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
+      const handlePointerMove = (moveEvent: PointerEvent) => {
+        const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 240), 360);
+        setCreationSidebarWidth(nextWidth);
+      };
+
+      const handlePointerUp = () => {
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        window.removeEventListener("pointermove", handlePointerMove);
+        window.removeEventListener("pointerup", handlePointerUp);
+      };
+
+      window.addEventListener("pointermove", handlePointerMove);
+      window.addEventListener("pointerup", handlePointerUp);
+    },
+    [setCreationSidebarWidth],
+  );
+
   const handleUpdateConversation = useCallback(
     async (
       id: string,
-      data: {
-        title?: string;
-        projectId?: string;
-        agentId?: string;
-        runtimeId?: string;
-        archived?: boolean;
-        deleted?: boolean;
+        data: {
+          title?: string;
+          runtimeId?: string;
+          archived?: boolean;
+          deleted?: boolean;
       },
     ) => {
       try {
@@ -245,8 +257,6 @@ export function CreationView({
 
   const handleCreateConversation = useCallback(
     async (data: {
-      projectId?: string;
-      agentId?: string;
       runtimeId?: string;
     }) => {
       try {
@@ -261,6 +271,143 @@ export function CreationView({
 
   return (
     <div className="flex flex-1 overflow-hidden">
+      <div
+        className={cn(
+          "relative shrink-0 border-r border-border bg-card transition-[width] duration-200",
+          creationSidebarCollapsed ? "w-14" : "w-[var(--creation-sidebar-width)]",
+        )}
+        style={
+          creationSidebarCollapsed
+            ? undefined
+            : ({ "--creation-sidebar-width": `${creationSidebarWidth}px` } as React.CSSProperties)
+        }
+      >
+        <div className="flex h-14 items-center justify-between border-b border-border px-4">
+          {!creationSidebarCollapsed ? (
+            <>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-foreground">{m.creation()}</div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="active:-translate-y-0"
+                  onClick={() => void handleNewConversation()}
+                  title={m.new_conversation()}
+                >
+                  <HugeiconsIcon icon={Add01Icon} className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="active:-translate-y-0"
+                  onClick={toggleCreationSidebar}
+                  title={m.collapse_sidebar()}
+                >
+                  <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+                </Button>
+              </div>
+            </>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className="absolute right-1.5 top-1/2 z-10 -translate-y-1/2 active:-translate-y-1/2"
+              onClick={toggleCreationSidebar}
+              title={m.expand_sidebar()}
+            >
+              <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+            </Button>
+          )}
+        </div>
+
+        {!creationSidebarCollapsed ? (
+          <>
+            <ScrollArea className="h-[calc(100%-5.5rem)]">
+              <div className="space-y-0.5 p-1.5">
+                {availableConversations.map((conversation) => {
+                  const isActive = conversation.id === activeConversationId;
+
+                  return (
+                    <div
+                      key={conversation.id}
+                      className={cn(
+                        "group flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors",
+                        isActive
+                          ? "bg-accent font-medium text-accent-foreground"
+                          : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
+                      )}
+                      onClick={() => setActiveConversationId(conversation.id)}
+                    >
+                      <HugeiconsIcon icon={Chat01Icon} className="size-3.5 shrink-0 opacity-40" />
+                      <button type="button" className="flex-1 text-left">
+                        <div className="truncate text-xs leading-5">
+                          {conversation.title || m.untitled_conversation()}
+                        </div>
+                      </button>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setConvToDelete(conversation.id);
+                          setDeleteConfirmOpen(true);
+                        }}
+                        className="text-muted-foreground/55 opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                        title={m.delete()}
+                      >
+                        <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                      </Button>
+                    </div>
+                  );
+                })}
+
+                {availableConversations.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <HugeiconsIcon icon={Chat01Icon} className="mx-auto mb-1.5 size-5 text-muted-foreground/30" />
+                    <p className="text-xs text-muted-foreground">{m.no_conversations()}</p>
+                  </div>
+                ) : null}
+              </div>
+            </ScrollArea>
+
+            <div className="flex items-center justify-center gap-1 border-t border-border px-2 py-2.5">
+              {creationFilterButtons.map((filter) => (
+                <button
+                  key={filter.value}
+                  type="button"
+                  onClick={() => setCreationArchiveFilter(filter.value)}
+                  aria-pressed={creationArchiveFilter === filter.value}
+                  title={filter.label}
+                  className={cn(
+                    "inline-flex size-8 items-center justify-center rounded-md transition-colors",
+                    creationArchiveFilter === filter.value
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                  )}
+                >
+                  <HugeiconsIcon icon={filter.icon} className={cn("size-3.5", filter.iconClassName)} />
+                </button>
+              ))}
+            </div>
+
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize creation sidebar"
+              onPointerDown={handleResizeStart}
+              className="absolute top-0 right-[-4px] z-10 h-full w-2 cursor-col-resize rounded-full transition-colors hover:bg-primary/15"
+            />
+          </>
+        ) : null}
+      </div>
+
       <div className="flex flex-1 flex-col overflow-hidden">
         {!hasLoadedConversations && isLoadingConversations ? (
           <div className="flex h-full items-center justify-center">
@@ -272,21 +419,12 @@ export function CreationView({
             isDraftConversation={!activeConversation}
             messages={uiMessages}
             sending={sending}
-            agents={agents}
             runtimes={enabledRuntimes}
-            projects={projects}
-            defaultAgentId={settings?.defaultAgentId}
             onUpdateConversation={handleUpdateConversation}
             onCreateConversation={handleCreateConversation}
-            onSetDefaultAgent={(agentId) => {
-              const selectedAgent = agents.find(
-                (agent) => agent.id === agentId,
-              );
+            onSetDefaultRuntime={(runtimeId) => {
               void api
-                .updateSettings({
-                  defaultAgentId: agentId,
-                  defaultRuntimeId: selectedAgent?.runtimeId,
-                })
+                .updateSettings({ defaultRuntimeId: runtimeId })
                 .then((updated) => {
                   onSettingsChange(updated);
                 });
@@ -437,27 +575,20 @@ interface ChatAreaProps {
   isDraftConversation: boolean;
   messages: UIMessage[];
   sending: boolean;
-  agents: AgentProfile[];
   runtimes: RuntimeProfile[];
-  projects: Project[];
-  defaultAgentId?: string;
   onCreateConversation: (data: {
-    projectId?: string;
-    agentId?: string;
     runtimeId?: string;
   }) => Promise<Conversation>;
   onUpdateConversation: (
     id: string,
     data: {
       title?: string;
-      projectId?: string;
-      agentId?: string;
       runtimeId?: string;
       archived?: boolean;
       deleted?: boolean;
     },
   ) => Promise<void>;
-  onSetDefaultAgent: (agentId?: string) => void;
+  onSetDefaultRuntime: (runtimeId?: string) => void;
   onSendMessage: (
     content: string,
     conversation?: Conversation,
@@ -470,55 +601,30 @@ function ChatArea({
   isDraftConversation,
   messages,
   sending,
-  agents,
   runtimes,
-  projects,
-  defaultAgentId,
   onCreateConversation,
   onUpdateConversation,
-  onSetDefaultAgent,
+  onSetDefaultRuntime,
   onSendMessage,
 }: ChatAreaProps) {
   const [input, setInput] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isConversationUpdating, setIsConversationUpdating] = useState(false);
-  const [specDialogOpen, setSpecDialogOpen] = useState(false);
-  const [projectSpec, setProjectSpec] = useState("");
-  const [projectSpecDraft, setProjectSpecDraft] = useState("");
-  const [projectSpecLoading, setProjectSpecLoading] = useState(false);
-  const [projectSpecSaving, setProjectSpecSaving] = useState(false);
   const [inputCollapsed] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const specFileInputRef = useRef<HTMLInputElement>(null);
   const pendingConversationUpdateRef = useRef<Promise<void> | null>(null);
-  const [draftProjectId, setDraftProjectId] = useState<string | undefined>(
-    conversation.projectId,
-  );
-  const [draftAgentId, setDraftAgentId] = useState<string | undefined>(
-    conversation.agentId,
-  );
   const [draftRuntimeId, setDraftRuntimeId] = useState<string | undefined>(
     conversation.runtimeId,
   );
 
   useEffect(() => {
-    setDraftProjectId(conversation.projectId);
-    setDraftAgentId(conversation.agentId);
     setDraftRuntimeId(conversation.runtimeId);
   }, [
-    conversation.agentId,
-    conversation.projectId,
     conversation.runtimeId,
     conversation.id,
   ]);
 
-  const effectiveProjectId = isDraftConversation
-    ? draftProjectId
-    : conversation.projectId;
-  const effectiveAgentId = isDraftConversation
-    ? draftAgentId
-    : conversation.agentId;
   const effectiveRuntimeId = isDraftConversation
     ? draftRuntimeId
     : conversation.runtimeId;
@@ -539,21 +645,12 @@ function ChatArea({
     () => runtimes.find((r) => r.id === effectiveRuntimeId),
     [effectiveRuntimeId, runtimes],
   );
-  const selectedProject = useMemo(
-    () => projects.find((p) => p.id === effectiveProjectId),
-    [effectiveProjectId, projects],
-  );
   const { pendingUserMessageByConversationId, setPendingUserMessage } =
     useConversationStore();
   const pendingUserMessage =
     conversation.id === "__draft__"
       ? null
       : (pendingUserMessageByConversationId[conversation.id] ?? null);
-  const projectAgentsFilePath = useMemo(
-    () => getProjectAgentsFilePath(selectedProject),
-    [selectedProject],
-  );
-  const hasProjectSpec = projectSpec.trim().length > 0;
   const visibleMessages = useMemo(() => {
     if (!pendingUserMessage) return messages;
 
@@ -590,45 +687,6 @@ function ChatArea({
   }, [conversation.id]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    if (!projectAgentsFilePath) {
-      setProjectSpec("");
-      setProjectSpecDraft("");
-      setProjectSpecLoading(false);
-      return;
-    }
-
-    const loadProjectAgentsFile = async () => {
-      setProjectSpecLoading(true);
-
-      try {
-        const file = await api.readWorkspaceFile(projectAgentsFilePath);
-        if (cancelled) return;
-
-        const content = file.content ?? "";
-        setProjectSpec(content);
-        setProjectSpecDraft(content);
-      } catch (err) {
-        if (cancelled) return;
-        console.error("Failed to load AGENTS.md:", err);
-        setProjectSpec("");
-        setProjectSpecDraft("");
-      } finally {
-        if (!cancelled) {
-          setProjectSpecLoading(false);
-        }
-      }
-    };
-
-    void loadProjectAgentsFile();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [projectAgentsFilePath]);
-
-  useEffect(() => {
     if (!pendingUserMessage) return;
     const hasMatchedUserMessage = messages.some(
       (message) =>
@@ -648,17 +706,13 @@ function ChatArea({
   }, [attachedFiles.length, conversation.id, input, syncTextareaHeight]);
 
   const queueConversationUpdate = useCallback(
-    (data: {
-      title?: string;
-      projectId?: string;
-      agentId?: string;
-      runtimeId?: string;
-      archived?: boolean;
-      deleted?: boolean;
-    }) => {
+      (data: {
+        title?: string;
+        runtimeId?: string;
+        archived?: boolean;
+        deleted?: boolean;
+      }) => {
       if (isDraftConversation) {
-        if (data.projectId !== undefined) setDraftProjectId(data.projectId);
-        if (data.agentId !== undefined) setDraftAgentId(data.agentId);
         if (data.runtimeId !== undefined) setDraftRuntimeId(data.runtimeId);
         return Promise.resolve();
       }
@@ -699,8 +753,6 @@ function ChatArea({
 
       const targetConversation = isDraftConversation
         ? await onCreateConversation({
-            projectId: draftProjectId,
-            agentId: draftAgentId,
             runtimeId: draftRuntimeId,
           })
         : conversation;
@@ -712,8 +764,6 @@ function ChatArea({
     }
   }, [
     attachedFiles,
-    draftAgentId,
-    draftProjectId,
     draftRuntimeId,
     input,
     isDraftConversation,
@@ -721,53 +771,6 @@ function ChatArea({
     onSendMessage,
     sending,
   ]);
-
-  const handleOpenSpecDialog = useCallback(() => {
-    if (!selectedProject || !projectAgentsFilePath) {
-      toast.info("请先给当前会话选择一个项目，再编辑项目指令。");
-      return;
-    }
-
-    setProjectSpecDraft(projectSpec);
-    setSpecDialogOpen(true);
-  }, [projectAgentsFilePath, projectSpec, selectedProject]);
-
-  const handleSaveSpec = useCallback(async () => {
-    if (!projectAgentsFilePath) return;
-
-    setProjectSpecSaving(true);
-
-    try {
-      await api.writeWorkspaceFile(projectAgentsFilePath, projectSpecDraft);
-      setProjectSpec(projectSpecDraft);
-      setSpecDialogOpen(false);
-      toast.success("项目指令已保存到 AGENTS.md");
-    } catch (err) {
-      console.error("Failed to save AGENTS.md:", err);
-      toast.error("项目指令保存失败");
-    } finally {
-      setProjectSpecSaving(false);
-    }
-  }, [projectAgentsFilePath, projectSpecDraft]);
-
-  const handleImportSpecFile = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      try {
-        const content = await file.text();
-        setProjectSpecDraft(content);
-        toast.success(`已导入 ${file.name}，保存后会覆盖项目 AGENTS.md`);
-      } catch (err) {
-        console.error("Failed to import AGENTS.md source file:", err);
-        toast.error("AGENTS.md 源文件导入失败");
-      } finally {
-        event.target.value = "";
-      }
-    },
-    [],
-  );
 
   function handleKeys(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -795,13 +798,6 @@ function ChatArea({
                 描述你的目标，我会先拆解计划，再推进执行与审查。
               </p>
             </div>
-            <input
-              ref={specFileInputRef}
-              type="file"
-              accept={PROJECT_SPEC_FILE_ACCEPT}
-              className="hidden"
-              onChange={handleImportSpecFile}
-            />
             <BorderBeam
               size="md"
               theme="auto"
@@ -856,72 +852,15 @@ function ChatArea({
                 />
                 <div className="relative z-20 flex items-center justify-between gap-2 pt-2 pb-0.5">
                   <div className="overflow-visible flex items-center gap-1">
-                    <Select
-                      value={effectiveProjectId || "__none__"}
-                      onValueChange={(v) =>
-                        queueConversationUpdate({
-                          projectId: !v || v === "__none__" ? undefined : v,
-                        })
-                      }
-                    >
-                      <SelectTrigger
-                        size="sm"
-                        className="w-36 cursor-default justify-between rounded-full data-[size=sm]:rounded-full px-2.5 text-xs [&>svg:last-child]:hidden"
-                      >
-                        <span className="flex min-w-0 items-center gap-1.5">
-                          {isConversationUpdating ? (
-                            <Spinner
-                              size="sm"
-                              name="braille"
-                              className="size-3 shrink-0 text-muted-foreground"
-                            />
-                          ) : (
-                            <HugeiconsIcon
-                              icon={Folder01Icon}
-                              className="size-3 shrink-0"
-                            />
-                          )}
-                          <SelectValue>
-                            {selectedProject?.name || "临时会话"}
-                          </SelectValue>
-                        </span>
-                        <HugeiconsIcon
-                          icon={UnfoldMoreIcon}
-                          className="size-3 shrink-0 text-muted-foreground"
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">临时会话</SelectItem>
-                        {projects.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <RuntimeSelector
-                      agents={agents.filter((a) => a.enabled)}
-                      selectedAgentId={effectiveAgentId ?? undefined}
-                      defaultAgentId={defaultAgentId}
-                      onSelect={({ runtimeId, agentId }) =>
-                        queueConversationUpdate({ runtimeId, agentId })
+                      runtimes={runtimes.filter((runtime) => runtime.enabled)}
+                      selectedRuntimeId={effectiveRuntimeId ?? undefined}
+                      defaultRuntimeId={settings?.defaultRuntimeId}
+                      onSelect={(runtimeId) =>
+                        queueConversationUpdate({ runtimeId })
                       }
-                      onSetDefault={onSetDefaultAgent}
+                      onSetDefault={onSetDefaultRuntime}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      title={
-                        selectedProject
-                          ? `${selectedProject.name} Project Instructions`
-                          : "Project Instructions"
-                      }
-                      className="shrink-0 text-muted-foreground hover:text-foreground"
-                      onClick={handleOpenSpecDialog}
-                    >
-                      <HugeiconsIcon icon={File02Icon} className="size-4" />
-                    </Button>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <Button
@@ -972,171 +911,48 @@ function ChatArea({
 
       {/* Messages */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 md:px-6">
-        <div className="mx-auto max-w-3xl pt-4 pb-1">
-          <div className="space-y-3">
-            {selectedProject && hasProjectSpec ? (
-              <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 px-4 py-3 text-xs text-sky-900 dark:text-sky-100">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-medium">
-                      {selectedProject.name} 的项目指令已启用
-                    </div>
-                    <div className="mt-1 line-clamp-2 text-sky-800/80 dark:text-sky-100/70">
-                      {projectSpec}
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0"
-                    onClick={handleOpenSpecDialog}
-                  >
-                    编辑
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
         <div ref={messagesEndRef} />
       </div>
-
-      <AppDialog
-        open={specDialogOpen}
-        onOpenChange={setSpecDialogOpen}
-        title={
-          selectedProject
-            ? `${selectedProject.name} / Project Instructions`
-            : "Project Instructions"
-        }
-        description="直接编辑当前项目目录下的 AGENTS.md。这份文件作为项目长期说明和对外兼容指令，不再等同于动态 Rules。"
-        size="xl"
-        bodyClassName="space-y-4"
-        footer={
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setSpecDialogOpen(false)}
-            >
-              取消
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setProjectSpecDraft("")}
-            >
-              清空
-            </Button>
-            <Button
-              type="button"
-              onClick={() => void handleSaveSpec()}
-              disabled={!projectAgentsFilePath || projectSpecSaving}
-            >
-              {projectSpecSaving ? "保存中..." : "保存项目指令"}
-            </Button>
-          </>
-        }
-      >
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2">
-          <div className="min-w-0">
-            <div className="text-sm font-medium text-foreground">
-              Project Instructions
-            </div>
-            <div className="text-xs text-muted-foreground">
-              支持导入 `.md`、`.txt`、`.spec` 文档，保存时会直接覆盖项目目录里的
-              `AGENTS.md`。
-            </div>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => specFileInputRef.current?.click()}
-            disabled={!projectAgentsFilePath}
-          >
-            导入文件
-          </Button>
-        </div>
-
-        {projectAgentsFilePath ? (
-          <div className="rounded-lg border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
-            文件路径: {projectAgentsFilePath}
-          </div>
-        ) : null}
-
-        {projectSpecLoading ? (
-          <div className="rounded-lg border border-border bg-background px-3 py-8 text-center text-sm text-muted-foreground">
-            正在加载 AGENTS.md...
-          </div>
-        ) : null}
-
-        <textarea
-          value={projectSpecDraft}
-          onChange={(event) => setProjectSpecDraft(event.target.value)}
-          placeholder={[
-            "在这里写项目长期指令，例如：",
-            "- 技术栈和目录约束",
-            "- 代码风格和命名规范",
-            "- 哪些文件不能改",
-            "- 提交、测试、验证要求",
-            "- Agent 处理该项目时必须遵守的规则",
-          ].join("\n")}
-          className="min-h-[420px] w-full resize-none rounded-xl border border-border bg-background px-4 py-3 font-mono text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-          spellCheck={false}
-          disabled={projectSpecLoading}
-        />
-      </AppDialog>
     </div>
   );
 }
 
 interface RuntimeSelectorProps {
-  agents: AgentProfile[];
-  selectedAgentId?: string;
-  defaultAgentId?: string;
-  onSelect: (selection: { runtimeId?: string; agentId?: string }) => void;
-  onSetDefault: (agentId?: string) => void;
+  runtimes: RuntimeProfile[];
+  selectedRuntimeId?: string;
+  defaultRuntimeId?: string;
+  onSelect: (runtimeId?: string) => void;
+  onSetDefault: (runtimeId?: string) => void;
 }
 
 function RuntimeSelector({
-  agents,
-  selectedAgentId,
-  defaultAgentId,
+  runtimes,
+  selectedRuntimeId,
+  defaultRuntimeId,
   onSelect,
   onSetDefault,
 }: RuntimeSelectorProps) {
-  const safeAgents = Array.isArray(agents) ? agents : [];
+  const safeRuntimes = Array.isArray(runtimes) ? runtimes : [];
   const [open, setOpen] = useState(false);
 
-  const selectedAgent = safeAgents.find((a) => a.id === selectedAgentId);
+  const selectedRuntime = safeRuntimes.find((runtime) => runtime.id === selectedRuntimeId);
 
   const allItems = [
     {
-      id: "none::__none__",
-      name: m.no_agent(),
+      id: "runtime::__none__",
+      name: m.creation_placeholder(),
       runtimeId: undefined,
-      agentId: undefined,
-      type: "none" as const,
     },
-    ...safeAgents.map((a) => ({
-      id: `agent::${a.id}`,
-      name: a.name,
-      runtimeId: a.runtimeId,
-      agentId: a.id,
-      type: "agent" as const,
+    ...safeRuntimes.map((runtime) => ({
+      id: `runtime::${runtime.id}`,
+      name: runtime.name,
+      runtimeId: runtime.id,
     })),
   ];
 
   const handleSelect = useCallback(
     (item: (typeof allItems)[number]) => {
-      if (item.type === "none") {
-        onSelect({ runtimeId: undefined, agentId: undefined });
-      } else {
-        onSelect({ runtimeId: item.runtimeId, agentId: item.agentId });
-      }
+      onSelect(item.runtimeId);
       setOpen(false);
     },
     [onSelect],
@@ -1150,10 +966,10 @@ function RuntimeSelector({
       >
         <span className="flex min-w-0 items-center gap-1.5">
           <span className="inline-flex size-4 shrink-0 items-center justify-center overflow-hidden text-foreground/70">
-            <HugeiconsIcon icon={Robot02Icon} className="size-3 shrink-0" />
+            <HugeiconsIcon icon={UnfoldMoreIcon} className="size-3 shrink-0" />
           </span>
           <span className="truncate">
-            {selectedAgent?.name || m.no_agent()}
+            {selectedRuntime?.name || m.creation_placeholder()}
           </span>
         </span>
         <HugeiconsIcon
@@ -1164,8 +980,7 @@ function RuntimeSelector({
 
       <DropdownMenuContent align="start" className="min-w-(--anchor-width)">
         {allItems.map((item) => {
-          const isDefault =
-            item.agentId !== undefined && item.agentId === defaultAgentId;
+          const isDefault = item.runtimeId !== undefined && item.runtimeId === defaultRuntimeId;
 
           return (
             <DropdownMenuItem
@@ -1177,7 +992,7 @@ function RuntimeSelector({
               className="flex items-center justify-between gap-2"
             >
               <span className="truncate">{item.name}</span>
-              {item.agentId !== undefined ? (
+              {item.runtimeId !== undefined ? (
                 <button
                   type="button"
                   className={cn(
@@ -1186,7 +1001,7 @@ function RuntimeSelector({
                       ? "text-primary"
                       : "text-muted-foreground/40 hover:text-primary",
                   )}
-                  title={isDefault ? "Default agent" : m.set_as_default()}
+                  title={isDefault ? "Default runtime" : m.set_as_default()}
                   onMouseDown={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -1195,11 +1010,11 @@ function RuntimeSelector({
                     event.preventDefault();
                     event.stopPropagation();
                     if (!isDefault) {
-                      onSetDefault(item.agentId);
+                      onSetDefault(item.runtimeId);
                     }
                   }}
                 >
-                  <Star className={cn("size-3", isDefault && "fill-primary")} />
+                  <HugeiconsIcon icon={Add01Icon} className={cn("size-3", isDefault && "text-primary")} />
                 </button>
               ) : null}
             </DropdownMenuItem>

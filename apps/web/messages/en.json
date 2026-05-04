@@ -595,5 +595,16 @@
   "set_as_default": "Set as default",
   "workspace": "Workspace",
   "collapse_sidebar": "Collapse sidebar",
-  "expand_sidebar": "Expand sidebar"
+  "expand_sidebar": "Expand sidebar",
+  "board_today": "Today",
+  "board_planning": "Planning",
+  "board_in_progress": "In Progress",
+  "board_completed": "Completed",
+  "board_waiting_for_input": "Waiting for input to start planning",
+  "board_ai_fallback": "AI",
+  "board_rename_conversation": "Rename conversation",
+  "board_delete_conversation": "Delete conversation",
+  "board_temporary_session": "Temporary",
+  "board_no_tasks": "No tasks",
+  "board_filter_all": "All"
 }

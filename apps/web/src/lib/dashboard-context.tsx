@@ -53,10 +53,6 @@ type DashboardView =
   | "creation"
   | "board"
   | "agents"
-  | "rules"
-  | "mcp-servers"
-  | "skills"
-  | "projects"
   | "calendar"
   | "mail"
   | "observability";
@@ -68,10 +64,8 @@ function getViewFromPath(pathname: string): DashboardView {
     "creation",
     "board",
     "agents",
-    "rules",
-    "mcp-servers",
-    "skills",
-    "projects",
+    "calendar",
+    "mail",
     "observability",
   ];
   return validViews.includes(segment as DashboardView) ? (segment as DashboardView) : "inbox";
@@ -384,16 +378,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     [agents, runtimes],
   );
 
-  const shouldLoadGoals = activeView === "projects" || activeView === "observability";
+  const shouldLoadGoals = activeView === "observability";
   const shouldLoadProjects =
     activeView === "creation" ||
     activeView === "board" ||
-    activeView === "projects" ||
-    activeView === "skills" ||
     activeView === "calendar" ||
     activeView === "mail";
-  const shouldLoadProblems =
-    activeView === "inbox" || activeView === "projects" || activeView === "observability";
+  const shouldLoadProblems = activeView === "inbox" || activeView === "observability";
   const shouldLoadAgents =
     activeView === "agents" ||
     activeView === "creation" ||
@@ -401,10 +392,10 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     activeView === "calendar" ||
     activeView === "mail" ||
     activeView === "observability";
-  const shouldLoadRules = activeView === "agents" || activeView === "rules";
-  const shouldLoadCommands = activeView === "projects" || activeView === "board";
-  const shouldLoadMcpServers = activeView === "mcp-servers";
-  const shouldLoadSkills = activeView === "skills";
+  const shouldLoadRules = activeView === "agents";
+  const shouldLoadCommands = activeView === "board";
+  const shouldLoadMcpServers = false;
+  const shouldLoadSkills = false;
 
   const applyOrganizationResult = useCallback(
     (nextOrganizations: Organization[]) => {
@@ -677,7 +668,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         await api.updateProblem(problemId, { status: "assigned" });
         await refreshAll();
         setActiveGoalId(goal.id);
-        navigate({ to: "/dashboard/projects" });
+        navigate({ to: "/dashboard/board" });
       } catch (err) {
         console.error("Convert to goal failed:", err);
       }
@@ -800,7 +791,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         setShowCreateDialog(false);
         await refreshAll();
         setActiveGoalId(goal.id);
-        navigate({ to: "/dashboard/projects" });
+        navigate({ to: "/dashboard/board" });
       } catch (err) {
         console.error("Failed to create goal:", err);
       }
@@ -825,7 +816,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         if (result.goals.length > 0) {
           setActiveGoalId(result.goals[0].id);
         }
-        navigate({ to: "/dashboard/projects" });
+        navigate({ to: "/dashboard/board" });
       } catch (err) {
         console.error("Command failed:", err);
       }

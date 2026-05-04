@@ -1,15 +1,14 @@
 import { Button } from "@/components/ui/button";
-import {
-  AgentModelTabs,
-  type AgentModelFilter,
-} from "@/components/layout/AgentModelTabs";
+import { type AgentModelFilter } from "@/components/layout/AgentModelTabs";
+import { BoardFilterBar } from "@/components/panels/BoardFilterBar";
+import type { ConversationBoardFilter } from "@/components/panels/BoardView";
 import { CapabilityModeTabs } from "@/components/layout/CapabilityModeTabs";
 import {
   InboxSourceTabs,
   type SourceFilter,
 } from "@/components/layout/InboxSourceTabs";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { PanelRight, PanelLeft } from "@hugeicons/core-free-icons";
+import { Add01Icon, PanelLeft, PanelRight } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
 import type { SidebarView } from "@/lib/types";
 import {
@@ -40,6 +39,9 @@ interface ToolbarProps {
   agentModelCounts: { all: number; local: number; cloud: number };
   capabilityViewMode?: CapabilityViewMode;
   onCapabilityViewModeChange?: (mode: CapabilityViewMode) => void;
+  boardFilter?: ConversationBoardFilter;
+  onBoardFilterChange?: (filter: ConversationBoardFilter) => void;
+  onOpenCreateGoal?: () => void;
   onRefresh?: () => void | Promise<void>;
   children?: React.ReactNode;
 }
@@ -51,11 +53,14 @@ export function Toolbar({
   sourceFilter,
   onSourceFilterChange,
   inboxCounts,
-  agentModelFilter,
-  onAgentModelFilterChange,
-  agentModelCounts,
+  agentModelFilter: _agentModelFilter,
+  onAgentModelFilterChange: _onAgentModelFilterChange,
+  agentModelCounts: _agentModelCounts,
   capabilityViewMode = "mine",
   onCapabilityViewModeChange,
+  boardFilter = "all",
+  onBoardFilterChange,
+  onOpenCreateGoal,
   children,
 }: ToolbarProps) {
   return (
@@ -68,13 +73,12 @@ export function Toolbar({
         />
       )}
 
-      {activeView === "agents" && (
-        <AgentModelTabs
-          value={agentModelFilter}
-          counts={agentModelCounts}
-          onChange={onAgentModelFilterChange}
+      {activeView === "board" && onBoardFilterChange ? (
+        <BoardFilterBar
+          boardFilter={boardFilter}
+          onBoardFilterChange={onBoardFilterChange}
         />
-      )}
+      ) : null}
 
       {isCapabilityView(activeView) && onCapabilityViewModeChange ? (
         <CapabilityModeTabs
@@ -89,6 +93,12 @@ export function Toolbar({
       {children}
 
       <div className="flex items-center gap-2">
+        {activeView === "board" && onOpenCreateGoal ? (
+          <Button variant="ghost" size="icon-sm" onClick={onOpenCreateGoal} title={m.add()}>
+            <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+          </Button>
+        ) : null}
+
         <Button
           variant="outline"
           size="icon-sm"

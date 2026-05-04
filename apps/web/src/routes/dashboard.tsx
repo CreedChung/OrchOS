@@ -8,7 +8,6 @@ import { CommandBar } from "@/components/panels/CommandBar";
 import { CreateGoalDialog } from "@/components/dialogs/CreateGoalDialog";
 import { CreateRuleDialog } from "@/components/dialogs/CreateRuleDialog";
 import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
-import { CreateAgentDialog } from "@/components/dialogs/CreateAgentDialog";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toolbar } from "@/components/layout/Toolbar";
 import { I18nProvider } from "@/lib/useI18n";
@@ -86,11 +85,9 @@ function getViewFromPath(pathname: string): SidebarView {
   const validViews: SidebarView[] = [
     "inbox",
     "creation",
-    "agents",
-    "rules",
-    "mcp-servers",
-    "skills",
-    "projects",
+    "board",
+    "calendar",
+    "mail",
     "observability",
   ];
   return validViews.includes(segment as SidebarView) ? (segment as SidebarView) : "inbox";
@@ -137,12 +134,10 @@ function DashboardLayout() {
     problems,
     activities,
     settings,
-    skills,
     refreshAll,
     handleCreateGoal,
     handleCommand,
     handleCreateRule,
-    handleCreateAgent,
     handleOrganizationCreate,
     handleOrganizationRename,
     handleOrganizationDelete,
@@ -154,8 +149,6 @@ function DashboardLayout() {
     setShowSettingsDialog,
     showCreateRuleDialog,
     setShowCreateRuleDialog,
-    showCreateAgentDialog,
-    setShowCreateAgentDialog,
     ruleFromProblem,
     searchQuery,
     setSearchQuery,
@@ -171,6 +164,8 @@ function DashboardLayout() {
     setActiveOrganizationId,
     sourceFilter,
     setSourceFilter,
+    boardFilter,
+    setBoardFilter,
     activityPanelOpen,
     toggleActivityPanel,
     activityExpanded,
@@ -243,7 +238,6 @@ function DashboardLayout() {
           >
             <Sidebar
               organizations={organizations}
-              problems={problems}
               activeOrganizationId={activeOrganizationId}
               activeView={activeView}
               collapsed={sidebarCollapsed}
@@ -277,6 +271,9 @@ function DashboardLayout() {
                   onToggleActivityPanel={toggleActivityPanel}
                   sourceFilter={sourceFilter}
                   onSourceFilterChange={setSourceFilter}
+                  boardFilter={boardFilter}
+                  onBoardFilterChange={setBoardFilter}
+                  onOpenCreateGoal={() => setShowCreateDialog(true)}
                   inboxCounts={inboxCounts}
                   capabilityViewMode={capabilityViewMode}
                   onCapabilityViewModeChange={(mode) => {
@@ -334,15 +331,6 @@ function DashboardLayout() {
               onSettingsChange={useUIStore.getState().setSettings}
               onRuntimesRefresh={refreshAll}
               registeredRuntimes={runtimes}
-            />
-          )}
-          {showCreateAgentDialog && (
-            <CreateAgentDialog
-              open={showCreateAgentDialog}
-              onClose={() => setShowCreateAgentDialog(false)}
-              runtimes={runtimes}
-              skills={skills}
-              onSubmit={handleCreateAgent}
             />
           )}
           {showMorphPanel && (

@@ -138,12 +138,6 @@ const AppleSwitch = forwardRef<HTMLButtonElement, AppleSwitchProps>(
     const suppressNextClick = useRef(false);
     const activeProgress = useTransform(thumbX, [0, thumbTravel], [0, 1]);
     const fillOpacity = useTransform(activeProgress, [0, 1], [0, 1]);
-    const glowOpacity = useTransform(
-      activeProgress,
-      [0, 0.7, 1],
-      [0, 0.18, 0.2],
-    );
-    const glowScale = useTransform(activeProgress, [0, 1], [0.82, 1]);
 
     useEffect(() => {
       if (activePointerId.current !== null) return;
@@ -305,15 +299,6 @@ const AppleSwitch = forwardRef<HTMLButtonElement, AppleSwitchProps>(
         }}
         {...props}
       >
-        <motion.span
-          className="pointer-events-none absolute -inset-1 rounded-full blur-md"
-          style={{
-            backgroundColor: colors.glow,
-            opacity: glowOpacity,
-            scale: glowScale,
-          }}
-        />
-
         <span className="absolute inset-0 overflow-hidden rounded-full">
           <span
             className="absolute inset-0 rounded-full"

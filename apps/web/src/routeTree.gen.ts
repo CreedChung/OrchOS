@@ -17,13 +17,9 @@ import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
-import { Route as DashboardSkillsRouteImport } from './routes/dashboard/skills'
-import { Route as DashboardRulesRouteImport } from './routes/dashboard/rules'
-import { Route as DashboardProjectsRouteImport } from './routes/dashboard/projects'
 import { Route as DashboardObservabilityRouteImport } from './routes/dashboard/observability'
-import { Route as DashboardMcpServersRouteImport } from './routes/dashboard/mcp-servers'
+import { Route as DashboardMailRouteImport } from './routes/dashboard/mail'
 import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
-import { Route as DashboardGoalsRouteImport } from './routes/dashboard/goals'
 import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
 import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
 import { Route as DashboardBoardRouteImport } from './routes/dashboard/board'
@@ -31,10 +27,6 @@ import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
 import { Route as DashboardActivityRouteImport } from './routes/dashboard/activity'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
-import { Route as DashboardSkillsMarketRouteImport } from './routes/dashboard/skills.market'
-import { Route as DashboardSkillsSkillIdRouteImport } from './routes/dashboard/skills.$skillId'
-import { Route as DashboardMcpServersMarketRouteImport } from './routes/dashboard/mcp-servers.market'
-import { Route as DashboardMcpServersServerIdRouteImport } from './routes/dashboard/mcp-servers.$serverId'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -76,39 +68,19 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardSkillsRoute = DashboardSkillsRouteImport.update({
-  id: '/skills',
-  path: '/skills',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardRulesRoute = DashboardRulesRouteImport.update({
-  id: '/rules',
-  path: '/rules',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardProjectsRoute = DashboardProjectsRouteImport.update({
-  id: '/projects',
-  path: '/projects',
-  getParentRoute: () => DashboardRoute,
-} as any)
 const DashboardObservabilityRoute = DashboardObservabilityRouteImport.update({
   id: '/observability',
   path: '/observability',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardMcpServersRoute = DashboardMcpServersRouteImport.update({
-  id: '/mcp-servers',
-  path: '/mcp-servers',
+const DashboardMailRoute = DashboardMailRouteImport.update({
+  id: '/mail',
+  path: '/mail',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardInboxRoute = DashboardInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardGoalsRoute = DashboardGoalsRouteImport.update({
-  id: '/goals',
-  path: '/goals',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardCreationRoute = DashboardCreationRouteImport.update({
@@ -146,28 +118,6 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardSkillsMarketRoute = DashboardSkillsMarketRouteImport.update({
-  id: '/market',
-  path: '/market',
-  getParentRoute: () => DashboardSkillsRoute,
-} as any)
-const DashboardSkillsSkillIdRoute = DashboardSkillsSkillIdRouteImport.update({
-  id: '/$skillId',
-  path: '/$skillId',
-  getParentRoute: () => DashboardSkillsRoute,
-} as any)
-const DashboardMcpServersMarketRoute =
-  DashboardMcpServersMarketRouteImport.update({
-    id: '/market',
-    path: '/market',
-    getParentRoute: () => DashboardMcpServersRoute,
-  } as any)
-const DashboardMcpServersServerIdRoute =
-  DashboardMcpServersServerIdRouteImport.update({
-    id: '/$serverId',
-    path: '/$serverId',
-    getParentRoute: () => DashboardMcpServersRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -184,18 +134,10 @@ export interface FileRoutesByFullPath {
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
-  '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
-  '/dashboard/mcp-servers': typeof DashboardMcpServersRouteWithChildren
+  '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
-  '/dashboard/projects': typeof DashboardProjectsRoute
-  '/dashboard/rules': typeof DashboardRulesRoute
-  '/dashboard/skills': typeof DashboardSkillsRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
-  '/dashboard/mcp-servers/$serverId': typeof DashboardMcpServersServerIdRoute
-  '/dashboard/mcp-servers/market': typeof DashboardMcpServersMarketRoute
-  '/dashboard/skills/$skillId': typeof DashboardSkillsSkillIdRoute
-  '/dashboard/skills/market': typeof DashboardSkillsMarketRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -211,18 +153,10 @@ export interface FileRoutesByTo {
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
-  '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
-  '/dashboard/mcp-servers': typeof DashboardMcpServersRouteWithChildren
+  '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
-  '/dashboard/projects': typeof DashboardProjectsRoute
-  '/dashboard/rules': typeof DashboardRulesRoute
-  '/dashboard/skills': typeof DashboardSkillsRouteWithChildren
   '/dashboard': typeof DashboardIndexRoute
-  '/dashboard/mcp-servers/$serverId': typeof DashboardMcpServersServerIdRoute
-  '/dashboard/mcp-servers/market': typeof DashboardMcpServersMarketRoute
-  '/dashboard/skills/$skillId': typeof DashboardSkillsSkillIdRoute
-  '/dashboard/skills/market': typeof DashboardSkillsMarketRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -240,18 +174,10 @@ export interface FileRoutesById {
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
-  '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
-  '/dashboard/mcp-servers': typeof DashboardMcpServersRouteWithChildren
+  '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
-  '/dashboard/projects': typeof DashboardProjectsRoute
-  '/dashboard/rules': typeof DashboardRulesRoute
-  '/dashboard/skills': typeof DashboardSkillsRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
-  '/dashboard/mcp-servers/$serverId': typeof DashboardMcpServersServerIdRoute
-  '/dashboard/mcp-servers/market': typeof DashboardMcpServersMarketRoute
-  '/dashboard/skills/$skillId': typeof DashboardSkillsSkillIdRoute
-  '/dashboard/skills/market': typeof DashboardSkillsMarketRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -270,18 +196,10 @@ export interface FileRouteTypes {
     | '/dashboard/board'
     | '/dashboard/calendar'
     | '/dashboard/creation'
-    | '/dashboard/goals'
     | '/dashboard/inbox'
-    | '/dashboard/mcp-servers'
+    | '/dashboard/mail'
     | '/dashboard/observability'
-    | '/dashboard/projects'
-    | '/dashboard/rules'
-    | '/dashboard/skills'
     | '/dashboard/'
-    | '/dashboard/mcp-servers/$serverId'
-    | '/dashboard/mcp-servers/market'
-    | '/dashboard/skills/$skillId'
-    | '/dashboard/skills/market'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -297,18 +215,10 @@ export interface FileRouteTypes {
     | '/dashboard/board'
     | '/dashboard/calendar'
     | '/dashboard/creation'
-    | '/dashboard/goals'
     | '/dashboard/inbox'
-    | '/dashboard/mcp-servers'
+    | '/dashboard/mail'
     | '/dashboard/observability'
-    | '/dashboard/projects'
-    | '/dashboard/rules'
-    | '/dashboard/skills'
     | '/dashboard'
-    | '/dashboard/mcp-servers/$serverId'
-    | '/dashboard/mcp-servers/market'
-    | '/dashboard/skills/$skillId'
-    | '/dashboard/skills/market'
   id:
     | '__root__'
     | '/'
@@ -325,18 +235,10 @@ export interface FileRouteTypes {
     | '/dashboard/board'
     | '/dashboard/calendar'
     | '/dashboard/creation'
-    | '/dashboard/goals'
     | '/dashboard/inbox'
-    | '/dashboard/mcp-servers'
+    | '/dashboard/mail'
     | '/dashboard/observability'
-    | '/dashboard/projects'
-    | '/dashboard/rules'
-    | '/dashboard/skills'
     | '/dashboard/'
-    | '/dashboard/mcp-servers/$serverId'
-    | '/dashboard/mcp-servers/market'
-    | '/dashboard/skills/$skillId'
-    | '/dashboard/skills/market'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -409,27 +311,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/skills': {
-      id: '/dashboard/skills'
-      path: '/skills'
-      fullPath: '/dashboard/skills'
-      preLoaderRoute: typeof DashboardSkillsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/rules': {
-      id: '/dashboard/rules'
-      path: '/rules'
-      fullPath: '/dashboard/rules'
-      preLoaderRoute: typeof DashboardRulesRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/projects': {
-      id: '/dashboard/projects'
-      path: '/projects'
-      fullPath: '/dashboard/projects'
-      preLoaderRoute: typeof DashboardProjectsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
     '/dashboard/observability': {
       id: '/dashboard/observability'
       path: '/observability'
@@ -437,11 +318,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardObservabilityRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/mcp-servers': {
-      id: '/dashboard/mcp-servers'
-      path: '/mcp-servers'
-      fullPath: '/dashboard/mcp-servers'
-      preLoaderRoute: typeof DashboardMcpServersRouteImport
+    '/dashboard/mail': {
+      id: '/dashboard/mail'
+      path: '/mail'
+      fullPath: '/dashboard/mail'
+      preLoaderRoute: typeof DashboardMailRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/inbox': {
@@ -449,13 +330,6 @@ declare module '@tanstack/react-router' {
       path: '/inbox'
       fullPath: '/dashboard/inbox'
       preLoaderRoute: typeof DashboardInboxRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/goals': {
-      id: '/dashboard/goals'
-      path: '/goals'
-      fullPath: '/dashboard/goals'
-      preLoaderRoute: typeof DashboardGoalsRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/creation': {
@@ -507,63 +381,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/skills/market': {
-      id: '/dashboard/skills/market'
-      path: '/market'
-      fullPath: '/dashboard/skills/market'
-      preLoaderRoute: typeof DashboardSkillsMarketRouteImport
-      parentRoute: typeof DashboardSkillsRoute
-    }
-    '/dashboard/skills/$skillId': {
-      id: '/dashboard/skills/$skillId'
-      path: '/$skillId'
-      fullPath: '/dashboard/skills/$skillId'
-      preLoaderRoute: typeof DashboardSkillsSkillIdRouteImport
-      parentRoute: typeof DashboardSkillsRoute
-    }
-    '/dashboard/mcp-servers/market': {
-      id: '/dashboard/mcp-servers/market'
-      path: '/market'
-      fullPath: '/dashboard/mcp-servers/market'
-      preLoaderRoute: typeof DashboardMcpServersMarketRouteImport
-      parentRoute: typeof DashboardMcpServersRoute
-    }
-    '/dashboard/mcp-servers/$serverId': {
-      id: '/dashboard/mcp-servers/$serverId'
-      path: '/$serverId'
-      fullPath: '/dashboard/mcp-servers/$serverId'
-      preLoaderRoute: typeof DashboardMcpServersServerIdRouteImport
-      parentRoute: typeof DashboardMcpServersRoute
-    }
   }
 }
-
-interface DashboardMcpServersRouteChildren {
-  DashboardMcpServersServerIdRoute: typeof DashboardMcpServersServerIdRoute
-  DashboardMcpServersMarketRoute: typeof DashboardMcpServersMarketRoute
-}
-
-const DashboardMcpServersRouteChildren: DashboardMcpServersRouteChildren = {
-  DashboardMcpServersServerIdRoute: DashboardMcpServersServerIdRoute,
-  DashboardMcpServersMarketRoute: DashboardMcpServersMarketRoute,
-}
-
-const DashboardMcpServersRouteWithChildren =
-  DashboardMcpServersRoute._addFileChildren(DashboardMcpServersRouteChildren)
-
-interface DashboardSkillsRouteChildren {
-  DashboardSkillsSkillIdRoute: typeof DashboardSkillsSkillIdRoute
-  DashboardSkillsMarketRoute: typeof DashboardSkillsMarketRoute
-}
-
-const DashboardSkillsRouteChildren: DashboardSkillsRouteChildren = {
-  DashboardSkillsSkillIdRoute: DashboardSkillsSkillIdRoute,
-  DashboardSkillsMarketRoute: DashboardSkillsMarketRoute,
-}
-
-const DashboardSkillsRouteWithChildren = DashboardSkillsRoute._addFileChildren(
-  DashboardSkillsRouteChildren,
-)
 
 interface DashboardRouteChildren {
   DashboardActivityRoute: typeof DashboardActivityRoute
@@ -571,13 +390,9 @@ interface DashboardRouteChildren {
   DashboardBoardRoute: typeof DashboardBoardRoute
   DashboardCalendarRoute: typeof DashboardCalendarRoute
   DashboardCreationRoute: typeof DashboardCreationRoute
-  DashboardGoalsRoute: typeof DashboardGoalsRoute
   DashboardInboxRoute: typeof DashboardInboxRoute
-  DashboardMcpServersRoute: typeof DashboardMcpServersRouteWithChildren
+  DashboardMailRoute: typeof DashboardMailRoute
   DashboardObservabilityRoute: typeof DashboardObservabilityRoute
-  DashboardProjectsRoute: typeof DashboardProjectsRoute
-  DashboardRulesRoute: typeof DashboardRulesRoute
-  DashboardSkillsRoute: typeof DashboardSkillsRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
@@ -587,13 +402,9 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardBoardRoute: DashboardBoardRoute,
   DashboardCalendarRoute: DashboardCalendarRoute,
   DashboardCreationRoute: DashboardCreationRoute,
-  DashboardGoalsRoute: DashboardGoalsRoute,
   DashboardInboxRoute: DashboardInboxRoute,
-  DashboardMcpServersRoute: DashboardMcpServersRouteWithChildren,
+  DashboardMailRoute: DashboardMailRoute,
   DashboardObservabilityRoute: DashboardObservabilityRoute,
-  DashboardProjectsRoute: DashboardProjectsRoute,
-  DashboardRulesRoute: DashboardRulesRoute,
-  DashboardSkillsRoute: DashboardSkillsRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
