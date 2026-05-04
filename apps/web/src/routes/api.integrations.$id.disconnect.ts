@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/integrations/$id/disconnect")({
   server: {
     handlers: {
       POST: async ({ params }) => {
-        const service = new IntegrationService(getLocalDb());
+        const service = new IntegrationService(await getLocalDb());
         return Response.json(service.disconnectIntegration(params.id));
       },
     },

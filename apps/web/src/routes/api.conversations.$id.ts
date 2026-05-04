@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/conversations/$id")({
   server: {
     handlers: {
       GET: async ({ params }) => {
-        const conv = await ConversationService.get(getLocalDb(), params.id);
+        const conv = await ConversationService.get(await getLocalDb(), params.id);
         return conv
           ? Response.json(conv)
           : Response.json({ error: "Conversation not found" }, { status: 404 });
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/conversations/$id")({
           archived?: boolean;
           deleted?: boolean;
         };
-        const conv = await ConversationService.update(getLocalDb(), params.id, body);
+        const conv = await ConversationService.update(await getLocalDb(), params.id, body);
         return conv
           ? Response.json(conv)
           : Response.json({ error: "Conversation not found" }, { status: 404 });
@@ -29,8 +29,8 @@ export const Route = createFileRoute("/api/conversations/$id")({
         const url = new URL(request.url);
         const permanent = url.searchParams.get("permanent") === "true";
         const success = permanent
-          ? await ConversationService.hardDelete(getLocalDb(), params.id)
-          : await ConversationService.delete(getLocalDb(), params.id);
+          ? await ConversationService.hardDelete(await getLocalDb(), params.id)
+          : await ConversationService.delete(await getLocalDb(), params.id);
         return success
           ? Response.json({ success: true })
           : Response.json({ error: "Conversation not found" }, { status: 404 });

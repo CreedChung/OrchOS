@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/integrations/$id/accounts/$accountId"
   server: {
     handlers: {
       DELETE: async ({ params }) => {
-        const service = new IntegrationService(getLocalDb());
+        const service = new IntegrationService(await getLocalDb());
         return Response.json(service.deleteIntegrationAccount(params.id, params.accountId));
       },
     },

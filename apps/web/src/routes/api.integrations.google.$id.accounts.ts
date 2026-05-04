@@ -12,7 +12,7 @@ export const Route = createFileRoute("/api/integrations/google/$id/accounts")({
           refreshToken: string;
           label?: string;
         };
-        const service = new IntegrationService(getLocalDb());
+        const service = new IntegrationService(await getLocalDb());
         const result = await service.connectGoogleIntegration(params.id as "google-calendar" | "gmail", body);
         return Response.json(result);
       },

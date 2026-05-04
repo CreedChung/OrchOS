@@ -5,7 +5,7 @@ import { ConversationService } from "@/server/modules/conversation/service";
 export const Route = createFileRoute("/api/conversations")({
   server: {
     handlers: {
-      GET: async () => Response.json(await ConversationService.list(getLocalDb())),
+      GET: async () => Response.json(await ConversationService.list(await getLocalDb())),
       POST: async ({ request }) => {
         const body = (await request.json()) as {
           title?: string;
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/api/conversations")({
           archived?: boolean;
           deleted?: boolean;
         };
-        return Response.json(await ConversationService.create(getLocalDb(), body));
+        return Response.json(await ConversationService.create(await getLocalDb(), body));
       },
     },
   },

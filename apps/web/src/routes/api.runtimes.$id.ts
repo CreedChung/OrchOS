@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/runtimes/$id")({
           enabled?: boolean;
           transport?: "stdio" | "tcp";
         };
-        const db = getLocalDb();
+        const db = await getLocalDb();
         let runtime = null;
         if (body.status !== undefined) runtime = await RuntimeService.updateStatus(db, params.id, body.status);
         else if (body.enabled !== undefined) runtime = await RuntimeService.updateEnabled(db, params.id, body.enabled);

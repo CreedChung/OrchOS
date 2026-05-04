@@ -1,0 +1,10 @@
+{
+  "name": "cli",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "start": "bun run src/index.ts",
+    "check-types": "tsc --noEmit"
+  }
+}

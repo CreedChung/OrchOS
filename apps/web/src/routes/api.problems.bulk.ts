@@ -7,7 +7,7 @@ export const Route = createFileRoute("/api/problems/bulk")({
     handlers: {
       POST: async ({ request }) => {
         const body = (await request.json()) as { ids: string[]; status: "open" | "fixed" | "ignored" | "assigned" };
-        const updated = await ProblemService.bulkUpdate(getLocalDb(), body.ids, { status: body.status });
+        const updated = await ProblemService.bulkUpdate(await getLocalDb(), body.ids, { status: body.status });
         return Response.json({ updated });
       },
     },

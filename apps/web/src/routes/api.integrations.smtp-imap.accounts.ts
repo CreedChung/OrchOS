@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/integrations/smtp-imap/accounts")({
           smtp: { host: string; port: number; secure: boolean };
           imap: { host: string; port: number; secure: boolean };
         };
-        const service = new IntegrationService(getLocalDb());
+        const service = new IntegrationService(await getLocalDb());
         return Response.json(service.createSmtpImapAccount(body));
       },
     },

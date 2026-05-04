@@ -5,10 +5,10 @@ import { OrganizationService } from "@/server/modules/organization";
 export const Route = createFileRoute("/api/organizations")({
   server: {
     handlers: {
-      GET: async () => Response.json(await OrganizationService.list(getLocalDb())),
+      GET: async () => Response.json(await OrganizationService.list(await getLocalDb())),
       POST: async ({ request }) => {
         const body = (await request.json()) as { name: string };
-        return Response.json(await OrganizationService.create(getLocalDb(), body.name));
+        return Response.json(await OrganizationService.create(await getLocalDb(), body.name));
       },
     },
   },

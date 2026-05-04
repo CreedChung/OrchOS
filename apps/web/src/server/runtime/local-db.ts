@@ -1,15 +1,17 @@
-import { createBunDb, syncSchema } from "@/server/bun/driver";
 import type { AppDb } from "@/server/db/types";
 
-let dbInstance: AppDb | null = null;
+let dbInstancePromise: Promise<AppDb> | null = null;
 
-export function getLocalDb(): AppDb {
-  if (dbInstance) {
-    return dbInstance;
+export async function getLocalDb(): Promise<AppDb> {
+  if (dbInstancePromise) {
+    return dbInstancePromise;
   }
 
-  const db = createBunDb();
-  syncSchema(db);
-  dbInstance = db;
-  return db;
+  dbInstancePromise = import("@/server/bun/driver").then(({ createBunDb, syncSchema }) => {
+    const db = createBunDb();
+    syncSchema(db);
+    return db;
+  });
+
+  return dbInstancePromise;
 }

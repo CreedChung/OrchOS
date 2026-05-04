@@ -5,10 +5,10 @@ import { ProjectService } from "@/server/modules/project/service";
 export const Route = createFileRoute("/api/projects")({
   server: {
     handlers: {
-      GET: async () => Response.json(await ProjectService.list(getLocalDb())),
+      GET: async () => Response.json(await ProjectService.list(await getLocalDb())),
       POST: async ({ request }) => {
         const body = (await request.json()) as { name: string; path: string; repositoryUrl?: string };
-        return Response.json(await ProjectService.create(getLocalDb(), body.name, body.path, body.repositoryUrl));
+        return Response.json(await ProjectService.create(await getLocalDb(), body.name, body.path, body.repositoryUrl));
       },
     },
   },

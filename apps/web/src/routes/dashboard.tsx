@@ -82,6 +82,7 @@ function getViewFromPath(pathname: string): SidebarView {
     "calendar",
     "mail",
     "observability",
+    "devices",
   ];
   return validViews.includes(segment as SidebarView) ? (segment as SidebarView) : "inbox";
 }

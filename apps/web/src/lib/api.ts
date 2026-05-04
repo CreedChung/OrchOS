@@ -252,6 +252,26 @@ export interface DetectRuntimesResponse {
   unavailable: DetectedRuntime[];
 }
 
+export interface LocalHostProfile {
+  id: string;
+  userId: string;
+  organizationId?: string;
+  deviceId: string;
+  name: string;
+  platform?: string;
+  appVersion?: string;
+  status: "online" | "offline";
+  runtimes: DetectedRuntime[];
+  metadata: Record<string, string>;
+  registeredAt: string;
+  lastSeenAt: string;
+}
+
+export interface LocalHostPairingToken {
+  pairingToken: string;
+  expiresAt: string;
+}
+
 export interface RegisterRuntimesResponse {
   registered: RuntimeProfile[];
   skipped: DetectedRuntime[];
@@ -474,6 +494,19 @@ export const api = {
     const response = await fetch(resolveApiUrl("/api/runtimes/detect"), { credentials: "include" });
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     return (await response.json()) as DetectRuntimesResponse;
+  },
+  listLocalHosts: async (): Promise<LocalHostProfile[]> => {
+    const response = await fetch(resolveApiUrl("/api/local-hosts"), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as LocalHostProfile[];
+  },
+  createLocalHostPairingToken: async (): Promise<LocalHostPairingToken> => {
+    const response = await fetch(resolveApiUrl("/api/local-hosts/pairing-tokens"), {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as LocalHostPairingToken;
   },
   
   // Integrations

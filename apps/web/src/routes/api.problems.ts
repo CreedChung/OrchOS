@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/problems")({
         const url = new URL(request.url);
         const status = url.searchParams.get("status") || undefined;
         const priority = url.searchParams.get("priority") || undefined;
-        return Response.json(await ProblemService.list(getLocalDb(), { status: status as any, priority: priority as any }));
+        return Response.json(await ProblemService.list(await getLocalDb(), { status: status as any, priority: priority as any }));
       },
       POST: async ({ request }) => {
         const body = (await request.json()) as {
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/problems")({
           context?: string;
           actions?: string[];
         };
-        return Response.json(await ProblemService.create(getLocalDb(), body));
+        return Response.json(await ProblemService.create(await getLocalDb(), body));
       },
     },
   },

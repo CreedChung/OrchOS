@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/observability/metrics")({
   server: {
     handlers: {
       GET: async () => {
-        const db = getLocalDb();
+        const db = await getLocalDb();
         const allProblems = await db.select().from(problems).all();
         const allRuntimes = await db.select().from(runtimes).all();
         return Response.json({

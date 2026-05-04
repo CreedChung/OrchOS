@@ -2,9 +2,15 @@ import { createBunDb, syncSchema } from "./driver";
 import { createApp } from "../app";
 import { S3Client } from "bun";
 import type { StorageAdapter } from "../modules/agent";
+import { configureLocalCliExecution } from "../runtime/local-cli-adapter";
 
 const db = createBunDb();
 await syncSchema(db);
+
+configureLocalCliExecution(
+  process.env.ORCHOS_LOCAL_CLI_URL,
+  process.env.ORCHOS_LOCAL_CLI_TOKEN,
+);
 
 function createBunStorage(): StorageAdapter | undefined {
   try {

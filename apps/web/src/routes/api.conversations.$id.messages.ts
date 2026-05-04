@@ -6,16 +6,16 @@ export const Route = createFileRoute("/api/conversations/$id/messages")({
   server: {
     handlers: {
       GET: async ({ params }) => {
-        const conv = await ConversationService.get(getLocalDb(), params.id);
+        const conv = await ConversationService.get(await getLocalDb(), params.id);
         return conv
-          ? Response.json(await ConversationService.getMessages(getLocalDb(), params.id))
+          ? Response.json(await ConversationService.getMessages(await getLocalDb(), params.id))
           : Response.json({ error: "Conversation not found" }, { status: 404 });
       },
       POST: async ({ params, request }) => {
         const body = (await request.json()) as { content: string };
-        const conv = await ConversationService.get(getLocalDb(), params.id);
+        const conv = await ConversationService.get(await getLocalDb(), params.id);
         return conv
-          ? Response.json(await ConversationService.sendAndReply(getLocalDb(), params.id, body.content))
+          ? Response.json(await ConversationService.sendAndReply(await getLocalDb(), params.id, body.content))
           : Response.json({ error: "Conversation not found" }, { status: 404 });
       },
     },

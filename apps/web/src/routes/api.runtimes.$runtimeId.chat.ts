@@ -7,7 +7,7 @@ export const Route = createFileRoute("/api/runtimes/$runtimeId/chat")({
     handlers: {
       POST: async ({ params, request }) => {
         const body = (await request.json()) as { prompt: string };
-        const result = await RuntimeService.chat(getLocalDb(), params.runtimeId, body.prompt);
+        const result = await RuntimeService.chat(await getLocalDb(), params.runtimeId, body.prompt);
         return Response.json(result, { status: !result.success && result.error?.includes("not found") ? 404 : 200 });
       },
     },

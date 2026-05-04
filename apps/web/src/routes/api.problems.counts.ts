@@ -5,7 +5,7 @@ import { ProblemService } from "@/server/modules/problem/service";
 export const Route = createFileRoute("/api/problems/counts")({
   server: {
     handlers: {
-      GET: async () => Response.json(await ProblemService.countByStatus(getLocalDb())),
+      GET: async () => Response.json(await ProblemService.countByStatus(await getLocalDb())),
     },
   },
 });

@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/conversations/deleted")({
   server: {
     handlers: {
       DELETE: async () => {
-        const count = await ConversationService.clearDeleted(getLocalDb());
+        const count = await ConversationService.clearDeleted(await getLocalDb());
         return Response.json({ success: true, count });
       },
     },

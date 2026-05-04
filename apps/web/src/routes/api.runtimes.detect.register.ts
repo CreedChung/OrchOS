@@ -7,7 +7,7 @@ export const Route = createFileRoute("/api/runtimes/detect/register")({
     handlers: {
       POST: async ({ request }) => {
         const body = (await request.json()) as { runtimeIds?: string[]; registerAll?: boolean };
-        const db = getLocalDb();
+        const db = await getLocalDb();
         const detected = await RuntimeService.detect();
         const registered = [];
         const skipped = [];

@@ -1,4 +1,10 @@
-import { getRemoteExecutionAdapter } from "@/server/runtime/execution-adapter";
+import {
+  getRemoteExecutionAdapter,
+  type DetectedRuntime,
+  type RuntimeChatResult,
+  type RuntimeHealthCheckResult,
+  type RuntimeModelResult,
+} from "@/server/runtime/execution-adapter";
 
 export interface RuntimeExecutionResult {
   success: boolean;
@@ -13,19 +19,31 @@ export interface RuntimeExecutorConfig {
   env?: Record<string, string>;
 }
 
-type BunSpawn = typeof import("bun").spawn;
-let cachedSpawn: BunSpawn | undefined;
+type RuntimeSpawn = (options: {
+  cmd: string[];
+  cwd: string;
+  env: Record<string, string>;
+  stdout: "pipe";
+  stderr: "pipe";
+}) => {
+  stdout: ReadableStream<Uint8Array>;
+  stderr: ReadableStream<Uint8Array>;
+  kill: () => void;
+  exited: Promise<number>;
+};
+
+let cachedSpawn: RuntimeSpawn | undefined;
 const DEFAULT_TIMEOUT = 60000;
 
-async function getSpawn(): Promise<BunSpawn | undefined> {
+function getSpawn(): RuntimeSpawn | undefined {
   if (cachedSpawn !== undefined) return cachedSpawn;
-  try {
-    const bun = await import("bun");
-    cachedSpawn = bun.spawn;
-    return cachedSpawn;
-  } catch {
-    return undefined;
-  }
+
+  const bunRuntime = globalThis as typeof globalThis & {
+    Bun?: { spawn?: RuntimeSpawn };
+  };
+
+  cachedSpawn = bunRuntime.Bun?.spawn;
+  return cachedSpawn;
 }
 
 const AGENT_CLI_REGISTRY = [
@@ -34,6 +52,10 @@ const AGENT_CLI_REGISTRY = [
   { id: "codex", name: "Codex", command: "codex", versionFlag: "--version", role: "Code generation & editing", capabilities: ["write_code", "fix_bug"], model: "local/codex", invokeTemplate: { cmdTemplate: "echo '$PROMPT' | codex 2>&1 | head -20", successIndicators: ["codex", "CodeX"], timeout: 30000 } },
   { id: "opencode", name: "OpenCode", command: "opencode", versionFlag: "--version", role: "Open-source code generation", capabilities: ["write_code", "fix_bug", "review"], model: "local/opencode", invokeTemplate: { cmdTemplate: "echo '$PROMPT' | opencode 2>&1 | head -20", successIndicators: ["opencode", "OpenCode"], timeout: 30000 } },
 ] as const;
+
+function getRuntimeRegistryEntry(runtimeId: string) {
+  return AGENT_CLI_REGISTRY.find((entry) => entry.id === runtimeId);
+}
 
 export async function runRuntimeCommand(command: string, config: RuntimeExecutorConfig = {}): Promise<RuntimeExecutionResult> {
   const remoteAdapter = getRemoteExecutionAdapter();
@@ -46,7 +68,7 @@ export async function runRuntimeCommand(command: string, config: RuntimeExecutor
       exitCode: result.exitCode ?? (result.success ? 0 : 1),
     };
   }
-  const spawnFn = await getSpawn();
+  const spawnFn = getSpawn();
   if (!spawnFn) {
     return { success: false, output: "", error: "Executor not available in this environment", exitCode: 1 };
   }
@@ -65,8 +87,13 @@ export async function runRuntimeCommand(command: string, config: RuntimeExecutor
 }
 
 export async function detectRuntimeCLIs() {
-  const available = [] as any[];
-  const unavailable = [] as any[];
+  const remoteAdapter = getRemoteExecutionAdapter();
+  if (remoteAdapter?.detectRuntimes) {
+    return remoteAdapter.detectRuntimes();
+  }
+
+  const available: DetectedRuntime[] = [];
+  const unavailable: DetectedRuntime[] = [];
   for (const agent of AGENT_CLI_REGISTRY) {
     const whichResult = await runRuntimeCommand(`which ${agent.command}`);
     const base = { id: agent.id, name: agent.name, command: agent.command, role: agent.role, capabilities: [...agent.capabilities], model: agent.model, transport: "stdio" as const };
@@ -88,8 +115,13 @@ export async function detectRuntimeCLIs() {
   return { available, unavailable };
 }
 
-export async function runtimeHealthCheck(runtimeId: string, options?: { level?: "basic" | "ping" | "full"; prompt?: string }) {
-  const agent = AGENT_CLI_REGISTRY.find((a) => a.id === runtimeId);
+export async function runtimeHealthCheck(runtimeId: string, options?: { level?: "basic" | "ping" | "full"; prompt?: string }): Promise<RuntimeHealthCheckResult> {
+  const remoteAdapter = getRemoteExecutionAdapter();
+  if (remoteAdapter?.runtimeHealthCheck) {
+    return remoteAdapter.runtimeHealthCheck(runtimeId, options);
+  }
+
+  const agent = getRuntimeRegistryEntry(runtimeId);
   if (!agent) {
     return { healthy: false, level: "basic" as const, output: "", error: `Unknown agent ID: ${runtimeId}`, responseTime: 0, agentName: runtimeId, agentCommand: runtimeId };
   }
@@ -117,8 +149,13 @@ export async function runtimeHealthCheck(runtimeId: string, options?: { level?: 
   return { healthy: result.success, level, output: result.output.trim().slice(0, 1000), error: result.success ? undefined : result.error, responseTime: Date.now() - startTime, agentName: agent.name, agentCommand: agent.command, authRequired };
 }
 
-export async function getRuntimeCurrentModel(runtimeId: string, fallbackModel?: string) {
-  const agent = AGENT_CLI_REGISTRY.find((a) => a.id === runtimeId);
+export async function getRuntimeCurrentModel(runtimeId: string, fallbackModel?: string): Promise<RuntimeModelResult> {
+  const remoteAdapter = getRemoteExecutionAdapter();
+  if (remoteAdapter?.getRuntimeCurrentModel) {
+    return remoteAdapter.getRuntimeCurrentModel(runtimeId, fallbackModel);
+  }
+
+  const agent = getRuntimeRegistryEntry(runtimeId);
   if (!agent) return { model: fallbackModel, source: "registry" as const };
   const modelQuery = "modelQuery" in agent ? agent.modelQuery : undefined;
   if (modelQuery) {
@@ -135,7 +172,12 @@ export async function getRuntimeCurrentModel(runtimeId: string, fallbackModel?: 
   return { model: fallbackModel || agent.model, source: "registry" as const };
 }
 
-export async function chatWithRuntimeCommand(command: string, prompt: string, runtimeName: string) {
+export async function chatWithRuntimeCommand(command: string, prompt: string, runtimeName: string): Promise<RuntimeChatResult> {
+  const remoteAdapter = getRemoteExecutionAdapter();
+  if (remoteAdapter?.chatWithRuntime) {
+    return remoteAdapter.chatWithRuntime(command, prompt, runtimeName);
+  }
+
   const startTime = Date.now();
   const result = await runRuntimeCommand(`${command} -p '${prompt.replace(/'/g, "'\\''")}' 2>&1`, { timeout: 120000 });
   return {

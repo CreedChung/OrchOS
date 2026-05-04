@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/problems/$id")({
   server: {
     handlers: {
       GET: async ({ params }) => {
-        const problem = await ProblemService.get(getLocalDb(), params.id);
+        const problem = await ProblemService.get(await getLocalDb(), params.id);
         return problem
           ? Response.json(problem)
           : Response.json({ error: "Problem not found" }, { status: 404 });
@@ -19,13 +19,13 @@ export const Route = createFileRoute("/api/problems/$id")({
           source?: string;
           context?: string;
         };
-        const problem = await ProblemService.update(getLocalDb(), params.id, body);
+        const problem = await ProblemService.update(await getLocalDb(), params.id, body);
         return problem
           ? Response.json(problem)
           : Response.json({ error: "Problem not found" }, { status: 404 });
       },
       DELETE: async ({ params }) => {
-        const deleted = await ProblemService.delete(getLocalDb(), params.id);
+        const deleted = await ProblemService.delete(await getLocalDb(), params.id);
         return deleted
           ? Response.json({ success: true })
           : Response.json({ error: "Problem not found" }, { status: 404 });

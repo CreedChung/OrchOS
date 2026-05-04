@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "@tanstack/react-router";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   Cancel01Icon,
@@ -45,6 +46,7 @@ import { m } from "@/paraglide/messages";
 import type { ControlSettings, NotificationEvent, SoundId } from "@/lib/types";
 import { NOTIFICATION_EVENTS, AVAILABLE_SOUNDS } from "@/lib/types";
 import { api, type DetectRuntimesResponse, type RuntimeProfile } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 type SettingsTab = "general" | "notifications" | "integrations" | "runtimes" | "about";
 
@@ -664,6 +666,9 @@ export function SettingsDialog({
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground max-w-[240px]">{m.runtimes_desc()}</p>
                   <div className="flex items-center gap-1.5">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/dashboard/devices">本地设备</Link>
+                    </Button>
                     {detectResult && detectResult.available.length > 0 && (
                       <button
                         onClick={handleRegisterAll}

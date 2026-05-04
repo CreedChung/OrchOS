@@ -6,8 +6,7 @@ let settingsServicePromise: Promise<SettingsService> | null = null;
 
 function getSettingsService() {
   if (!settingsServicePromise) {
-    const db = getLocalDb();
-    settingsServicePromise = SettingsService.create(db);
+    settingsServicePromise = getLocalDb().then((db) => SettingsService.create(db));
   }
 
   return settingsServicePromise;

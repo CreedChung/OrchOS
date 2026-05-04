@@ -10,6 +10,7 @@ import { createRuntimeController } from "./modules/runtime";
 import { createProblemController } from "./modules/problem";
 import { filesystemController } from "./modules/filesystem";
 import { createConversationController } from "./modules/conversation";
+import { createLocalHostController } from "./modules/local-hosts";
 
 export interface AppOptions {
   db: AppDb;
@@ -24,6 +25,7 @@ export function createApp(options: AppOptions) {
   const runtimeController = createRuntimeController(db);
   const problemController = createProblemController(db);
   const conversationController = createConversationController(db);
+  const localHostController = createLocalHostController(db);
 
   return new Elysia()
     .use(cors())
@@ -33,5 +35,6 @@ export function createApp(options: AppOptions) {
     .use(organizationController)
     .use(problemController)
     .use(filesystemController)
-    .use(conversationController);
+    .use(conversationController)
+    .use(localHostController);
 }

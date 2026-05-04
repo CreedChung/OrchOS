@@ -8,11 +8,12 @@
   "scripts": {
     "build": "bun run --filter=web build",
     "dev": "bun run --filter=web dev",
+    "dev:cli": "bun run --filter=cli dev",
     "dev:all": "bun run --filter=web dev",
     "lint": "oxlint . --config .oxlintrc.json --ignore-path .gitignore",
     "lint:strict": "oxlint . --config .oxlintrc.json --ignore-path .gitignore --deny-warnings",
     "format": "oxfmt --write .",
-    "check-types": "bun run --filter=web check-types && bun run --filter=@repo/ui check-types",
+    "check-types": "bun run --filter=web check-types && bun run --filter=cli check-types",
     "test": "bun run --filter=web test",
     "prepare": "lefthook install"
   },

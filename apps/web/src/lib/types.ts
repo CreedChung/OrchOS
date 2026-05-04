@@ -243,4 +243,5 @@ export type SidebarView =
   | "board"
   | "calendar"
   | "mail"
-  | "observability";
+  | "observability"
+  | "devices";

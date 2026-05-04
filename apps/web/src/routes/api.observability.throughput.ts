@@ -7,7 +7,7 @@ export const Route = createFileRoute("/api/observability/throughput")({
       GET: async ({ request }) => {
         const url = new URL(request.url);
         const range = url.searchParams.get("range") || "24h";
-        const db = getLocalDb();
+        const db = await getLocalDb();
         const rows = (await db.select().from((db as any)._?.schema?.events ?? ({} as any)).all?.()) ?? [];
         const points = Array.isArray(rows)
           ? rows.slice(0, range === "24h" ? 24 : range === "7d" ? 7 : 30).map((_, index) => ({
