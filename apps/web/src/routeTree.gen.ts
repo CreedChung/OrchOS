@@ -29,6 +29,7 @@ import { Route as ApiRuntimesRouteImport } from './routes/api.runtimes'
 import { Route as ApiProjectsRouteImport } from './routes/api.projects'
 import { Route as ApiProblemsRouteImport } from './routes/api.problems'
 import { Route as ApiOrganizationsRouteImport } from './routes/api.organizations'
+import { Route as ApiLocalHostsRouteImport } from './routes/api.local-hosts'
 import { Route as ApiIntegrationsRouteImport } from './routes/api.integrations'
 import { Route as ApiConversationsRouteImport } from './routes/api.conversations'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
@@ -43,6 +44,9 @@ import { Route as ApiProblemsIdRouteImport } from './routes/api.problems.$id'
 import { Route as ApiOrganizationsIdRouteImport } from './routes/api.organizations.$id'
 import { Route as ApiObservabilityThroughputRouteImport } from './routes/api.observability.throughput'
 import { Route as ApiObservabilityMetricsRouteImport } from './routes/api.observability.metrics'
+import { Route as ApiLocalHostsPairingTokensRouteImport } from './routes/api.local-hosts.pairing-tokens'
+import { Route as ApiLocalHostsPairRouteImport } from './routes/api.local-hosts.pair'
+import { Route as ApiLocalHostsHeartbeatRouteImport } from './routes/api.local-hosts.heartbeat'
 import { Route as ApiFilesystemFileRouteImport } from './routes/api.filesystem.file'
 import { Route as ApiFilesystemBrowseRouteImport } from './routes/api.filesystem.browse'
 import { Route as ApiConversationsDeletedRouteImport } from './routes/api.conversations.deleted'
@@ -158,6 +162,11 @@ const ApiOrganizationsRoute = ApiOrganizationsRouteImport.update({
   path: '/api/organizations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLocalHostsRoute = ApiLocalHostsRouteImport.update({
+  id: '/api/local-hosts',
+  path: '/api/local-hosts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiIntegrationsRoute = ApiIntegrationsRouteImport.update({
   id: '/api/integrations',
   path: '/api/integrations',
@@ -228,6 +237,22 @@ const ApiObservabilityMetricsRoute = ApiObservabilityMetricsRouteImport.update({
   id: '/api/observability/metrics',
   path: '/api/observability/metrics',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLocalHostsPairingTokensRoute =
+  ApiLocalHostsPairingTokensRouteImport.update({
+    id: '/pairing-tokens',
+    path: '/pairing-tokens',
+    getParentRoute: () => ApiLocalHostsRoute,
+  } as any)
+const ApiLocalHostsPairRoute = ApiLocalHostsPairRouteImport.update({
+  id: '/pair',
+  path: '/pair',
+  getParentRoute: () => ApiLocalHostsRoute,
+} as any)
+const ApiLocalHostsHeartbeatRoute = ApiLocalHostsHeartbeatRouteImport.update({
+  id: '/heartbeat',
+  path: '/heartbeat',
+  getParentRoute: () => ApiLocalHostsRoute,
 } as any)
 const ApiFilesystemFileRoute = ApiFilesystemFileRouteImport.update({
   id: '/api/filesystem/file',
@@ -322,6 +347,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/api/conversations': typeof ApiConversationsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
+  '/api/local-hosts': typeof ApiLocalHostsRouteWithChildren
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
   '/api/problems': typeof ApiProblemsRouteWithChildren
   '/api/projects': typeof ApiProjectsRouteWithChildren
@@ -339,6 +365,9 @@ export interface FileRoutesByFullPath {
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
+  '/api/local-hosts/heartbeat': typeof ApiLocalHostsHeartbeatRoute
+  '/api/local-hosts/pair': typeof ApiLocalHostsPairRoute
+  '/api/local-hosts/pairing-tokens': typeof ApiLocalHostsPairingTokensRoute
   '/api/observability/metrics': typeof ApiObservabilityMetricsRoute
   '/api/observability/throughput': typeof ApiObservabilityThroughputRoute
   '/api/organizations/$id': typeof ApiOrganizationsIdRoute
@@ -371,6 +400,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/api/conversations': typeof ApiConversationsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
+  '/api/local-hosts': typeof ApiLocalHostsRouteWithChildren
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
   '/api/problems': typeof ApiProblemsRouteWithChildren
   '/api/projects': typeof ApiProjectsRouteWithChildren
@@ -388,6 +418,9 @@ export interface FileRoutesByTo {
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
+  '/api/local-hosts/heartbeat': typeof ApiLocalHostsHeartbeatRoute
+  '/api/local-hosts/pair': typeof ApiLocalHostsPairRoute
+  '/api/local-hosts/pairing-tokens': typeof ApiLocalHostsPairingTokensRoute
   '/api/observability/metrics': typeof ApiObservabilityMetricsRoute
   '/api/observability/throughput': typeof ApiObservabilityThroughputRoute
   '/api/organizations/$id': typeof ApiOrganizationsIdRoute
@@ -422,6 +455,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/api/conversations': typeof ApiConversationsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
+  '/api/local-hosts': typeof ApiLocalHostsRouteWithChildren
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
   '/api/problems': typeof ApiProblemsRouteWithChildren
   '/api/projects': typeof ApiProjectsRouteWithChildren
@@ -439,6 +473,9 @@ export interface FileRoutesById {
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
+  '/api/local-hosts/heartbeat': typeof ApiLocalHostsHeartbeatRoute
+  '/api/local-hosts/pair': typeof ApiLocalHostsPairRoute
+  '/api/local-hosts/pairing-tokens': typeof ApiLocalHostsPairingTokensRoute
   '/api/observability/metrics': typeof ApiObservabilityMetricsRoute
   '/api/observability/throughput': typeof ApiObservabilityThroughputRoute
   '/api/organizations/$id': typeof ApiOrganizationsIdRoute
@@ -474,6 +511,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/conversations'
     | '/api/integrations'
+    | '/api/local-hosts'
     | '/api/organizations'
     | '/api/problems'
     | '/api/projects'
@@ -491,6 +529,9 @@ export interface FileRouteTypes {
     | '/api/conversations/deleted'
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
+    | '/api/local-hosts/heartbeat'
+    | '/api/local-hosts/pair'
+    | '/api/local-hosts/pairing-tokens'
     | '/api/observability/metrics'
     | '/api/observability/throughput'
     | '/api/organizations/$id'
@@ -523,6 +564,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/conversations'
     | '/api/integrations'
+    | '/api/local-hosts'
     | '/api/organizations'
     | '/api/problems'
     | '/api/projects'
@@ -540,6 +582,9 @@ export interface FileRouteTypes {
     | '/api/conversations/deleted'
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
+    | '/api/local-hosts/heartbeat'
+    | '/api/local-hosts/pair'
+    | '/api/local-hosts/pairing-tokens'
     | '/api/observability/metrics'
     | '/api/observability/throughput'
     | '/api/organizations/$id'
@@ -573,6 +618,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/conversations'
     | '/api/integrations'
+    | '/api/local-hosts'
     | '/api/organizations'
     | '/api/problems'
     | '/api/projects'
@@ -590,6 +636,9 @@ export interface FileRouteTypes {
     | '/api/conversations/deleted'
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
+    | '/api/local-hosts/heartbeat'
+    | '/api/local-hosts/pair'
+    | '/api/local-hosts/pairing-tokens'
     | '/api/observability/metrics'
     | '/api/observability/throughput'
     | '/api/organizations/$id'
@@ -624,6 +673,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   ApiConversationsRoute: typeof ApiConversationsRouteWithChildren
   ApiIntegrationsRoute: typeof ApiIntegrationsRouteWithChildren
+  ApiLocalHostsRoute: typeof ApiLocalHostsRouteWithChildren
   ApiOrganizationsRoute: typeof ApiOrganizationsRouteWithChildren
   ApiProblemsRoute: typeof ApiProblemsRouteWithChildren
   ApiProjectsRoute: typeof ApiProjectsRouteWithChildren
@@ -777,6 +827,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOrganizationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/local-hosts': {
+      id: '/api/local-hosts'
+      path: '/api/local-hosts'
+      fullPath: '/api/local-hosts'
+      preLoaderRoute: typeof ApiLocalHostsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/integrations': {
       id: '/api/integrations'
       path: '/api/integrations'
@@ -874,6 +931,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/observability/metrics'
       preLoaderRoute: typeof ApiObservabilityMetricsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/local-hosts/pairing-tokens': {
+      id: '/api/local-hosts/pairing-tokens'
+      path: '/pairing-tokens'
+      fullPath: '/api/local-hosts/pairing-tokens'
+      preLoaderRoute: typeof ApiLocalHostsPairingTokensRouteImport
+      parentRoute: typeof ApiLocalHostsRoute
+    }
+    '/api/local-hosts/pair': {
+      id: '/api/local-hosts/pair'
+      path: '/pair'
+      fullPath: '/api/local-hosts/pair'
+      preLoaderRoute: typeof ApiLocalHostsPairRouteImport
+      parentRoute: typeof ApiLocalHostsRoute
+    }
+    '/api/local-hosts/heartbeat': {
+      id: '/api/local-hosts/heartbeat'
+      path: '/heartbeat'
+      fullPath: '/api/local-hosts/heartbeat'
+      preLoaderRoute: typeof ApiLocalHostsHeartbeatRouteImport
+      parentRoute: typeof ApiLocalHostsRoute
     }
     '/api/filesystem/file': {
       id: '/api/filesystem/file'
@@ -1047,6 +1125,22 @@ const ApiIntegrationsRouteWithChildren = ApiIntegrationsRoute._addFileChildren(
   ApiIntegrationsRouteChildren,
 )
 
+interface ApiLocalHostsRouteChildren {
+  ApiLocalHostsHeartbeatRoute: typeof ApiLocalHostsHeartbeatRoute
+  ApiLocalHostsPairRoute: typeof ApiLocalHostsPairRoute
+  ApiLocalHostsPairingTokensRoute: typeof ApiLocalHostsPairingTokensRoute
+}
+
+const ApiLocalHostsRouteChildren: ApiLocalHostsRouteChildren = {
+  ApiLocalHostsHeartbeatRoute: ApiLocalHostsHeartbeatRoute,
+  ApiLocalHostsPairRoute: ApiLocalHostsPairRoute,
+  ApiLocalHostsPairingTokensRoute: ApiLocalHostsPairingTokensRoute,
+}
+
+const ApiLocalHostsRouteWithChildren = ApiLocalHostsRoute._addFileChildren(
+  ApiLocalHostsRouteChildren,
+)
+
 interface ApiOrganizationsRouteChildren {
   ApiOrganizationsIdRoute: typeof ApiOrganizationsIdRoute
 }
@@ -1131,6 +1225,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   ApiConversationsRoute: ApiConversationsRouteWithChildren,
   ApiIntegrationsRoute: ApiIntegrationsRouteWithChildren,
+  ApiLocalHostsRoute: ApiLocalHostsRouteWithChildren,
   ApiOrganizationsRoute: ApiOrganizationsRouteWithChildren,
   ApiProblemsRoute: ApiProblemsRouteWithChildren,
   ApiProjectsRoute: ApiProjectsRouteWithChildren,

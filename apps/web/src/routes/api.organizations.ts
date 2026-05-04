@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getLocalDb } from "@/server/runtime/local-db";
-import { OrganizationService } from "@/server/modules/organization";
+import { OrganizationService } from "@/server/modules/organization/service";
 
 export const Route = createFileRoute("/api/organizations")({
   server: {

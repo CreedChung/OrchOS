@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "@tanstack/react-router";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   Cancel01Icon,
@@ -666,8 +665,14 @@ export function SettingsDialog({
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground max-w-[240px]">{m.runtimes_desc()}</p>
                   <div className="flex items-center gap-1.5">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/dashboard/devices">本地设备</Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        window.location.href = "/dashboard/devices";
+                      }}
+                    >
+                      本地设备
                     </Button>
                     {detectResult && detectResult.available.length > 0 && (
                       <button

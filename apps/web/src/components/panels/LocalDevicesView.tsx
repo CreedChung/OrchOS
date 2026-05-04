@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ComputerIcon,
@@ -44,7 +43,7 @@ function formatRelativeTime(value: string) {
 
 function getPairingCommand(token: string) {
   return [
-    `ORCHOS_CLOUD_API_URL=${typeof window === "undefined" ? "http://127.0.0.1:5173" : window.location.origin}`,
+    `ORCHOS_CLOUD_API_URL=${typeof window === "undefined" ? "http://127.0.0.1:3000" : window.location.origin}`,
     `ORCHOS_CLOUD_PAIRING_TOKEN=${token}`,
     `bun run dev:cli`,
   ].join(" \\\n");
@@ -265,8 +264,14 @@ export function LocalDevicesView({
 
         <div className="flex items-center justify-between rounded-2xl bg-muted/30 px-4 py-3 text-sm text-muted-foreground ring-1 ring-foreground/6">
           <span className="[text-wrap:pretty]">You can still use the quick local runtime scan inside Settings for manual inspection and registration.</span>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/dashboard/creation">Back to workspace</Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              window.location.href = "/dashboard/creation";
+            }}
+          >
+            Back to workspace
           </Button>
         </div>
       </div>

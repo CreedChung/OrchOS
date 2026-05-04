@@ -13,6 +13,13 @@ declare module "bun" {
 
 declare module "bun:sqlite";
 
+declare module "better-sqlite3" {
+  export default class Database {
+    constructor(path: string, options?: Record<string, unknown>);
+    pragma(statement: string): unknown;
+  }
+}
+
 interface R2ObjectBody {
   body?: ReadableStream<Uint8Array> | null;
   httpMetadata?: { contentType?: string };
