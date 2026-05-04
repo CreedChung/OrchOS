@@ -15,8 +15,10 @@ let activeMessageLoads = 0;
 
 function sortConversationsByUpdatedAt(conversations: Conversation[]) {
   return [...conversations].sort((a, b) => {
-    const aTime = typeof a.updatedAt === "string" ? Date.parse(a.updatedAt) : Number.NaN;
-    const bTime = typeof b.updatedAt === "string" ? Date.parse(b.updatedAt) : Number.NaN;
+    const aTime =
+      typeof a.updatedAt === "string" ? Date.parse(a.updatedAt) : Number.NaN;
+    const bTime =
+      typeof b.updatedAt === "string" ? Date.parse(b.updatedAt) : Number.NaN;
 
     if (Number.isNaN(aTime) && Number.isNaN(bTime)) return 0;
     if (Number.isNaN(aTime)) return 1;
@@ -26,7 +28,10 @@ function sortConversationsByUpdatedAt(conversations: Conversation[]) {
   });
 }
 
-function upsertConversation(conversations: Conversation[], conversation: Conversation) {
+function upsertConversation(
+  conversations: Conversation[],
+  conversation: Conversation,
+) {
   const next = conversations.filter((item) => item.id !== conversation.id);
   next.push(conversation);
   return sortConversationsByUpdatedAt(next);
@@ -47,8 +52,17 @@ interface ConversationState {
 interface ConversationActions {
   loadConversations: (options?: { force?: boolean }) => Promise<void>;
   setActiveConversationId: (id: string | null) => void;
-  loadMessages: (conversationId: string, options?: { force?: boolean }) => Promise<void>;
-  createConversation: (data: { runtimeId?: string }) => Promise<Conversation>;
+  loadMessages: (
+    conversationId: string,
+    options?: { force?: boolean },
+  ) => Promise<void>;
+  createConversation: (data: {
+    title?: string;
+    projectId?: string;
+    agentId?: string;
+    runtimeId?: string;
+    deleted?: boolean;
+  }) => Promise<Conversation>;
   updateConversation: (
     id: string,
     data: {
@@ -58,18 +72,26 @@ interface ConversationActions {
       runtimeId?: string;
       archived?: boolean;
       deleted?: boolean;
-    }
+    },
   ) => Promise<void>;
   deleteConversation: (id: string, permanent?: boolean) => Promise<void>;
   addMessage: (conversationId: string, message: ConversationMessage) => void;
   setConversationPending: (conversationId: string | null) => void;
-  setPendingUserMessage: (conversationId: string, content: string | undefined) => void;
-  setConversationFlowDraft: (conversationId: string, draft: ConversationFlowDraft | undefined) => void;
+  setPendingUserMessage: (
+    conversationId: string,
+    content: string | undefined,
+  ) => void;
+  setConversationFlowDraft: (
+    conversationId: string,
+    draft: ConversationFlowDraft | undefined,
+  ) => void;
   getActiveConversation: () => Conversation | null;
   getActiveMessages: () => ConversationMessage[];
 }
 
-export const useConversationStore = create<ConversationState & ConversationActions>((set, get) => ({
+export const useConversationStore = create<
+  ConversationState & ConversationActions
+>((set, get) => ({
   conversations: [],
   activeConversationId: null,
   pendingConversationId: null,
@@ -156,7 +178,10 @@ export const useConversationStore = create<ConversationState & ConversationActio
   },
 
   deleteConversation: async (id, permanent = false) => {
-    await api.deleteConversation(id, permanent ? { permanent: true } : undefined);
+    await api.deleteConversation(
+      id,
+      permanent ? { permanent: true } : undefined,
+    );
     const { activeConversationId } = get();
     set((state) => ({
       conversations: permanent
@@ -173,7 +198,8 @@ export const useConversationStore = create<ConversationState & ConversationActio
                 : conversation,
             ),
           ),
-      activeConversationId: activeConversationId === id ? null : activeConversationId,
+      activeConversationId:
+        activeConversationId === id ? null : activeConversationId,
     }));
   },
 
@@ -181,7 +207,10 @@ export const useConversationStore = create<ConversationState & ConversationActio
     set((state) => ({
       messagesByConversationId: {
         ...state.messagesByConversationId,
-        [conversationId]: [...(state.messagesByConversationId[conversationId] || []), message],
+        [conversationId]: [
+          ...(state.messagesByConversationId[conversationId] || []),
+          message,
+        ],
       },
     }));
   },

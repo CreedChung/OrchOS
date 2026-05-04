@@ -1,10 +1,9 @@
 import { useState } from "react";
+import { AppleSwitch } from "@/components/unlumen-ui/apple-switch";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Shield01Icon,
-  ToggleLeft,
-  ToggleRight,
   Cancel01Icon,
   Circle,
   Edit02Icon,
@@ -295,17 +294,12 @@ export function AgentDetailView({
                     <div className="mt-2 text-xs text-foreground/75 whitespace-pre-wrap">{rule.instruction}</div>
                   ) : null}
                 </div>
-                <button
-                  onClick={() => onRuleToggle(rule.id, !rule.enabled)}
-                  className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-                  title={rule.enabled ? m.disable_rule() : m.enable_rule()}
-                >
-                  {rule.enabled ? (
-                    <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
-                  ) : (
-                    <HugeiconsIcon icon={ToggleLeft} className="size-5" />
-                  )}
-                </button>
+                <AppleSwitch
+                  checked={rule.enabled}
+                  onCheckedChange={() => onRuleToggle(rule.id, !rule.enabled)}
+                  size="sm"
+                  aria-label={rule.enabled ? m.disable_rule() : m.enable_rule()}
+                />
                 <button
                   onClick={() => handleDeleteClick(rule.id)}
                   className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"

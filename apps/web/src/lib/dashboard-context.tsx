@@ -51,11 +51,14 @@ type RefreshResults = {
 type DashboardView =
   | "inbox"
   | "creation"
+  | "board"
   | "agents"
   | "rules"
   | "mcp-servers"
   | "skills"
   | "projects"
+  | "calendar"
+  | "mail"
   | "observability";
 
 function getViewFromPath(pathname: string): DashboardView {
@@ -63,6 +66,7 @@ function getViewFromPath(pathname: string): DashboardView {
   const validViews: DashboardView[] = [
     "inbox",
     "creation",
+    "board",
     "agents",
     "rules",
     "mcp-servers",
@@ -382,13 +386,23 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const shouldLoadGoals = activeView === "projects" || activeView === "observability";
   const shouldLoadProjects =
-    activeView === "creation" || activeView === "projects" || activeView === "skills";
+    activeView === "creation" ||
+    activeView === "board" ||
+    activeView === "projects" ||
+    activeView === "skills" ||
+    activeView === "calendar" ||
+    activeView === "mail";
   const shouldLoadProblems =
     activeView === "inbox" || activeView === "projects" || activeView === "observability";
   const shouldLoadAgents =
-    activeView === "agents" || activeView === "creation" || activeView === "observability";
+    activeView === "agents" ||
+    activeView === "creation" ||
+    activeView === "board" ||
+    activeView === "calendar" ||
+    activeView === "mail" ||
+    activeView === "observability";
   const shouldLoadRules = activeView === "agents" || activeView === "rules";
-  const shouldLoadCommands = activeView === "projects";
+  const shouldLoadCommands = activeView === "projects" || activeView === "board";
   const shouldLoadMcpServers = activeView === "mcp-servers";
   const shouldLoadSkills = activeView === "skills";
 
@@ -509,7 +523,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
     initializedViewsRef.current.add(activeView);
 
-    if (activeView === "creation") {
+    if (
+      activeView === "creation" ||
+      activeView === "board" ||
+      activeView === "calendar" ||
+      activeView === "mail"
+    ) {
       const criticalResults = await Promise.allSettled([
         api.listRuntimes(),
         shouldLoadProjects ? api.listProjects() : Promise.resolve<Project[]>([]),

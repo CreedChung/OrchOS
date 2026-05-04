@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { AppleSwitch } from "@/components/unlumen-ui/apple-switch";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   FolderGitIcon,
   Add01Icon,
   Delete02Icon,
-  ToggleLeft,
-  ToggleRight,
   Download01Icon,
   SparklesIcon,
   Menu01Icon,
@@ -677,17 +676,17 @@ export function McpServersView({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleToggle(activeServer.id, activeServer.enabled)}
-                    >
-                      <HugeiconsIcon
-                        icon={activeServer.enabled ? ToggleRight : ToggleLeft}
-                        className={cn("mr-1.5 size-4", activeServer.enabled && "text-emerald-500")}
+                    <div className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5">
+                      <AppleSwitch
+                        checked={activeServer.enabled}
+                        onCheckedChange={() => handleToggle(activeServer.id, activeServer.enabled)}
+                        size="sm"
+                        aria-label={activeServer.enabled ? m.disable() : m.enable()}
                       />
-                      {activeServer.enabled ? m.disable() : m.enable()}
-                    </Button>
+                      <span className="text-sm text-foreground">
+                        {activeServer.enabled ? m.disable() : m.enable()}
+                      </span>
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"

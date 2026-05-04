@@ -66,7 +66,6 @@ function AgentsPage() {
     <div className="flex flex-1 overflow-hidden">
       <AgentList
         agents={agents}
-        runtimes={runtimes}
         activeAgentId={activeAgentId}
         loading={loading}
         width={sidebarWidth}

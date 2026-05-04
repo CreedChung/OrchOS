@@ -860,6 +860,51 @@ export const api = {
     const result = await client.api.runtimes.detect.get();
     return assertData(result);
   },
+  
+  // Integrations
+  listIntegrations: async (): Promise<Integration[]> => {
+    const client = createEdenClient();
+    const result = await client.api.integrations.get();
+    return assertData(result);
+  },
+  connectIntegration: async (
+    id: "github" | "gitlab",
+    data: { accessToken: string; apiUrl?: string },
+  ): Promise<Integration> => {
+    const client = createEdenClient();
+    const result = await client.api.integrations({ id }).connect.post(data);
+    return assertData(result);
+  },
+  connectGoogleIntegration: async (
+    id: "google-calendar" | "gmail",
+    data: { clientId: string; clientSecret: string; refreshToken: string; label?: string },
+  ): Promise<Integration> => {
+    const client = createEdenClient();
+    const result = await client.api.integrations.google({ id }).accounts.post(data);
+    return assertData(result);
+  },
+  createSmtpImapAccount: async (data: {
+    email: string;
+    displayName?: string;
+    username: string;
+    password: string;
+    smtp: { host: string; port: number; secure: boolean };
+    imap: { host: string; port: number; secure: boolean };
+  }): Promise<Integration> => {
+    const client = createEdenClient();
+    const result = await client.api.integrations["smtp-imap"].accounts.post(data);
+    return assertData(result);
+  },
+  deleteIntegrationAccount: async (id: string, accountId: string): Promise<Integration> => {
+    const client = createEdenClient();
+    const result = await client.api.integrations({ id }).accounts({ accountId }).delete();
+    return assertData(result);
+  },
+  disconnectIntegration: async (id: string): Promise<{ success: boolean }> => {
+    const client = createEdenClient();
+    const result = await client.api.integrations({ id }).disconnect.post(undefined);
+    return assertData(result);
+  },
   registerDetectedRuntimes: (data: {
     runtimeIds?: string[];
     registerAll?: boolean;

@@ -20,9 +20,10 @@ import {
   UnfoldMoreIcon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
-import { cn, getRuntimeIconComponent } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { Spinner } from "@/components/ui/spinner";
+import { AppleSwitch } from "@/components/unlumen-ui/apple-switch";
 import {
   Select,
   SelectContent,
@@ -406,20 +407,12 @@ export function SettingsDialog({
                     <span className="text-sm font-medium text-foreground">{m.auto_commit()}</span>
                     <p className="text-xs text-muted-foreground">{m.auto_commit_desc()}</p>
                   </div>
-                  <button
-                    onClick={() => handleToggle("autoCommit")}
-                    className={cn(
-                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-                      currentSettings.autoCommit ? "bg-emerald-500" : "bg-muted",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                        currentSettings.autoCommit ? "translate-x-6" : "translate-x-1",
-                      )}
-                    />
-                  </button>
+                  <AppleSwitch
+                    checked={currentSettings.autoCommit}
+                    onCheckedChange={() => void handleToggle("autoCommit")}
+                    size="sm"
+                    aria-label={m.auto_commit()}
+                  />
                 </div>
 
                 {/* Auto Fix */}
@@ -428,20 +421,12 @@ export function SettingsDialog({
                     <span className="text-sm font-medium text-foreground">{m.auto_fix()}</span>
                     <p className="text-xs text-muted-foreground">{m.auto_fix_desc()}</p>
                   </div>
-                  <button
-                    onClick={() => handleToggle("autoFix")}
-                    className={cn(
-                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-                      currentSettings.autoFix ? "bg-emerald-500" : "bg-muted",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                        currentSettings.autoFix ? "translate-x-6" : "translate-x-1",
-                      )}
-                    />
-                  </button>
+                  <AppleSwitch
+                    checked={currentSettings.autoFix}
+                    onCheckedChange={() => void handleToggle("autoFix")}
+                    size="sm"
+                    aria-label={m.auto_fix()}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -451,20 +436,12 @@ export function SettingsDialog({
                       When a chat is bound to a project, block execution unless that project's sandbox starts successfully.
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleToggle("projectChatsRequireSandbox")}
-                    className={cn(
-                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-                      currentSettings.projectChatsRequireSandbox ? "bg-emerald-500" : "bg-muted",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                        currentSettings.projectChatsRequireSandbox ? "translate-x-6" : "translate-x-1",
-                      )}
-                    />
-                  </button>
+                  <AppleSwitch
+                    checked={currentSettings.projectChatsRequireSandbox}
+                    onCheckedChange={() => void handleToggle("projectChatsRequireSandbox")}
+                    size="sm"
+                    aria-label="Project Chats Require Sandbox"
+                  />
                 </div>
 
                 {/* Language */}
@@ -507,20 +484,12 @@ export function SettingsDialog({
                     </span>
                     <p className="text-xs text-muted-foreground">{m.system_notifications_desc()}</p>
                   </div>
-                  <button
-                    onClick={() => handleNotificationToggle("system")}
-                    className={cn(
-                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-                      currentSettings.notifications?.system ? "bg-emerald-500" : "bg-muted",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                        currentSettings.notifications?.system ? "translate-x-6" : "translate-x-1",
-                      )}
-                    />
-                  </button>
+                  <AppleSwitch
+                    checked={Boolean(currentSettings.notifications?.system)}
+                    onCheckedChange={() => void handleNotificationToggle("system")}
+                    size="sm"
+                    aria-label={m.system_notifications()}
+                  />
                 </div>
 
                 {/* Notification Sound */}
@@ -531,20 +500,12 @@ export function SettingsDialog({
                     </span>
                     <p className="text-xs text-muted-foreground">{m.notification_sound_desc()}</p>
                   </div>
-                  <button
-                    onClick={() => handleNotificationToggle("sound")}
-                    className={cn(
-                      "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-                      currentSettings.notifications?.sound ? "bg-emerald-500" : "bg-muted",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                        currentSettings.notifications?.sound ? "translate-x-6" : "translate-x-1",
-                      )}
-                    />
-                  </button>
+                  <AppleSwitch
+                    checked={Boolean(currentSettings.notifications?.sound)}
+                    onCheckedChange={() => void handleNotificationToggle("sound")}
+                    size="sm"
+                    aria-label={m.notification_sound()}
+                  />
                 </div>
 
                 {/* Per-Event Sound Config */}
@@ -617,20 +578,12 @@ export function SettingsDialog({
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                          <button
-                            onClick={() => handleEventSoundToggle(event.id)}
-                            className={cn(
-                              "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-                              isEnabled ? "bg-emerald-500" : "bg-muted",
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
-                                isEnabled ? "translate-x-5" : "translate-x-0.5",
-                              )}
-                            />
-                          </button>
+                          <AppleSwitch
+                            checked={isEnabled}
+                            onCheckedChange={() => void handleEventSoundToggle(event.id)}
+                            size="sm"
+                            aria-label={m[event.labelKey]()}
+                          />
                         </div>
                       );
                     })}
@@ -769,30 +722,30 @@ export function SettingsDialog({
                           )}
                         >
                           <div
-                            className={cn(
-                              "flex size-8 items-center justify-center rounded-md",
-                              isRegistered
-                                ? "bg-muted/50 dark:bg-white/10"
-                                : "bg-muted/50 dark:bg-white/10",
-                            )}
-                          >
-                            {(() => {
-                              const RuntimeIcon = getRuntimeIconComponent(agent);
-                              return RuntimeIcon ? (
-                                <HugeiconsIcon icon={RuntimeIcon} className="size-5" />
-                              ) : (
-                                <span
-                                  className={cn(
-                                    "text-sm font-bold",
-                                    isRegistered
-                                      ? "text-muted-foreground"
-                                      : "text-emerald-600 dark:text-emerald-400",
-                                  )}
-                                >
-                                  {agent.name.charAt(0).toUpperCase()}
-                                </span>
-                              );
-                            })()}
+                             className={cn(
+                               "flex size-8 items-center justify-center rounded-md",
+                               isRegistered
+                                 ? "bg-muted/50 dark:bg-white/10"
+                                 : "bg-muted/50 dark:bg-white/10",
+                             )}
+                           >
+                             {(() => {
+                               const iconUrl = getRuntimeIcon(agent);
+                               return iconUrl ? (
+                                 <img src={iconUrl} alt={agent.name} className="size-5 object-contain" />
+                               ) : (
+                                 <span
+                                   className={cn(
+                                     "text-sm font-bold",
+                                     isRegistered
+                                       ? "text-muted-foreground"
+                                       : "text-emerald-600 dark:text-emerald-400",
+                                   )}
+                                 >
+                                   {agent.name.charAt(0).toUpperCase()}
+                                 </span>
+                               );
+                             })()}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
@@ -846,17 +799,17 @@ export function SettingsDialog({
                         key={agent.id}
                         className="flex items-center gap-3 rounded-lg border border-border/30 bg-muted/20 px-4 py-2.5 opacity-50"
                       >
-                        <div className="flex size-8 items-center justify-center rounded-md bg-muted/50 dark:bg-white/10">
-                           {(() => {
-                             const RuntimeIcon = getRuntimeIconComponent(agent);
-                             return RuntimeIcon ? (
-                               <HugeiconsIcon icon={RuntimeIcon} className="size-5 opacity-50" />
-                             ) : (
-                               <span className="text-sm font-bold text-muted-foreground">
-                                 {agent.name.charAt(0).toUpperCase()}
-                               </span>
-                             );
-                           })()}
+                         <div className="flex size-8 items-center justify-center rounded-md bg-muted/50 dark:bg-white/10">
+                            {(() => {
+                               const iconUrl = getRuntimeIcon(agent);
+                              return iconUrl ? (
+                                <img src={iconUrl} alt={agent.name} className="size-5 object-contain opacity-50" />
+                              ) : (
+                                <span className="text-sm font-bold text-muted-foreground">
+                                  {agent.name.charAt(0).toUpperCase()}
+                                </span>
+                              );
+                            })()}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">

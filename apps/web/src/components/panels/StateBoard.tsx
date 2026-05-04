@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { AppleSwitch } from "@/components/unlumen-ui/apple-switch";
 import { Badge } from "@/components/ui/badge";
 import { StatusIcon } from "@/components/panels/StatusIcon";
 import { m } from "@/paraglide/messages";
@@ -242,20 +243,12 @@ export function StateBoard({
 
         {/* Auto Mode Toggle */}
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-          <button
-            onClick={onAutoModeToggle}
-            className={cn(
-              "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-              isAutoMode ? "bg-emerald-500" : "bg-muted",
-            )}
-          >
-            <span
-              className={cn(
-                "inline-block size-4 rounded-full bg-white shadow-sm transition-transform",
-                isAutoMode ? "translate-x-6" : "translate-x-1",
-              )}
-            />
-          </button>
+          <AppleSwitch
+            checked={isAutoMode}
+            onCheckedChange={() => onAutoModeToggle()}
+            size="sm"
+            aria-label={m.auto_mode()}
+          />
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">{m.auto_mode()}</span>

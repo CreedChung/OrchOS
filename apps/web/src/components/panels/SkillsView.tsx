@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { AppleSwitch } from "@/components/unlumen-ui/apple-switch";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Wrench01Icon,
   Add01Icon,
   Delete02Icon,
-  ToggleLeft,
-  ToggleRight,
   SparklesIcon,
   Download01Icon,
   Menu01Icon,
@@ -768,17 +767,17 @@ export function SkillsView({
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleToggle(activeSkill.id, activeSkill.enabled)}
-                    >
-                      <HugeiconsIcon
-                        icon={activeSkill.enabled ? ToggleRight : ToggleLeft}
-                        className={cn("mr-1.5 size-4", activeSkill.enabled && "text-emerald-500")}
+                    <div className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5">
+                      <AppleSwitch
+                        checked={activeSkill.enabled}
+                        onCheckedChange={() => handleToggle(activeSkill.id, activeSkill.enabled)}
+                        size="sm"
+                        aria-label={activeSkill.enabled ? m.disable() : m.enable()}
                       />
-                      {activeSkill.enabled ? m.disable() : m.enable()}
-                    </Button>
+                      <span className="text-sm text-foreground">
+                        {activeSkill.enabled ? m.disable() : m.enable()}
+                      </span>
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"

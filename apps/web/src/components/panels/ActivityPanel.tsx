@@ -14,7 +14,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
-import type { ActivityEntry, Goal, Problem, Project } from "@/lib/types";
+import type { ActivityEntry, Goal, Problem, Project, SidebarView } from "@/lib/types";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
 import { MessageBubble, mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
@@ -27,7 +27,7 @@ interface ActivityPanelProps {
   collapsed: boolean;
   expanded?: boolean;
   onCollapse?: () => void;
-  activeView: "inbox" | "creation" | "agents" | "mcp-servers" | "skills" | "projects" | "observability";
+  activeView: SidebarView;
 }
 
 function buildFlowMessages(

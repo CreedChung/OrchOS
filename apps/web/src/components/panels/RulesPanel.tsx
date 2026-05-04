@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { AppleSwitch } from "@/components/unlumen-ui/apple-switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -17,8 +18,6 @@ import {
   Add01Icon,
   Edit02Icon,
   Delete02Icon,
-  ToggleLeft,
-  ToggleRight,
   Cancel01Icon,
 } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
@@ -289,9 +288,12 @@ export function RulesPanel({ rules, projects = [], agents = [], onCreateRule, on
           </div>
           {!showCreate && activeRule ? (
             <div className="flex items-center gap-1">
-              <button onClick={() => onToggleRule(activeRule.id, !activeRule.enabled)} className="shrink-0 text-muted-foreground hover:text-foreground" title={activeRule.enabled ? m.disable_rule() : m.enable_rule()}>
-                {activeRule.enabled ? <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" /> : <HugeiconsIcon icon={ToggleLeft} className="size-5" />}
-              </button>
+              <AppleSwitch
+                checked={activeRule.enabled}
+                onCheckedChange={() => onToggleRule(activeRule.id, !activeRule.enabled)}
+                size="sm"
+                aria-label={activeRule.enabled ? m.disable_rule() : m.enable_rule()}
+              />
               <button onClick={() => handleEditRule(activeRule)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" title="Edit rule">
                 <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
               </button>

@@ -1,5 +1,39 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
+interface SpeechRecognitionAlternative {
+  transcript: string;
+}
+
+interface SpeechRecognitionResultLike {
+  isFinal: boolean;
+  0: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionEventLike {
+  resultIndex: number;
+  results: ArrayLike<SpeechRecognitionResultLike>;
+}
+
+interface SpeechRecognitionErrorEventLike {
+  error: string;
+}
+
+interface SpeechRecognitionLike {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+}
+
+interface SpeechRecognitionConstructorLike {
+  new (): SpeechRecognitionLike;
+}
+
 interface UseSpeechRecognitionResult {
   isListening: boolean;
   transcript: string;
@@ -11,7 +45,7 @@ interface UseSpeechRecognitionResult {
 export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   const isSupported =
     typeof window !== "undefined" &&
@@ -21,8 +55,8 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     if (!isSupported) return;
 
     const SpeechRecognitionAPI =
-      (window as unknown as { SpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ||
-      (window as unknown as { webkitSpeechRecognition?: typeof SpeechRecognition })
+      (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructorLike }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: SpeechRecognitionConstructorLike })
         .webkitSpeechRecognition;
 
     if (!SpeechRecognitionAPI) return;
@@ -32,7 +66,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     recognition.interimResults = true;
     recognition.lang = navigator.language || "en-US";
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: SpeechRecognitionEventLike) => {
       let finalTranscript = "";
       let interimTranscript = "";
 
@@ -50,7 +84,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       }
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEventLike) => {
       if (event.error !== "no-speech") {
         console.error("Speech recognition error:", event.error);
       }

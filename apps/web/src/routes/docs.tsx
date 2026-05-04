@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { I18nProvider } from "@/lib/useI18n";
 import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/docs")({
@@ -81,84 +80,100 @@ pop();`;
 
 function DocsPage() {
   return (
-    <I18nProvider>
-      <div className="flex min-h-screen flex-col bg-background">
-        <Header />
-        <main className="flex-1">
-          <section className="mx-auto max-w-6xl px-6 py-16 sm:px-10 lg:px-14">
-            <div className="space-y-16">
-              <div className="space-y-6">
-                <div className="inline-flex items-center rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {m.docs_audio_badge()}
-                </div>
-                <div className="max-w-3xl space-y-4">
-                  <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-                    {m.docs_audio_title()}
-                  </h1>
-                  <p className="text-lg leading-8 text-muted-foreground">
-                    {m.docs_audio_description()}
-                  </p>
-                </div>
-                <PlaygroundPreview />
+    <div className="flex min-h-screen flex-col bg-background">
+      <Header />
+      <main className="flex-1">
+        <section className="mx-auto max-w-6xl px-6 py-16 sm:px-10 lg:px-14">
+          <div className="space-y-16">
+            <div className="space-y-6">
+              <div className="inline-flex items-center rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                {m.docs_audio_badge()}
               </div>
-
-              <section id="quickstart" className="space-y-6 scroll-mt-20">
-                <SectionHeading title={m.docs_audio_quickstart_heading()} />
-                <p className="text-muted-foreground">{m.docs_audio_quickstart_intro()}</p>
-
-                <Tabs defaultValue={installCommands[0].label} className="w-full">
-                  <TabsList className="w-full max-w-fit flex-wrap">
-                    {installCommands.map((command) => (
-                      <TabsTrigger key={command.label} value={command.label}>
-                        {command.label}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-
-                  {installCommands.map((command) => (
-                    <TabsContent key={command.label} value={command.label} className="mt-4">
-                      <CodePanel code={command.value} />
-                    </TabsContent>
-                  ))}
-                </Tabs>
-
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">{m.docs_audio_quickstart_define()}</p>
-                  <CodePanel code={quickstartCode} language="ts" />
-                </div>
-              </section>
-
-              <DocsSection
-                title={m.docs_audio_get_started_heading()}
-                cards={getStartedCards}
-                columns="md:grid-cols-2"
-              />
-
-              <DocsSection
-                title={m.docs_audio_integrate_heading()}
-                cards={integrateCards}
-                columns="lg:grid-cols-3"
-              />
-
-              <DocsSection
-                title={m.docs_audio_information_heading()}
-                cards={informationCards}
-                columns="md:grid-cols-2"
-              />
+              <div className="max-w-3xl space-y-4">
+                <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+                  {m.docs_audio_title()}
+                </h1>
+                <p className="text-lg leading-8 text-muted-foreground">
+                  {m.docs_audio_description()}
+                </p>
+              </div>
+              <PlaygroundPreview />
             </div>
-          </section>
-        </main>
-        <Footer />
-      </div>
-    </I18nProvider>
+
+            <section id="quickstart" className="space-y-6 scroll-mt-20">
+              <SectionHeading title={m.docs_audio_quickstart_heading()} />
+              <p className="text-muted-foreground">
+                {m.docs_audio_quickstart_intro()}
+              </p>
+
+              <Tabs defaultValue={installCommands[0].label} className="w-full">
+                <TabsList className="w-full max-w-fit flex-wrap">
+                  {installCommands.map((command) => (
+                    <TabsTrigger key={command.label} value={command.label}>
+                      {command.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {installCommands.map((command) => (
+                  <TabsContent
+                    key={command.label}
+                    value={command.label}
+                    className="mt-4"
+                  >
+                    <CodePanel code={command.value} />
+                  </TabsContent>
+                ))}
+              </Tabs>
+
+              <div className="space-y-4">
+                <p className="text-muted-foreground">
+                  {m.docs_audio_quickstart_define()}
+                </p>
+                <CodePanel code={quickstartCode} language="ts" />
+              </div>
+            </section>
+
+            <DocsSection
+              title={m.docs_audio_get_started_heading()}
+              cards={getStartedCards}
+              columns="md:grid-cols-2"
+            />
+
+            <DocsSection
+              title={m.docs_audio_integrate_heading()}
+              cards={integrateCards}
+              columns="lg:grid-cols-3"
+            />
+
+            <DocsSection
+              title={m.docs_audio_information_heading()}
+              cards={informationCards}
+              columns="md:grid-cols-2"
+            />
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
 function SectionHeading({ title }: { title: string }) {
-  return <h2 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h2>;
+  return (
+    <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+      {title}
+    </h2>
+  );
 }
 
-function CodePanel({ code, language = "bash" }: { code: string; language?: string }) {
+function CodePanel({
+  code,
+  language = "bash",
+}: {
+  code: string;
+  language?: string;
+}) {
   return (
     <pre className="overflow-x-auto rounded-2xl border border-border bg-muted/60 p-4 text-sm leading-6 text-foreground">
       <code className={`language-${language}`}>{code}</code>
@@ -182,15 +197,21 @@ function PlaygroundPreview() {
           />
           <div className="flex flex-wrap items-center gap-3">
             <Button type="button" onClick={() => setActive((value) => !value)}>
-              {active ? m.docs_audio_playground_stop() : m.docs_audio_playground_play()}
+              {active
+                ? m.docs_audio_playground_stop()
+                : m.docs_audio_playground_play()}
             </Button>
-            <span className="text-sm text-muted-foreground">{m.docs_audio_playground_caption()}</span>
+            <span className="text-sm text-muted-foreground">
+              {m.docs_audio_playground_caption()}
+            </span>
           </div>
         </div>
 
         <div className="flex min-h-64 flex-col justify-between rounded-2xl border border-border bg-background p-5">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">{m.docs_audio_playground_preview_label()}</p>
+            <p className="text-sm font-medium text-foreground">
+              {m.docs_audio_playground_preview_label()}
+            </p>
             <p className="text-sm leading-6 text-muted-foreground">
               {m.docs_audio_playground_preview_desc()}
             </p>
@@ -232,7 +253,10 @@ function DocsSection({
       <SectionHeading title={title} />
       <div className={`grid gap-4 ${columns}`}>
         {cards.map((card) => (
-          <Card key={card.href} className="border border-border/80 bg-card/70 py-0 transition-colors hover:bg-card">
+          <Card
+            key={card.href}
+            className="border border-border/80 bg-card/70 py-0 transition-colors hover:bg-card"
+          >
             <CardHeader className="pt-5">
               <CardTitle>{card.title()}</CardTitle>
               <CardDescription>{card.description()}</CardDescription>

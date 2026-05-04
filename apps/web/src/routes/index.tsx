@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import Header from "@/components/layout/Header";
 import { m } from "@/paraglide/messages";
-import { I18nProvider, useLocale } from "@/lib/useI18n";
+import { useLocale } from "@/lib/useI18n";
 import { Button } from "@/components/ui/button";
 import { FeaturesBento } from "@/components/ui/features-bento";
 import Footer from "@/components/layout/Footer";
@@ -32,15 +32,22 @@ function HomePageInner() {
             >
               {locale === "en" ? (
                 <>
-                  {m.hero_line1()} <span className="italic">{m.hero_line2_word()}</span> {m.hero_line2()}
+                  {m.hero_line1()}{" "}
+                  <span className="italic">{m.hero_line2_word()}</span>{" "}
+                  {m.hero_line2()}
                 </>
               ) : locale === "ko" || locale === "ja" ? (
                 <>
-                  <span className="italic">{m.hero_line2_word()}</span>{m.hero_line2()}
+                  <span className="italic">{m.hero_line2_word()}</span>
+                  {m.hero_line2()}
                 </>
               ) : (
                 <>
-                  {m.hero_line1()} <span className="text-primary italic">{m.hero_line2_word()}</span> {m.hero_line2()}
+                  {m.hero_line1()}{" "}
+                  <span className="text-primary italic">
+                    {m.hero_line2_word()}
+                  </span>{" "}
+                  {m.hero_line2()}
                 </>
               )}
               <br />
@@ -50,7 +57,10 @@ function HomePageInner() {
               {m.hero_subtitle()}
             </p>
             <div className="flex flex-wrap items-center justify-start gap-3">
-              <Button asChild className="h-auto rounded-2xl px-6 py-3 shadow-sm">
+              <Button
+                asChild
+                className="h-auto rounded-2xl px-6 py-3 shadow-sm"
+              >
                 <Link to="/dashboard">{m.open_dashboard()}</Link>
               </Button>
             </div>
@@ -82,9 +92,5 @@ function HomePageInner() {
 }
 
 function HomePage() {
-  return (
-    <I18nProvider>
-      <HomePageInner />
-    </I18nProvider>
-  );
+  return <HomePageInner />;
 }

@@ -9,8 +9,6 @@ import {
   Download01Icon,
   Delete02Icon,
   Edit02Icon,
-  Folder01Icon,
-  FolderIcon,
   GitBranchIcon,
   Link01Icon,
   PlayCircleIcon,
@@ -34,7 +32,7 @@ import {
 import { api, type InboxThread } from "@/lib/api";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useConversationStore } from "@/lib/stores/conversation";
-import { cn } from "@/lib/utils";
+import { cn, getProjectIcon } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import type {
   Command,
@@ -503,15 +501,12 @@ export function ProjectsView({
                         : "text-foreground/80 hover:bg-accent/50",
                     )}
                   >
-                    <div className={cn(
-                      "flex size-7 shrink-0 items-center justify-center rounded-md",
-                      isActive ? "bg-primary/10" : "bg-foreground/5",
-                    )}>
-                      <HugeiconsIcon icon={FolderIcon} className={cn(
-                        "size-3.5",
-                        isActive ? "text-primary" : "text-foreground/30",
-                      )} />
-                    </div>
+                      <div className={cn(
+                        "flex size-7 shrink-0 items-center justify-center rounded-md",
+                        isActive ? "bg-primary/10" : "bg-foreground/5",
+                      )}>
+                        <img src={getProjectIcon(project)} alt={project.name} className="size-3.5 object-contain" />
+                      </div>
                     <div className="min-w-0 flex-1 pr-14">
                       <p className={cn(
                         "truncate text-xs font-medium",
@@ -567,9 +562,10 @@ export function ProjectsView({
 
               {projects.length === 0 && (
                 <div className="py-8 text-center">
-                  <HugeiconsIcon
-                    icon={Folder01Icon}
-                    className="mx-auto mb-2 size-6 text-muted-foreground/30"
+                  <img
+                    src={getProjectIcon({})}
+                    alt="project"
+                    className="mx-auto mb-2 size-6 text-muted-foreground/30 object-contain"
                   />
                   <p className="text-sm text-muted-foreground">{m.env_no_projects()}</p>
                   <p className="mt-1 text-xs text-muted-foreground/60">{m.no_project()}</p>
@@ -606,7 +602,7 @@ export function ProjectsView({
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
                       <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                        <HugeiconsIcon icon={FolderIcon} className="size-5 text-primary" />
+                        <img src={getProjectIcon(activeProject)} alt={activeProject.name} className="size-5 object-contain" />
                       </div>
                       <div>
                         <h1 className="text-xl font-semibold text-foreground">
@@ -827,27 +823,27 @@ export function ProjectsView({
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/40 bg-background/60 px-6 py-12">
-                      <HugeiconsIcon icon={Folder01Icon} className="mb-2 size-5 text-muted-foreground/30" />
+                      <img src={getProjectIcon({})} alt="project" className="mx-auto mb-2 size-5 text-muted-foreground/30 object-contain" />
                       <p className="text-sm text-muted-foreground">{m.no_project()}</p>
                     </div>
                   )}
                 </section>
               </div>
             </ScrollArea>
-          ) : projects.length > 0 ? (
-            <div className="flex h-full items-center justify-center p-6">
-              <div className="flex max-w-sm flex-col items-center rounded-2xl border border-dashed border-border/50 bg-background/70 px-8 py-10 text-center">
-                <HugeiconsIcon icon={Folder01Icon} className="mb-3 size-8 text-muted-foreground/25" />
-                <p className="text-sm font-medium text-foreground/80">选择一个项目开始查看</p>
-                <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                  从左侧点击项目后，这里会显示当前项目的目标、活动和上下文信息。
-                </p>
+            ) : projects.length > 0 ? (
+              <div className="flex h-full items-center justify-center p-6">
+                <div className="flex max-w-sm flex-col items-center rounded-2xl border border-dashed border-border/50 bg-background/70 px-8 py-10 text-center">
+                  <img src={getProjectIcon({})} alt="project" className="mb-3 size-8 text-muted-foreground/25 object-contain" />
+                  <p className="text-sm font-medium text-foreground/80">选择一个项目开始查看</p>
+                  <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                    从左侧点击项目后，这里会显示当前项目的目标、活动和上下文信息。
+                  </p>
+                </div>
               </div>
-            </div>
-          ) : (
+            ) : (
             <div className="flex h-full items-center justify-center">
               <div className="text-center">
-                <HugeiconsIcon icon={Folder01Icon} className="mx-auto mb-2 size-6 text-muted-foreground/30" />
+                <img src={getProjectIcon({})} alt="project" className="mx-auto mb-2 size-6 text-muted-foreground/30 object-contain" />
                 <p className="text-sm text-muted-foreground">{m.env_no_projects()}</p>
                 <p className="mt-1 text-xs text-muted-foreground/60">{m.no_project()}</p>
               </div>
@@ -961,7 +957,7 @@ export function ProjectsView({
                 onClick={() => setShowDirectoryPicker(true)}
                 className="absolute right-1 top-1 h-8"
               >
-                <HugeiconsIcon icon={Folder01Icon} className="size-3.5" />
+                <img src={getProjectIcon({})} alt="project" className="size-3.5 object-contain" />
                 Browse
               </Button>
             </div>

@@ -286,11 +286,14 @@ export interface Rule {
 export type SidebarView =
   | "inbox"
   | "creation"
+  | "board"
   | "agents"
   | "rules"
   | "mcp-servers"
   | "skills"
   | "projects"
+  | "calendar"
+  | "mail"
   | "observability";
 
 export interface AgentRule {

@@ -1,10 +1,20 @@
 import { treaty } from "@elysiajs/eden";
-import type { App as ServerApp } from "@server-app/index";
 
 const RAW_API_BASE =
   import.meta.env.VITE_API_BASE_URL?.trim() ?? import.meta.env.VITE_API_BASE?.trim() ?? "";
 
 export const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
+
+type EdenClient = ReturnType<typeof treaty> & {
+  api: any;
+  ws: {
+    subscribe: () => {
+      on: (event: string, handler: (...args: any[]) => void) => void;
+      subscribe: (handler: (event: { data: unknown }) => void) => void;
+      close: () => void;
+    };
+  };
+};
 
 export function getServerBaseUrl() {
   if (API_BASE) {
@@ -19,5 +29,5 @@ export function getServerBaseUrl() {
 }
 
 export function createEdenClient() {
-  return treaty<ServerApp>(getServerBaseUrl());
+  return treaty(getServerBaseUrl()) as EdenClient;
 }

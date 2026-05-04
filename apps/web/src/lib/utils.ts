@@ -43,6 +43,21 @@ const RUNTIME_ICONS: Record<string, string> = {
   amp: "/runtimes/amp-color.svg",
 };
 
+const PROJECT_ICONS: Record<string, string> = {
+  default: "/projects/default.svg",
+};
+
+export function getProjectIcon(project: { name?: string; path?: string }): string {
+  const keys = [
+    project.name?.toLowerCase(),
+    project.path?.split("/").pop()?.toLowerCase(),
+  ];
+  for (const key of keys) {
+    if (key && PROJECT_ICONS[key]) return PROJECT_ICONS[key];
+  }
+  return PROJECT_ICONS.default;
+}
+
 export function getRuntimeIcon(agent: {
   id?: string;
   name: string;

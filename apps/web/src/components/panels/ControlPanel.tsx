@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { AppleSwitch } from "@/components/unlumen-ui/apple-switch";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ChevronDown,
   ChevronRight,
   Settings02Icon,
-  ToggleLeft,
-  ToggleRight,
 } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
 import type { ControlSettings } from "@/lib/types";
@@ -52,15 +51,13 @@ export function ControlPanel({ settings, onSettingsChange }: ControlPanelProps) 
           {/* Auto Commit */}
           <div className="flex items-center justify-between">
             <span className="text-sm text-foreground">{m.auto_commit()}</span>
-            <button
-              onClick={() => handleToggle("autoCommit")}
-              className="flex items-center gap-1.5 text-sm"
-            >
-              {settings.autoCommit ? (
-                <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
-              ) : (
-                <HugeiconsIcon icon={ToggleLeft} className="size-5 text-muted-foreground" />
-              )}
+            <div className="flex items-center gap-2 text-sm">
+              <AppleSwitch
+                checked={settings.autoCommit}
+                onCheckedChange={() => void handleToggle("autoCommit")}
+                size="sm"
+                aria-label={m.auto_commit()}
+              />
               <span
                 className={cn(
                   "text-xs",
@@ -69,21 +66,19 @@ export function ControlPanel({ settings, onSettingsChange }: ControlPanelProps) 
               >
                 {settings.autoCommit ? m.on() : m.off()}
               </span>
-            </button>
+            </div>
           </div>
 
           {/* Auto Fix */}
           <div className="flex items-center justify-between">
             <span className="text-sm text-foreground">{m.auto_fix()}</span>
-            <button
-              onClick={() => handleToggle("autoFix")}
-              className="flex items-center gap-1.5 text-sm"
-            >
-              {settings.autoFix ? (
-                <HugeiconsIcon icon={ToggleRight} className="size-5 text-emerald-500" />
-              ) : (
-                <HugeiconsIcon icon={ToggleLeft} className="size-5 text-muted-foreground" />
-              )}
+            <div className="flex items-center gap-2 text-sm">
+              <AppleSwitch
+                checked={settings.autoFix}
+                onCheckedChange={() => void handleToggle("autoFix")}
+                size="sm"
+                aria-label={m.auto_fix()}
+              />
               <span
                 className={cn(
                   "text-xs",
@@ -92,7 +87,7 @@ export function ControlPanel({ settings, onSettingsChange }: ControlPanelProps) 
               >
                 {settings.autoFix ? m.on() : m.off()}
               </span>
-            </button>
+            </div>
           </div>
 
           {/* Model Strategy */}

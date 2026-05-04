@@ -174,7 +174,6 @@ function DashboardLayout() {
     activityPanelOpen,
     toggleActivityPanel,
     activityExpanded,
-    setActivityExpanded,
     sidebarCollapsed,
     toggleSidebar,
   } = useUIStore();
@@ -191,14 +190,6 @@ function DashboardLayout() {
         setShowMorphPanel(true);
       }
     };
-
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(enableMorphPanel, { timeout: 1200 });
-      return () => {
-        cancelled = true;
-        window.cancelIdleCallback(idleId);
-      };
-    }
 
     const timeoutId = globalThis.setTimeout(enableMorphPanel, 300);
     return () => {
@@ -306,9 +297,7 @@ function DashboardLayout() {
               goals={goals}
               projects={projects}
               problems={problems}
-              collapsed={!activityPanelOpen && !activityExpanded}
-              expanded={activityExpanded}
-              onCollapse={() => setActivityExpanded(!activityExpanded)}
+              collapsed={!activityPanelOpen}
               activeView={activeView}
             />
           </div>

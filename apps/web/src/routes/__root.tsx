@@ -1,6 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { I18nProvider } from "@/lib/useI18n";
 import { getLocale } from "@/paraglide/runtime";
 import { initializeClientLocale } from "@/lib/i18n-runtime";
 
@@ -57,7 +58,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
-        <TooltipProvider>{children}</TooltipProvider>
+        <I18nProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+        </I18nProvider>
         <Scripts />
       </body>
     </html>

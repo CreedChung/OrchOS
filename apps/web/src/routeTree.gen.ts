@@ -25,6 +25,8 @@ import { Route as DashboardMcpServersRouteImport } from './routes/dashboard/mcp-
 import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
 import { Route as DashboardGoalsRouteImport } from './routes/dashboard/goals'
 import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
+import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
+import { Route as DashboardBoardRouteImport } from './routes/dashboard/board'
 import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
 import { Route as DashboardActivityRouteImport } from './routes/dashboard/activity'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
@@ -114,6 +116,16 @@ const DashboardCreationRoute = DashboardCreationRouteImport.update({
   path: '/creation',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardCalendarRoute = DashboardCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardBoardRoute = DashboardBoardRouteImport.update({
+  id: '/board',
+  path: '/board',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardAgentsRoute = DashboardAgentsRouteImport.update({
   id: '/agents',
   path: '/agents',
@@ -169,6 +181,8 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
+  '/dashboard/board': typeof DashboardBoardRoute
+  '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
@@ -194,6 +208,8 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
+  '/dashboard/board': typeof DashboardBoardRoute
+  '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
@@ -221,6 +237,8 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/dashboard/activity': typeof DashboardActivityRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
+  '/dashboard/board': typeof DashboardBoardRoute
+  '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/goals': typeof DashboardGoalsRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
@@ -249,6 +267,8 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/dashboard/activity'
     | '/dashboard/agents'
+    | '/dashboard/board'
+    | '/dashboard/calendar'
     | '/dashboard/creation'
     | '/dashboard/goals'
     | '/dashboard/inbox'
@@ -274,6 +294,8 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/dashboard/activity'
     | '/dashboard/agents'
+    | '/dashboard/board'
+    | '/dashboard/calendar'
     | '/dashboard/creation'
     | '/dashboard/goals'
     | '/dashboard/inbox'
@@ -300,6 +322,8 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/dashboard/activity'
     | '/dashboard/agents'
+    | '/dashboard/board'
+    | '/dashboard/calendar'
     | '/dashboard/creation'
     | '/dashboard/goals'
     | '/dashboard/inbox'
@@ -441,6 +465,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCreationRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/calendar': {
+      id: '/dashboard/calendar'
+      path: '/calendar'
+      fullPath: '/dashboard/calendar'
+      preLoaderRoute: typeof DashboardCalendarRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/board': {
+      id: '/dashboard/board'
+      path: '/board'
+      fullPath: '/dashboard/board'
+      preLoaderRoute: typeof DashboardBoardRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/agents': {
       id: '/dashboard/agents'
       path: '/agents'
@@ -530,6 +568,8 @@ const DashboardSkillsRouteWithChildren = DashboardSkillsRoute._addFileChildren(
 interface DashboardRouteChildren {
   DashboardActivityRoute: typeof DashboardActivityRoute
   DashboardAgentsRoute: typeof DashboardAgentsRoute
+  DashboardBoardRoute: typeof DashboardBoardRoute
+  DashboardCalendarRoute: typeof DashboardCalendarRoute
   DashboardCreationRoute: typeof DashboardCreationRoute
   DashboardGoalsRoute: typeof DashboardGoalsRoute
   DashboardInboxRoute: typeof DashboardInboxRoute
@@ -544,6 +584,8 @@ interface DashboardRouteChildren {
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardActivityRoute: DashboardActivityRoute,
   DashboardAgentsRoute: DashboardAgentsRoute,
+  DashboardBoardRoute: DashboardBoardRoute,
+  DashboardCalendarRoute: DashboardCalendarRoute,
   DashboardCreationRoute: DashboardCreationRoute,
   DashboardGoalsRoute: DashboardGoalsRoute,
   DashboardInboxRoute: DashboardInboxRoute,
