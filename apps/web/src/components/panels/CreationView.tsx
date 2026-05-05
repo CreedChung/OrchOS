@@ -60,7 +60,7 @@ export function CreationView({
   const creationArchiveFilter = useUIStore((s) => s.creationArchiveFilter);
   const setCreationArchiveFilter = useUIStore((s) => s.setCreationArchiveFilter);
   const creationSidebarCollapsed = useUIStore((s) => s.creationSidebarCollapsed);
-  const toggleCreationSidebar = useUIStore((s) => s.toggleCreationSidebar);
+  const setCreationSidebarCollapsed = useUIStore((s) => s.setCreationSidebarCollapsed);
   const creationSidebarWidth = useUIStore((s) => s.creationSidebarWidth);
   const setCreationSidebarWidth = useUIStore((s) => s.setCreationSidebarWidth);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -68,6 +68,7 @@ export function CreationView({
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
   const [showExpandedContent, setShowExpandedContent] = useState(!creationSidebarCollapsed);
   const autoCreatingConversationRef = useRef(false);
+  const collapseTimerRef = useRef<number | null>(null);
 
   const {
     conversations,
@@ -137,16 +138,47 @@ export function CreationView({
   }, [activeConversationId, loadMessages]);
 
   useEffect(() => {
-    if (creationSidebarCollapsed) {
-      const timer = window.setTimeout(() => {
-        setShowExpandedContent(false);
-      }, 180);
+    return () => {
+      if (collapseTimerRef.current !== null) {
+        window.clearTimeout(collapseTimerRef.current);
+      }
+    };
+  }, []);
 
-      return () => window.clearTimeout(timer);
+  useEffect(() => {
+    if (creationSidebarCollapsed) {
+      setShowExpandedContent(false);
+      return;
     }
 
-    setShowExpandedContent(true);
+    const timer = window.setTimeout(() => {
+      setShowExpandedContent(true);
+    }, 220);
+
+    return () => window.clearTimeout(timer);
   }, [creationSidebarCollapsed]);
+
+  const handleCollapseSidebar = useCallback(() => {
+    if (collapseTimerRef.current !== null) {
+      window.clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+
+    setShowExpandedContent(false);
+    collapseTimerRef.current = window.setTimeout(() => {
+      setCreationSidebarCollapsed(true);
+      collapseTimerRef.current = null;
+    }, 180);
+  }, [setCreationSidebarCollapsed]);
+
+  const handleExpandSidebar = useCallback(() => {
+    if (collapseTimerRef.current !== null) {
+      window.clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+
+    setCreationSidebarCollapsed(false);
+  }, [setCreationSidebarCollapsed]);
 
   const handleNewConversation = useCallback(async () => {
     if (
@@ -300,8 +332,8 @@ export function CreationView({
       >
         <div
           className={cn(
-            "border-b border-border p-2 transition-opacity duration-300 ease-out",
-            !showExpandedContent && "pointer-events-none absolute inset-x-0 top-0 opacity-0",
+            "border-b border-border p-2 transition-[opacity,filter] duration-300 ease-out",
+            showExpandedContent ? "opacity-100 blur-0" : "pointer-events-none opacity-0 blur-[6px]",
           )}
           aria-hidden={!showExpandedContent}
         >
@@ -325,7 +357,7 @@ export function CreationView({
                   variant="ghost"
                   size="icon-sm"
                   className="active:-translate-y-0"
-                  onClick={toggleCreationSidebar}
+                  onClick={handleCollapseSidebar}
                   title={m.collapse_sidebar()}
                 >
                   <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
@@ -336,8 +368,8 @@ export function CreationView({
 
         <div
           className={cn(
-            "min-h-0 flex flex-1 flex-col transition-opacity duration-300 ease-out",
-            !showExpandedContent && "pointer-events-none opacity-0",
+            "min-h-0 flex flex-1 flex-col transition-[opacity,filter] duration-300 ease-out",
+            showExpandedContent ? "opacity-100 blur-0" : "pointer-events-none opacity-0 blur-[6px]",
           )}
           aria-hidden={!showExpandedContent}
         >
@@ -449,8 +481,8 @@ export function CreationView({
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="absolute left-4 top-2 z-20 active:-translate-y-0"
-            onClick={toggleCreationSidebar}
+            className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)] active:translate-y-0"
+            onClick={handleExpandSidebar}
             title={m.expand_sidebar()}
           >
             <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />

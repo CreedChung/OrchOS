@@ -20,8 +20,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { m } from "@/paraglide/messages";
-import type { Problem, InboxSource } from "@/lib/types";
+import type { Problem, InboxSource, ProblemStatus } from "@/lib/types";
 import { isInboxItem } from "@/lib/types";
+import type { InboxStatusFilter } from "@/components/layout/InboxStatusTabs";
 
 type SourceFilter = "all" | InboxSource;
 
@@ -30,6 +31,7 @@ interface InboxProps {
   onConvertToGoal: (problemId: string, suggestedGoal?: string) => void;
   onDismiss: (problemId: string) => void;
   sourceFilter: SourceFilter;
+  statusFilter: InboxStatusFilter;
 }
 
 const sourceConfig: Record<
@@ -66,17 +68,26 @@ const sourceConfig: Record<
   },
 };
 
-export function Inbox({ problems, onConvertToGoal, onDismiss, sourceFilter }: InboxProps) {
+export function Inbox({
+  problems,
+  onConvertToGoal,
+  onDismiss,
+  sourceFilter,
+  statusFilter,
+}: InboxProps) {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [convertingId, setConvertingId] = useState<string | null>(null);
 
   const inboxItems = useMemo(() => {
-    let filtered = problems.filter((p) => p.status === "open" && isInboxItem(p));
+    let filtered = problems.filter((p) => isInboxItem(p));
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((p) => p.status === (statusFilter as ProblemStatus));
+    }
     if (sourceFilter !== "all") {
       filtered = filtered.filter((p) => p.source === sourceFilter);
     }
     return filtered;
-  }, [problems, sourceFilter]);
+  }, [problems, sourceFilter, statusFilter]);
 
   const handleConvert = useCallback(
     (problemId: string, suggestedGoal?: string) => {

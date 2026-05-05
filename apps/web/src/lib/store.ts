@@ -4,9 +4,12 @@ import type { ControlSettings } from "@/lib/types";
 import type { ConversationBoardFilter } from "@/components/panels/BoardView";
 
 type SourceFilter = "all" | "github_pr" | "github_issue" | "mention" | "agent_request";
+type InboxStatusFilter = "all" | "open" | "assigned" | "fixed" | "ignored";
 type GoalStatusFilter = "all" | "active" | "completed" | "paused";
 type ScopeFilter = "all" | "global" | "project";
 type CreationArchiveFilter = "all" | "active" | "archived";
+type MailFolderFilter = "all" | "unread" | "waiting_reply" | "completed" | "archived";
+type CalendarViewMode = "day" | "week" | "month";
 type CapabilityViewMode = "mine" | "market";
 type ThemeMode = "light" | "dark" | "auto";
 
@@ -18,9 +21,12 @@ interface UIState {
 
   // Filters
   sourceFilter: SourceFilter;
+  inboxStatusFilter: InboxStatusFilter;
   goalStatusFilter: GoalStatusFilter;
   scopeFilter: ScopeFilter;
   creationArchiveFilter: CreationArchiveFilter;
+  mailFolderFilter: MailFolderFilter;
+  calendarViewMode: CalendarViewMode;
   capabilityViewMode: CapabilityViewMode;
   boardFilter: ConversationBoardFilter;
 
@@ -43,9 +49,12 @@ interface UIActions {
   setActiveInboxId: (id: string | null) => void;
   setActiveOrganizationId: (id: string | null) => void;
   setSourceFilter: (filter: SourceFilter) => void;
+  setInboxStatusFilter: (filter: InboxStatusFilter) => void;
   setGoalStatusFilter: (filter: GoalStatusFilter) => void;
   setScopeFilter: (filter: ScopeFilter) => void;
   setCreationArchiveFilter: (filter: CreationArchiveFilter) => void;
+  setMailFolderFilter: (filter: MailFolderFilter) => void;
+  setCalendarViewMode: (mode: CalendarViewMode) => void;
   setCapabilityViewMode: (mode: CapabilityViewMode) => void;
   setBoardFilter: (filter: ConversationBoardFilter) => void;
   setActivityPanelOpen: (open: boolean) => void;
@@ -81,9 +90,12 @@ export const useUIStore = create<UIState & UIActions>()(
 
       // Filters
       sourceFilter: "all" as SourceFilter,
+      inboxStatusFilter: "all" as InboxStatusFilter,
       goalStatusFilter: "all" as GoalStatusFilter,
       scopeFilter: "all" as ScopeFilter,
       creationArchiveFilter: "all" as CreationArchiveFilter,
+      mailFolderFilter: "all" as MailFolderFilter,
+      calendarViewMode: "week" as CalendarViewMode,
       capabilityViewMode: "mine" as CapabilityViewMode,
       boardFilter: "all" as ConversationBoardFilter,
 
@@ -104,9 +116,12 @@ export const useUIStore = create<UIState & UIActions>()(
       setActiveInboxId: (id) => set({ activeInboxId: id }),
       setActiveOrganizationId: (id) => set({ activeOrganizationId: id }),
       setSourceFilter: (filter) => set({ sourceFilter: filter }),
+      setInboxStatusFilter: (filter) => set({ inboxStatusFilter: filter }),
       setGoalStatusFilter: (filter) => set({ goalStatusFilter: filter }),
       setScopeFilter: (filter) => set({ scopeFilter: filter }),
       setCreationArchiveFilter: (filter) => set({ creationArchiveFilter: filter }),
+      setMailFolderFilter: (filter) => set({ mailFolderFilter: filter }),
+      setCalendarViewMode: (mode) => set({ calendarViewMode: mode }),
       setCapabilityViewMode: (mode) => set({ capabilityViewMode: mode }),
       setBoardFilter: (filter) => set({ boardFilter: filter }),
       setActivityPanelOpen: (open) => set({ activityPanelOpen: open }),

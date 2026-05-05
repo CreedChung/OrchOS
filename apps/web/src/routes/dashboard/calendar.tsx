@@ -1,15 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  Add01Icon,
+  ArrowLeft01Icon,
   ArrowRight01Icon,
   Calendar03Icon,
   Delete02Icon,
-  LinkSquare02Icon,
+  GoogleIcon,
+  SquareArrowDataTransferHorizontalIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
-import { SidebarHeader } from "@/components/layout/SidebarHeader";
 import { api, type Integration } from "@/lib/api";
+import { AppDialog } from "@/components/ui/app-dialog";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
@@ -30,10 +34,18 @@ export const Route = createFileRoute("/dashboard/calendar")({ component: Calenda
 
 function CalendarPage() {
   const [integrations, setIntegrations] = useState<CalendarIntegration[]>([]);
-  const [sidebarWidth, setSidebarWidth] = useState(288);
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
+  const [selectedSidebarItem, setSelectedSidebarItem] = useState<string>("google-overview");
+  const [isCalendarSourceDialogOpen, setIsCalendarSourceDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isLocalCalendarDialogOpen, setIsLocalCalendarDialogOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showExpandedContent, setShowExpandedContent] = useState(true);
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const collapseTimerRef = useRef<number | null>(null);
   const [form, setForm] = useState({
     label: "",
     clientId: "",
@@ -47,14 +59,37 @@ function CalendarPage() {
   );
   const accounts = integration?.accounts ?? [];
   const activeAccount = accounts.find((account) => account.id === activeAccountId) ?? accounts[0] ?? null;
+  const hasSidebarCalendars = accounts.length > 0;
 
   useEffect(() => {
     void loadIntegrations();
   }, []);
 
   useEffect(() => {
+    return () => {
+      if (collapseTimerRef.current !== null) {
+        window.clearTimeout(collapseTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (sidebarCollapsed) {
+      setShowExpandedContent(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowExpandedContent(true);
+    }, 220);
+
+    return () => window.clearTimeout(timer);
+  }, [sidebarCollapsed]);
+
+  useEffect(() => {
     if (accounts.length === 0) {
       setActiveAccountId(null);
+      setSelectedSidebarItem((current) => (current.startsWith("google-account:") ? "google-overview" : current));
       return;
     }
 
@@ -92,7 +127,13 @@ function CalendarPage() {
         ...current.filter((item) => item.id !== updated.id),
         updated,
       ]);
-      setForm((current) => ({ ...current, refreshToken: "" }));
+      setForm({
+        label: "",
+        clientId: "",
+        clientSecret: "",
+        refreshToken: "",
+      });
+      setIsAddDialogOpen(false);
       toast.success("Google Calendar connected");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to connect Google Calendar");
@@ -108,26 +149,61 @@ function CalendarPage() {
         ...current.filter((item) => item.id !== updated.id),
         updated,
       ]);
+      setSelectedSidebarItem("google-overview");
       toast.success("Calendar account removed");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to remove calendar account");
     }
   }
 
-  function handleResizeStart(event: React.PointerEvent<HTMLDivElement>) {
+  function openGoogleCalendarDialog() {
+    setIsCalendarSourceDialogOpen(false);
+    setIsAddDialogOpen(true);
+  }
+
+  function openLocalCalendarDialog() {
+    setIsCalendarSourceDialogOpen(false);
+    setIsLocalCalendarDialogOpen(true);
+  }
+
+  const handleCollapseSidebar = useCallback(() => {
+    if (collapseTimerRef.current !== null) {
+      window.clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+
+    setShowExpandedContent(false);
+    collapseTimerRef.current = window.setTimeout(() => {
+      setSidebarCollapsed(true);
+      collapseTimerRef.current = null;
+    }, 180);
+  }, []);
+
+  const handleExpandSidebar = useCallback(() => {
+    if (collapseTimerRef.current !== null) {
+      window.clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+
+    setSidebarCollapsed(false);
+  }, []);
+
+  const handleResizeStart = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
     const sidebarEl = event.currentTarget.parentElement;
     const sidebarLeft = sidebarEl?.getBoundingClientRect().left ?? 0;
 
+    setIsResizingSidebar(true);
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
-      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 220), 320);
+      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 260), 420);
       setSidebarWidth(nextWidth);
     };
 
     const handlePointerUp = () => {
+      setIsResizingSidebar(false);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
       window.removeEventListener("pointermove", handlePointerMove);
@@ -136,228 +212,438 @@ function CalendarPage() {
 
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
-  }
+  }, []);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
-          className="relative hidden shrink-0 border-r border-border bg-card lg:block"
-          style={{ width: Math.min(sidebarWidth, 320), maxWidth: "20rem" }}
+          className={cn(
+            "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r border-border bg-card transition-[width] duration-300 ease-out lg:flex",
+            sidebarCollapsed ? "w-0 border-r-transparent" : "w-[var(--calendar-sidebar-width)]",
+          )}
+          style={
+            sidebarCollapsed
+              ? undefined
+              : ({ "--calendar-sidebar-width": `${Math.min(sidebarWidth, 420)}px` } as CSSProperties)
+          }
         >
-          <SidebarHeader icon={Calendar03Icon} title={m.calendar()} count={accounts.length} />
-
-          <ScrollArea className="h-[calc(100%-2.75rem)]">
-            <div className="space-y-2 p-3">
-              <div className="rounded-lg border border-border/60 bg-muted/25 px-3 py-2.5">
-                <div className="text-sm font-semibold text-foreground">{m.calendar_google_title()}</div>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  {m.calendar_google_desc()}
-                </p>
+          <div
+            className={cn(
+              "border-b border-border p-2 transition-[opacity,filter] duration-300 ease-out",
+              showExpandedContent ? "opacity-100 blur-0" : "pointer-events-none opacity-0 blur-[6px]",
+            )}
+            aria-hidden={!showExpandedContent}
+          >
+            <div className="flex h-10 items-center justify-between rounded-md px-2">
+              <div className="text-sm font-semibold text-foreground">{m.calendar()}</div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setIsCalendarSourceDialogOpen(true)}
+                  className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  title="Add calendar"
+                >
+                  <HugeiconsIcon icon={Add01Icon} className="size-4" />
+                </button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="active:-translate-y-0"
+                  onClick={handleCollapseSidebar}
+                  title={m.collapse_sidebar()}
+                >
+                  <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+                </Button>
               </div>
-
-              {loading ? (
-                <div className="rounded-xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-                  {m.loading()}
-                </div>
-              ) : accounts.length > 0 ? (
-                accounts.map((account) => {
-                  const isActive = account.id === activeAccount?.id;
-
-                  return (
-                    <button
-                      key={account.id}
-                      type="button"
-                      onClick={() => setActiveAccountId(account.id)}
-                      className={cn(
-                        "w-full rounded-xl border px-3 py-3 text-left transition-colors",
-                        isActive
-                          ? "border-primary/30 bg-primary/5"
-                          : "border-border/70 bg-background/70 hover:bg-accent/60",
-                      )}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <HugeiconsIcon icon={Calendar03Icon} className="size-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium text-foreground">
-                            {account.label}
-                          </div>
-                          <div className="truncate text-xs text-muted-foreground">
-                            {account.email || account.username}
-                          </div>
-                          <div className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
-                            <span>{account.scopes.length} scopes</span>
-                            <HugeiconsIcon icon={ArrowRight01Icon} className="size-3 opacity-60" />
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })
-              ) : (
-                <div className="rounded-xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-                  No calendar accounts connected yet.
-                </div>
-              )}
             </div>
-          </ScrollArea>
+          </div>
 
           <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize calendar sidebar"
-            onPointerDown={handleResizeStart}
-            className="absolute top-0 right-[-4px] z-10 h-full w-2 cursor-col-resize rounded-full transition-colors hover:bg-primary/15"
-          />
+            className={cn(
+              "min-h-0 flex flex-1 flex-col transition-[opacity,filter] duration-300 ease-out",
+              showExpandedContent ? "opacity-100 blur-0" : "pointer-events-none opacity-0 blur-[6px]",
+            )}
+            aria-hidden={!showExpandedContent}
+          >
+            {hasSidebarCalendars ? (
+              <ScrollArea className="min-h-0 flex-1">
+                <div className="space-y-5 p-3">
+                  <section className="space-y-2">
+                    <div className="px-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                      Google
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSidebarItem("google-overview")}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                        selectedSidebarItem === "google-overview"
+                          ? "border-primary/40 bg-primary/5"
+                          : "border-border/60 bg-background/60 hover:bg-accent/40",
+                      )}
+                    >
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                        <HugeiconsIcon icon={GoogleIcon} className="size-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-foreground">Google Calendar</div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          {accounts.length} account{accounts.length > 1 ? "s" : ""}
+                        </div>
+                      </div>
+                    </button>
+
+                    <div className="space-y-1">
+                      {accounts.map((account) => {
+                        const isActive = selectedSidebarItem === `google-account:${account.id}`;
+
+                        return (
+                          <button
+                            key={account.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveAccountId(account.id);
+                              setSelectedSidebarItem(`google-account:${account.id}`);
+                            }}
+                            className={cn(
+                              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors",
+                              isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/40",
+                            )}
+                          >
+                            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              <HugeiconsIcon icon={Calendar03Icon} className="size-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-medium text-foreground">{account.label}</div>
+                              <div className="truncate text-xs text-muted-foreground">
+                                {account.email || account.username}
+                              </div>
+                            </div>
+                            <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5 text-muted-foreground" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </div>
+              </ScrollArea>
+            ) : (
+              <div className="min-h-0 flex-1" />
+            )}
+
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize calendar sidebar"
+              onPointerDown={handleResizeStart}
+              className={cn(
+                "group absolute top-0 right-[-8px] z-20 flex h-full w-4 cursor-col-resize items-center justify-center",
+                isResizingSidebar && "before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-[repeating-linear-gradient(to_bottom,theme(colors.sky.500)_0_6px,transparent_6px_12px)]",
+              )}
+            >
+              <div
+                className={cn(
+                  "flex h-12 w-2 items-center justify-center rounded-full border border-border bg-card shadow-sm transition-[background-color,border-color,transform,box-shadow,opacity] duration-150 ease-out group-hover:bg-muted group-hover:scale-100 group-hover:shadow-md",
+                  isResizingSidebar ? "border-border bg-muted scale-100 shadow-md" : "scale-95",
+                  !showExpandedContent && "opacity-0",
+                )}
+              >
+                <div
+                  className={cn(
+                    "h-7 w-px rounded-full bg-border transition-[height,background-color,opacity] duration-150 ease-out group-hover:h-8 group-hover:bg-foreground/35",
+                    isResizingSidebar && "opacity-0",
+                  )}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="relative min-w-0 flex-1 overflow-hidden">
+          {sidebarCollapsed ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)] active:translate-y-0"
+              onClick={handleExpandSidebar}
+              title={m.expand_sidebar()}
+            >
+              <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+            </Button>
+          ) : null}
           <ScrollArea className="h-full">
-            <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-              <section className="rounded-2xl border border-border bg-card/70 p-8 shadow-sm">
-                <div className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <HugeiconsIcon icon={Calendar03Icon} className="size-6" />
-                </div>
-                <div className="space-y-3">
-                  <h1 className="text-2xl font-semibold tracking-tight">{m.calendar()}</h1>
-                  <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                    {m.calendar_page_desc()}
-                  </p>
-                </div>
-                <div className="mt-8 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-xl border border-border/70 bg-background/70 p-5">
-                    <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                      <HugeiconsIcon icon={LinkSquare02Icon} className="size-4 text-primary" />
-                      {m.calendar_google_title()}
+            <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-6 p-6">
+              {loading ? (
+                <section className="rounded-2xl border border-dashed border-border/70 bg-card/40 px-6 py-14 text-center text-sm text-muted-foreground">
+                  {m.loading()}
+                </section>
+              ) : selectedSidebarItem.startsWith("local") ? (
+                <section className="rounded-2xl border border-dashed border-border/70 bg-card/40 px-6 py-16 shadow-sm">
+                  <div className="mx-auto max-w-xl text-center">
+                    <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                      <HugeiconsIcon icon={SquareArrowDataTransferHorizontalIcon} className="size-6" />
                     </div>
-                    <p className="text-sm leading-6 text-muted-foreground">{m.calendar_google_desc()}</p>
-                  </div>
-                  <div className="rounded-xl border border-border/70 bg-background/70 p-5">
-                    <div className="mb-3 text-sm font-medium text-foreground">{m.calendar_next_step_title()}</div>
-                    <p className="text-sm leading-6 text-muted-foreground">{m.calendar_next_step_desc()}</p>
-                  </div>
-                </div>
-              </section>
-
-              <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                  <h2 className="text-base font-semibold text-foreground">Google OAuth</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Use a Google OAuth client and refresh token with Calendar scopes.
-                  </p>
-                  <div className="mt-6 grid gap-4">
-                    <label className="grid gap-2 text-sm">
-                      <span className="font-medium text-foreground">Account label</span>
-                      <input
-                        value={form.label}
-                        onChange={(event) => setForm((current) => ({ ...current, label: event.target.value }))}
-                        placeholder="Ops Calendar"
-                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm">
-                      <span className="font-medium text-foreground">Client ID</span>
-                      <input
-                        value={form.clientId}
-                        onChange={(event) => setForm((current) => ({ ...current, clientId: event.target.value }))}
-                        placeholder="Google OAuth Client ID"
-                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm">
-                      <span className="font-medium text-foreground">Client Secret</span>
-                      <input
-                        type="password"
-                        value={form.clientSecret}
-                        onChange={(event) => setForm((current) => ({ ...current, clientSecret: event.target.value }))}
-                        placeholder="Google OAuth Client Secret"
-                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm">
-                      <span className="font-medium text-foreground">Refresh Token</span>
-                      <textarea
-                        value={form.refreshToken}
-                        onChange={(event) => setForm((current) => ({ ...current, refreshToken: event.target.value }))}
-                        placeholder="Google refresh token with calendar scopes"
-                        className="min-h-28 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </label>
-                  </div>
-                  <div className="mt-5 flex items-center justify-between gap-3">
-                    <p className="text-xs text-muted-foreground">
-                      Required scopes: `calendar`, `calendar.events`
+                    <h2 className="mt-5 text-lg font-semibold text-foreground">Local calendars are coming next</h2>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      This sidebar now reserves space for your own calendar groups and calendars. The full local calendar model, event editor, and schedule views still need backend and calendar UI work.
                     </p>
-                    <button
-                      onClick={() => void handleConnect()}
-                      disabled={submitting}
-                      className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                    >
-                      {submitting ? m.loading() : m.connect()}
-                    </button>
+                    <Button type="button" variant="outline" className="mt-5" onClick={() => setIsLocalCalendarDialogOpen(true)}>
+                      <HugeiconsIcon icon={Add01Icon} className="size-4" />
+                      Create local calendar
+                    </Button>
                   </div>
-                </div>
-
-                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground">Connected accounts</h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Manage each Google Calendar identity bound to this workspace.
-                      </p>
+                </section>
+              ) : accounts.length === 0 ? (
+                <section className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-border/70 bg-card/40 px-6 py-16 shadow-sm">
+                  <div className="max-w-md text-center">
+                    <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                      <HugeiconsIcon icon={Calendar03Icon} className="size-6" />
                     </div>
-                    {integration?.connected ? (
-                      <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                        {m.connected()}
-                      </span>
-                    ) : null}
+                    <h2 className="mt-5 text-lg font-semibold text-foreground">No calendar connected yet</h2>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Add a Google Calendar account to manage meetings, deadlines, and project timing from this workspace.
+                    </p>
+                    <Button type="button" className="mt-5" onClick={() => setIsCalendarSourceDialogOpen(true)}>
+                      <HugeiconsIcon icon={Add01Icon} className="size-4" />
+                      Add calendar
+                    </Button>
+                  </div>
+                </section>
+              ) : (
+                <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+                  <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-base font-semibold text-foreground">Connected accounts</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Manage each Google Calendar identity bound to this workspace.
+                        </p>
+                      </div>
+                      {integration?.connected ? (
+                        <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                          {m.connected()}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-5 space-y-3">
+                      {accounts.map((account) => {
+                        const isActive = account.id === activeAccount?.id;
+
+                        return (
+                          <button
+                            key={account.id}
+                            type="button"
+                            onClick={() => setActiveAccountId(account.id)}
+                            className={[
+                              "w-full rounded-xl border px-4 py-3 text-left transition-colors",
+                              isActive
+                                ? "border-primary/40 bg-primary/5"
+                                : "border-border/70 bg-background/70 hover:bg-accent/40",
+                            ].join(" ")}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-medium text-foreground">{account.label}</div>
+                                <div className="mt-1 truncate text-xs text-muted-foreground">
+                                  {account.email || account.username}
+                                </div>
+                              </div>
+                              <span className="rounded-full bg-muted px-2 py-1 text-[10px] text-muted-foreground">
+                                {account.scopes.length} scopes
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <div className="mt-5 space-y-3">
-                    {loading ? (
-                      <div className="rounded-xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-                        {m.loading()}
+                  <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-base font-semibold text-foreground">Account details</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Review scopes and remove access when needed.
+                        </p>
                       </div>
-                    ) : activeAccount ? (
-                      <div className="rounded-xl border border-border/70 bg-background/70 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-medium text-foreground">
-                              {activeAccount.label}
+                      <Button type="button" variant="outline" size="sm" onClick={() => setIsCalendarSourceDialogOpen(true)}>
+                        <HugeiconsIcon icon={Add01Icon} className="size-4" />
+                        {m.add()}
+                      </Button>
+                    </div>
+
+                    <div className="mt-5 space-y-3">
+                      {activeAccount ? (
+                        <div className="rounded-xl border border-border/70 bg-background/70 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-medium text-foreground">
+                                {activeAccount.label}
+                              </div>
+                              <div className="truncate text-xs text-muted-foreground">
+                                {activeAccount.email || activeAccount.username}
+                              </div>
                             </div>
-                            <div className="truncate text-xs text-muted-foreground">
-                              {activeAccount.email || activeAccount.username}
-                            </div>
+                            <button
+                              onClick={() => void handleDeleteAccount(activeAccount.id)}
+                              className="rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            >
+                              <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                            </button>
                           </div>
-                          <button
-                            onClick={() => void handleDeleteAccount(activeAccount.id)}
-                            className="rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                          >
-                            <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                          </button>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {activeAccount.scopes.map((scope) => (
+                              <span key={scope} className="rounded-full bg-muted px-2 py-1 text-[10px] text-muted-foreground">
+                                {scope.replace("https://www.googleapis.com/auth/", "")}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {activeAccount.scopes.map((scope) => (
-                            <span key={scope} className="rounded-full bg-muted px-2 py-1 text-[10px] text-muted-foreground">
-                              {scope.replace("https://www.googleapis.com/auth/", "")}
-                            </span>
-                          ))}
+                      ) : (
+                        <div className="rounded-xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
+                          Select an account to inspect its permissions.
                         </div>
-                      </div>
-                    ) : (
-                      <div className="rounded-xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-                        No calendar accounts connected yet.
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              )}
             </div>
           </ScrollArea>
         </div>
       </div>
+
+      <AppDialog
+        open={isCalendarSourceDialogOpen}
+        onOpenChange={setIsCalendarSourceDialogOpen}
+        title="Add calendar"
+        description="Choose whether to connect Google Calendar or create a local calendar."
+        size="md"
+        footer={
+          <Button type="button" variant="outline" onClick={() => setIsCalendarSourceDialogOpen(false)}>
+            {m.cancel()}
+          </Button>
+        }
+      >
+        <div className="grid gap-3">
+          <button
+            type="button"
+            onClick={openGoogleCalendarDialog}
+            className="flex w-full items-start gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition-colors hover:bg-accent/40"
+          >
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
+              <HugeiconsIcon icon={GoogleIcon} className="size-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium text-foreground">Google Calendar</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                Connect an existing Google account with OAuth credentials and a refresh token.
+              </div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={openLocalCalendarDialog}
+            className="flex w-full items-start gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition-colors hover:bg-accent/40"
+          >
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+              <HugeiconsIcon icon={SquareArrowDataTransferHorizontalIcon} className="size-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium text-foreground">Local calendar</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                Reserve space for calendars and events managed directly inside this workspace.
+              </div>
+            </div>
+          </button>
+        </div>
+      </AppDialog>
+
+      <AppDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        title="Add Google Calendar"
+        description="Connect a Google Calendar account with OAuth credentials and a refresh token."
+        size="lg"
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              {m.cancel()}
+            </Button>
+            <Button type="button" onClick={() => void handleConnect()} disabled={submitting}>
+              {submitting ? m.loading() : m.connect()}
+            </Button>
+          </>
+        }
+      >
+        <div className="grid gap-4">
+          <label className="grid gap-2 text-sm">
+            <span className="font-medium text-foreground">Account label</span>
+            <input
+              value={form.label}
+              onChange={(event) => setForm((current) => ({ ...current, label: event.target.value }))}
+              placeholder="Ops Calendar"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            />
+          </label>
+          <label className="grid gap-2 text-sm">
+            <span className="font-medium text-foreground">Client ID</span>
+            <input
+              value={form.clientId}
+              onChange={(event) => setForm((current) => ({ ...current, clientId: event.target.value }))}
+              placeholder="Google OAuth Client ID"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            />
+          </label>
+          <label className="grid gap-2 text-sm">
+            <span className="font-medium text-foreground">Client Secret</span>
+            <input
+              type="password"
+              value={form.clientSecret}
+              onChange={(event) => setForm((current) => ({ ...current, clientSecret: event.target.value }))}
+              placeholder="Google OAuth Client Secret"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            />
+          </label>
+          <label className="grid gap-2 text-sm">
+            <span className="font-medium text-foreground">Refresh Token</span>
+            <textarea
+              value={form.refreshToken}
+              onChange={(event) => setForm((current) => ({ ...current, refreshToken: event.target.value }))}
+              placeholder="Google refresh token with calendar scopes"
+              className="min-h-32 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            />
+          </label>
+          <p className="text-xs text-muted-foreground">Required scopes: `calendar`, `calendar.events`</p>
+        </div>
+      </AppDialog>
+
+      <AppDialog
+        open={isLocalCalendarDialogOpen}
+        onOpenChange={setIsLocalCalendarDialogOpen}
+        title="Create local calendar"
+        description="The local calendar model is not implemented yet. This entry point is reserved for your own grouped calendars and events."
+        size="md"
+        footer={
+          <Button type="button" onClick={() => setIsLocalCalendarDialogOpen(false)}>
+            {m.cancel()}
+          </Button>
+        }
+      >
+        <div className="space-y-3 text-sm text-muted-foreground">
+          <p>Planned here:</p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Create custom calendar groups</li>
+            <li>Create multiple local calendars inside each group</li>
+            <li>Store and edit your own events without Google</li>
+          </ul>
+        </div>
+      </AppDialog>
     </div>
   );
 }

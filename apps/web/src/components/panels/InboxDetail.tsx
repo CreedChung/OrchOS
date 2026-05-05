@@ -16,7 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
 import { cn } from "@/lib/utils";
-import type { InboxMessage, InboxThread, InboxMessageType, Project } from "@/lib/api";
+import type { InboxMessage, InboxThread, InboxMessageType } from "@/lib/api";
+import type { Project } from "@/lib/types";
 
 interface InboxDetailProps {
   thread: InboxThread;

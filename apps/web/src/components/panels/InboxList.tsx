@@ -68,12 +68,7 @@ interface InboxListProps {
 
 export function InboxList({ threads, activeInboxId, projectNameById, onSelectItem }: InboxListProps) {
   return (
-    <div className="flex h-full w-80 flex-col border-r border-border bg-background">
-      <div className="flex h-14 items-center justify-between border-b border-border px-4">
-        <h2 className="text-sm font-semibold text-foreground">{m.inbox()}</h2>
-        {threads.length > 0 && <span className="text-[10px] tabular-nums text-muted-foreground">{threads.length}</span>}
-      </div>
-
+    <div className="flex h-full min-w-0 w-full flex-col bg-background">
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-0.5">
           {threads.map((thread) => {

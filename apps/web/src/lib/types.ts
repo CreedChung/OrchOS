@@ -240,8 +240,9 @@ export function isSystemProblem(
 export type SidebarView =
   | "inbox"
   | "creation"
+  | "bookmarks"
   | "board"
   | "calendar"
   | "mail"
   | "observability"
-  | "devices";
+  | "agents";

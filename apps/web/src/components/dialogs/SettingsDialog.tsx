@@ -6,16 +6,11 @@ import {
   SlidersHorizontalIcon,
   Robot02Icon,
   InformationCircleIcon,
-  LinkCircleIcon,
   NotificationIcon,
   Search01Icon,
   CloudIcon,
   Server,
   AddCircleHalfDotIcon,
-  GitBranchIcon,
-  BubbleChatIcon,
-  FolderOpenIcon,
-  AlertIcon,
   VolumeHighIcon,
   UnfoldMoreIcon,
   Tick02Icon,
@@ -32,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,47 +41,11 @@ import { NOTIFICATION_EVENTS, AVAILABLE_SOUNDS } from "@/lib/types";
 import { api, type DetectRuntimesResponse, type RuntimeProfile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
-type SettingsTab = "general" | "notifications" | "integrations" | "runtimes" | "about";
-
-type IntegrationCategory = "code" | "comm" | "project" | "monitor";
-
-const integrationCategoryDefs: {
-  id: IntegrationCategory;
-  icon: IconSvgElement;
-  labelKey: () => string;
-}[] = [
-  { id: "code", icon: GitBranchIcon, labelKey: m.integration_cat_code },
-  { id: "comm", icon: BubbleChatIcon, labelKey: m.integration_cat_comm },
-  { id: "project", icon: FolderOpenIcon, labelKey: m.integration_cat_project },
-  { id: "monitor", icon: AlertIcon, labelKey: m.integration_cat_monitor },
-];
-
-const integrationItems: {
-  category: IntegrationCategory;
-  nameKey: () => string;
-  descKey: () => string;
-  connected?: boolean;
-}[] = [
-  {
-    category: "code",
-    nameKey: m.integration_github,
-    descKey: m.integration_github_desc,
-    connected: true,
-  },
-  { category: "code", nameKey: m.integration_gitlab, descKey: m.integration_gitlab_desc },
-  { category: "comm", nameKey: m.integration_slack, descKey: m.integration_slack_desc },
-  { category: "comm", nameKey: m.integration_discord, descKey: m.integration_discord_desc },
-  { category: "project", nameKey: m.integration_linear, descKey: m.integration_linear_desc },
-  { category: "project", nameKey: m.integration_jira, descKey: m.integration_jira_desc },
-  { category: "project", nameKey: m.integration_notion, descKey: m.integration_notion_desc },
-  { category: "monitor", nameKey: m.integration_sentry, descKey: m.integration_sentry_desc },
-  { category: "monitor", nameKey: m.integration_pagerduty, descKey: m.integration_pagerduty_desc },
-];
+type SettingsTab = "general" | "notifications" | "runtimes" | "about";
 
 const tabDefs: { id: SettingsTab; icon: IconSvgElement; labelKey: () => string }[] = [
   { id: "general", icon: SlidersHorizontalIcon, labelKey: m.general },
   { id: "notifications", icon: NotificationIcon, labelKey: m.notifications },
-  { id: "integrations", icon: LinkCircleIcon, labelKey: m.integrations },
   { id: "runtimes", icon: Robot02Icon, labelKey: m.runtimes },
   { id: "about", icon: InformationCircleIcon, labelKey: m.about },
 ];
@@ -142,7 +100,6 @@ export function SettingsDialog({
 }: SettingsDialogProps) {
   const [localSettings, setLocalSettings] = useState<ControlSettings | null>(settings);
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
-  const [activeIntegrationCat, setActiveIntegrationCat] = useState<IntegrationCategory>("code");
   const [detectResult, setDetectResult] = useState<DetectRuntimesResponse | null>(null);
   const [detecting, setDetecting] = useState(false);
   const [registering, setRegistering] = useState<string | null>(null);
@@ -593,59 +550,6 @@ export function SettingsDialog({
               </div>
             )}
 
-            {activeTab === "integrations" && (
-              <div className="space-y-4">
-                <p className="text-xs text-muted-foreground">{m.connect_services_desc()}</p>
-                <Tabs
-                  value={activeIntegrationCat}
-                  onValueChange={(v) => setActiveIntegrationCat(v as IntegrationCategory)}
-                >
-                  <TabsList className="max-w-full flex-wrap">
-                    {integrationCategoryDefs.map((cat) => {
-                      const Icon = cat.icon;
-                      return (
-                        <TabsTrigger key={cat.id} value={cat.id}>
-                          <HugeiconsIcon icon={Icon} className="size-3.5" />
-                          {cat.labelKey()}
-                        </TabsTrigger>
-                      );
-                    })}
-                  </TabsList>
-                </Tabs>
-                {/* Filtered integration list */}
-                <div className="space-y-2">
-                  {integrationItems
-                    .filter((item) => item.category === activeIntegrationCat)
-                    .map((integration) => (
-                      <div
-                        key={integration.nameKey()}
-                        className="flex items-center gap-3 rounded-lg border border-border/50 px-4 py-3"
-                      >
-                        <div className="flex size-8 items-center justify-center rounded-md bg-muted text-sm font-bold text-muted-foreground">
-                          {integration.nameKey().charAt(0)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <span className="text-sm font-medium text-foreground">
-                            {integration.nameKey()}
-                          </span>
-                          <p className="text-xs text-muted-foreground">{integration.descKey()}</p>
-                        </div>
-                         <button
-                           className={cn(
-                             "rounded-md px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer",
-                             integration.connected
-                               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                               : "border border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
-                           )}
-                         >
-                          {integration.connected ? m.connected() : m.connect()}
-                        </button>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
             {activeTab === "runtimes" && (
               <div className="space-y-4">
                 {/* Registration feedback */}
@@ -669,7 +573,7 @@ export function SettingsDialog({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        window.location.href = "/dashboard/devices";
+                        window.location.href = "/dashboard/agents";
                       }}
                     >
                       本地设备

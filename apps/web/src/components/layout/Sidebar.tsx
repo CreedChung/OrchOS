@@ -32,6 +32,7 @@ import {
   UserCircleIcon,
   Logout03Icon,
   Chat01Icon,
+  Bookmark01Icon,
   Calendar03Icon,
   Mail01Icon,
   SidebarLeft01Icon,
@@ -41,6 +42,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
@@ -138,6 +140,12 @@ export function Sidebar({
           label: m.creation(),
           shortcut: `${isMac ? "Cmd" : "Ctrl"}+K`,
         },
+        {
+          id: "bookmarks",
+          to: "/dashboard/bookmarks",
+          icon: Bookmark01Icon,
+          label: "Bookmarks",
+        },
       ],
     },
     {
@@ -147,7 +155,7 @@ export function Sidebar({
           id: "board",
           to: "/dashboard/board",
           icon: DashboardCircleIcon,
-          label: "To do",
+          label: "Reminder",
         },
         {
           id: "calendar",
@@ -167,8 +175,8 @@ export function Sidebar({
       label: m.observability(),
       items: [
         {
-          id: "devices",
-          to: "/dashboard/devices",
+          id: "agents",
+          to: "/dashboard/agents",
           icon: ComputerIcon,
           label: m.agents(),
         },
@@ -226,52 +234,58 @@ export function Sidebar({
                 </div>
                 {activeOrganization ? (
                   <>
-                    <DropdownMenuLabel>
-                      {m.org_launcher_current()}
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        onOrganizationChange(activeOrganization.id)
-                      }
-                    >
-                      <span className="flex-1">{activeOrganization.name}</span>
-                      <HugeiconsIcon
-                        icon={Tick02Icon}
-                        className="size-4 text-primary"
-                      />
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                ) : null}
-                <DropdownMenuLabel>{m.org_launcher_all()}</DropdownMenuLabel>
-                {filteredOrganizations.length > 0 ? (
-                  filteredOrganizations.map((org) => (
-                    <DropdownMenuItem
-                      key={org.id}
-                      onClick={() => onOrganizationChange(org.id)}
-                    >
-                      <span className="flex-1">{org.name}</span>
-                      {org.id === activeOrganizationId && (
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel>
+                        {m.org_launcher_current()}
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          onOrganizationChange(activeOrganization.id)
+                        }
+                      >
+                        <span className="flex-1">{activeOrganization.name}</span>
                         <HugeiconsIcon
                           icon={Tick02Icon}
                           className="size-4 text-primary"
                         />
-                      )}
-                    </DropdownMenuItem>
-                  ))
-                ) : (
-                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                    {m.no_organizations()}
-                  </div>
-                )}
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                  </>
+                ) : null}
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>{m.org_launcher_all()}</DropdownMenuLabel>
+                  {filteredOrganizations.length > 0 ? (
+                    filteredOrganizations.map((org) => (
+                      <DropdownMenuItem
+                        key={org.id}
+                        onClick={() => onOrganizationChange(org.id)}
+                      >
+                        <span className="flex-1">{org.name}</span>
+                        {org.id === activeOrganizationId && (
+                          <HugeiconsIcon
+                            icon={Tick02Icon}
+                            className="size-4 text-primary"
+                          />
+                        )}
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                      {m.no_organizations()}
+                    </div>
+                  )}
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel>
-                  {m.team_create_organization()}
-                </DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setCreateOrgOpen(true)}>
-                  <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-                  {m.team_create_organization()}
-                </DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>
+                    {m.team_create_organization()}
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => setCreateOrgOpen(true)}>
+                    <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+                    {m.team_create_organization()}
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
             {activeOrganizationId && (

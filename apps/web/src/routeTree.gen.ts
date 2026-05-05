@@ -23,6 +23,7 @@ import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
 import { Route as DashboardDevicesRouteImport } from './routes/dashboard/devices'
 import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
 import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
+import { Route as DashboardBookmarksRouteImport } from './routes/dashboard/bookmarks'
 import { Route as DashboardBoardRouteImport } from './routes/dashboard/board'
 import { Route as ApiSettingsRouteImport } from './routes/api.settings'
 import { Route as ApiRuntimesRouteImport } from './routes/api.runtimes'
@@ -130,6 +131,11 @@ const DashboardCreationRoute = DashboardCreationRouteImport.update({
 const DashboardCalendarRoute = DashboardCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardBookmarksRoute = DashboardBookmarksRouteImport.update({
+  id: '/bookmarks',
+  path: '/bookmarks',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardBoardRoute = DashboardBoardRouteImport.update({
@@ -354,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/api/runtimes': typeof ApiRuntimesRouteWithChildren
   '/api/settings': typeof ApiSettingsRoute
   '/dashboard/board': typeof DashboardBoardRoute
+  '/dashboard/bookmarks': typeof DashboardBookmarksRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/devices': typeof DashboardDevicesRoute
@@ -407,6 +414,7 @@ export interface FileRoutesByTo {
   '/api/runtimes': typeof ApiRuntimesRouteWithChildren
   '/api/settings': typeof ApiSettingsRoute
   '/dashboard/board': typeof DashboardBoardRoute
+  '/dashboard/bookmarks': typeof DashboardBookmarksRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/devices': typeof DashboardDevicesRoute
@@ -462,6 +470,7 @@ export interface FileRoutesById {
   '/api/runtimes': typeof ApiRuntimesRouteWithChildren
   '/api/settings': typeof ApiSettingsRoute
   '/dashboard/board': typeof DashboardBoardRoute
+  '/dashboard/bookmarks': typeof DashboardBookmarksRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
   '/dashboard/devices': typeof DashboardDevicesRoute
@@ -518,6 +527,7 @@ export interface FileRouteTypes {
     | '/api/runtimes'
     | '/api/settings'
     | '/dashboard/board'
+    | '/dashboard/bookmarks'
     | '/dashboard/calendar'
     | '/dashboard/creation'
     | '/dashboard/devices'
@@ -571,6 +581,7 @@ export interface FileRouteTypes {
     | '/api/runtimes'
     | '/api/settings'
     | '/dashboard/board'
+    | '/dashboard/bookmarks'
     | '/dashboard/calendar'
     | '/dashboard/creation'
     | '/dashboard/devices'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/api/runtimes'
     | '/api/settings'
     | '/dashboard/board'
+    | '/dashboard/bookmarks'
     | '/dashboard/calendar'
     | '/dashboard/creation'
     | '/dashboard/devices'
@@ -783,6 +795,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/dashboard/calendar'
       preLoaderRoute: typeof DashboardCalendarRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/bookmarks': {
+      id: '/dashboard/bookmarks'
+      path: '/bookmarks'
+      fullPath: '/dashboard/bookmarks'
+      preLoaderRoute: typeof DashboardBookmarksRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/board': {
@@ -1056,6 +1075,7 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteChildren {
   DashboardBoardRoute: typeof DashboardBoardRoute
+  DashboardBookmarksRoute: typeof DashboardBookmarksRoute
   DashboardCalendarRoute: typeof DashboardCalendarRoute
   DashboardCreationRoute: typeof DashboardCreationRoute
   DashboardDevicesRoute: typeof DashboardDevicesRoute
@@ -1067,6 +1087,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardBoardRoute: DashboardBoardRoute,
+  DashboardBookmarksRoute: DashboardBookmarksRoute,
   DashboardCalendarRoute: DashboardCalendarRoute,
   DashboardCreationRoute: DashboardCreationRoute,
   DashboardDevicesRoute: DashboardDevicesRoute,

@@ -2,14 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Outlet, useLocation, Navigate, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/auth";
+import { api } from "@/lib/api";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ActivityPanel } from "@/components/panels/ActivityPanel";
 import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toolbar } from "@/components/layout/Toolbar";
+import { CreateBoardConversationDialog } from "@/components/dialogs/CreateBoardConversationDialog";
 import { I18nProvider } from "@/lib/reminder";
 import { useUIStore } from "@/lib/store";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
+import { useConversationStore } from "@/lib/stores/conversation";
 import { AuthTransitionOverlay } from "@/components/ui/auth-transition-overlay";
 import { Spinner } from "@/components/ui/spinner";
 import type { SidebarView } from "@/lib/types";
@@ -78,11 +81,12 @@ function getViewFromPath(pathname: string): SidebarView {
   const validViews: SidebarView[] = [
     "inbox",
     "creation",
+    "bookmarks",
     "board",
     "calendar",
     "mail",
     "observability",
-    "devices",
+    "agents",
   ];
   return validViews.includes(segment as SidebarView) ? (segment as SidebarView) : "inbox";
 }
@@ -110,6 +114,11 @@ function DashboardWrapper() {
 function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  if (location.pathname === "/dashboard" || location.pathname === "/dashboard/") {
+    return <Navigate to="/dashboard/creation" replace />;
+  }
+
   const dashboardPath = getDashboardEntryPath(location.pathname);
   const activeView = getViewFromPath(dashboardPath);
   const capabilityViewMode = isCapabilityView(activeView)
@@ -117,10 +126,13 @@ function DashboardLayout() {
     : "mine";
   const [showAuthTransition, setShowAuthTransition] = useState(() => isAuthTransition());
   const [startDashboardReveal, setStartDashboardReveal] = useState(false);
+  const [createBoardDialogOpen, setCreateBoardDialogOpen] = useState(false);
   const revealTriggeredRef = useRef(false);
+  const { createConversation, setActiveConversationId } = useConversationStore();
 
   const {
     runtimes,
+    projects: dashboardProjects,
     organizations,
     problems,
     settings,
@@ -135,12 +147,19 @@ function DashboardLayout() {
     inboxCounts,
     loading,
   } = useDashboard();
+  const projects = dashboardProjects ?? [];
 
   const {
     activeOrganizationId,
     setActiveOrganizationId,
     sourceFilter,
     setSourceFilter,
+    inboxStatusFilter,
+    setInboxStatusFilter,
+    mailFolderFilter,
+    setMailFolderFilter,
+    calendarViewMode,
+    setCalendarViewMode,
     boardFilter,
     setBoardFilter,
     activityPanelOpen,
@@ -232,8 +251,14 @@ function DashboardLayout() {
                   onToggleActivityPanel={toggleActivityPanel}
                   sourceFilter={sourceFilter}
                   onSourceFilterChange={setSourceFilter}
-                  boardFilter={boardFilter}
-                  onBoardFilterChange={setBoardFilter}
+                  inboxStatusFilter={inboxStatusFilter}
+                   onInboxStatusFilterChange={setInboxStatusFilter}
+                   mailFolderFilter={mailFolderFilter}
+                   onMailFolderFilterChange={setMailFolderFilter}
+                   calendarViewMode={calendarViewMode}
+                   onCalendarViewModeChange={setCalendarViewMode}
+                   boardFilter={boardFilter}
+                   onBoardFilterChange={setBoardFilter}
                   inboxCounts={inboxCounts}
                   agentModelFilter="all"
                   onAgentModelFilterChange={() => {}}
@@ -244,7 +269,17 @@ function DashboardLayout() {
                       void navigate({ to: getCapabilityPath(activeView, mode) });
                     }
                   }}
-                  onRefresh={refreshAll}
+                   onOpenCreateGoal={
+                     activeView === "board"
+                       ? () => {
+                           setCreateBoardDialogOpen(true);
+                         }
+                       : undefined
+                   }
+                   onOpenMailAccounts={() => {
+                     window.dispatchEvent(new CustomEvent("orchos:open-mail-accounts"));
+                   }}
+                   onRefresh={refreshAll}
                 />
                 <Outlet />
               </div>
@@ -265,6 +300,31 @@ function DashboardLayout() {
               registeredRuntimes={runtimes}
             />
           )}
+          <CreateBoardConversationDialog
+            open={createBoardDialogOpen}
+            projects={projects}
+            onClose={() => setCreateBoardDialogOpen(false)}
+            onSubmit={async (values) => {
+              const created = await createConversation({
+                title: values.title,
+                projectId: values.projectId,
+              });
+              const noteSections = [
+                values.description ? `Notes:\n${values.description}` : "",
+                values.dueDate ? `Due date: ${values.dueDate}` : "",
+                `Priority: ${values.priority}`,
+                values.tags.length > 0 ? `Tags:\n${values.tags.map((item) => `- ${item}`).join("\n")}` : "",
+                values.subtasks.length > 0
+                  ? `Subtasks:\n${values.subtasks.map((item) => `- [ ] ${item}`).join("\n")}`
+                  : "",
+              ].filter(Boolean);
+              if (noteSections.length > 0) {
+                await api.sendConversationMessage(created.id, noteSections.join("\n\n"));
+              }
+              setActiveConversationId(created.id);
+              await navigate({ to: "/dashboard/creation" });
+            }}
+          />
         </div>
       </>
     </I18nProvider>

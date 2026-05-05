@@ -39,22 +39,24 @@ type RefreshResults = {
 type DashboardView =
   | "inbox"
   | "creation"
+  | "bookmarks"
   | "board"
   | "calendar"
   | "mail"
   | "observability"
-  | "devices";
+  | "agents";
 
 function getViewFromPath(pathname: string): DashboardView {
   const segment = pathname.replace("/dashboard/", "").replace("/dashboard", "");
   const validViews: DashboardView[] = [
     "inbox",
     "creation",
+    "bookmarks",
     "board",
     "calendar",
     "mail",
     "observability",
-    "devices",
+    "agents",
   ];
   return validViews.includes(segment as DashboardView) ? (segment as DashboardView) : "inbox";
 }
@@ -174,10 +176,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const shouldLoadProjects =
     activeView === "creation" ||
+    activeView === "bookmarks" ||
     activeView === "board" ||
     activeView === "calendar" ||
     activeView === "mail";
-  const shouldLoadLocalHosts = activeView === "devices";
+  const shouldLoadLocalHosts = activeView === "agents";
   const shouldLoadProblems = activeView === "inbox" || activeView === "observability";
   const agentModelCounts = useMemo(() => ({ all: 0, local: 0, cloud: 0 }), []);
 
@@ -336,7 +339,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (activeView === "devices") {
+    if (activeView === "agents") {
       const deviceResults = await Promise.allSettled([
         api.listRuntimes(),
         api.listLocalHosts(),

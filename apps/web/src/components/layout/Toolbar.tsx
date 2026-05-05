@@ -1,14 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { type AgentModelFilter } from "@/components/layout/AgentModelTabs";
+import { CalendarViewTabs, type CalendarViewMode } from "@/components/layout/CalendarViewTabs";
 import { BoardFilterBar } from "@/components/panels/BoardFilterBar";
 import type { ConversationBoardFilter } from "@/components/panels/BoardView";
 import { CapabilityModeTabs } from "@/components/layout/CapabilityModeTabs";
+import { MailFolderTabs, type MailFolderFilter } from "@/components/layout/MailFolderTabs";
+import {
+  InboxStatusTabs,
+  type InboxStatusFilter,
+} from "@/components/layout/InboxStatusTabs";
 import {
   InboxSourceTabs,
   type SourceFilter,
 } from "@/components/layout/InboxSourceTabs";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, PanelLeft, PanelRight } from "@hugeicons/core-free-icons";
+import { Add01Icon, PanelLeft, PanelRight, Settings02Icon } from "@hugeicons/core-free-icons";
 import { m } from "@/paraglide/messages";
 import type { SidebarView } from "@/lib/types";
 import {
@@ -27,6 +33,12 @@ interface ToolbarProps {
   onSearchChange?: (value: string) => void;
   sourceFilter: SourceFilter;
   onSourceFilterChange: (filter: SourceFilter) => void;
+  inboxStatusFilter: InboxStatusFilter;
+  onInboxStatusFilterChange: (filter: InboxStatusFilter) => void;
+  mailFolderFilter: MailFolderFilter;
+  onMailFolderFilterChange: (filter: MailFolderFilter) => void;
+  calendarViewMode: CalendarViewMode;
+  onCalendarViewModeChange: (mode: CalendarViewMode) => void;
   inboxCounts: {
     all: number;
     github_pr: number;
@@ -42,6 +54,7 @@ interface ToolbarProps {
   boardFilter?: ConversationBoardFilter;
   onBoardFilterChange?: (filter: ConversationBoardFilter) => void;
   onOpenCreateGoal?: () => void;
+  onOpenMailAccounts?: () => void;
   onRefresh?: () => void | Promise<void>;
   children?: React.ReactNode;
 }
@@ -52,6 +65,12 @@ export function Toolbar({
   onToggleActivityPanel,
   sourceFilter,
   onSourceFilterChange,
+  inboxStatusFilter,
+  onInboxStatusFilterChange,
+  mailFolderFilter,
+  onMailFolderFilterChange,
+  calendarViewMode,
+  onCalendarViewModeChange,
   inboxCounts,
   agentModelFilter: _agentModelFilter,
   onAgentModelFilterChange: _onAgentModelFilterChange,
@@ -61,17 +80,32 @@ export function Toolbar({
   boardFilter = "all",
   onBoardFilterChange,
   onOpenCreateGoal,
+  onOpenMailAccounts,
   children,
 }: ToolbarProps) {
   return (
-    <div className="flex h-11 items-center gap-2 border-b border-border bg-background px-4">
+    <div className="relative flex h-11 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
       {activeView === "inbox" && (
-        <InboxSourceTabs
-          value={sourceFilter}
-          counts={inboxCounts}
-          onChange={onSourceFilterChange}
-        />
+        <>
+          <InboxStatusTabs
+            value={inboxStatusFilter}
+            onChange={onInboxStatusFilterChange}
+          />
+          <InboxSourceTabs
+            value={sourceFilter}
+            counts={inboxCounts}
+            onChange={onSourceFilterChange}
+          />
+        </>
       )}
+
+      {activeView === "mail" ? (
+        <MailFolderTabs value={mailFolderFilter} onChange={onMailFolderFilterChange} />
+      ) : null}
+
+      {activeView === "calendar" ? (
+        <CalendarViewTabs value={calendarViewMode} onChange={onCalendarViewModeChange} />
+      ) : null}
 
       {activeView === "board" && onBoardFilterChange ? (
         <BoardFilterBar
@@ -99,22 +133,29 @@ export function Toolbar({
           </Button>
         ) : null}
 
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={onToggleActivityPanel}
-          title={
-            activityPanelOpen
-              ? m.close_activity_panel()
-              : m.open_activity_panel()
-          }
-        >
-          {activityPanelOpen ? (
-            <HugeiconsIcon icon={PanelLeft} className="size-4" />
-          ) : (
-            <HugeiconsIcon icon={PanelRight} className="size-4" />
-          )}
-        </Button>
+        {activeView === "mail" ? (
+          <Button variant="outline" size="sm" onClick={onOpenMailAccounts}>
+            <HugeiconsIcon icon={Settings02Icon} className="size-3.5" />
+            Accounts
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={onToggleActivityPanel}
+            title={
+              activityPanelOpen
+                ? m.close_activity_panel()
+                : m.open_activity_panel()
+            }
+          >
+            {activityPanelOpen ? (
+              <HugeiconsIcon icon={PanelLeft} className="size-4" />
+            ) : (
+              <HugeiconsIcon icon={PanelRight} className="size-4" />
+            )}
+          </Button>
+        )}
       </div>
     </div>
   );
