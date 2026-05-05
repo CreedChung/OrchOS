@@ -103,11 +103,8 @@ function Background() {
   return (
     <div
       aria-hidden="true"
-      className="absolute inset-0 opacity-0 group-hover:opacity-[0.02] transition-opacity duration-500"
-      style={{
-        backgroundImage: "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.8) 1px, transparent 1px)",
-        backgroundSize: "24px 24px",
-      }}
+      className="absolute inset-0 opacity-0 group-hover:opacity-[0.06] transition-opacity duration-500 bg-[radial-gradient(circle_at_2px_2px,rgba(0,0,0,0.6)_1px,transparent_1px)] dark:bg-[radial-gradient(circle_at_2px_2px,rgba(255,255,255,0.5)_1px,transparent_1px)]"
+      style={{ backgroundSize: "24px 24px" }}
     />
   );
 }

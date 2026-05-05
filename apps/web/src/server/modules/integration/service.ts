@@ -355,6 +355,18 @@ export class IntegrationService {
     return this.sanitizeIntegration(integration);
   }
 
+  async updateIntegrationAccount(id: string, accountId: string, data: { label?: string; email?: string; username?: string }) {
+    const integrations = await this.getIntegrations();
+    const integration = this.requireIntegration(integrations, id);
+    const account = integration.accounts.find((a) => a.id === accountId);
+    if (!account) throw new Error(`Account ${accountId} not found`);
+    if (data.label !== undefined) account.label = data.label;
+    if (data.email !== undefined) account.email = data.email;
+    if (data.username !== undefined) account.username = data.username;
+    await this.saveIntegrations(integrations);
+    return this.sanitizeIntegration(integration);
+  }
+
   async deleteIntegrationAccount(id: string, accountId: string) {
     const integrations = await this.getIntegrations();
     const integration = this.requireIntegration(integrations, id);

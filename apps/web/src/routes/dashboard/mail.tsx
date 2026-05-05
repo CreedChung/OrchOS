@@ -13,6 +13,9 @@ import {
   ArrowRight01Icon,
   GoogleIcon,
   SquareArrowDataTransferHorizontalIcon,
+  EyeIcon,
+  ViewOffSlashIcon,
+  MailEdit02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
@@ -73,8 +76,11 @@ function MailPage() {
   const [mailConnectMode, setMailConnectMode] = useState<"gmail" | "smtp-imap">(
     "gmail",
   );
+  const [showClientSecret, setShowClientSecret] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submittingAccount, setSubmittingAccount] = useState(false);
+  const [activeAccountId, setActiveAccountIdFilter] = useState<string | null>(null);
   const collapseTimerRef = useRef<number | null>(null);
   const [gmailForm, setGmailForm] = useState({
     label: "",
@@ -442,10 +448,11 @@ function MailPage() {
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
           className={cn(
-            "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r border-border bg-card transition-[width] duration-300 ease-out lg:flex",
+            "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r bg-card transition-[width] duration-300 ease-out lg:flex",
             sidebarCollapsed
               ? "w-0 border-r-transparent"
               : "w-[var(--mail-sidebar-width)]",
+            isResizingSidebar ? "border-r-transparent" : "border-border",
           )}
           style={
             sidebarCollapsed
@@ -482,7 +489,7 @@ function MailPage() {
                   onClick={() => setIsComposeDialogOpen(true)}
                   title="Compose mail"
                 >
-                  <HugeiconsIcon icon={Add01Icon} className="size-4" />
+                  <HugeiconsIcon icon={MailEdit02Icon} className="size-4" />
                 </Button>
                 <Button
                   type="button"
@@ -513,6 +520,9 @@ function MailPage() {
                 activeInboxId={activeThread?.id ?? null}
                 projectNameById={projectNameById}
                 onSelectItem={setActiveInboxId}
+                accounts={mailAccounts}
+                activeAccountId={activeAccountId}
+                onAccountChange={setActiveAccountIdFilter}
               />
             </div>
           </div>
@@ -551,7 +561,7 @@ function MailPage() {
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)]"
+              className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)] active:!translate-y-[-50%]"
               onClick={handleExpandSidebar}
               title={m.expand_sidebar()}
             >
@@ -785,18 +795,28 @@ function MailPage() {
                 <span className="font-medium text-foreground">
                   Client Secret
                 </span>
-                <input
-                  type="password"
-                  value={gmailForm.clientSecret}
-                  onChange={(event) =>
-                    setGmailForm((current) => ({
-                      ...current,
-                      clientSecret: event.target.value,
-                    }))
-                  }
-                  placeholder="Google OAuth Client Secret"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                />
+                <div className="relative">
+                  <input
+                    type={showClientSecret ? "text" : "password"}
+                    value={gmailForm.clientSecret}
+                    onChange={(event) =>
+                      setGmailForm((current) => ({
+                        ...current,
+                        clientSecret: event.target.value,
+                      }))
+                    }
+                    placeholder="Google OAuth Client Secret"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 pr-9 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowClientSecret((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    <HugeiconsIcon icon={showClientSecret ? ViewOffSlashIcon : EyeIcon} className="size-4" />
+                  </button>
+                </div>
               </label>
               <label className="grid gap-2 text-sm">
                 <span className="font-medium text-foreground">
@@ -864,18 +884,28 @@ function MailPage() {
               </label>
               <label className="grid gap-2 text-sm md:col-span-2">
                 <span className="font-medium text-foreground">Password</span>
-                <input
-                  type="password"
-                  value={mailAccountForm.password}
-                  onChange={(event) =>
-                    setMailAccountForm((current) => ({
-                      ...current,
-                      password: event.target.value,
-                    }))
-                  }
-                  placeholder="Mailbox password or app password"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={mailAccountForm.password}
+                    onChange={(event) =>
+                      setMailAccountForm((current) => ({
+                        ...current,
+                        password: event.target.value,
+                      }))
+                    }
+                    placeholder="Mailbox password or app password"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 pr-9 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    <HugeiconsIcon icon={showPassword ? ViewOffSlashIcon : EyeIcon} className="size-4" />
+                  </button>
+                </div>
               </label>
               <label className="grid gap-2 text-sm">
                 <span className="font-medium text-foreground">SMTP host</span>

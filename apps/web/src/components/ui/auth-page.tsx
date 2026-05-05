@@ -29,7 +29,7 @@ export function AuthPage({ mode, children }: AuthPageProps) {
     <main className="min-h-screen bg-background">
       <section
         className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat p-4 sm:p-8"
-        style={{ backgroundImage: "url('/background.png')" }}
+        style={{ backgroundImage: "url('/hero/background.png')" }}
       >
         <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px]" aria-hidden="true" />
 

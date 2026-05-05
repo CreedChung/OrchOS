@@ -14,6 +14,9 @@ import {
   VolumeHighIcon,
   UnfoldMoreIcon,
   Tick02Icon,
+  InboxIcon,
+  GoogleIcon,
+  Edit02Icon,
 } from "@hugeicons/core-free-icons";
 import { cn, getRuntimeIcon } from "@/lib/utils";
 import ThemeToggle from "@/components/layout/ThemeToggle";
@@ -41,12 +44,26 @@ import { NOTIFICATION_EVENTS, AVAILABLE_SOUNDS } from "@/lib/types";
 import { api, type DetectRuntimesResponse, type RuntimeProfile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
-type SettingsTab = "general" | "notifications" | "runtimes" | "about";
+type SettingsTab = "general" | "notifications" | "runtimes" | "mail" | "about";
+
+type MailIntegrationAccount = {
+  id: string;
+  label: string;
+  email?: string;
+  username?: string;
+};
+
+type SettingsMailIntegration = {
+  id: string;
+  name: string;
+  accounts?: MailIntegrationAccount[];
+};
 
 const tabDefs: { id: SettingsTab; icon: IconSvgElement; labelKey: () => string }[] = [
   { id: "general", icon: SlidersHorizontalIcon, labelKey: m.general },
   { id: "notifications", icon: NotificationIcon, labelKey: m.notifications },
   { id: "runtimes", icon: Robot02Icon, labelKey: m.runtimes },
+  { id: "mail", icon: InboxIcon, labelKey: () => "Mail" },
   { id: "about", icon: InformationCircleIcon, labelKey: m.about },
 ];
 
@@ -57,6 +74,7 @@ interface SettingsDialogProps {
   onSettingsChange: (settings: ControlSettings) => void;
   onRuntimesRefresh: () => void;
   registeredRuntimes: RuntimeProfile[];
+  defaultTab?: SettingsTab;
 }
 
 function ModelBadge({ model, isLocalRuntime }: { model: string; isLocalRuntime?: boolean }) {
@@ -97,9 +115,16 @@ export function SettingsDialog({
   onSettingsChange,
   onRuntimesRefresh,
   registeredRuntimes,
+  defaultTab,
 }: SettingsDialogProps) {
   const [localSettings, setLocalSettings] = useState<ControlSettings | null>(settings);
-  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(defaultTab || "general");
+
+  useEffect(() => {
+    if (open && defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [open, defaultTab]);
   const [detectResult, setDetectResult] = useState<DetectRuntimesResponse | null>(null);
   const [detecting, setDetecting] = useState(false);
   const [registering, setRegistering] = useState<string | null>(null);
@@ -107,6 +132,10 @@ export function SettingsDialog({
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const [mailIntegrations, setMailIntegrations] = useState<SettingsMailIntegration[]>([]);
+  const [loadingMail, setLoadingMail] = useState(false);
+  const [editingMailAccount, setEditingMailAccount] = useState<{ integrationId: string; account: MailIntegrationAccount } | null>(null);
+  const [editMailForm, setEditMailForm] = useState({ label: "", email: "" });
   const { locale: currentLocale, setLocaleWithSync } = useLocale();
 
   useEffect(() => {
@@ -228,6 +257,16 @@ export function SettingsDialog({
     }
   }, [open, activeTab, handleDetect]);
 
+  // Load mail integrations when the mail tab is activated
+  useEffect(() => {
+    if (open && activeTab === "mail" && !loadingMail) {
+      setLoadingMail(true);
+      api.listIntegrations().then((result) => {
+        setMailIntegrations(result.filter((i) => i.id === "gmail" || i.id === "smtp-imap") as SettingsMailIntegration[]);
+      }).finally(() => setLoadingMail(false));
+    }
+  }, [open, activeTab]);
+
   const handleRegisterAgent = useCallback(
     async (runtimeId: string) => {
       setRegistering(runtimeId);
@@ -291,6 +330,34 @@ export function SettingsDialog({
       setRegistering(null);
     }
   }, [onRuntimesRefresh]);
+
+  const handleEditMailAccount = useCallback((integrationId: string, account: MailIntegrationAccount) => {
+    setEditMailForm({ label: account.label, email: account.email || account.username || "" });
+    setEditingMailAccount({ integrationId, account });
+  }, []);
+
+  const handleSaveMailAccount = useCallback(async () => {
+    if (!editingMailAccount) return;
+    try {
+      const updated = await api.updateIntegrationAccount(editingMailAccount.integrationId, editingMailAccount.account.id, {
+        label: editMailForm.label,
+        email: editMailForm.email,
+      });
+      setMailIntegrations((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      setEditingMailAccount(null);
+    } catch (err) {
+      console.error("Failed to update mail account:", err);
+    }
+  }, [editingMailAccount, editMailForm]);
+
+  const handleDeleteMailAccount = useCallback(async (integrationId: string, accountId: string) => {
+    try {
+      const updated = await api.deleteIntegrationAccount(integrationId, accountId);
+      setMailIntegrations((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    } catch (err) {
+      console.error("Failed to delete mail account:", err);
+    }
+  }, []);
 
   if (!open) return null;
 
@@ -707,6 +774,102 @@ export function SettingsDialog({
                     <p className="text-xs text-muted-foreground/60 mt-1">
                       {m.detect_runtimes_hint_desc()}
                     </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "mail" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium text-foreground">Mail Accounts</span>
+                    <p className="text-xs text-muted-foreground">View and manage your email accounts</p>
+                  </div>
+                </div>
+
+                {loadingMail ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Spinner size="sm" />
+                  </div>
+                ) : mailIntegrations.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-border/50 py-6 text-center">
+                    <HugeiconsIcon icon={InboxIcon} className="mx-auto size-5 text-muted-foreground/30 mb-2" />
+                    <p className="text-sm text-muted-foreground">No mail accounts configured</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">
+                      Add an email account in the Mail page to get started.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {mailIntegrations.map((integration) => (
+                      <div key={integration.id} className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                          <HugeiconsIcon icon={integration.id === "google-mail" ? GoogleIcon : InboxIcon} className="size-4" />
+                          {integration.name}
+                        </div>
+                        {integration.accounts && integration.accounts.length > 0 ? (
+                          <div className="space-y-1.5 pl-6">
+                            {integration.accounts.map((account) => (
+                              <div key={account.id} className="flex items-center justify-between rounded-lg border border-border/50 px-3 py-2">
+                                <div className="min-w-0">
+                                  <div className="text-sm text-foreground truncate">{account.label}</div>
+                                  <div className="text-xs text-muted-foreground truncate">{account.email || account.username}</div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEditMailAccount(integration.id, account)}
+                                    className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground transition-colors"
+                                  >
+                                    <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteMailAccount(integration.id, account.id)}
+                                    className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-destructive transition-colors"
+                                  >
+                                    <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground pl-6">No accounts</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {editingMailAccount && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setEditingMailAccount(null)}>
+                    <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                      <h3 className="text-sm font-semibold text-foreground mb-4">Edit account</h3>
+                      <div className="space-y-3">
+                        <label className="grid gap-1.5 text-sm">
+                          <span className="text-muted-foreground">Label</span>
+                          <input
+                            value={editMailForm.label}
+                            onChange={(e) => setEditMailForm((f) => ({ ...f, label: e.target.value }))}
+                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        </label>
+                        <label className="grid gap-1.5 text-sm">
+                          <span className="text-muted-foreground">Email</span>
+                          <input
+                            value={editMailForm.email}
+                            onChange={(e) => setEditMailForm((f) => ({ ...f, email: e.target.value }))}
+                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        </label>
+                      </div>
+                      <div className="mt-5 flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={() => setEditingMailAccount(null)}>Cancel</Button>
+                        <Button type="button" onClick={handleSaveMailAccount}>Save</Button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

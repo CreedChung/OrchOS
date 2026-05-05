@@ -119,8 +119,9 @@ export function DevicesPage() {
     <div className="flex h-full min-h-0 flex-1 overflow-hidden bg-background">
       <div
         className={cn(
-          "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r border-border bg-card transition-[width] duration-300 ease-out lg:flex",
+          "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r bg-card transition-[width] duration-300 ease-out lg:flex",
           sidebarCollapsed ? "w-0 border-r-transparent" : "w-[var(--agents-sidebar-width)]",
+          isResizingSidebar ? "border-r-transparent" : "border-border",
         )}
         style={
           sidebarCollapsed
@@ -277,7 +278,7 @@ export function DevicesPage() {
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)]"
+            className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)] active:!translate-y-[-50%]"
             onClick={handleExpandSidebar}
             title={m.expand_sidebar()}
           >

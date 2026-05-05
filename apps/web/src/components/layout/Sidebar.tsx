@@ -495,7 +495,7 @@ export function Sidebar({
             <InfoCardMedia
               media={[
                 {
-                  src: "/background.png",
+                  src: "/hero/background.png",
                   alt: "OrchOS",
                 },
               ]}

@@ -5,6 +5,11 @@ import { IntegrationService } from "@/server/modules/integration/service";
 export const Route = createFileRoute("/api/integrations/$id/accounts/$accountId")({
   server: {
     handlers: {
+      PATCH: async ({ params, request }) => {
+        const data = (await request.json()) as { label?: string; email?: string; username?: string };
+        const service = new IntegrationService(await getLocalDb());
+        return Response.json(service.updateIntegrationAccount(params.id, params.accountId, data));
+      },
       DELETE: async ({ params }) => {
         const service = new IntegrationService(await getLocalDb());
         return Response.json(service.deleteIntegrationAccount(params.id, params.accountId));

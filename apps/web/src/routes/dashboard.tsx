@@ -48,7 +48,7 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
         <div className="relative h-screen overflow-hidden bg-background">
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100 blur-xl scale-105"
-            style={{ backgroundImage: "url('/background.png')" }}
+            style={{ backgroundImage: "url('/hero/background.png')" }}
           />
           <div className="absolute inset-0 bg-background/72 backdrop-blur-[2px]" />
           <div className="relative flex h-full items-center justify-center">
@@ -127,6 +127,7 @@ function DashboardLayout() {
   const [showAuthTransition, setShowAuthTransition] = useState(() => isAuthTransition());
   const [startDashboardReveal, setStartDashboardReveal] = useState(false);
   const [createBoardDialogOpen, setCreateBoardDialogOpen] = useState(false);
+  const [settingsDefaultTab, setSettingsDefaultTab] = useState<"general" | "notifications" | "runtimes" | "mail" | "about">("general");
   const revealTriggeredRef = useRef(false);
   const { createConversation, setActiveConversationId } = useConversationStore();
 
@@ -276,9 +277,10 @@ function DashboardLayout() {
                          }
                        : undefined
                    }
-                   onOpenMailAccounts={() => {
-                     window.dispatchEvent(new CustomEvent("orchos:open-mail-accounts"));
-                   }}
+                    onOpenMailAccounts={() => {
+                      setSettingsDefaultTab("mail");
+                      setShowSettingsDialog(true);
+                    }}
                    onRefresh={refreshAll}
                 />
                 <Outlet />
@@ -293,11 +295,15 @@ function DashboardLayout() {
           {showSettingsDialog && (
             <SettingsDialog
               open={showSettingsDialog}
-              onClose={() => setShowSettingsDialog(false)}
+              onClose={() => {
+                setShowSettingsDialog(false);
+                setSettingsDefaultTab("general");
+              }}
               settings={settings}
               onSettingsChange={useUIStore.getState().setSettings}
               onRuntimesRefresh={refreshAll}
               registeredRuntimes={runtimes}
+              defaultTab={settingsDefaultTab}
             />
           )}
           <CreateBoardConversationDialog

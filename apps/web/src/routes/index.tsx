@@ -18,7 +18,7 @@ function HomePageInner() {
         <section className="relative flex h-screen -mt-14 items-start justify-center overflow-hidden px-6 pt-14 sm:px-10 lg:px-14">
           <div className="absolute inset-0 z-0">
             <img
-              src="/background.png"
+              src="/hero/background.png"
               alt=""
               className="size-full object-cover"
               fetchPriority="high"
@@ -67,14 +67,14 @@ function HomePageInner() {
 
             <div className="group mt-auto h-[180px] w-full self-center overflow-hidden rounded-t-md border-x border-t border-white/10 bg-black/20 shadow-2xl transition-[height] duration-300 ease-out backdrop-blur-sm hover:h-[260px] sm:h-[220px] sm:hover:h-[320px] lg:h-[260px] lg:hover:h-[400px]">
               <img
-                src="/hero.png"
+                src="/hero/hero.png"
                 alt="OrchOS Hero"
                 className="h-full w-full object-cover object-top dark:hidden"
                 loading="lazy"
                 decoding="async"
               />
               <img
-                src="/hero-dark.png"
+                src="/hero/hero-dark.png"
                 alt="OrchOS Hero"
                 className="hidden h-full w-full object-cover object-top dark:block"
                 loading="lazy"

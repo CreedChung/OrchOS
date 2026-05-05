@@ -7,6 +7,8 @@ import {
   InformationCircleIcon,
   Alert01Icon,
   CheckmarkBadge01Icon,
+  GoogleIcon,
+  InboxIcon,
 } from "@hugeicons/core-free-icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -64,9 +66,20 @@ interface InboxListProps {
   activeInboxId: string | null;
   projectNameById: Map<string, string>;
   onSelectItem: (id: string) => void;
+  accounts?: { id: string; label: string; email?: string; username?: string; source?: string }[];
+  activeAccountId?: string | null;
+  onAccountChange?: (id: string | null) => void;
 }
 
-export function InboxList({ threads, activeInboxId, projectNameById, onSelectItem }: InboxListProps) {
+export function InboxList({
+  threads,
+  activeInboxId,
+  projectNameById,
+  onSelectItem,
+  accounts,
+  activeAccountId,
+  onAccountChange,
+}: InboxListProps) {
   return (
     <div className="flex h-full min-w-0 w-full flex-col bg-background">
       <ScrollArea className="flex-1">
@@ -125,6 +138,40 @@ export function InboxList({ threads, activeInboxId, projectNameById, onSelectIte
           )}
         </div>
       </ScrollArea>
+
+      {accounts && accounts.length > 0 && onAccountChange ? (
+        <div className="border-t border-border p-2">
+          <div className="flex flex-wrap items-center gap-1 rounded-md px-1">
+            {[
+              { id: null, label: "All", icon: InboxIcon },
+              ...accounts.map((a) => ({ id: a.id, label: a.label, icon: a.source === "Gmail" ? GoogleIcon : InboxIcon })),
+            ].map((item) => {
+              const isActive = activeAccountId === item.id;
+              const isAll = item.id === null;
+              return (
+                <button
+                  key={item.id ?? "__all__"}
+                  type="button"
+                  onClick={() => onAccountChange(item.id)}
+                  title={item.label}
+                  className={cn(
+                    "inline-flex size-10 items-center justify-center rounded-md transition-colors",
+                    isActive
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                  )}
+                >
+                  {isAll ? (
+                    <HugeiconsIcon icon={item.icon} className="size-4" />
+                  ) : (
+                    <span className="text-xs font-semibold">{item.label.charAt(0).toUpperCase()}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

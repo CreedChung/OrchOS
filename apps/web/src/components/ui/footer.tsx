@@ -67,12 +67,6 @@ const NavSection = ({
         className="text-muted-foreground hover:text-foreground transition-colors duration-300 font-sans text-xs md:text-sm group relative inline-block"
       >
         {link.label}
-        <motion.span
-          className="absolute bottom-0 left-0 h-0.5 bg-primary"
-          initial={{ width: 0 }}
-          whileHover={{ width: "100%" }}
-          transition={{ duration: 0.3 }}
-        />
       </motion.span>
     );
 

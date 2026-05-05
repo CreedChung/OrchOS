@@ -28,7 +28,7 @@ function AuthScene({ reveal }: { reveal: boolean }) {
         <div className="absolute inset-0 overflow-hidden bg-background">
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: "url('/background.png')" }}
+            style={{ backgroundImage: "url('/hero/background.png')" }}
           />
           <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px]" />
         </div>
@@ -102,7 +102,7 @@ export function AuthTransitionOverlay({ active, reveal, onComplete }: AuthTransi
       <div className="pointer-events-none fixed inset-0 z-[120] overflow-hidden" aria-hidden="true">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/background.png')" }}
+          style={{ backgroundImage: "url('/hero/background.png')" }}
         />
         <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px]" />
       </div>

@@ -581,6 +581,18 @@ export const api = {
     }
     return (await response.json()) as Integration;
   },
+  updateIntegrationAccount: async (id: string, accountId: string, data: { label?: string; email?: string; username?: string }): Promise<Integration> => {
+    const response = await fetch(resolveApiUrl(`/api/integrations/${id}/accounts/${accountId}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return (await response.json()) as Integration;
+  },
   deleteIntegrationAccount: async (id: string, accountId: string): Promise<Integration> => {
     const response = await fetch(resolveApiUrl(`/api/integrations/${id}/accounts/${accountId}`), {
       method: "DELETE",

@@ -248,7 +248,7 @@ function parseBookmarkCsv(text: string) {
 }
 
 function BookmarksPage() {
-  const [sidebarWidth, setSidebarWidth] = useState(300);
+  const [sidebarWidth, setSidebarWidth] = useState(320);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showExpandedContent, setShowExpandedContent] = useState(true);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
@@ -324,7 +324,7 @@ function BookmarksPage() {
     document.body.style.userSelect = "none";
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
-      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 240), 380);
+      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 280), 420);
       setSidebarWidth(nextWidth);
     };
 
@@ -484,8 +484,9 @@ function BookmarksPage() {
 
       <div
         className={cn(
-          "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r border-border bg-card transition-[width] duration-300 ease-out lg:flex",
+          "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r bg-card transition-[width] duration-300 ease-out lg:flex",
           sidebarCollapsed ? "w-0 border-r-transparent" : "w-[var(--bookmarks-sidebar-width)]",
+          isResizingSidebar ? "border-r-transparent" : "border-border",
         )}
         style={
           sidebarCollapsed
@@ -502,16 +503,27 @@ function BookmarksPage() {
         >
           <div className="flex h-10 items-center justify-between rounded-md px-2">
             <div className="text-sm font-semibold text-foreground">Bookmarks</div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="active:-translate-y-0"
-              onClick={handleCollapseSidebar}
-              title="Collapse sidebar"
-            >
-              <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                onClick={handleCreateCategory}
+                title="New category"
+              >
+                <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="active:-translate-y-0"
+                onClick={handleCollapseSidebar}
+                title="Collapse sidebar"
+              >
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -539,15 +551,6 @@ function BookmarksPage() {
                   <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                     Categories
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={handleCreateCategory}
-                    title="New category"
-                  >
-                    <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-                  </Button>
                 </div>
                 {categories.length > 0 ? (
                   <div className="space-y-1">

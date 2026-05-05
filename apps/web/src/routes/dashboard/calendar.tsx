@@ -633,8 +633,9 @@ function CalendarPage() {
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
           className={cn(
-            "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r border-border bg-card transition-[width] duration-300 ease-out lg:flex",
+            "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r bg-card transition-[width] duration-300 ease-out lg:flex",
             sidebarCollapsed ? "w-0 border-r-transparent" : "w-[var(--calendar-sidebar-width)]",
+            isResizingSidebar ? "border-r-transparent" : "border-border",
           )}
           style={
             sidebarCollapsed
@@ -740,104 +741,56 @@ function CalendarPage() {
                     </section>
                   ) : null}
 
-                  <section className="space-y-2">
-                    <div className="flex items-center justify-between gap-2 px-2">
-                      <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Local</div>
-                      <button
-                        type="button"
-                        onClick={() => openLocalGroupDialog()}
-                        className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        title="Create group"
-                      >
-                        <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-                      </button>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSidebarItem("local-overview")}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
-                        selectedSidebarItem === "local-overview"
-                          ? "border-primary/40 bg-primary/5"
-                          : "border-border/60 bg-background/60 hover:bg-accent/40",
-                      )}
-                    >
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                        <HugeiconsIcon icon={SquareArrowDataTransferHorizontalIcon} className="size-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-foreground">Local calendars</div>
-                        <div className="mt-0.5 text-xs text-muted-foreground">
-                          {localGroups.length} group{localGroups.length === 1 ? "" : "s"} · {localCalendars.length} calendar
-                          {localCalendars.length === 1 ? "" : "s"}
-                        </div>
-                      </div>
-                    </button>
-
+                  <div className="space-y-0.5">
                     {groupedLocalCalendars.length > 0 ? (
-                      <div className="space-y-3">
+                      <div className="space-y-0.5">
                         {groupedLocalCalendars.map(({ group, calendars }) => {
                           const isGroupActive = selectedSidebarItem === `local-group:${group.id}`;
 
                           return (
-                            <div key={group.id} className="rounded-2xl border border-border/60 bg-background/60 p-2 shadow-sm">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedSidebarItem(`local-group:${group.id}`)}
-                                  className={cn(
-                                    "flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-2 text-left transition-colors",
-                                    isGroupActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/40",
-                                  )}
-                                >
-                                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                                    <HugeiconsIcon icon={Calendar03Icon} className="size-3.5" />
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <div className="truncate text-sm font-medium text-foreground">{group.name}</div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {calendars.length} calendar{calendars.length === 1 ? "" : "s"}
-                                    </div>
-                                  </div>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => openLocalCalendarDialog(group.id)}
-                                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                  title="Add calendar to group"
-                                >
-                                  <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-                                </button>
+                            <div key={group.id}>
+                              <div
+                                onClick={() => setSelectedSidebarItem(`local-group:${group.id}`)}
+                                className={cn(
+                                  "flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors",
+                                  isGroupActive
+                                    ? "bg-accent font-medium text-accent-foreground"
+                                    : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
+                                )}
+                              >
+                                <HugeiconsIcon
+                                  icon={Calendar03Icon}
+                                  className="size-3.5 shrink-0 text-violet-500"
+                                />
+                                <span className="min-w-0 flex-1 truncate">{group.name}</span>
+                                <span className="text-xs text-muted-foreground/60">{calendars.length}</span>
                               </div>
 
-                              <div className="mt-1 space-y-1">
+                              <div className="ml-3 space-y-0.5">
                                 {calendars.map((calendar) => {
                                   const isCalendarActive = selectedSidebarItem === `local-calendar:${calendar.id}`;
 
                                   return (
-                                    <button
+                                    <div
                                       key={calendar.id}
-                                      type="button"
                                       onClick={() => setSelectedSidebarItem(`local-calendar:${calendar.id}`)}
                                       className={cn(
-                                        "flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors",
-                                        isCalendarActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/40",
+                                        "group flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors",
+                                        isCalendarActive
+                                          ? "bg-accent font-medium text-accent-foreground"
+                                          : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
                                       )}
                                     >
                                       <span
-                                        className="size-2.5 shrink-0 rounded-full"
+                                        className="size-2 shrink-0 rounded-full"
                                         style={{ backgroundColor: calendar.color }}
                                         aria-hidden="true"
                                       />
-                                      <div className="min-w-0 flex-1">
-                                        <div className="truncate text-sm font-medium text-foreground">{calendar.name}</div>
-                                        <div className="truncate text-xs text-muted-foreground">
-                                          {localEvents.filter((event) => event.calendarId === calendar.id).length} event
-                                          {localEvents.filter((event) => event.calendarId === calendar.id).length === 1 ? "" : "s"}
-                                        </div>
-                                      </div>
-                                    </button>
+                                      <span className="min-w-0 flex-1 truncate">{calendar.name}</span>
+                                      <span className="text-xs text-muted-foreground/60">
+                                        {localEvents.filter((event) => event.calendarId === calendar.id).length}
+                                      </span>
+                                    </div>
                                   );
                                 })}
                               </div>
@@ -846,11 +799,12 @@ function CalendarPage() {
                         })}
                       </div>
                     ) : (
-                      <div className="rounded-xl border border-dashed border-border/60 px-3 py-4 text-sm text-muted-foreground">
-                        Create a group to start organizing local calendars.
+                      <div className="py-6 text-center">
+                        <HugeiconsIcon icon={Calendar03Icon} className="mx-auto mb-1.5 size-5 text-muted-foreground/30" />
+                        <p className="text-xs text-muted-foreground">Create a group to start organizing local calendars.</p>
                       </div>
                     )}
-                  </section>
+                  </div>
                 </div>
               </ScrollArea>
             ) : (
@@ -892,7 +846,7 @@ function CalendarPage() {
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)]"
+              className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)] active:!translate-y-[-50%]"
               onClick={handleExpandSidebar}
               title={m.expand_sidebar()}
             >

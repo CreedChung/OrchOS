@@ -119,32 +119,34 @@ export function FeaturesBento() {
       <section className="dark:bg-muted/25 bg-zinc-50 flex items-center justify-center py-16 md:py-24 min-h-screen">
         <div className="mx-auto w-full max-w-5xl px-6">
           <div className="mx-auto grid gap-2 sm:grid-cols-5">
-            {/* Main: Multi-Agent Coordination */}
+            {/* Main: Kanban */}
             <Card className="group overflow-hidden shadow-black/5 sm:col-span-3 sm:rounded-none sm:rounded-tl-xl">
-              <CardHeader>
-                <div className="md:px-4 md:pt-4 md:pb-2">
-                  <p className="font-medium">{m.feature_agents_title()}</p>
+              <CardHeader className="pb-0">
+                <div className="md:p-4 md:pb-2">
+                  <p className="font-medium">
+                    Kanban
+                  </p>
                   <p className="text-muted-foreground mt-3 max-w-sm text-sm">
-                    {m.feature_agents_desc()}
+                    Visualize your workflow with boards, columns, and cards. Drag and drop tasks across stages to track progress at a glance.
                   </p>
                 </div>
               </CardHeader>
 
-              <div className="relative pl-6 md:pl-10">
-                <div className="bg-background h-44 overflow-hidden rounded-tl-lg border-l border-t pl-2 pt-2 dark:bg-zinc-950 sm:h-52 md:h-56">
-<img
-                    src="/bento1.png"
+              <div className="relative pl-4 md:pl-6">
+                <div className="bg-background h-44 overflow-hidden rounded-tl-lg border-l border-t dark:bg-zinc-950 sm:h-52 md:h-56">
+                  <img
+                    src="/hero/bento1.png"
                     className="shadow h-full w-full object-cover object-top dark:hidden"
-                    alt="Dashboard light"
+                    alt="Kanban light"
                     width={1207}
                     height={929}
                     loading="lazy"
                     decoding="async"
                   />
                   <img
-                    src="/bento1-dark.png"
+                    src="/hero/bento1-dark.png"
                     className="hidden h-full w-full object-cover object-top dark:block"
-                    alt="Dashboard dark"
+                    alt="Kanban dark"
                     width={1207}
                     height={929}
                     loading="lazy"
@@ -154,17 +156,22 @@ export function FeaturesBento() {
               </div>
             </Card>
 
-            {/* Top Right: Goal-Driven Workflows */}
+            {/* Top Right: Mail */}
             <Card className="group h-full overflow-hidden shadow-zinc-950/5 sm:col-span-2 sm:rounded-none sm:rounded-tr-xl">
-              <p className="mx-auto my-4 max-w-md text-balance px-6 text-center text-lg font-semibold sm:text-2xl md:px-6 md:pt-4 md:pb-2">
-                {m.feature_goals_title()}
-              </p>
+              <CardHeader>
+                <div className="md:p-4 md:pb-2">
+                  <p className="font-medium">邮件</p>
+                  <p className="text-muted-foreground mt-3 max-w-sm text-sm">
+                    Manage multiple email accounts in one inbox. Compose, reply, and organize messages with AI-powered assistance.
+                  </p>
+                </div>
+              </CardHeader>
 
               <CardContent className="mt-auto flex-1">
-                <div className="relative h-full">
+                <div className="relative h-full pl-4 md:pl-6">
                   <div className="h-44 overflow-hidden rounded-r-lg border sm:h-52 md:h-56">
 <img
-                      src="/bento2.png"
+                      src="/hero/bento2.png"
                       className="shadow dark:hidden w-full h-full object-cover"
                       alt="Analytics light"
                       width={1207}
@@ -173,7 +180,7 @@ export function FeaturesBento() {
                       decoding="async"
                     />
                     <img
-                      src="/bento2-dark.png"
+                      src="/hero/bento2-dark.png"
                       className="hidden dark:block w-full h-full object-cover"
                       alt="Analytics dark"
                       width={1207}
@@ -186,86 +193,50 @@ export function FeaturesBento() {
               </CardContent>
             </Card>
 
-            {/* Bottom Left: Hotkeys */}
+            {/* Bottom Left: Calendar */}
             <Card
-              className="group cursor-pointer p-5 shadow-black/5 sm:col-span-2 sm:rounded-none sm:rounded-bl-xl md:p-8"
-              onClick={() => setOpen(true)}
+              className="group shadow-black/5 sm:col-span-2 sm:rounded-none sm:rounded-bl-xl"
             >
-              <p className="mx-auto mb-8 max-w-md text-balance text-center text-lg font-semibold sm:text-2xl">
-                {m.ai_ask()}
-              </p>
-
-              <div className="flex justify-center gap-4">
-                <div className="inset-shadow-sm dark:inset-shadow-white/5 bg-muted/35 relative flex aspect-square size-14 items-center rounded-[7px] border p-3 shadow-lg ring dark:shadow-white/5 dark:ring-black">
-                  <span className="absolute right-2 top-1 block text-sm">⌘</span>
-                  <HugeiconsIcon icon={Robot02Icon} className="mt-auto size-4 text-primary" />
+              <CardHeader className="pb-0">
+                <div className="md:p-4 md:pb-2">
+                  <p className="font-medium">
+                    日历
+                  </p>
+                  <p className="text-muted-foreground mt-3 max-w-sm text-sm">
+                    Plan your schedule with month, week, and day views. Add events, set reminders, and keep track of important dates.
+                  </p>
                 </div>
-                <div className="inset-shadow-sm dark:inset-shadow-white/5 bg-muted/35 flex aspect-square size-14 items-center justify-center rounded-[7px] border p-3 shadow-lg ring dark:shadow-white/5 dark:ring-black">
-                  <span className="font-semibold">K</span>
-                </div>
-              </div>
+              </CardHeader>
             </Card>
 
-            {/* Bottom Right: Integrations */}
+            {/* Bottom Right: Agents */}
             <Card className="group relative shadow-black/5 sm:col-span-3 sm:rounded-none sm:rounded-br-xl">
               <CardHeader className="p-5 md:px-8 md:pt-6 md:pb-4">
-                <p className="font-medium">{m.integrations_heading()}</p>
+                <p className="font-medium">Agents</p>
                 <p className="text-muted-foreground mt-2 max-w-sm text-sm">
-                  {m.connect_services_desc()}
+                  Deploy and manage AI agents with specialized capabilities. Coordinate them to work together on complex tasks.
                 </p>
               </CardHeader>
-              <CardContent className="relative px-5 pb-5 md:px-8 md:pb-8">
+              <CardContent className="relative px-5 md:px-8">
                 <div className="grid grid-cols-4 gap-2 md:grid-cols-6">
                   <div className="rounded-[var(--radius)] bg-muted/50 flex aspect-square items-center justify-center border p-3">
-                    <img
-                      className="m-auto size-6 invert dark:invert-0 md:size-7"
-                      src="https://simpleicons.org/icons/github.svg"
-                      alt="GitHub logo"
-                      width={32}
-                      height={32}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                  <div className="rounded-(--radius) bg-muted/50 flex aspect-square items-center justify-center border p-3">
-                    <img
-                      className="m-auto size-6 invert dark:invert-0 md:size-7"
-                      src="https://simpleicons.org/icons/slack.svg"
-                      alt="Slack logo"
-                      width={32}
-                      height={32}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                  <div className="rounded-(--radius) bg-muted/50 flex aspect-square items-center justify-center border p-3">
-                    <img
-                      className="m-auto size-6 invert dark:invert-0 md:size-7"
-                      src="https://simpleicons.org/icons/linear.svg"
-                      alt="Linear logo"
-                      width={32}
-                      height={32}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                    />
+                    <img className="m-auto size-6 md:size-7" src="/runtimes/opencode.svg" alt="OpenCode" width={32} height={32} loading="lazy" decoding="async" />
                   </div>
                   <div className="rounded-[var(--radius)] bg-muted/50 flex aspect-square items-center justify-center border p-3">
-                    <img
-                      className="m-auto size-6 invert dark:invert-0 md:size-7"
-                      src="https://simpleicons.org/icons/sentry.svg"
-                      alt="Sentry logo"
-                      width={32}
-                      height={32}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                    />
+                    <img className="m-auto size-6 md:size-7" src="/runtimes/gemini-color.svg" alt="Gemini" width={32} height={32} loading="lazy" decoding="async" />
                   </div>
-                  <div className="rounded-[var(--radius)] aspect-square border border-dashed" />
-                  <div className="rounded-[var(--radius)] aspect-square border border-dashed" />
+                  <div className="rounded-[var(--radius)] bg-muted/50 flex aspect-square items-center justify-center border p-3">
+                    <img className="m-auto size-6 md:size-7" src="/runtimes/codex-color.svg" alt="Codex" width={32} height={32} loading="lazy" decoding="async" />
+                  </div>
+                  <div className="rounded-[var(--radius)] bg-muted/50 flex aspect-square items-center justify-center border p-3">
+                    <img className="m-auto size-6 md:size-7" src="/runtimes/claudecode-color.svg" alt="Claude Code" width={32} height={32} loading="lazy" decoding="async" />
+                  </div>
+                  <div className="rounded-[var(--radius)] bg-muted/50 flex aspect-square items-center justify-center border border-dashed p-3">
+                    <img className="m-auto size-6 md:size-7 opacity-30" src="/runtimes/pi.svg" alt="Pi" width={32} height={32} loading="lazy" decoding="async" />
+                  </div>
+                  <div className="rounded-[var(--radius)] bg-muted/50 flex aspect-square items-center justify-center border border-dashed p-3">
+                    <img className="m-auto size-6 md:size-7 opacity-30" src="/runtimes/amp-color.svg" alt="AMP" width={32} height={32} loading="lazy" decoding="async" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
