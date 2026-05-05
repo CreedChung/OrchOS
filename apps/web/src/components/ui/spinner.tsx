@@ -3,7 +3,7 @@ import spinners from "unicode-animations";
 import { cn } from "@/lib/utils";
 
 interface SpinnerProps {
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   name?: keyof typeof spinners;
   className?: string;
 }
@@ -12,6 +12,7 @@ const sizeClasses = {
   sm: "text-sm",
   md: "text-lg",
   lg: "text-3xl",
+  xl: "text-6xl",
 };
 
 export function Spinner({ size = "md", name = "braille", className }: SpinnerProps) {

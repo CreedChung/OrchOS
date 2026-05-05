@@ -56,6 +56,15 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "") || "bookmark-category";
 }
 
+function createImportId(prefix: string, ...parts: string[]) {
+  const slug = slugify(parts.join("-"));
+  const suffix = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID().slice(0, 8)
+    : Math.random().toString(36).slice(2, 10);
+
+  return `${prefix}-${slug}-${suffix}`;
+}
+
 function dedupeCategoryId(base: string, used: Set<string>) {
   if (!used.has(base)) {
     used.add(base);
@@ -75,51 +84,118 @@ function dedupeCategoryId(base: string, used: Set<string>) {
 function normalizeCategory(name: string, bookmarks: ImportedBookmark[], used: Set<string>) {
   const trimmedName = name.trim() || "Imported";
   return {
-    id: dedupeCategoryId(slugify(trimmedName), used),
+    id: dedupeCategoryId(createImportId("bookmark-category", trimmedName), used),
     name: trimmedName,
     bookmarks,
   } satisfies BookmarkCategory;
 }
 
-function parseBookmarkHtml(text: string) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(text, "text/html");
-  const containers = Array.from(doc.querySelectorAll("dt"));
-  const categories: BookmarkCategory[] = [];
-  const used = new Set<string>();
+function getCategoryDl(dt: Element): Element | null {
+  let next = dt.nextElementSibling;
+  while (next) {
+    if (next.tagName === "DD") {
+      const dl = next.querySelector(":scope > dl");
+      if (dl) return dl;
+      return null;
+    }
+    if (next.tagName === "DL") {
+      return next;
+    }
+    if (next.tagName !== "P" && next.tagName !== "HR") {
+      return null;
+    }
+    next = next.nextElementSibling;
+  }
+  return dt.querySelector(":scope > dl");
+}
 
-  for (const container of containers) {
-    const heading = container.querySelector(":scope > h3");
-    if (!heading) {
+function getDirectBookmarkLink(dt: Element): HTMLAnchorElement | null {
+  const link = dt.querySelector(":scope > a[href]");
+  return link instanceof HTMLAnchorElement ? link : null;
+}
+
+function getDirectDtChildren(dl: Element) {
+  const children: Element[] = [];
+
+  for (const child of Array.from(dl.children)) {
+    if (child.tagName === "DT") {
+      children.push(child);
       continue;
     }
 
-    const links = Array.from(container.querySelectorAll(":scope > dl a[href]"));
-    if (links.length === 0) {
-      continue;
-    }
-
-    const bookmarks = links
-      .map((link, index) => {
-        const url = link.getAttribute("href")?.trim() ?? "";
-        if (!url) {
-          return null;
+    if (child.tagName === "P") {
+      for (const nested of Array.from(child.children)) {
+        if (nested.tagName === "DT") {
+          children.push(nested);
         }
+      }
+    }
+  }
 
-        return {
-          id: `${slugify(heading.textContent || "category")}-${index}-${slugify(link.textContent || "bookmark")}`,
-          title: link.textContent?.trim() || url,
-          url,
-          pinned: false,
-        } as ImportedBookmark;
-      })
-      .filter((item): item is ImportedBookmark => item !== null);
+  return children;
+}
 
+function collectHtmlCategories(
+  dl: Element,
+  categories: BookmarkCategory[],
+  used: Set<string>,
+  path: string[] = [],
+) {
+  const directBookmarkGroups = new Map<string, ImportedBookmark[]>();
+  let looseBookmarkIndex = 0;
+
+  for (const child of getDirectDtChildren(dl)) {
+    const heading = child.querySelector(":scope > h3");
+    if (heading) {
+      const folderName = heading.textContent?.trim() || "Imported";
+      const folderDl = getCategoryDl(child);
+      if (folderDl) {
+        collectHtmlCategories(folderDl, categories, used, [...path, folderName]);
+      }
+      continue;
+    }
+
+    const link = getDirectBookmarkLink(child);
+    if (!link) {
+      continue;
+    }
+
+    const url = link.getAttribute("href")?.trim() ?? "";
+    if (!url) {
+      continue;
+    }
+
+    const categoryName = path.length > 0 ? path.join(" / ") : "Imported";
+    const bookmarks = directBookmarkGroups.get(categoryName) ?? [];
+    const title = link.textContent?.trim() || url;
+    bookmarks.push({
+      id: createImportId("bookmark", categoryName, String(looseBookmarkIndex), title),
+      title,
+      url,
+      pinned: false,
+    });
+    directBookmarkGroups.set(categoryName, bookmarks);
+    looseBookmarkIndex += 1;
+  }
+
+  for (const [name, bookmarks] of directBookmarkGroups.entries()) {
     if (bookmarks.length === 0) {
       continue;
     }
 
-    categories.push(normalizeCategory(heading.textContent || "Imported", bookmarks, used));
+    categories.push(normalizeCategory(name, bookmarks, used));
+  }
+}
+
+function parseBookmarkHtml(text: string) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, "text/html");
+  const categories: BookmarkCategory[] = [];
+  const used = new Set<string>();
+
+  const rootContainers = Array.from(doc.querySelectorAll("body > dl, body > p > dl"));
+  for (const container of rootContainers) {
+    collectHtmlCategories(container, categories, used);
   }
 
   if (categories.length > 0) {
@@ -134,8 +210,8 @@ function parseBookmarkHtml(text: string) {
         return null;
       }
 
-      return {
-          id: `imported-${index}-${slugify(link.textContent || "bookmark")}`,
+        return {
+          id: createImportId("bookmark", "imported", String(index), link.textContent || "bookmark"),
           title: link.textContent?.trim() || url,
           url,
           pinned: false,
@@ -164,7 +240,7 @@ function parseBookmarkJson(text: string) {
         }
 
         return {
-          id: `imported-${index}-${slugify(String(record.title || record.name || url))}`,
+          id: createImportId("bookmark", "imported", String(index), String(record.title || record.name || url)),
           title: typeof record.title === "string" ? record.title : typeof record.name === "string" ? record.name : url,
           url,
           pinned: false,
@@ -199,7 +275,7 @@ function parseBookmarkJson(text: string) {
         }
 
         return {
-          id: `${slugify(name)}-${index}-${slugify(String(record.title || record.name || url))}`,
+          id: createImportId("bookmark", name, String(index), String(record.title || record.name || url)),
           title: typeof record.title === "string" ? record.title : typeof record.name === "string" ? record.name : url,
           url,
           pinned: false,
@@ -245,7 +321,7 @@ function parseBookmarkCsv(text: string) {
     const title = titleIndex >= 0 ? row[titleIndex]?.trim() || url : row[0]?.trim() || url;
     const existing = grouped.get(category) ?? [];
     existing.push({
-      id: `${slugify(category)}-${index}-${slugify(title)}`,
+      id: createImportId("bookmark", category, String(index), title),
       title,
       url,
       pinned: false,
@@ -254,6 +330,66 @@ function parseBookmarkCsv(text: string) {
   });
 
   return Array.from(grouped.entries()).map(([name, bookmarks]) => normalizeCategory(name, bookmarks, used));
+}
+
+function Favicon({ url, pinned }: { url: string; pinned: boolean }) {
+  const [failed, setFailed] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  let domain: string | null = null;
+  try { domain = new URL(url).hostname; } catch {}
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  if (failed || !domain) {
+    return (
+      <div ref={ref} className={cn(
+        "relative flex size-10 shrink-0 items-center justify-center rounded-xl",
+        pinned ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary",
+      )}>
+        <HugeiconsIcon icon={Bookmark01Icon} className="size-4" />
+        {pinned && (
+          <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+            <HugeiconsIcon icon={PinIcon} className="size-2.5" />
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative size-10 shrink-0 overflow-hidden rounded-xl bg-accent">
+      {visible ? (
+        <img
+          src={`https://icons.duckduckgo.com/ip3/${domain}.ico`}
+          alt=""
+          className="size-full outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className="size-full" />
+      )}
+      {pinned && (
+        <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+          <HugeiconsIcon icon={PinIcon} className="size-2.5" />
+        </span>
+      )}
+    </div>
+  );
 }
 
 function BookmarksPage() {
@@ -274,7 +410,8 @@ function BookmarksPage() {
   const [bookmarkDraft, setBookmarkDraft] = useState<BookmarkDraft>({ title: "", url: "" });
   const [loading, setLoading] = useState(true);
   const [isCreateBookmarkDialogOpen, setIsCreateBookmarkDialogOpen] = useState(false);
-  const [isCreateCategoryDialogOpen, setIsCreateCategoryDialogOpen] = useState(false);
+  const [isCreateOrImportDialogOpen, setIsCreateOrImportDialogOpen] = useState(false);
+  const [createOrImportStep, setCreateOrImportStep] = useState<"choose" | "create" | "import">("choose");
   const [createCategoryName, setCreateCategoryName] = useState("");
   const { searchQuery } = useDashboard();
 
@@ -378,7 +515,16 @@ function BookmarksPage() {
 
   function handleCreateCategory() {
     setCreateCategoryName("");
-    setIsCreateCategoryDialogOpen(true);
+    setCreateOrImportStep("choose");
+    setIsCreateOrImportDialogOpen(true);
+  }
+
+  function handleSelectCategoryCreate() {
+    setCreateOrImportStep("create");
+  }
+
+  function handleSelectImport() {
+    setCreateOrImportStep("import");
   }
 
   function handleCreateCategorySubmit() {
@@ -393,7 +539,7 @@ function BookmarksPage() {
     void persistCategories(nextCategories, newCategory.id).catch((error) => {
       toast.error(error instanceof Error ? error.message : "Failed to create category");
     });
-    setIsCreateCategoryDialogOpen(false);
+    setIsCreateOrImportDialogOpen(false);
   }
 
   function moveCategory(sourceId: string, targetId: string) {
@@ -478,6 +624,7 @@ function BookmarksPage() {
       setCategories(saved);
     } catch (error) {
       console.error("Failed to toggle pin:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to toggle pin");
     }
   }, []);
 
@@ -529,6 +676,7 @@ function BookmarksPage() {
           <div className="flex h-10 items-center justify-between rounded-md px-2">
             <div className="text-sm font-semibold text-foreground">Bookmarks</div>
             <div className="flex items-center gap-1">
+
               <Button
                 type="button"
                 variant="ghost"
@@ -708,10 +856,7 @@ function BookmarksPage() {
                       <HugeiconsIcon icon={Add01Icon} className="size-4" />
                       New bookmark
                     </Button>
-                    <Button type="button" variant="outline" onClick={handleImportBookmarksClick}>
-                      <HugeiconsIcon icon={Upload01Icon} className="size-4" />
-                      Import
-                    </Button>
+
                   </div>
                 </div>
 
@@ -735,18 +880,23 @@ function BookmarksPage() {
                             return;
                           }
                         }}
-                        className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:bg-accent/30 active:scale-[0.96]"
+        className={cn(
+          "group rounded-2xl bg-card p-5 h-[108px] transition-[background-color,scale,box-shadow] duration-200 ease-out hover:bg-accent/30 active:scale-[0.96]",
+          !bookmark.pinned && "ring-1 ring-black/[0.06] dark:ring-white/[0.08] shadow-sm hover:ring-black/[0.08] dark:hover:ring-white/[0.13]",
+          bookmark.pinned && "border border-primary/30 bg-primary/[0.02] shadow-sm",
+        )}
                       >
-                        <div className="flex items-start gap-3">
+                        <div className="relative flex items-start gap-3">
                           <a
                             href={bookmark.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex min-w-0 flex-1 items-start gap-3"
+                            className={cn(
+                              "flex min-w-0 flex-1 items-start gap-3",
+                              !bookmark.pinned && "group-hover:pr-[86px]",
+                            )}
                           >
-                            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                              <HugeiconsIcon icon={Bookmark01Icon} className="size-4" />
-                            </div>
+                            <Favicon url={bookmark.url} pinned={bookmark.pinned} />
                             <div className="min-w-0 flex-1">
                               <h2 className="truncate text-sm font-medium text-foreground">{bookmark.title}</h2>
                               <p className="mt-2 line-clamp-2 break-all text-xs leading-5 text-muted-foreground">
@@ -754,7 +904,12 @@ function BookmarksPage() {
                               </p>
                             </div>
                           </a>
-                          <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          <div className={cn(
+                            "flex items-center gap-1 transition-opacity",
+                            bookmark.pinned
+                              ? "opacity-100 shrink-0"
+                              : "opacity-0 group-hover:opacity-100 absolute right-0 top-0",
+                          )}>
                             <Button
                               type="button"
                               variant="ghost"
@@ -832,7 +987,7 @@ function BookmarksPage() {
                   action={{
                     label: "Import from file",
                     icon: <HugeiconsIcon icon={Upload01Icon} className="size-4" />,
-                    onClick: handleImportBookmarksClick,
+                    onClick: handleCreateCategory,
                   }}
                   className="w-full max-w-lg"
                 />
@@ -1046,23 +1201,74 @@ function BookmarksPage() {
       />
 
       <AppDialog
-        open={isCreateCategoryDialogOpen}
-        onOpenChange={setIsCreateCategoryDialogOpen}
-        title="New category"
-        description="Enter a name for the new bookmark category."
+        open={isCreateOrImportDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setCreateOrImportStep("choose");
+          setIsCreateOrImportDialogOpen(open);
+        }}
+        title={createOrImportStep === "choose" ? "Create or import" : createOrImportStep === "create" ? "New category" : "Import from file"}
         size="sm"
+        bodyClassName={createOrImportStep === "choose" ? "flex items-center" : undefined}
         footer={
-          <>
-            <Button type="button" variant="outline" onClick={() => setIsCreateCategoryDialogOpen(false)}>
+          createOrImportStep === "choose" ? (
+            <Button type="button" variant="outline" onClick={() => setIsCreateOrImportDialogOpen(false)}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleCreateCategorySubmit}>
-              Create
-            </Button>
-          </>
+          ) : createOrImportStep === "create" ? (
+            <>
+              <Button type="button" variant="outline" onClick={() => setCreateOrImportStep("choose")}>
+                Back
+              </Button>
+              <Button type="button" onClick={handleCreateCategorySubmit}>
+                Create
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button type="button" variant="outline" onClick={() => setCreateOrImportStep("choose")}>
+                Back
+              </Button>
+              <Button type="button" onClick={handleImportBookmarksClick}>
+                Import
+              </Button>
+            </>
+          )
         }
       >
-        <div className="space-y-4">
+        {createOrImportStep === "choose" ? (
+          <div className="grid w-full gap-3">
+            <button
+              type="button"
+              onClick={handleSelectCategoryCreate}
+              className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition-colors hover:bg-accent/40"
+            >
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <HugeiconsIcon icon={Folder01Icon} className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-foreground">New category</div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  Create an empty category to organize your bookmarks.
+                </div>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={handleSelectImport}
+              className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition-colors hover:bg-accent/40"
+            >
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <HugeiconsIcon icon={Upload01Icon} className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-foreground">Import from file</div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  Import bookmarks from an HTML, JSON, or CSV file.
+                </div>
+              </div>
+            </button>
+          </div>
+        ) : createOrImportStep === "create" ? (
           <label className="grid gap-2 text-sm">
             <span className="font-medium text-foreground">Name</span>
             <input
@@ -1079,7 +1285,16 @@ function BookmarksPage() {
               autoFocus
             />
           </label>
-        </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3 py-6">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <HugeiconsIcon icon={Upload01Icon} className="size-6" />
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              Import bookmarks from an HTML, JSON, or CSV file.
+            </p>
+          </div>
+        )}
       </AppDialog>
     </div>
   );

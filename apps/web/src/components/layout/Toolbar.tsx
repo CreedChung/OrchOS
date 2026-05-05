@@ -130,11 +130,13 @@ export function Toolbar({
       <div className="flex items-center gap-2">
         {activeView === "board" && onOpenCreateGoal ? (
           <Tooltip>
-            <TooltipTrigger>
-              <Button variant="ghost" size="icon-sm" onClick={onOpenCreateGoal}>
-                <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={(props) => (
+                <Button {...props} variant="ghost" size="icon-sm" onClick={onOpenCreateGoal}>
+                  <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+                </Button>
+              )}
+            />
             <TooltipContent side="bottom">{m.add()}</TooltipContent>
           </Tooltip>
         ) : null}

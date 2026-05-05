@@ -6,6 +6,7 @@ import {
   ArrowRight01Icon,
   Calendar03Icon,
   Delete02Icon,
+  Edit02Icon,
   GoogleIcon,
   SquareArrowDataTransferHorizontalIcon,
 } from "@hugeicons/core-free-icons";
@@ -749,11 +750,11 @@ function CalendarPage() {
                           const isGroupActive = selectedSidebarItem === `local-group:${group.id}`;
 
                           return (
-                            <div key={group.id}>
+                              <div key={group.id}>
                               <div
                                 onClick={() => setSelectedSidebarItem(`local-group:${group.id}`)}
                                 className={cn(
-                                  "flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors",
+                                  "group flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors",
                                   isGroupActive
                                     ? "bg-accent font-medium text-accent-foreground"
                                     : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
@@ -764,7 +765,27 @@ function CalendarPage() {
                                   className="size-3.5 shrink-0 text-violet-500"
                                 />
                                 <span className="min-w-0 flex-1 truncate">{group.name}</span>
-                                <span className="text-xs text-muted-foreground/60">{calendars.length}</span>
+                                <span className="text-xs text-muted-foreground/60 group-hover:hidden">{calendars.length}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  onClick={(e) => { e.stopPropagation(); openLocalGroupDialog(group); }}
+                                  className="opacity-0 transition-opacity group-hover:opacity-100"
+                                  title="Edit group"
+                                >
+                                  <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteLocalGroup(group); }}
+                                  className="opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                                  title="Delete group"
+                                >
+                                  <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                                </Button>
                               </div>
 
                               <div className="ml-3 space-y-0.5">
@@ -1113,97 +1134,151 @@ function CalendarPage() {
                     </div>
                   </section>
                 ) : selectedLocalGroup ? (
-                  <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+                  <section className="space-y-6">
                     <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <div className="text-sm font-medium text-muted-foreground">Group</div>
-                          <h2 className="mt-1 text-balance text-2xl font-semibold text-foreground">{selectedLocalGroup.name}</h2>
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            Keep related calendars together so personal planning, projects, and operations each have their own event streams.
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-3">
+                            <h2 className="text-xl font-semibold text-foreground">{selectedLocalGroup.name}</h2>
+                            <div className="flex flex-wrap gap-1">
+                              {localCalendars.filter((c) => c.groupId === selectedLocalGroup.id).map((c) => (
+                                <span key={c.id} className="size-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+                              ))}
+                            </div>
+                          </div>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {localCalendars.filter((c) => c.groupId === selectedLocalGroup.id).length} calendars
                           </p>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Button type="button" variant="outline" onClick={() => openLocalGroupDialog(selectedLocalGroup)}>
-                            Edit group
+                        <div className="flex items-center gap-2">
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((m) => addMonths(m, -1))}>
+                                <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Previous month</TooltipContent>
+                          </Tooltip>
+                          <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth(startOfMonth(new Date()))}>
+                            Today
                           </Button>
-                          <Button type="button" onClick={() => openLocalCalendarDialog(selectedLocalGroup.id)}>
-                            <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                            Add calendar
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((m) => addMonths(m, 1))}>
+                                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Next month</TooltipContent>
+                          </Tooltip>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="mt-6 grid gap-4 md:grid-cols-2">
-                        {localCalendars.filter((calendar) => calendar.groupId === selectedLocalGroup.id).map((calendar) => {
-                          const calendarEventCount = localEvents.filter((event) => event.calendarId === calendar.id).length;
+                    <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+                      <div className="mb-1 px-2">
+                        <div className="text-lg font-semibold text-foreground">{formatMonthLabel(visibleMonth)}</div>
+                      </div>
+                      <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        {WEEKDAY_LABELS.map((label) => (
+                          <div key={label} className="py-2">{label}</div>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-7 gap-2">
+                        {monthDays.map((day) => {
+                          const dayKey = formatDayKey(day);
+                          const dayEvents = eventsByDay.get(dayKey) ?? [];
+                          const isCurrentMonth = day.getMonth() === visibleMonth.getMonth();
+                          const isToday = dayKey === formatDayKey(new Date());
+                          const isSelected = dayKey === selectedLocalDate;
 
                           return (
-                            <div key={calendar.id} className="rounded-2xl border border-border/70 bg-background/80 p-5 shadow-sm">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="size-3 rounded-full" style={{ backgroundColor: calendar.color }} />
-                                    <div className="truncate text-sm font-semibold text-foreground">{calendar.name}</div>
-                                  </div>
-                                  <div className="mt-2 text-xs text-muted-foreground">
-                                    {calendarEventCount} event{calendarEventCount === 1 ? "" : "s"}
-                                  </div>
-                                  {calendar.description ? <p className="mt-3 text-sm text-muted-foreground">{calendar.description}</p> : null}
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedSidebarItem(`local-calendar:${calendar.id}`)}
-                                  className="rounded-lg border border-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                >
-                                  Open
-                                </button>
+                            <button
+                              key={dayKey}
+                              type="button"
+                              onClick={() => setSelectedLocalDate(dayKey)}
+                              className={cn(
+                                "min-h-28 rounded-2xl border p-3 text-left shadow-sm transition-colors hover:bg-accent/40",
+                                isSelected ? "border-primary/40 bg-primary/5" : "border-border/60 bg-background/80",
+                                !isCurrentMonth && "opacity-55",
+                              )}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className={cn("inline-flex size-7 items-center justify-center rounded-full text-sm font-medium tabular-nums", isToday && "bg-foreground text-background")}>
+                                  {day.getDate()}
+                                </span>
+                                <span className="text-[11px] text-muted-foreground">{dayEvents.length}</span>
                               </div>
-                            </div>
+                              <div className="mt-3 space-y-1.5">
+                                {dayEvents.slice(0, 3).map((event) => {
+                                  const calendar = localCalendars.find((item) => item.id === event.calendarId);
+                                  return (
+                                    <div
+                                      key={event.id}
+                                      className="truncate rounded-lg px-2 py-1 text-xs font-medium"
+                                      style={{
+                                        backgroundColor: `${calendar?.color ?? LOCAL_CALENDAR_COLORS[0]}1A`,
+                                        color: calendar?.color ?? LOCAL_CALENDAR_COLORS[0],
+                                      }}
+                                    >
+                                      {event.title}
+                                    </div>
+                                  );
+                                })}
+                                {dayEvents.length > 3 ? <div className="text-xs text-muted-foreground">+{dayEvents.length - 3} more</div> : null}
+                              </div>
+                            </button>
                           );
                         })}
-
-                        {localCalendars.filter((calendar) => calendar.groupId === selectedLocalGroup.id).length === 0 ? (
-                          <div className="rounded-2xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground md:col-span-2">
-                            This group is empty. Add a calendar to start storing events.
-                          </div>
-                        ) : null}
                       </div>
                     </div>
 
                     <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-sm font-medium text-muted-foreground">Group actions</div>
-                          <div className="mt-1 text-lg font-semibold text-foreground">Manage this group</div>
+                          <div className="text-sm font-medium text-muted-foreground">Selected day</div>
+                          <div className="mt-1 text-lg font-semibold text-foreground">{formatLongDate(selectedLocalDate)}</div>
                         </div>
-                        <Button type="button" variant="outline" size="sm" onClick={() => handleDeleteLocalGroup(selectedLocalGroup)}>
-                          <HugeiconsIcon icon={Delete02Icon} className="size-4" />
-                          Delete
+                        <Button type="button" variant="outline" size="sm" onClick={() => openLocalEventDialog(selectedLocalDate)}>
+                          <HugeiconsIcon icon={Add01Icon} className="size-4" />
+                          Add
                         </Button>
                       </div>
-
-                      <div className="mt-5 grid gap-3">
-                        <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                          <div className="text-sm font-medium text-foreground">Calendars</div>
-                          <div className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
-                            {localCalendars.filter((calendar) => calendar.groupId === selectedLocalGroup.id).length}
+                      <div className="mt-5 space-y-3">
+                        {selectedDateEvents.length > 0 ? (
+                          selectedDateEvents.map((event) => {
+                            const calendar = localCalendars.find((item) => item.id === event.calendarId);
+                            return (
+                              <div key={event.id} className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="size-2.5 rounded-full" style={{ backgroundColor: calendar?.color ?? LOCAL_CALENDAR_COLORS[0] }} />
+                                      <div className="truncate text-sm font-medium text-foreground">{event.title}</div>
+                                    </div>
+                                    <div className="mt-1 text-xs text-muted-foreground">
+                                      {event.allDay ? "All day" : `${formatTime(event.startAt)} - ${formatTime(event.endAt)}`}
+                                      {calendar ? <span> · {calendar.name}</span> : null}
+                                    </div>
+                                    {event.location ? <div className="mt-1 text-xs text-muted-foreground">{event.location}</div> : null}
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <Button type="button" variant="ghost" size="icon-sm" onClick={() => openLocalEventDialog(selectedLocalDate, event)}>
+                                      <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+                                    </Button>
+                                    <Button type="button" variant="ghost" size="icon-sm" className="hover:text-destructive" onClick={() => handleDeleteLocalEvent(event)}>
+                                      <HugeiconsIcon icon={Delete02Icon} className="size-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                {event.description ? <p className="mt-3 text-sm text-muted-foreground">{event.description}</p> : null}
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="rounded-2xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
+                            No events on this day yet.
                           </div>
-                        </div>
-                        <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                          <div className="text-sm font-medium text-foreground">Events</div>
-                          <div className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
-                            {
-                              localEvents.filter((event) =>
-                                localCalendars.some((calendar) => calendar.id === event.calendarId && calendar.groupId === selectedLocalGroup.id),
-                              ).length
-                            }
-                          </div>
-                        </div>
-                        <Button type="button" className="mt-2" onClick={() => openLocalCalendarDialog(selectedLocalGroup.id)}>
-                          <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                          Create another calendar
-                        </Button>
+                        )}
                       </div>
                     </div>
                   </section>
@@ -1831,8 +1906,13 @@ function loadLocalCalendarStore(): LocalCalendarStore {
   }
 }
 
+function randomId() {
+  if (typeof crypto?.randomUUID === "function") return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function createId(prefix: string) {
-  return `${prefix}-${crypto.randomUUID()}`;
+  return `${prefix}-${randomId()}`;
 }
 
 function formatDayKey(date: Date) {

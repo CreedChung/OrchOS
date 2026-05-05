@@ -55,7 +55,7 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-0 bg-background/72 backdrop-blur-[2px]" />
           <div className="relative flex h-full items-center justify-center">
             <div className="flex items-center gap-3 rounded-full border border-white/15 bg-black/20 px-4 py-2 text-white/85 shadow-lg backdrop-blur-md">
-              <Spinner size="sm" className="text-white/85" />
+              <Spinner size="xl" className="text-white/85" />
               <span className="text-sm" suppressHydrationWarning>
                 Checking authentication...
               </span>
@@ -66,7 +66,7 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
     }
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <Spinner className="text-muted-foreground/70" />
+        <Spinner size="xl" className="text-muted-foreground/70" />
       </div>
     );
   }

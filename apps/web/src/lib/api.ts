@@ -494,6 +494,15 @@ export interface BookmarkCategory {
   bookmarks: BookmarkItem[];
 }
 
+export interface CustomAgent {
+  id: string;
+  name: string;
+  url: string;
+  apiKey: string;
+  model: string;
+  createdAt: string;
+}
+
 // API functions
 export const api = {
 
@@ -1117,6 +1126,41 @@ export const api = {
     return (await response.json()) as BookmarkCategory[];
   },
 
+  // Custom Agents
+  listCustomAgents: async (): Promise<CustomAgent[]> => {
+    const response = await fetch(resolveApiUrl("/api/custom-agents"), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as CustomAgent[];
+  },
+  createCustomAgent: async (data: { name: string; url: string; apiKey: string; model: string }): Promise<CustomAgent[]> => {
+    const response = await fetch(resolveApiUrl("/api/custom-agents"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as CustomAgent[];
+  },
+  updateCustomAgent: async (id: string, data: Partial<{ name: string; url: string; apiKey: string; model: string }>): Promise<CustomAgent[]> => {
+    const response = await fetch(resolveApiUrl(`/api/custom-agents/${id}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as CustomAgent[];
+  },
+  deleteCustomAgent: async (id: string): Promise<CustomAgent[]> => {
+    const response = await fetch(resolveApiUrl(`/api/custom-agents/${id}`), {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as CustomAgent[];
+  },
+
   // Conversations
   listConversations: async (): Promise<Conversation[]> => {
     const response = await fetch(resolveApiUrl("/api/conversations"), { credentials: "include" });
@@ -1186,12 +1230,12 @@ export const api = {
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     return ((await response.json()) as unknown[]).map(normalizeConversationMessage);
   },
-  sendConversationMessage: async (id: string, content: string): Promise<ConversationMessage> => {
+  sendConversationMessage: async (id: string, content: string, customAgentId?: string): Promise<ConversationMessage> => {
     const response = await fetch(resolveApiUrl(`/api/conversations/${id}/messages`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, customAgentId }),
     });
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     return normalizeConversationMessage(await response.json());

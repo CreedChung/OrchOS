@@ -45,6 +45,7 @@ import type { ControlSettings, NotificationEvent, SoundId } from "@/lib/types";
 import { NOTIFICATION_EVENTS, AVAILABLE_SOUNDS } from "@/lib/types";
 import { api, type DetectRuntimesResponse, type RuntimeProfile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { AppDialog } from "@/components/ui/app-dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const defaultEventSounds: Record<string, string> = {
@@ -656,15 +657,6 @@ export function SettingsDialog({
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground max-w-[240px]">{m.runtimes_desc()}</p>
                   <div className="flex items-center gap-1.5">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        window.location.href = "/dashboard/agents";
-                      }}
-                    >
-                      本地设备
-                    </Button>
                     {detectResult && detectResult.available.length > 0 && (
                       <button
                         onClick={handleRegisterAll}
@@ -911,134 +903,139 @@ export function SettingsDialog({
                   </div>
                 )}
 
-                {editingMailAccount && (
-                  <div className="rounded-lg border border-border p-4 space-y-4">
-                    <h3 className="text-sm font-semibold text-foreground">Edit mail account</h3>
-                    <div className="space-y-4">
-                      <label className="grid gap-1.5 text-sm">
-                        <span className="text-muted-foreground">Email</span>
-                        <input
-                          value={editMailForm.email}
-                          onChange={(e) => setEditMailForm((f) => ({ ...f, email: e.target.value, username: f.username || e.target.value }))}
-                          placeholder="you@company.com"
-                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                        />
-                      </label>
-                      <label className="grid gap-1.5 text-sm">
-                        <span className="text-muted-foreground">Display name</span>
-                        <input
-                          value={editMailForm.displayName}
-                          onChange={(e) => setEditMailForm((f) => ({ ...f, displayName: e.target.value }))}
-                          placeholder="Team Inbox"
-                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                        />
-                      </label>
-                      <label className="grid gap-1.5 text-sm">
-                        <span className="text-muted-foreground">Username</span>
-                        <input
-                          value={editMailForm.username}
-                          onChange={(e) => setEditMailForm((f) => ({ ...f, username: e.target.value }))}
-                          placeholder="IMAP/SMTP username"
-                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                        />
-                      </label>
-                      <label className="grid gap-1.5 text-sm">
-                        <span className="text-muted-foreground">Password</span>
-                        <div className="relative">
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            value={editMailForm.password}
-                            onChange={(e) => setEditMailForm((f) => ({ ...f, password: e.target.value }))}
-                            placeholder="Mailbox password or app password"
-                            className="w-full rounded-md border border-border bg-background px-3 py-2 pr-9 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            tabIndex={-1}
-                          >
-                            <HugeiconsIcon icon={showPassword ? ViewOffSlashIcon : EyeIcon} className="size-4" />
-                          </button>
-                        </div>
-                      </label>
-
-                      <div className="border-t border-border pt-4">
-                        <p className="text-xs font-medium text-muted-foreground mb-3">SMTP Configuration</p>
-                        <div className="space-y-3">
-                          <label className="grid gap-1.5 text-sm">
-                            <span className="text-muted-foreground">Host</span>
-                            <input
-                              value={editMailForm.smtpHost}
-                              onChange={(e) => setEditMailForm((f) => ({ ...f, smtpHost: e.target.value }))}
-                              placeholder="smtp.gmail.com"
-                              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                            />
-                          </label>
-                          <div className="grid grid-cols-2 gap-3">
-                            <label className="grid gap-1.5 text-sm">
-                              <span className="text-muted-foreground">Port</span>
-                              <input
-                                value={editMailForm.smtpPort}
-                                onChange={(e) => setEditMailForm((f) => ({ ...f, smtpPort: e.target.value }))}
-                                placeholder="587"
-                                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                              />
-                            </label>
-                            <label className="flex items-center gap-2 text-sm pt-5">
-                              <input
-                                type="checkbox"
-                                checked={editMailForm.smtpSecure}
-                                onChange={(e) => setEditMailForm((f) => ({ ...f, smtpSecure: e.target.checked }))}
-                                className="rounded border-border"
-                              />
-                              <span className="text-muted-foreground">Use TLS/SSL</span>
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-border pt-4">
-                        <p className="text-xs font-medium text-muted-foreground mb-3">IMAP Configuration</p>
-                        <div className="space-y-3">
-                          <label className="grid gap-1.5 text-sm">
-                            <span className="text-muted-foreground">Host</span>
-                            <input
-                              value={editMailForm.imapHost}
-                              onChange={(e) => setEditMailForm((f) => ({ ...f, imapHost: e.target.value }))}
-                              placeholder="imap.gmail.com"
-                              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                            />
-                          </label>
-                          <div className="grid grid-cols-2 gap-3">
-                            <label className="grid gap-1.5 text-sm">
-                              <span className="text-muted-foreground">Port</span>
-                              <input
-                                value={editMailForm.imapPort}
-                                onChange={(e) => setEditMailForm((f) => ({ ...f, imapPort: e.target.value }))}
-                                placeholder="993"
-                                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                              />
-                            </label>
-                            <label className="flex items-center gap-2 text-sm pt-5">
-                              <input
-                                type="checkbox"
-                                checked={editMailForm.imapSecure}
-                                onChange={(e) => setEditMailForm((f) => ({ ...f, imapSecure: e.target.checked }))}
-                                className="rounded border-border"
-                              />
-                              <span className="text-muted-foreground">Use TLS/SSL</span>
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2 pt-2">
+                <AppDialog
+                  open={editingMailAccount !== null}
+                  onOpenChange={(open) => { if (!open) setEditingMailAccount(null); }}
+                  title="Edit mail account"
+                  size="lg"
+                  nested
+                  footer={
+                    <div className="flex justify-end gap-2">
                       <Button type="button" variant="outline" onClick={() => setEditingMailAccount(null)}>Cancel</Button>
                       <Button type="button" onClick={handleSaveMailAccount}>Save</Button>
                     </div>
+                  }
+                >
+                  <div className="space-y-4">
+                    <label className="grid gap-1.5 text-sm">
+                      <span className="text-muted-foreground">Email</span>
+                      <input
+                        value={editMailForm.email}
+                        onChange={(e) => setEditMailForm((f) => ({ ...f, email: e.target.value, username: f.username || e.target.value }))}
+                        placeholder="you@company.com"
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </label>
+                    <label className="grid gap-1.5 text-sm">
+                      <span className="text-muted-foreground">Display name</span>
+                      <input
+                        value={editMailForm.displayName}
+                        onChange={(e) => setEditMailForm((f) => ({ ...f, displayName: e.target.value }))}
+                        placeholder="Team Inbox"
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </label>
+                    <label className="grid gap-1.5 text-sm">
+                      <span className="text-muted-foreground">Username</span>
+                      <input
+                        value={editMailForm.username}
+                        onChange={(e) => setEditMailForm((f) => ({ ...f, username: e.target.value }))}
+                        placeholder="IMAP/SMTP username"
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </label>
+                    <label className="grid gap-1.5 text-sm">
+                      <span className="text-muted-foreground">Password</span>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={editMailForm.password}
+                          onChange={(e) => setEditMailForm((f) => ({ ...f, password: e.target.value }))}
+                          placeholder="Mailbox password or app password"
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 pr-9 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          <HugeiconsIcon icon={showPassword ? ViewOffSlashIcon : EyeIcon} className="size-4" />
+                        </button>
+                      </div>
+                    </label>
+
+                    <div className="border-t border-border pt-4">
+                      <p className="text-xs font-medium text-muted-foreground mb-3">SMTP Configuration</p>
+                      <div className="space-y-3">
+                        <label className="grid gap-1.5 text-sm">
+                          <span className="text-muted-foreground">Host</span>
+                          <input
+                            value={editMailForm.smtpHost}
+                            onChange={(e) => setEditMailForm((f) => ({ ...f, smtpHost: e.target.value }))}
+                            placeholder="smtp.gmail.com"
+                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <label className="grid gap-1.5 text-sm">
+                            <span className="text-muted-foreground">Port</span>
+                            <input
+                              value={editMailForm.smtpPort}
+                              onChange={(e) => setEditMailForm((f) => ({ ...f, smtpPort: e.target.value }))}
+                              placeholder="587"
+                              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                            />
+                          </label>
+                          <label className="flex items-center gap-2 text-sm pt-5">
+                            <input
+                              type="checkbox"
+                              checked={editMailForm.smtpSecure}
+                              onChange={(e) => setEditMailForm((f) => ({ ...f, smtpSecure: e.target.checked }))}
+                              className="rounded border-border"
+                            />
+                            <span className="text-muted-foreground">Use TLS/SSL</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-border pt-4">
+                      <p className="text-xs font-medium text-muted-foreground mb-3">IMAP Configuration</p>
+                      <div className="space-y-3">
+                        <label className="grid gap-1.5 text-sm">
+                          <span className="text-muted-foreground">Host</span>
+                          <input
+                            value={editMailForm.imapHost}
+                            onChange={(e) => setEditMailForm((f) => ({ ...f, imapHost: e.target.value }))}
+                            placeholder="imap.gmail.com"
+                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <label className="grid gap-1.5 text-sm">
+                            <span className="text-muted-foreground">Port</span>
+                            <input
+                              value={editMailForm.imapPort}
+                              onChange={(e) => setEditMailForm((f) => ({ ...f, imapPort: e.target.value }))}
+                              placeholder="993"
+                              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                            />
+                          </label>
+                          <label className="flex items-center gap-2 text-sm pt-5">
+                            <input
+                              type="checkbox"
+                              checked={editMailForm.imapSecure}
+                              onChange={(e) => setEditMailForm((f) => ({ ...f, imapSecure: e.target.checked }))}
+                              className="rounded border-border"
+                            />
+                            <span className="text-muted-foreground">Use TLS/SSL</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </AppDialog>
               </div>
             )}
 

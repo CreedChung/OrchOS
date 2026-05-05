@@ -32,6 +32,7 @@ import { Route as ApiProblemsRouteImport } from './routes/api.problems'
 import { Route as ApiOrganizationsRouteImport } from './routes/api.organizations'
 import { Route as ApiLocalHostsRouteImport } from './routes/api.local-hosts'
 import { Route as ApiIntegrationsRouteImport } from './routes/api.integrations'
+import { Route as ApiCustomAgentsRouteImport } from './routes/api.custom-agents'
 import { Route as ApiConversationsRouteImport } from './routes/api.conversations'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
 import { Route as ApiBookmarksRouteImport } from './routes/api.bookmarks'
@@ -52,6 +53,7 @@ import { Route as ApiLocalHostsHeartbeatRouteImport } from './routes/api.local-h
 import { Route as ApiInboxThreadsRouteImport } from './routes/api.inbox.threads'
 import { Route as ApiFilesystemFileRouteImport } from './routes/api.filesystem.file'
 import { Route as ApiFilesystemBrowseRouteImport } from './routes/api.filesystem.browse'
+import { Route as ApiCustomAgentsIdRouteImport } from './routes/api.custom-agents.$id'
 import { Route as ApiConversationsDeletedRouteImport } from './routes/api.conversations.deleted'
 import { Route as ApiConversationsIdRouteImport } from './routes/api.conversations.$id'
 import { Route as ApiBookmarksMoveRouteImport } from './routes/api.bookmarks.move'
@@ -185,6 +187,11 @@ const ApiIntegrationsRoute = ApiIntegrationsRouteImport.update({
   path: '/api/integrations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCustomAgentsRoute = ApiCustomAgentsRouteImport.update({
+  id: '/api/custom-agents',
+  path: '/api/custom-agents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiConversationsRoute = ApiConversationsRouteImport.update({
   id: '/api/conversations',
   path: '/api/conversations',
@@ -286,6 +293,11 @@ const ApiFilesystemBrowseRoute = ApiFilesystemBrowseRouteImport.update({
   id: '/api/filesystem/browse',
   path: '/api/filesystem/browse',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCustomAgentsIdRoute = ApiCustomAgentsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiCustomAgentsRoute,
 } as any)
 const ApiConversationsDeletedRoute = ApiConversationsDeletedRouteImport.update({
   id: '/deleted',
@@ -398,6 +410,7 @@ export interface FileRoutesByFullPath {
   '/api/bookmarks': typeof ApiBookmarksRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/conversations': typeof ApiConversationsRouteWithChildren
+  '/api/custom-agents': typeof ApiCustomAgentsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
   '/api/local-hosts': typeof ApiLocalHostsRouteWithChildren
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
@@ -417,6 +430,7 @@ export interface FileRoutesByFullPath {
   '/api/bookmarks/move': typeof ApiBookmarksMoveRoute
   '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
+  '/api/custom-agents/$id': typeof ApiCustomAgentsIdRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
   '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
@@ -459,6 +473,7 @@ export interface FileRoutesByTo {
   '/api/bookmarks': typeof ApiBookmarksRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/conversations': typeof ApiConversationsRouteWithChildren
+  '/api/custom-agents': typeof ApiCustomAgentsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
   '/api/local-hosts': typeof ApiLocalHostsRouteWithChildren
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
@@ -478,6 +493,7 @@ export interface FileRoutesByTo {
   '/api/bookmarks/move': typeof ApiBookmarksMoveRoute
   '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
+  '/api/custom-agents/$id': typeof ApiCustomAgentsIdRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
   '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
@@ -522,6 +538,7 @@ export interface FileRoutesById {
   '/api/bookmarks': typeof ApiBookmarksRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/conversations': typeof ApiConversationsRouteWithChildren
+  '/api/custom-agents': typeof ApiCustomAgentsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
   '/api/local-hosts': typeof ApiLocalHostsRouteWithChildren
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
@@ -541,6 +558,7 @@ export interface FileRoutesById {
   '/api/bookmarks/move': typeof ApiBookmarksMoveRoute
   '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
+  '/api/custom-agents/$id': typeof ApiCustomAgentsIdRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
   '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
@@ -586,6 +604,7 @@ export interface FileRouteTypes {
     | '/api/bookmarks'
     | '/api/chat'
     | '/api/conversations'
+    | '/api/custom-agents'
     | '/api/integrations'
     | '/api/local-hosts'
     | '/api/organizations'
@@ -605,6 +624,7 @@ export interface FileRouteTypes {
     | '/api/bookmarks/move'
     | '/api/conversations/$id'
     | '/api/conversations/deleted'
+    | '/api/custom-agents/$id'
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
     | '/api/inbox/threads'
@@ -647,6 +667,7 @@ export interface FileRouteTypes {
     | '/api/bookmarks'
     | '/api/chat'
     | '/api/conversations'
+    | '/api/custom-agents'
     | '/api/integrations'
     | '/api/local-hosts'
     | '/api/organizations'
@@ -666,6 +687,7 @@ export interface FileRouteTypes {
     | '/api/bookmarks/move'
     | '/api/conversations/$id'
     | '/api/conversations/deleted'
+    | '/api/custom-agents/$id'
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
     | '/api/inbox/threads'
@@ -709,6 +731,7 @@ export interface FileRouteTypes {
     | '/api/bookmarks'
     | '/api/chat'
     | '/api/conversations'
+    | '/api/custom-agents'
     | '/api/integrations'
     | '/api/local-hosts'
     | '/api/organizations'
@@ -728,6 +751,7 @@ export interface FileRouteTypes {
     | '/api/bookmarks/move'
     | '/api/conversations/$id'
     | '/api/conversations/deleted'
+    | '/api/custom-agents/$id'
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
     | '/api/inbox/threads'
@@ -772,6 +796,7 @@ export interface RootRouteChildren {
   ApiBookmarksRoute: typeof ApiBookmarksRouteWithChildren
   ApiChatRoute: typeof ApiChatRoute
   ApiConversationsRoute: typeof ApiConversationsRouteWithChildren
+  ApiCustomAgentsRoute: typeof ApiCustomAgentsRouteWithChildren
   ApiIntegrationsRoute: typeof ApiIntegrationsRouteWithChildren
   ApiLocalHostsRoute: typeof ApiLocalHostsRouteWithChildren
   ApiOrganizationsRoute: typeof ApiOrganizationsRouteWithChildren
@@ -949,6 +974,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiIntegrationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/custom-agents': {
+      id: '/api/custom-agents'
+      path: '/api/custom-agents'
+      fullPath: '/api/custom-agents'
+      preLoaderRoute: typeof ApiCustomAgentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/conversations': {
       id: '/api/conversations'
       path: '/api/conversations'
@@ -1088,6 +1120,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/filesystem/browse'
       preLoaderRoute: typeof ApiFilesystemBrowseRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/custom-agents/$id': {
+      id: '/api/custom-agents/$id'
+      path: '/$id'
+      fullPath: '/api/custom-agents/$id'
+      preLoaderRoute: typeof ApiCustomAgentsIdRouteImport
+      parentRoute: typeof ApiCustomAgentsRoute
     }
     '/api/conversations/deleted': {
       id: '/api/conversations/deleted'
@@ -1280,6 +1319,18 @@ const ApiConversationsRouteChildren: ApiConversationsRouteChildren = {
 const ApiConversationsRouteWithChildren =
   ApiConversationsRoute._addFileChildren(ApiConversationsRouteChildren)
 
+interface ApiCustomAgentsRouteChildren {
+  ApiCustomAgentsIdRoute: typeof ApiCustomAgentsIdRoute
+}
+
+const ApiCustomAgentsRouteChildren: ApiCustomAgentsRouteChildren = {
+  ApiCustomAgentsIdRoute: ApiCustomAgentsIdRoute,
+}
+
+const ApiCustomAgentsRouteWithChildren = ApiCustomAgentsRoute._addFileChildren(
+  ApiCustomAgentsRouteChildren,
+)
+
 interface ApiIntegrationsRouteChildren {
   ApiIntegrationsIdConnectRoute: typeof ApiIntegrationsIdConnectRoute
   ApiIntegrationsIdDisconnectRoute: typeof ApiIntegrationsIdDisconnectRoute
@@ -1424,6 +1475,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiBookmarksRoute: ApiBookmarksRouteWithChildren,
   ApiChatRoute: ApiChatRoute,
   ApiConversationsRoute: ApiConversationsRouteWithChildren,
+  ApiCustomAgentsRoute: ApiCustomAgentsRouteWithChildren,
   ApiIntegrationsRoute: ApiIntegrationsRouteWithChildren,
   ApiLocalHostsRoute: ApiLocalHostsRouteWithChildren,
   ApiOrganizationsRoute: ApiOrganizationsRouteWithChildren,

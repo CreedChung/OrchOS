@@ -1,26 +1,21 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  Add01Icon,
   ComputerIcon,
   LinkSquare02Icon,
-  RefreshIcon,
 } from "@hugeicons/core-free-icons";
 
 import { EmptyState } from "@/components/ui/interactive-empty-state";
 import { m } from "@/paraglide/messages";
-import type { LocalHostPairingToken } from "@/lib/api";
 
 interface LocalDevicesViewProps {
   loading: boolean;
-  pairing: LocalHostPairingToken | null;
-  pairingLoading: boolean;
-  onCreatePairingToken: () => Promise<void>;
+  onConnectClick: () => void;
 }
 
 export function LocalDevicesView({
   loading,
-  pairing,
-  pairingLoading,
-  onCreatePairingToken,
+  onConnectClick,
 }: LocalDevicesViewProps) {
   if (loading) {
     return (
@@ -40,13 +35,12 @@ export function LocalDevicesView({
         icons={[
           <HugeiconsIcon key="d1" icon={ComputerIcon} className="size-6" />,
           <HugeiconsIcon key="d2" icon={LinkSquare02Icon} className="size-6" />,
-          <HugeiconsIcon key="d3" icon={RefreshIcon} className="size-6" />,
+          <HugeiconsIcon key="d3" icon={Add01Icon} className="size-6" />,
         ]}
         action={{
-          label: pairingLoading ? m.generating_token() : pairing ? m.regenerate_token() : m.pair_device(),
-          icon: <HugeiconsIcon icon={ComputerIcon} className="size-4" />,
-          onClick: () => void onCreatePairingToken(),
-          disabled: pairingLoading,
+          label: "Connect agent",
+          icon: <HugeiconsIcon icon={Add01Icon} className="size-4" />,
+          onClick: onConnectClick,
         }}
         className="w-full max-w-lg"
       />

@@ -12,11 +12,11 @@ import {
   Cancel01Icon,
   UnfoldMoreIcon,
   Delete02Icon,
-  Bookmark01Icon,
   Folder01Icon,
   Search01Icon,
   GlobeIcon,
   PinIcon,
+  Settings01Icon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { api, type BookmarkCategory, type Conversation, type ConversationMessage } from "@/lib/api";
+import { api, type BookmarkCategory, type Conversation, type ConversationMessage, type CustomAgent } from "@/lib/api";
 import type {
   ControlSettings,
   RuntimeProfile,
@@ -89,6 +89,12 @@ export function CreationView({
   const [showExpandedContent, setShowExpandedContent] = useState(!creationSidebarCollapsed);
   const autoCreatingConversationRef = useRef(false);
   const collapseTimerRef = useRef<number | null>(null);
+  const [customAgents, setCustomAgents] = useState<CustomAgent[]>([]);
+  const [selectedCustomAgentId, setSelectedCustomAgentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void api.listCustomAgents().then(setCustomAgents).catch(() => {});
+  }, []);
 
   const {
     conversations,
@@ -425,20 +431,26 @@ export function CreationView({
                         </div>
                       </button>
 
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setConvToDelete(conversation.id);
-                          setDeleteConfirmOpen(true);
-                        }}
-                        className="text-muted-foreground/55 opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
-                        title={m.delete()}
-                      >
-                        <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={() => (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setConvToDelete(conversation.id);
+                                setDeleteConfirmOpen(true);
+                              }}
+                              className="text-muted-foreground/55 opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                            >
+                              <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                            </Button>
+                          )}
+                        />
+                        <TooltipContent side="bottom">{m.delete()}</TooltipContent>
+                      </Tooltip>
                     </div>
                   );
                 })}
@@ -455,21 +467,26 @@ export function CreationView({
           <div className="border-t border-border p-2">
             <div className="flex h-10 items-center justify-center gap-1 rounded-md px-2">
                 {creationFilterButtons.map((filter) => (
-                  <button
-                    key={filter.value}
-                    type="button"
-                    onClick={() => setCreationArchiveFilter(filter.value)}
-                    aria-pressed={creationArchiveFilter === filter.value}
-                    title={filter.label}
-                    className={cn(
-                      "inline-flex size-8 items-center justify-center rounded-md transition-colors",
-                      creationArchiveFilter === filter.value
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                    )}
-                  >
-                    <HugeiconsIcon icon={filter.icon} className={cn("size-3.5", filter.iconClassName)} />
-                  </button>
+                  <Tooltip key={filter.value}>
+                    <TooltipTrigger
+                      render={() => (
+                        <button
+                          type="button"
+                          onClick={() => setCreationArchiveFilter(filter.value)}
+                          aria-pressed={creationArchiveFilter === filter.value}
+                          className={cn(
+                            "inline-flex size-8 items-center justify-center rounded-md transition-colors",
+                            creationArchiveFilter === filter.value
+                              ? "bg-accent text-accent-foreground"
+                              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                          )}
+                        >
+                          <HugeiconsIcon icon={filter.icon} className={cn("size-3.5", filter.iconClassName)} />
+                        </button>
+                      )}
+                    />
+                    <TooltipContent side="top">{filter.label}</TooltipContent>
+                  </Tooltip>
                 ))}
             </div>
           </div>
@@ -531,6 +548,9 @@ export function CreationView({
             sending={sending}
             runtimes={enabledRuntimes}
             defaultRuntimeId={settings?.defaultRuntimeId}
+            customAgents={customAgents}
+            selectedCustomAgentId={selectedCustomAgentId}
+            onSelectCustomAgent={setSelectedCustomAgentId}
             onUpdateConversation={handleUpdateConversation}
             onCreateConversation={handleCreateConversation}
             onSetDefaultRuntime={(runtimeId) => {
@@ -540,7 +560,7 @@ export function CreationView({
                   onSettingsChange(updated);
                 });
             }}
-            onSendMessage={async (content, targetConversation) => {
+            onSendMessage={async (content, targetConversation, customAgentId) => {
               const conversation = targetConversation ?? activeConversation;
               if (!conversation) return;
 
@@ -549,7 +569,7 @@ export function CreationView({
                 setPendingUserMessage(conversation.id, content);
               }
               try {
-                await api.sendConversationMessage(conversation.id, content);
+                await api.sendConversationMessage(conversation.id, content, customAgentId);
                 await loadMessages(conversation.id, { force: true });
                 setPendingUserMessage(conversation.id, undefined);
                 if (!conversation.title && messages.length === 0) {
@@ -598,6 +618,9 @@ interface ChatAreaProps {
   sending: boolean;
   runtimes: RuntimeProfile[];
   defaultRuntimeId?: string;
+  customAgents: CustomAgent[];
+  selectedCustomAgentId: string | null;
+  onSelectCustomAgent: (id: string | null) => void;
   onCreateConversation: (data: {
     runtimeId?: string;
   }) => Promise<Conversation>;
@@ -614,8 +637,56 @@ interface ChatAreaProps {
   onSendMessage: (
     content: string,
     conversation?: Conversation,
+    customAgentId?: string,
   ) => Promise<void>;
   onReloadMessages?: () => Promise<void>;
+}
+
+function Favicon({ url }: { url: string }) {
+  const [failed, setFailed] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  let domain: string | null = null;
+  try { domain = new URL(url).hostname; } catch {}
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  if (failed || !domain) {
+    return (
+      <div ref={ref} className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <HugeiconsIcon icon={PinIcon} className="size-4" />
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative size-10 shrink-0 overflow-hidden rounded-xl bg-accent">
+      {visible ? (
+        <img
+          src={`https://icons.duckduckgo.com/ip3/${domain}.ico`}
+          alt=""
+          className="size-full outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className="size-full" />
+      )}
+    </div>
+  );
 }
 
 function ChatArea({
@@ -625,6 +696,9 @@ function ChatArea({
   sending,
   runtimes,
   defaultRuntimeId,
+  customAgents,
+  selectedCustomAgentId,
+  onSelectCustomAgent,
   onCreateConversation,
   onUpdateConversation,
   onSetDefaultRuntime,
@@ -659,8 +733,14 @@ function ChatArea({
       ecosia: m.search_engine_ecosia(),
     })[e.id],
   }));
-  const pinnedBookmarks = useMemo(
-    () => bookmarks.flatMap((category) => category.bookmarks.filter((b) => b.pinned)),
+  const pinnedGroups = useMemo(
+    () => bookmarks
+      .map((category) => ({
+        name: category.name,
+        id: category.id,
+        bookmarks: category.bookmarks.filter((b) => b.pinned),
+      }))
+      .filter((group) => group.bookmarks.length > 0),
     [bookmarks],
   );
 
@@ -689,6 +769,10 @@ function ChatArea({
   const selectedRuntime = useMemo(
     () => runtimes.find((r) => r.id === effectiveRuntimeId),
     [effectiveRuntimeId, runtimes],
+  );
+  const selectedCustomAgent = useMemo(
+    () => customAgents.find((a) => a.id === selectedCustomAgentId),
+    [customAgents, selectedCustomAgentId],
   );
   const { pendingUserMessageByConversationId, setPendingUserMessage } =
     useConversationStore();
@@ -812,7 +896,7 @@ function ChatArea({
           })
         : conversation;
 
-      await onSendMessage(content, targetConversation);
+      await onSendMessage(content, targetConversation, selectedCustomAgentId ?? undefined);
     } catch (err) {
       console.error("Failed to send message:", err);
       toast.error(m.send_failed());
@@ -827,6 +911,7 @@ function ChatArea({
     onCreateConversation,
     onSendMessage,
     searchEngineId,
+    selectedCustomAgentId,
     sending,
   ]);
 
@@ -900,6 +985,8 @@ function ChatArea({
                       ? "Search the web..."
                       : selectedRuntime
                         ? `Message ${selectedRuntime.name}...`
+                        : selectedCustomAgent
+                          ? `Message ${selectedCustomAgent.name}...`
                         : m.creation_placeholder()
                   }
                   className="min-h-[40px] w-full resize-none bg-transparent py-1 text-sm leading-6 outline-none placeholder:text-muted-foreground"
@@ -941,15 +1028,26 @@ function ChatArea({
                       </button>
                     </div>
                     {mode === "chat" ? (
-                      <RuntimeSelector
-                        runtimes={runtimes.filter((runtime) => runtime.enabled)}
-                        selectedRuntimeId={effectiveRuntimeId ?? undefined}
-                        defaultRuntimeId={defaultRuntimeId}
-                        onSelect={(runtimeId) =>
-                          queueConversationUpdate({ runtimeId })
-                        }
-                        onSetDefault={onSetDefaultRuntime}
-                      />
+                      <>
+                        <CustomAgentSelector
+                          agents={customAgents}
+                          selectedAgentId={selectedCustomAgentId}
+                          onSelect={(id) => {
+                            onSelectCustomAgent(id);
+                            if (id) queueConversationUpdate({ runtimeId: undefined });
+                          }}
+                        />
+                        <RuntimeSelector
+                          runtimes={runtimes.filter((runtime) => runtime.enabled)}
+                          selectedRuntimeId={effectiveRuntimeId ?? undefined}
+                          defaultRuntimeId={defaultRuntimeId}
+                          onSelect={(runtimeId) => {
+                            queueConversationUpdate({ runtimeId });
+                            if (runtimeId) onSelectCustomAgent(null);
+                          }}
+                          onSetDefault={onSetDefaultRuntime}
+                        />
+                      </>
                     ) : (
                       <SearchEngineSelector
                         engines={searchEngines}
@@ -1015,62 +1113,41 @@ function ChatArea({
       {/* Bookmarks + Browser Tabs */}
       {messages.length === 0 && !sending && (
         <div className="flex min-h-0 flex-1 gap-4 overflow-hidden px-4 py-4 md:px-6">
-          {bookmarks.length > 0 && (
-            <div className="flex min-w-0 flex-[2] flex-col gap-3 overflow-y-auto">
-              <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <HugeiconsIcon icon={Bookmark01Icon} className="size-3.5" />
-                Bookmarks
-              </span>
-              <div className="flex flex-col gap-3">
-                {bookmarks.map((category) => (
-                  <div key={category.id} className="flex flex-col gap-1.5">
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <HugeiconsIcon icon={PinIcon} className="size-3.5" />
+              书签
+            </span>
+            <div className="flex flex-1 flex-col min-h-0 gap-3 overflow-y-auto">
+              {pinnedGroups.length > 0 ? (
+                pinnedGroups.map((group) => (
+                  <div key={group.id} className="flex flex-col gap-1.5">
                     <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground/70">
                       <HugeiconsIcon icon={Folder01Icon} className="size-3" />
-                      {category.name}
+                      {group.name}
                     </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {category.bookmarks.map((bookmark) => (
+                    <div className="flex flex-col gap-1.5">
+                      {group.bookmarks.map((bookmark) => (
                         <button
                           key={bookmark.id}
                           type="button"
                           onClick={() => setInput(bookmark.url)}
-                          className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          className="group flex items-start gap-3 rounded-2xl bg-card p-5 h-[108px] text-left ring-1 ring-black/[0.06] dark:ring-white/[0.08] shadow-sm transition-[background-color,scale,box-shadow] duration-200 ease-out hover:bg-accent/30 active:scale-[0.96] hover:ring-black/[0.08] dark:hover:ring-white/[0.13]"
                         >
-                          <HugeiconsIcon icon={Bookmark01Icon} className="size-3 shrink-0" />
-                          <span className="truncate max-w-[160px]">{bookmark.title}</span>
+                          <Favicon url={bookmark.url} />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium text-foreground">{bookmark.title}</div>
+                            <div className="mt-2 line-clamp-2 break-all text-xs leading-5 text-muted-foreground">
+                              {bookmark.url}
+                            </div>
+                          </div>
                         </button>
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <HugeiconsIcon icon={PinIcon} className="size-3.5" />
-              {m.creation()}
-            </span>
-            <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
-              {pinnedBookmarks.length > 0 ? (
-                pinnedBookmarks.map((bookmark) => (
-                  <button
-                    key={bookmark.id}
-                    type="button"
-                    onClick={() => setInput(bookmark.url)}
-                    className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-accent"
-                  >
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <HugeiconsIcon icon={PinIcon} className="size-3.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs font-medium text-foreground">{bookmark.title}</div>
-                      <div className="truncate text-[11px] text-muted-foreground">{bookmark.url}</div>
-                    </div>
-                  </button>
                 ))
               ) : (
-                <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border/50 p-4">
+                <div className="flex flex-1 flex-col justify-center mb-2 rounded-lg border border-dashed border-border/50 p-4">
                   <p className="text-center text-xs text-muted-foreground/60">
                     Pin bookmarks from the Bookmarks page to see them here.
                   </p>
@@ -1082,7 +1159,7 @@ function ChatArea({
       )}
 
       {/* Messages */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 md:px-6">
+      <div className={cn("flex min-h-0 flex-col overflow-y-auto px-4 md:px-6", messages.length === 0 && !sending ? "hidden" : "flex-1")}>
         <div ref={messagesEndRef} />
       </div>
     </div>
@@ -1192,6 +1269,62 @@ function RuntimeSelector({
             </DropdownMenuItem>
           );
         })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+interface CustomAgentSelectorProps {
+  agents: CustomAgent[];
+  selectedAgentId: string | null;
+  onSelect: (agentId: string | null) => void;
+}
+
+function CustomAgentSelector({
+  agents,
+  selectedAgentId,
+  onSelect,
+}: CustomAgentSelectorProps) {
+  const [open, setOpen] = useState(false);
+  const selectedAgent = agents.find((a) => a.id === selectedAgentId);
+
+  return (
+    <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger
+        onClick={(e) => e.stopPropagation()}
+        className="flex h-7 w-36 cursor-default items-center justify-between gap-1.5 rounded-full border border-input bg-transparent py-2 pe-2 ps-2.5 text-xs whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+      >
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="inline-flex size-4 shrink-0 items-center justify-center overflow-hidden text-foreground/70">
+            <HugeiconsIcon icon={Settings01Icon} className="size-3 shrink-0" />
+          </span>
+          <span className="truncate">
+            {selectedAgent?.name || "Agent"}
+          </span>
+        </span>
+        <HugeiconsIcon
+          icon={UnfoldMoreIcon}
+          className="size-3 shrink-0 text-muted-foreground"
+        />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="start" className="min-w-(--anchor-width)">
+        <DropdownMenuItem
+          onClick={(e) => { e.stopPropagation(); onSelect(null); setOpen(false); }}
+          className="text-muted-foreground"
+        >
+          None
+        </DropdownMenuItem>
+        {agents.map((agent) => (
+          <DropdownMenuItem
+            key={agent.id}
+            onClick={(e) => { e.stopPropagation(); onSelect(agent.id); setOpen(false); }}
+            className="flex items-center justify-between gap-2"
+          >
+            <span className="truncate">{agent.name}</span>
+            <span className="text-[10px] text-muted-foreground">{agent.model}</span>
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
