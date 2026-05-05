@@ -9,7 +9,7 @@ import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toolbar } from "@/components/layout/Toolbar";
 import { CreateBoardConversationDialog } from "@/components/dialogs/CreateBoardConversationDialog";
-import { I18nProvider } from "@/lib/reminder";
+import { I18nProvider } from "@/lib/i18n-provider";
 import { useUIStore } from "@/lib/store";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
 import { useConversationStore } from "@/lib/stores/conversation";

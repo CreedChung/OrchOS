@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { useClerk, useOrganization, useUser } from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   Cancel01Icon,
   DashboardCircleIcon,
-  KeyboardIcon,
+  CommandIcon,
   Key01Icon,
   Target01Icon,
   ChevronDown,
@@ -59,6 +59,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { m } from "@/paraglide/messages";
+import { useUIStore } from "@/lib/store";
 import type { Organization, SidebarView } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -104,7 +105,6 @@ export function Sidebar({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [createOrgOpen, setCreateOrgOpen] = useState(false);
   const [orgSearch, setOrgSearch] = useState("");
-  const [isMac, setIsMac] = useState(false);
   const [showExpandedContent, setShowExpandedContent] = useState(!collapsed);
   const activeOrganization =
     organizations.find((o) => o.id === activeOrganizationId) ?? null;
@@ -112,9 +112,33 @@ export function Sidebar({
     org.name.toLowerCase().includes(orgSearch.trim().toLowerCase()),
   );
 
+  const navigate = useNavigate();
+  const showShortcutHints = useUIStore((s) => s.settings?.showShortcutHints ?? false);
+
   useEffect(() => {
-    setIsMac(/Mac|iPhone|iPad|iPod/.test(window.navigator.platform));
-  }, []);
+    const shortcutMap: Record<string, string> = {
+      1: "/dashboard/creation",
+      2: "/dashboard/bookmarks",
+      3: "/dashboard/board",
+      4: "/dashboard/calendar",
+      5: "/dashboard/mail",
+      6: "/dashboard/agents",
+      7: "/dashboard/observability",
+    };
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey) {
+        const path = shortcutMap[event.key];
+        if (path) {
+          event.preventDefault();
+          navigate({ to: path });
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigate]);
 
   useEffect(() => {
     if (collapsed) {
@@ -138,13 +162,14 @@ export function Sidebar({
           to: "/dashboard/creation",
           icon: Chat01Icon,
           label: m.creation(),
-          shortcut: `${isMac ? "Cmd" : "Ctrl"}+K`,
+          shortcut: "1",
         },
         {
           id: "bookmarks",
           to: "/dashboard/bookmarks",
           icon: Bookmark01Icon,
-          label: "Bookmarks",
+          label: m.bookmarks(),
+          shortcut: "2",
         },
       ],
     },
@@ -155,19 +180,22 @@ export function Sidebar({
           id: "board",
           to: "/dashboard/board",
           icon: DashboardCircleIcon,
-          label: "Reminder",
+          label: m.reminder(),
+          shortcut: "3",
         },
         {
           id: "calendar",
           to: "/dashboard/calendar",
           icon: Calendar03Icon,
           label: m.calendar(),
+          shortcut: "4",
         },
         {
           id: "mail",
           to: "/dashboard/mail",
           icon: Mail01Icon,
           label: m.mail(),
+          shortcut: "5",
         },
       ],
     },
@@ -179,12 +207,14 @@ export function Sidebar({
           to: "/dashboard/agents",
           icon: ComputerIcon,
           label: m.agents(),
+          shortcut: "6",
         },
         {
           id: "observability",
           to: "/dashboard/observability",
           icon: AiBrain01Icon,
           label: m.observability(),
+          shortcut: "7",
         },
       ],
     },
@@ -392,7 +422,7 @@ export function Sidebar({
                         >
                           {label}
                         </span>
-                        {showExpandedContent && shortcut && (
+                        {showExpandedContent && shortcut && showShortcutHints && (
                           <span
                             className={cn(
                               "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-opacity duration-300 ease-out opacity-100 delay-220",
@@ -403,7 +433,7 @@ export function Sidebar({
                             aria-label={`Shortcut ${shortcut}`}
                           >
                             <HugeiconsIcon
-                              icon={KeyboardIcon}
+                              icon={CommandIcon}
                               className="size-3 shrink-0"
                             />
                             {shortcut}

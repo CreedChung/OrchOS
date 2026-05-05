@@ -7,6 +7,7 @@ export class SettingsService {
     autoCommit: false,
     autoFix: true,
     modelStrategy: "adaptive",
+    showShortcutHints: false,
   };
 
   private constructor(private db: AppDb) {}
@@ -23,6 +24,7 @@ export class SettingsService {
       if (row.key === "autoCommit") this.settings.autoCommit = row.value === "true";
       if (row.key === "autoFix") this.settings.autoFix = row.value === "true";
       if (row.key === "modelStrategy") this.settings.modelStrategy = row.value as ControlSettings["modelStrategy"];
+      if (row.key === "showShortcutHints") this.settings.showShortcutHints = row.value === "true";
     }
   }
 
@@ -50,6 +52,13 @@ export class SettingsService {
       await this.db.insert(settings).values({ key: "modelStrategy", value: patch.modelStrategy }).onConflictDoUpdate({
         target: settings.key,
         set: { value: patch.modelStrategy },
+      }).run();
+    }
+    if (patch.showShortcutHints !== undefined) {
+      this.settings.showShortcutHints = patch.showShortcutHints;
+      await this.db.insert(settings).values({ key: "showShortcutHints", value: String(patch.showShortcutHints) }).onConflictDoUpdate({
+        target: settings.key,
+        set: { value: String(patch.showShortcutHints) },
       }).run();
     }
     return { ...this.settings };

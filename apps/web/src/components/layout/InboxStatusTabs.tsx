@@ -8,6 +8,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
 
 export type InboxStatusFilter = "all" | "open" | "assigned" | "fixed" | "ignored";
 
@@ -25,34 +26,34 @@ const inboxStatusTabs: Array<{
 }> = [
   {
     id: "all",
-    label: "全部",
+    label: m.all(),
     icon: Menu01Icon,
     tone: "",
   },
   {
     id: "open",
-    label: "未读",
+    label: m.open(),
     icon: InformationCircleIcon,
     tone: "text-sky-600 dark:text-sky-400",
     bgAccent: "bg-sky-500/5 dark:bg-sky-500/10",
   },
   {
     id: "assigned",
-    label: "处理中",
+    label: m.in_progress(),
     icon: PlayCircleIcon,
     tone: "text-amber-600 dark:text-amber-400",
     bgAccent: "bg-amber-500/5 dark:bg-amber-500/10",
   },
   {
     id: "fixed",
-    label: "已完成",
+    label: m.board_completed(),
     icon: CheckmarkCircle02Icon,
     tone: "text-emerald-600 dark:text-emerald-400",
     bgAccent: "bg-emerald-500/5 dark:bg-emerald-500/10",
   },
   {
     id: "ignored",
-    label: "已忽略",
+    label: m.ignored(),
     icon: ViewOffIcon,
     tone: "text-muted-foreground",
     bgAccent: "bg-muted",

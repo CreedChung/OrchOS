@@ -118,6 +118,7 @@ export interface ControlSettings {
   autoCommit: boolean;
   autoFix: boolean;
   modelStrategy: "local-first" | "cloud-first" | "adaptive";
+  showShortcutHints: boolean;
 }
 
 export interface McpServerProfile {

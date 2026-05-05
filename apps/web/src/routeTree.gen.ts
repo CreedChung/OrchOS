@@ -20,7 +20,6 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardObservabilityRouteImport } from './routes/dashboard/observability'
 import { Route as DashboardMailRouteImport } from './routes/dashboard/mail'
 import { Route as DashboardInboxRouteImport } from './routes/dashboard/inbox'
-import { Route as DashboardDevicesRouteImport } from './routes/dashboard/devices'
 import { Route as DashboardCreationRouteImport } from './routes/dashboard/creation'
 import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
 import { Route as DashboardBookmarksRouteImport } from './routes/dashboard/bookmarks'
@@ -121,11 +120,6 @@ const DashboardMailRoute = DashboardMailRouteImport.update({
 const DashboardInboxRoute = DashboardInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardDevicesRoute = DashboardDevicesRouteImport.update({
-  id: '/devices',
-  path: '/devices',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardCreationRoute = DashboardCreationRouteImport.update({
@@ -397,7 +391,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
-  '/dashboard/devices': typeof DashboardDevicesRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
@@ -456,7 +449,6 @@ export interface FileRoutesByTo {
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
-  '/dashboard/devices': typeof DashboardDevicesRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
@@ -517,7 +509,6 @@ export interface FileRoutesById {
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
   '/dashboard/creation': typeof DashboardCreationRoute
-  '/dashboard/devices': typeof DashboardDevicesRoute
   '/dashboard/inbox': typeof DashboardInboxRoute
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
@@ -579,7 +570,6 @@ export interface FileRouteTypes {
     | '/dashboard/bookmarks'
     | '/dashboard/calendar'
     | '/dashboard/creation'
-    | '/dashboard/devices'
     | '/dashboard/inbox'
     | '/dashboard/mail'
     | '/dashboard/observability'
@@ -638,7 +628,6 @@ export interface FileRouteTypes {
     | '/dashboard/bookmarks'
     | '/dashboard/calendar'
     | '/dashboard/creation'
-    | '/dashboard/devices'
     | '/dashboard/inbox'
     | '/dashboard/mail'
     | '/dashboard/observability'
@@ -698,7 +687,6 @@ export interface FileRouteTypes {
     | '/dashboard/bookmarks'
     | '/dashboard/calendar'
     | '/dashboard/creation'
-    | '/dashboard/devices'
     | '/dashboard/inbox'
     | '/dashboard/mail'
     | '/dashboard/observability'
@@ -837,13 +825,6 @@ declare module '@tanstack/react-router' {
       path: '/inbox'
       fullPath: '/dashboard/inbox'
       preLoaderRoute: typeof DashboardInboxRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/devices': {
-      id: '/dashboard/devices'
-      path: '/devices'
-      fullPath: '/dashboard/devices'
-      preLoaderRoute: typeof DashboardDevicesRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/creation': {
@@ -1177,7 +1158,6 @@ interface DashboardRouteChildren {
   DashboardBookmarksRoute: typeof DashboardBookmarksRoute
   DashboardCalendarRoute: typeof DashboardCalendarRoute
   DashboardCreationRoute: typeof DashboardCreationRoute
-  DashboardDevicesRoute: typeof DashboardDevicesRoute
   DashboardInboxRoute: typeof DashboardInboxRoute
   DashboardMailRoute: typeof DashboardMailRoute
   DashboardObservabilityRoute: typeof DashboardObservabilityRoute
@@ -1190,7 +1170,6 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardBookmarksRoute: DashboardBookmarksRoute,
   DashboardCalendarRoute: DashboardCalendarRoute,
   DashboardCreationRoute: DashboardCreationRoute,
-  DashboardDevicesRoute: DashboardDevicesRoute,
   DashboardInboxRoute: DashboardInboxRoute,
   DashboardMailRoute: DashboardMailRoute,
   DashboardObservabilityRoute: DashboardObservabilityRoute,

@@ -111,22 +111,20 @@ export interface RuntimeModelsResponse {
 }
 
 export type NotificationEvent =
-  | "goal_completed"
-  | "goal_failed"
-  | "agent_action"
-  | "inbox_item"
-  | "build_failed"
-  | "review_rejected"
-  | "mention";
+  | "email"
+  | "calendar"
+  | "message"
+  | "reminder"
+  | "system"
+  | "social";
 
 export const NOTIFICATION_EVENTS: { id: NotificationEvent; labelKey: string }[] = [
-  { id: "goal_completed", labelKey: "event_goal_completed" },
-  { id: "goal_failed", labelKey: "event_goal_failed" },
-  { id: "agent_action", labelKey: "event_agent_action" },
-  { id: "inbox_item", labelKey: "event_inbox_item" },
-  { id: "build_failed", labelKey: "event_build_failed" },
-  { id: "review_rejected", labelKey: "event_review_rejected" },
-  { id: "mention", labelKey: "event_mention" },
+  { id: "email", labelKey: "event_email" },
+  { id: "calendar", labelKey: "event_calendar" },
+  { id: "message", labelKey: "event_message" },
+  { id: "reminder", labelKey: "event_reminder" },
+  { id: "system", labelKey: "event_system" },
+  { id: "social", labelKey: "event_social" },
 ];
 
 export const AVAILABLE_SOUNDS = [
@@ -150,6 +148,7 @@ export interface ControlSettings {
   timezone: string;
   defaultRuntimeId?: string;
   projectChatsRequireSandbox: boolean;
+  showShortcutHints: boolean;
   notifications: {
     system: boolean;
     sound: boolean;

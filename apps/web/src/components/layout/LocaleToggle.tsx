@@ -1,5 +1,5 @@
 import { AVAILABLE_LOCALES } from "@/lib/i18n";
-import { useLocale } from "@/lib/reminder";
+import { useLocale } from "@/lib/i18n-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,

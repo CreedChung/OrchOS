@@ -32,7 +32,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useLocale } from "@/lib/reminder";
+import { useLocale } from "@/lib/i18n-provider";
 import { AVAILABLE_LOCALES } from "@/lib/i18n";
 import { playUiSound } from "@/lib/audio";
 import { m } from "@/paraglide/messages";
@@ -116,7 +116,7 @@ export function SettingsDialog({
   const currentSettings = localSettings ?? settings;
 
   const handleToggle = async (
-    key: keyof Pick<ControlSettings, "autoCommit" | "autoFix" | "projectChatsRequireSandbox">,
+    key: keyof Pick<ControlSettings, "showShortcutHints">,
   ) => {
     if (!currentSettings) return;
     try {
@@ -359,46 +359,17 @@ export function SettingsDialog({
           <div className="flex-1 overflow-y-auto p-6">
             {activeTab === "general" && (
               <div className="space-y-6">
-                {/* Auto Commit */}
+                {/* Shortcut Hints */}
                 <div className="flex items-center justify-between">
                   <div className="max-w-[280px]">
-                    <span className="text-sm font-medium text-foreground">{m.auto_commit()}</span>
-                    <p className="text-xs text-muted-foreground">{m.auto_commit_desc()}</p>
+                    <span className="text-sm font-medium text-foreground">{m.shortcut_hints()}</span>
+                    <p className="text-xs text-muted-foreground">{m.shortcut_hints_desc()}</p>
                   </div>
                   <AppleSwitch
-                    checked={currentSettings.autoCommit}
-                    onCheckedChange={() => void handleToggle("autoCommit")}
+                    checked={currentSettings.showShortcutHints}
+                    onCheckedChange={() => void handleToggle("showShortcutHints")}
                     size="sm"
-                    aria-label={m.auto_commit()}
-                  />
-                </div>
-
-                {/* Auto Fix */}
-                <div className="flex items-center justify-between">
-                  <div className="max-w-[280px]">
-                    <span className="text-sm font-medium text-foreground">{m.auto_fix()}</span>
-                    <p className="text-xs text-muted-foreground">{m.auto_fix_desc()}</p>
-                  </div>
-                  <AppleSwitch
-                    checked={currentSettings.autoFix}
-                    onCheckedChange={() => void handleToggle("autoFix")}
-                    size="sm"
-                    aria-label={m.auto_fix()}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="max-w-[280px]">
-                    <span className="text-sm font-medium text-foreground">Project Chats Require Sandbox</span>
-                    <p className="text-xs text-muted-foreground">
-                      When a chat is bound to a project, block execution unless that project's sandbox starts successfully.
-                    </p>
-                  </div>
-                  <AppleSwitch
-                    checked={currentSettings.projectChatsRequireSandbox}
-                    onCheckedChange={() => void handleToggle("projectChatsRequireSandbox")}
-                    size="sm"
-                    aria-label="Project Chats Require Sandbox"
+                    aria-label={m.shortcut_hints()}
                   />
                 </div>
 
@@ -449,23 +420,6 @@ export function SettingsDialog({
                     aria-label={m.system_notifications()}
                   />
                 </div>
-
-                {/* Notification Sound */}
-                <div className="flex items-center justify-between">
-                  <div className="max-w-[280px]">
-                    <span className="text-sm font-medium text-foreground">
-                      {m.notification_sound()}
-                    </span>
-                    <p className="text-xs text-muted-foreground">{m.notification_sound_desc()}</p>
-                  </div>
-                  <AppleSwitch
-                    checked={Boolean(currentSettings.notifications?.sound)}
-                    onCheckedChange={() => void handleNotificationToggle("sound")}
-                    size="sm"
-                    aria-label={m.notification_sound()}
-                  />
-                </div>
-
                 {/* Per-Event Sound Config */}
                 <div className="space-y-2">
                   <span className="text-sm font-medium text-foreground">{m.event_sounds()}</span>

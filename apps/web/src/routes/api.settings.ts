@@ -24,6 +24,7 @@ export const Route = createFileRoute("/api/settings")({
           autoCommit?: boolean;
           autoFix?: boolean;
           modelStrategy?: "local-first" | "cloud-first" | "adaptive";
+          showShortcutHints?: boolean;
         };
         const service = await getSettingsService();
         const updated = await service.update(patch);

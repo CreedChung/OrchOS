@@ -1,7 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { I18nProvider } from "@/lib/reminder";
+import { I18nProvider } from "@/lib/i18n-provider";
 import { getLocale } from "@/paraglide/runtime";
 import { initializeClientLocale } from "@/lib/i18n-runtime";
 

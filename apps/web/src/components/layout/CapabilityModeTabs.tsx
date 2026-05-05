@@ -3,6 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 import { getCapabilityPath, type CapabilityView, type CapabilityViewMode } from "@/lib/capability-routing";
 import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
 
 interface CapabilityModeTabsProps {
   view: CapabilityView;
@@ -16,8 +17,8 @@ const capabilityModeItems: Array<{
   icon: typeof FolderLibraryIcon;
   iconClassName: string;
 }> = [
-  { key: "mine", label: "我的", icon: FolderLibraryIcon, iconClassName: "text-emerald-500" },
-  { key: "market", label: "市场", icon: Store04Icon, iconClassName: "text-sky-500" },
+  { key: "mine", label: m.mine(), icon: FolderLibraryIcon, iconClassName: "text-emerald-500" },
+  { key: "market", label: m.market(), icon: Store04Icon, iconClassName: "text-sky-500" },
 ];
 
 export function CapabilityModeTabs({ view, mode, onModeChange }: CapabilityModeTabsProps) {

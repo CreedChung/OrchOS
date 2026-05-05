@@ -417,7 +417,7 @@ function MailPage() {
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
         const nextWidth = Math.min(
-          Math.max(moveEvent.clientX - sidebarLeft, 260),
+          Math.max(moveEvent.clientX - sidebarLeft, 280),
           420,
         );
         setSidebarWidth(nextWidth);
@@ -551,7 +551,7 @@ function MailPage() {
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)] active:translate-y-0"
+              className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)]"
               onClick={handleExpandSidebar}
               title={m.expand_sidebar()}
             >

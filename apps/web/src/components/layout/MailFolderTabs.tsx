@@ -8,55 +8,32 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { cn } from "@/lib/utils";
+import { m } from "@/paraglide/messages";
 
-export type MailFolderFilter = "all" | "unread" | "waiting_reply" | "completed" | "archived";
+export type MailFolderFilter =
+  | "all"
+  | "unread"
+  | "waiting_reply"
+  | "completed"
+  | "archived";
 
 interface MailFolderTabsProps {
   value: MailFolderFilter;
-  onChange: (filter: MailFolderFilter) => void;
+  onChange: (mode: MailFolderFilter) => void;
 }
 
 const mailFolderTabs: Array<{
   id: MailFolderFilter;
-  label: string;
+  label: () => string;
   icon: typeof Menu01Icon;
   tone: string;
   bgAccent?: string;
 }> = [
-  {
-    id: "all",
-    label: "全部",
-    icon: Menu01Icon,
-    tone: "",
-  },
-  {
-    id: "unread",
-    label: "未读",
-    icon: Mail01Icon,
-    tone: "text-sky-600 dark:text-sky-400",
-    bgAccent: "bg-sky-500/5 dark:bg-sky-500/10",
-  },
-  {
-    id: "waiting_reply",
-    label: "待回复",
-    icon: ReplayIcon,
-    tone: "text-amber-600 dark:text-amber-400",
-    bgAccent: "bg-amber-500/5 dark:bg-amber-500/10",
-  },
-  {
-    id: "completed",
-    label: "已完成",
-    icon: CheckmarkCircle02Icon,
-    tone: "text-emerald-600 dark:text-emerald-400",
-    bgAccent: "bg-emerald-500/5 dark:bg-emerald-500/10",
-  },
-  {
-    id: "archived",
-    label: "已归档",
-    icon: Archive01Icon,
-    tone: "text-muted-foreground",
-    bgAccent: "bg-muted",
-  },
+  { id: "all", label: () => m.all(), icon: Menu01Icon, tone: "" },
+  { id: "unread", label: () => m.unread(), icon: Mail01Icon, tone: "text-sky-600 dark:text-sky-400", bgAccent: "bg-sky-500/5 dark:bg-sky-500/10" },
+  { id: "waiting_reply", label: () => m.waiting_reply(), icon: ReplayIcon, tone: "text-amber-600 dark:text-amber-400", bgAccent: "bg-amber-500/5 dark:bg-amber-500/10" },
+  { id: "completed", label: () => m.board_completed(), icon: CheckmarkCircle02Icon, tone: "text-emerald-600 dark:text-emerald-400", bgAccent: "bg-emerald-500/5 dark:bg-emerald-500/10" },
+  { id: "archived", label: () => m.archived(), icon: Archive01Icon, tone: "text-muted-foreground", bgAccent: "bg-muted" },
 ];
 
 export function MailFolderTabs({ value, onChange }: MailFolderTabsProps) {
@@ -81,7 +58,7 @@ export function MailFolderTabs({ value, onChange }: MailFolderTabsProps) {
             icon={tab.icon}
             className={cn("size-3.5", value === tab.id ? tab.tone : "")}
           />
-          {tab.label}
+            {tab.label()}
         </button>
       ))}
     </div>

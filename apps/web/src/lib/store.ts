@@ -77,6 +77,7 @@ const defaultSettings: ControlSettings = {
   locale: "en",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   projectChatsRequireSandbox: true,
+  showShortcutHints: false,
   notifications: { system: true, sound: true, eventSounds: {}, eventSoundFiles: {} },
 };
 
@@ -104,7 +105,7 @@ export const useUIStore = create<UIState & UIActions>()(
       activityExpanded: false,
       sidebarCollapsed: false,
       creationSidebarCollapsed: false,
-      creationSidebarWidth: 288,
+      creationSidebarWidth: 320,
 
       // Theme
       theme: "auto" as ThemeMode,
@@ -142,7 +143,7 @@ export const useUIStore = create<UIState & UIActions>()(
       migrate: (persisted, version) => {
         if (version < 2) {
           const state = persisted as Record<string, unknown>;
-          state.creationSidebarWidth = 288;
+          state.creationSidebarWidth = 320;
         }
         return persisted;
       },
