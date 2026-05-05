@@ -172,7 +172,7 @@ function DashboardLayout() {
 
   const dashboardColumns = activityExpanded
     ? "auto minmax(0,0fr) minmax(0,1fr)"
-    : `auto minmax(0,1fr) ${activityPanelOpen ? "20rem" : "0px"}`;
+    : `auto minmax(0,1fr) ${activityPanelOpen ? "300px" : "0px"}`;
 
   useEffect(() => {
     if (revealTriggeredRef.current || loading) {

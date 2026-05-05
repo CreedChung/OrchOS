@@ -12,6 +12,9 @@ import {
   Cancel01Icon,
   UnfoldMoreIcon,
   Delete02Icon,
+  Bookmark01Icon,
+  Folder01Icon,
+  ComputerIcon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
 import { Button } from "@/components/ui/button";
@@ -27,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { api, type Conversation, type ConversationMessage } from "@/lib/api";
+import { api, type BookmarkCategory, type Conversation, type ConversationMessage } from "@/lib/api";
 import type {
   ControlSettings,
   RuntimeProfile,
@@ -265,7 +268,7 @@ export function CreationView({
       document.body.style.userSelect = "none";
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
-        const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 280), 420);
+        const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 420);
         setCreationSidebarWidth(nextWidth);
       };
 
@@ -345,31 +348,31 @@ export function CreationView({
               </div>
               <div className="flex items-center gap-1">
                 <Tooltip>
-                  <TooltipTrigger>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="active:-translate-y-0"
-                      onClick={() => void handleNewConversation()}
-                    >
-                      <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
+                  <TooltipTrigger
+                    render={() => (
+                      <button
+                        type="button"
+                        className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:-translate-y-0"
+                        onClick={() => void handleNewConversation()}
+                      >
+                        <HugeiconsIcon icon={Add01Icon} className="size-4" />
+                      </button>
+                    )}
+                  />
                   <TooltipContent side="bottom">{m.new_conversation()}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                  <TooltipTrigger>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="active:-translate-y-0"
-                      onClick={handleCollapseSidebar}
-                    >
-                      <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
+                  <TooltipTrigger
+                    render={() => (
+                      <button
+                        type="button"
+                        className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:-translate-y-0"
+                        onClick={handleCollapseSidebar}
+                      >
+                        <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+                      </button>
+                    )}
+                  />
                   <TooltipContent side="right">{m.collapse_sidebar()}</TooltipContent>
                 </Tooltip>
               </div>
@@ -622,6 +625,7 @@ function ChatArea({
   const [draftRuntimeId, setDraftRuntimeId] = useState<string | undefined>(
     conversation.runtimeId,
   );
+  const [bookmarks, setBookmarks] = useState<BookmarkCategory[]>([]);
 
   useEffect(() => {
     setDraftRuntimeId(conversation.runtimeId);
@@ -629,6 +633,12 @@ function ChatArea({
     conversation.runtimeId,
     conversation.id,
   ]);
+
+  useEffect(() => {
+    api.listBookmarks()
+      .then((data) => setBookmarks(data.filter((c) => c.bookmarks.length > 0)))
+      .catch(() => {});
+  }, []);
 
   const effectiveRuntimeId = isDraftConversation
     ? draftRuntimeId
@@ -917,6 +927,50 @@ function ChatArea({
                 </div>
               </div>
             </BorderBeam>
+          </div>
+        </div>
+      )}
+
+      {/* Bookmarks + Browser Windows */}
+      {messages.length === 0 && !sending && bookmarks.length > 0 && (
+        <div className="flex min-h-0 flex-1 gap-4 overflow-hidden px-4 py-4 md:px-6">
+          <div className="flex min-w-0 flex-[2] flex-col gap-3 overflow-y-auto">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <HugeiconsIcon icon={Bookmark01Icon} className="size-3.5" />
+              Bookmarks
+            </span>
+            <div className="flex flex-col gap-3">
+              {bookmarks.map((category) => (
+                <div key={category.id} className="flex flex-col gap-1.5">
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground/70">
+                    <HugeiconsIcon icon={Folder01Icon} className="size-3" />
+                    {category.name}
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {category.bookmarks.map((bookmark) => (
+                      <button
+                        key={bookmark.id}
+                        type="button"
+                        onClick={() => setInput(bookmark.url)}
+                        className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        <HugeiconsIcon icon={Bookmark01Icon} className="size-3 shrink-0" />
+                        <span className="truncate max-w-[160px]">{bookmark.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <HugeiconsIcon icon={ComputerIcon} className="size-3.5" />
+              Open Windows
+            </span>
+            <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border/50 p-4">
+              <p className="text-center text-xs text-muted-foreground/60">No open windows detected</p>
+            </div>
           </div>
         </div>
       )}

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft01Icon, ArrowRight01Icon, ChartAverageIcon, ComputerIcon, Key01Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, ArrowRight01Icon, ChartAverageIcon, ComputerIcon, Copy01Icon, Key01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
+import { AppDialog } from "@/components/ui/app-dialog";
 import { LocalDevicesView } from "@/components/panels/LocalDevicesView";
 import { api, type LocalHostPairingToken } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -19,9 +20,11 @@ export const Route = createFileRoute("/dashboard/agents")({
 export function DevicesPage() {
   const { localHosts, loading } = useDashboard();
   const [pairing, setPairing] = useState<LocalHostPairingToken | null>(null);
+  const [showPairingDialog, setShowPairingDialog] = useState(false);
+  const [tokenCopied, setTokenCopied] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<"agents" | "stats" | "pairing">("agents");
   const [pairingLoading, setPairingLoading] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showExpandedContent, setShowExpandedContent] = useState(true);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
@@ -60,11 +63,23 @@ export function DevicesPage() {
       setPairingLoading(true);
       const token = await api.createLocalHostPairingToken();
       setPairing(token);
+      setShowPairingDialog(true);
+      setTokenCopied(false);
       toast.success(m.pairing_token_generated());
     } catch (error) {
       toast.error(error instanceof Error ? error.message : m.failed_create_pairing_token());
     } finally {
       setPairingLoading(false);
+    }
+  }
+
+  async function handleCopyToken(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setTokenCopied(true);
+      setTimeout(() => setTokenCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy");
     }
   }
 
@@ -100,7 +115,7 @@ export function DevicesPage() {
     document.body.style.userSelect = "none";
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
-      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 280), 420);
+      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 420);
       setSidebarWidth(nextWidth);
     };
 
@@ -301,6 +316,60 @@ export function DevicesPage() {
           onCreatePairingToken={handleCreatePairingToken}
         />
       </div>
+
+      <AppDialog
+        open={showPairingDialog}
+        onOpenChange={setShowPairingDialog}
+        title={m.pairing_token_title()}
+        description={m.pairing_token_desc()}
+        size="lg"
+        footer={
+          <div className="flex w-full items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              {pairing ? m.token_expires_in({ minutes: String(Math.max(1, Math.round((new Date(pairing.expiresAt).getTime() - Date.now()) / 60000))) }) : ""}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="ghost" onClick={() => setShowPairingDialog(false)}>
+                {m.done()}
+              </Button>
+              <Button type="button" variant="default" onClick={() => setShowPairingDialog(false)}>
+                {m.done()}
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">{m.pairing_token_instructions()}</p>
+
+          <div className="relative">
+            <pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all rounded-lg border border-border bg-muted p-4 font-mono text-xs text-foreground">
+              ORCHOS_CLOUD_API_URL=&quot;$YOUR_APP_URL&quot; \
+              ORCHOS_CLOUD_PAIRING_TOKEN={pairing?.pairingToken ?? ""} \
+              bunx @orchos/cli
+            </pre>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex-1 rounded-lg border border-border bg-muted px-3 py-2 font-mono text-xs text-foreground select-all">
+              {pairing?.pairingToken ?? ""}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (pairing?.pairingToken) {
+                  void handleCopyToken(pairing.pairingToken);
+                }
+              }}
+            >
+              <HugeiconsIcon icon={tokenCopied ? Tick01Icon : Copy01Icon} className="size-3.5" />
+              <span className="ml-1.5">{tokenCopied ? m.token_copied() : m.copy_token()}</span>
+            </Button>
+          </div>
+        </div>
+      </AppDialog>
     </div>
   );
 }

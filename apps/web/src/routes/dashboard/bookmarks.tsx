@@ -248,7 +248,7 @@ function parseBookmarkCsv(text: string) {
 }
 
 function BookmarksPage() {
-  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showExpandedContent, setShowExpandedContent] = useState(true);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
@@ -326,7 +326,7 @@ function BookmarksPage() {
     document.body.style.userSelect = "none";
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
-      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 280), 420);
+      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 420);
       setSidebarWidth(nextWidth);
     };
 
@@ -589,10 +589,10 @@ function BookmarksPage() {
                           >
                             <HugeiconsIcon icon={Folder01Icon} className="size-3.5 shrink-0 text-muted-foreground" />
                             <span className="min-w-0 flex-1 truncate text-sm text-foreground">{category.name}</span>
-                            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                              {category.bookmarks.length}
-                            </span>
                           </button>
+                          <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground group-hover:hidden">
+                            {category.bookmarks.length}
+                          </span>
                           <Button
                             type="button"
                             variant="ghost"

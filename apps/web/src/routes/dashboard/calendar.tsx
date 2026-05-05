@@ -104,7 +104,7 @@ function CalendarPage() {
   const [isLocalGroupDialogOpen, setIsLocalGroupDialogOpen] = useState(false);
   const [isLocalCalendarDialogOpen, setIsLocalCalendarDialogOpen] = useState(false);
   const [isLocalEventDialogOpen, setIsLocalEventDialogOpen] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showExpandedContent, setShowExpandedContent] = useState(true);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
@@ -613,7 +613,7 @@ function CalendarPage() {
     document.body.style.userSelect = "none";
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
-      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 280), 420);
+      const nextWidth = Math.min(Math.max(moveEvent.clientX - sidebarLeft, 200), 420);
       setSidebarWidth(nextWidth);
     };
 

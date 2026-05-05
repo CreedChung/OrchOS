@@ -26,9 +26,12 @@ declare const Bun: {
 };
 
 declare const process: {
+  argv: string[];
   env: Record<string, string | undefined>;
   cwd(): string;
+  exit(code: number): never;
   platform: string;
+  stdout: { write(data: string): void };
 };
 
 interface ExecutionResult {
@@ -58,6 +61,91 @@ interface RuntimeChatResult {
   agentName: string;
   responseTime: number;
 }
+
+function showHelp() {
+  process.stdout.write(`OrchOS Local CLI Host
+
+Usage:
+  orchos-cli [options]
+
+Options:
+  --host <addr>              HTTP server host (default: 127.0.0.1)
+                             Env: ORCHOS_LOCAL_CLI_HOST
+  --port <num>               HTTP server port (default: 4318)
+                             Env: ORCHOS_LOCAL_CLI_PORT
+  --auth-token <token>       Bearer token for incoming requests
+                             Env: ORCHOS_LOCAL_CLI_TOKEN
+  --api-url <url>            OrchOS cloud API base URL (required for pairing)
+                             Env: ORCHOS_CLOUD_API_URL
+  --pairing-token <token>    Pairing token from the OrchOS dashboard
+                             Env: ORCHOS_CLOUD_PAIRING_TOKEN
+  --device-name <name>       Name for this device (default: "This device")
+                             Env: ORCHOS_LOCAL_CLI_DEVICE_NAME
+  --device-id <id>           Unique device identifier (default: host:port)
+                             Env: ORCHOS_LOCAL_CLI_DEVICE_ID
+  --heartbeat-ms <ms>        Heartbeat interval in ms (default: 30000)
+                             Env: ORCHOS_LOCAL_CLI_HEARTBEAT_MS
+  --allowed-origins <list>   Comma-separated allowed CORS origins
+                             Env: ORCHOS_LOCAL_CLI_ALLOWED_ORIGINS
+  --credential-path <path>   Path to store credentials (default: .orchos-local-cli.json)
+                             Env: ORCHOS_LOCAL_CLI_CREDENTIAL_PATH
+  --help                     Show this help message
+
+Example:
+  orchos-cli --api-url https://app.orchos.dev --pairing-token orchos_pair_abc123
+`);
+}
+
+function parseArgs() {
+  const args = process.argv.slice(2);
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    switch (arg) {
+      case "--help": {
+        showHelp();
+        process.exit(0);
+      }
+      case "--host":
+        if (args[++i]) process.env.ORCHOS_LOCAL_CLI_HOST = args[i];
+        break;
+      case "--port": {
+        const val = args[++i];
+        if (val) process.env.ORCHOS_LOCAL_CLI_PORT = val;
+        break;
+      }
+      case "--auth-token":
+        if (args[++i]) process.env.ORCHOS_LOCAL_CLI_TOKEN = args[i];
+        break;
+      case "--api-url":
+        if (args[++i]) process.env.ORCHOS_CLOUD_API_URL = args[i];
+        break;
+      case "--pairing-token":
+        if (args[++i]) process.env.ORCHOS_CLOUD_PAIRING_TOKEN = args[i];
+        break;
+      case "--device-name":
+        if (args[++i]) process.env.ORCHOS_LOCAL_CLI_DEVICE_NAME = args[i];
+        break;
+      case "--device-id":
+        if (args[++i]) process.env.ORCHOS_LOCAL_CLI_DEVICE_ID = args[i];
+        break;
+      case "--heartbeat-ms":
+        if (args[++i]) process.env.ORCHOS_LOCAL_CLI_HEARTBEAT_MS = args[i];
+        break;
+      case "--allowed-origins":
+        if (args[++i]) process.env.ORCHOS_LOCAL_CLI_ALLOWED_ORIGINS = args[i];
+        break;
+      case "--credential-path":
+        if (args[++i]) process.env.ORCHOS_LOCAL_CLI_CREDENTIAL_PATH = args[i];
+        break;
+      default:
+        process.stdout.write(`Unknown option: ${arg}\n`);
+        showHelp();
+        process.exit(1);
+    }
+  }
+}
+
+parseArgs();
 
 const DEFAULT_TIMEOUT = 60000;
 const host = process.env.ORCHOS_LOCAL_CLI_HOST?.trim() || "127.0.0.1";

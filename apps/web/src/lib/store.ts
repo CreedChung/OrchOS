@@ -105,7 +105,7 @@ export const useUIStore = create<UIState & UIActions>()(
       activityExpanded: false,
       sidebarCollapsed: false,
       creationSidebarCollapsed: false,
-      creationSidebarWidth: 320,
+      creationSidebarWidth: 280,
 
       // Theme
       theme: "auto" as ThemeMode,
@@ -143,7 +143,7 @@ export const useUIStore = create<UIState & UIActions>()(
       migrate: (persisted, version) => {
         if (version < 2) {
           const state = persisted as Record<string, unknown>;
-          state.creationSidebarWidth = 320;
+          state.creationSidebarWidth = 280;
         }
         return persisted;
       },

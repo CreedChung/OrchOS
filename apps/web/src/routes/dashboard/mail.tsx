@@ -66,7 +66,7 @@ function MailPage() {
     Record<string, InboxMessage[]>
   >({});
   const [integrations, setIntegrations] = useState<MailIntegration[]>([]);
-  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [sidebarWidth, setSidebarWidth] = useState(280);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showExpandedContent, setShowExpandedContent] = useState(true);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
@@ -423,7 +423,7 @@ function MailPage() {
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
         const nextWidth = Math.min(
-          Math.max(moveEvent.clientX - sidebarLeft, 280),
+          Math.max(moveEvent.clientX - sidebarLeft, 200),
           420,
         );
         setSidebarWidth(nextWidth);
@@ -837,9 +837,9 @@ function MailPage() {
               </label>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-2 text-sm md:col-span-2">
-                <span className="font-medium text-foreground">Email</span>
+            <div className="space-y-4">
+              <label className="grid gap-1.5 text-sm">
+                <span className="text-muted-foreground">Email</span>
                 <input
                   value={mailAccountForm.email}
                   onChange={(event) =>
@@ -853,10 +853,8 @@ function MailPage() {
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                 />
               </label>
-              <label className="grid gap-2 text-sm">
-                <span className="font-medium text-foreground">
-                  Display name
-                </span>
+              <label className="grid gap-1.5 text-sm">
+                <span className="text-muted-foreground">Display name</span>
                 <input
                   value={mailAccountForm.displayName}
                   onChange={(event) =>
@@ -869,8 +867,8 @@ function MailPage() {
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                 />
               </label>
-              <label className="grid gap-2 text-sm">
-                <span className="font-medium text-foreground">Username</span>
+              <label className="grid gap-1.5 text-sm">
+                <span className="text-muted-foreground">Username</span>
                 <input
                   value={mailAccountForm.username}
                   onChange={(event) =>
@@ -883,8 +881,8 @@ function MailPage() {
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                 />
               </label>
-              <label className="grid gap-2 text-sm md:col-span-2">
-                <span className="font-medium text-foreground">Password</span>
+              <label className="grid gap-1.5 text-sm">
+                <span className="text-muted-foreground">Password</span>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -908,88 +906,106 @@ function MailPage() {
                   </button>
                 </div>
               </label>
-              <label className="grid gap-2 text-sm">
-                <span className="font-medium text-foreground">SMTP host</span>
-                <input
-                  value={mailAccountForm.smtpHost}
-                  onChange={(event) =>
-                    setMailAccountForm((current) => ({
-                      ...current,
-                      smtpHost: event.target.value,
-                    }))
-                  }
-                  placeholder="smtp.gmail.com"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                />
-              </label>
-              <label className="grid gap-2 text-sm">
-                <span className="font-medium text-foreground">SMTP port</span>
-                <input
-                  value={mailAccountForm.smtpPort}
-                  onChange={(event) =>
-                    setMailAccountForm((current) => ({
-                      ...current,
-                      smtpPort: event.target.value,
-                    }))
-                  }
-                  placeholder="587"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-sm text-foreground md:col-span-2">
-                <input
-                  type="checkbox"
-                  checked={mailAccountForm.smtpSecure}
-                  onChange={(event) =>
-                    setMailAccountForm((current) => ({
-                      ...current,
-                      smtpSecure: event.target.checked,
-                    }))
-                  }
-                />
-                Use TLS for SMTP
-              </label>
-              <label className="grid gap-2 text-sm">
-                <span className="font-medium text-foreground">IMAP host</span>
-                <input
-                  value={mailAccountForm.imapHost}
-                  onChange={(event) =>
-                    setMailAccountForm((current) => ({
-                      ...current,
-                      imapHost: event.target.value,
-                    }))
-                  }
-                  placeholder="imap.gmail.com"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                />
-              </label>
-              <label className="grid gap-2 text-sm">
-                <span className="font-medium text-foreground">IMAP port</span>
-                <input
-                  value={mailAccountForm.imapPort}
-                  onChange={(event) =>
-                    setMailAccountForm((current) => ({
-                      ...current,
-                      imapPort: event.target.value,
-                    }))
-                  }
-                  placeholder="993"
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-sm text-foreground md:col-span-2">
-                <input
-                  type="checkbox"
-                  checked={mailAccountForm.imapSecure}
-                  onChange={(event) =>
-                    setMailAccountForm((current) => ({
-                      ...current,
-                      imapSecure: event.target.checked,
-                    }))
-                  }
-                />
-                Use TLS for IMAP
-              </label>
+
+              <div className="border-t border-border pt-4">
+                <p className="text-xs font-medium text-muted-foreground mb-3">SMTP Configuration</p>
+                <div className="space-y-3">
+                  <label className="grid gap-1.5 text-sm">
+                    <span className="text-muted-foreground">Host</span>
+                    <input
+                      value={mailAccountForm.smtpHost}
+                      onChange={(event) =>
+                        setMailAccountForm((current) => ({
+                          ...current,
+                          smtpHost: event.target.value,
+                        }))
+                      }
+                      placeholder="smtp.gmail.com"
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="grid gap-1.5 text-sm">
+                      <span className="text-muted-foreground">Port</span>
+                      <input
+                        value={mailAccountForm.smtpPort}
+                        onChange={(event) =>
+                          setMailAccountForm((current) => ({
+                            ...current,
+                            smtpPort: event.target.value,
+                          }))
+                        }
+                        placeholder="587"
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm pt-5">
+                      <input
+                        type="checkbox"
+                        checked={mailAccountForm.smtpSecure}
+                        onChange={(event) =>
+                          setMailAccountForm((current) => ({
+                            ...current,
+                            smtpSecure: event.target.checked,
+                          }))
+                        }
+                        className="rounded border-border"
+                      />
+                      <span className="text-muted-foreground">Use TLS/SSL</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-border pt-4">
+                <p className="text-xs font-medium text-muted-foreground mb-3">IMAP Configuration</p>
+                <div className="space-y-3">
+                  <label className="grid gap-1.5 text-sm">
+                    <span className="text-muted-foreground">Host</span>
+                    <input
+                      value={mailAccountForm.imapHost}
+                      onChange={(event) =>
+                        setMailAccountForm((current) => ({
+                          ...current,
+                          imapHost: event.target.value,
+                        }))
+                      }
+                      placeholder="imap.gmail.com"
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="grid gap-1.5 text-sm">
+                      <span className="text-muted-foreground">Port</span>
+                      <input
+                        value={mailAccountForm.imapPort}
+                        onChange={(event) =>
+                          setMailAccountForm((current) => ({
+                            ...current,
+                            imapPort: event.target.value,
+                          }))
+                        }
+                        placeholder="993"
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm pt-5">
+                      <input
+                        type="checkbox"
+                        checked={mailAccountForm.imapSecure}
+                        onChange={(event) =>
+                          setMailAccountForm((current) => ({
+                            ...current,
+                            imapSecure: event.target.checked,
+                          }))
+                        }
+                        className="rounded border-border"
+                      />
+                      <span className="text-muted-foreground">Use TLS/SSL</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
