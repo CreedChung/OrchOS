@@ -280,7 +280,7 @@ function CalendarPage() {
     try {
       setIntegrations(await api.listIntegrations());
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to load integrations");
+      toast.error(error instanceof Error ? error.message : "Failed to load integrations", { closeButton: true });
     } finally {
       setLoading(false);
     }
@@ -310,7 +310,7 @@ function CalendarPage() {
       setIsAddDialogOpen(false);
       toast.success("Google Calendar connected");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to connect Google Calendar");
+      toast.error(error instanceof Error ? error.message : "Failed to connect Google Calendar", { closeButton: true });
     } finally {
       setSubmitting(false);
     }
@@ -323,7 +323,7 @@ function CalendarPage() {
       setSelectedSidebarItem("google-overview");
       toast.success("Calendar account removed");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to remove calendar account");
+      toast.error(error instanceof Error ? error.message : "Failed to remove calendar account", { closeButton: true });
     }
   }
 
@@ -1475,12 +1475,13 @@ function CalendarPage() {
             {m.cancel()}
           </Button>
         }
+        bodyClassName="flex items-center"
       >
-        <div className="grid gap-3">
+        <div className="grid w-full gap-3">
           <button
             type="button"
             onClick={openGoogleCalendarDialog}
-            className="flex w-full items-start gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition-colors hover:bg-accent/40"
+            className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition-colors hover:bg-accent/40"
           >
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
               <HugeiconsIcon icon={GoogleIcon} className="size-5" />
@@ -1496,7 +1497,7 @@ function CalendarPage() {
           <button
             type="button"
             onClick={() => openLocalGroupDialog()}
-            className="flex w-full items-start gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition-colors hover:bg-accent/40"
+            className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition-colors hover:bg-accent/40"
           >
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
               <HugeiconsIcon icon={SquareArrowDataTransferHorizontalIcon} className="size-5" />

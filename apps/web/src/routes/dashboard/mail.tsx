@@ -216,6 +216,7 @@ function MailPage() {
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to load mail threads",
+        { closeButton: true },
       );
     } finally {
       setLoading(false);
@@ -228,6 +229,7 @@ function MailPage() {
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to load mail accounts",
+        { closeButton: true },
       );
     }
   }
@@ -244,6 +246,7 @@ function MailPage() {
         error instanceof Error
           ? error.message
           : "Failed to load thread messages",
+        { closeButton: true },
       );
     }
   }
@@ -346,6 +349,7 @@ function MailPage() {
         error instanceof Error
           ? error.message
           : "Failed to connect mail account",
+        { closeButton: true },
       );
     } finally {
       setSubmittingAccount(false);
@@ -383,6 +387,7 @@ function MailPage() {
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to connect Gmail",
+        { closeButton: true },
       );
     } finally {
       setSubmittingAccount(false);

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 const DEFAULT_BACKEND_URL = "http://127.0.0.1:5173";
-const GITHUB_REPO_API_URL = "https://api.github.com/repos/CreedChung/OrchOS";
+const GITHUB_REPO_API_URL = "https://api.github.com/repos/NeitherCupid139/OrchOS";
 const GITHUB_STARS_CACHE_TTL_MS = 1000 * 60 * 30;
 
 let githubStarsCache: {

@@ -97,7 +97,7 @@ export function Header() {
             </Link>
           ))}
           <a
-            href="https://github.com/CreedChung/OrchOS"
+            href="https://github.com/NeitherCupid139/OrchOS"
             target="_blank"
             rel="noreferrer"
             className="mr-20"
@@ -147,7 +147,7 @@ export function Header() {
           <LocaleToggle />
           <ThemeToggle />
           <a
-            href="https://github.com/CreedChung/OrchOS"
+            href="https://github.com/NeitherCupid139/OrchOS"
             target="_blank"
             rel="noreferrer"
             onClick={() => setOpen(false)}

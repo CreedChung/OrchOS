@@ -119,7 +119,7 @@ export default function StickyFooter() {
         title: m.footer_company(),
         links: [
           { label: m.nav_about(), to: "/about" },
-          { label: m.integration_github(), to: "https://github.com/CreedChung/OrchOS" },
+          { label: m.integration_github(), to: "https://github.com/NeitherCupid139/OrchOS" },
         ],
       },
       {

@@ -49,6 +49,7 @@ import { Route as ApiObservabilityMetricsRouteImport } from './routes/api.observ
 import { Route as ApiLocalHostsPairingTokensRouteImport } from './routes/api.local-hosts.pairing-tokens'
 import { Route as ApiLocalHostsPairRouteImport } from './routes/api.local-hosts.pair'
 import { Route as ApiLocalHostsHeartbeatRouteImport } from './routes/api.local-hosts.heartbeat'
+import { Route as ApiInboxThreadsRouteImport } from './routes/api.inbox.threads'
 import { Route as ApiFilesystemFileRouteImport } from './routes/api.filesystem.file'
 import { Route as ApiFilesystemBrowseRouteImport } from './routes/api.filesystem.browse'
 import { Route as ApiConversationsDeletedRouteImport } from './routes/api.conversations.deleted'
@@ -61,10 +62,12 @@ import { Route as ApiRuntimesRuntimeIdChatRouteImport } from './routes/api.runti
 import { Route as ApiIntegrationsSmtpImapAccountsRouteImport } from './routes/api.integrations.smtp-imap.accounts'
 import { Route as ApiIntegrationsIdDisconnectRouteImport } from './routes/api.integrations.$id.disconnect'
 import { Route as ApiIntegrationsIdConnectRouteImport } from './routes/api.integrations.$id.connect'
+import { Route as ApiInboxThreadsIdRouteImport } from './routes/api.inbox.threads.$id'
 import { Route as ApiConversationsIdMessagesRouteImport } from './routes/api.conversations.$id.messages'
 import { Route as ApiBookmarksCategoriesIdRouteImport } from './routes/api.bookmarks.categories.$id'
 import { Route as ApiIntegrationsGoogleIdAccountsRouteImport } from './routes/api.integrations.google.$id.accounts'
 import { Route as ApiIntegrationsIdAccountsAccountIdRouteImport } from './routes/api.integrations.$id.accounts.$accountId'
+import { Route as ApiInboxThreadsIdMessagesRouteImport } from './routes/api.inbox.threads.$id.messages'
 import { Route as ApiBookmarksCategoriesCategoryIdItemsItemIdRouteImport } from './routes/api.bookmarks.categories.$categoryId.items.$itemId'
 
 const SignUpRoute = SignUpRouteImport.update({
@@ -269,6 +272,11 @@ const ApiLocalHostsHeartbeatRoute = ApiLocalHostsHeartbeatRouteImport.update({
   path: '/heartbeat',
   getParentRoute: () => ApiLocalHostsRoute,
 } as any)
+const ApiInboxThreadsRoute = ApiInboxThreadsRouteImport.update({
+  id: '/api/inbox/threads',
+  path: '/api/inbox/threads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiFilesystemFileRoute = ApiFilesystemFileRouteImport.update({
   id: '/api/filesystem/file',
   path: '/api/filesystem/file',
@@ -336,6 +344,11 @@ const ApiIntegrationsIdConnectRoute =
     path: '/$id/connect',
     getParentRoute: () => ApiIntegrationsRoute,
   } as any)
+const ApiInboxThreadsIdRoute = ApiInboxThreadsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiInboxThreadsRoute,
+} as any)
 const ApiConversationsIdMessagesRoute =
   ApiConversationsIdMessagesRouteImport.update({
     id: '/messages',
@@ -359,6 +372,12 @@ const ApiIntegrationsIdAccountsAccountIdRoute =
     id: '/$id/accounts/$accountId',
     path: '/$id/accounts/$accountId',
     getParentRoute: () => ApiIntegrationsRoute,
+  } as any)
+const ApiInboxThreadsIdMessagesRoute =
+  ApiInboxThreadsIdMessagesRouteImport.update({
+    id: '/messages',
+    path: '/messages',
+    getParentRoute: () => ApiInboxThreadsIdRoute,
   } as any)
 const ApiBookmarksCategoriesCategoryIdItemsItemIdRoute =
   ApiBookmarksCategoriesCategoryIdItemsItemIdRouteImport.update({
@@ -400,6 +419,7 @@ export interface FileRoutesByFullPath {
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
+  '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
   '/api/local-hosts/heartbeat': typeof ApiLocalHostsHeartbeatRoute
   '/api/local-hosts/pair': typeof ApiLocalHostsPairRoute
   '/api/local-hosts/pairing-tokens': typeof ApiLocalHostsPairingTokensRoute
@@ -415,6 +435,7 @@ export interface FileRoutesByFullPath {
   '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
   '/api/bookmarks/categories/$id': typeof ApiBookmarksCategoriesIdRoute
   '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
+  '/api/inbox/threads/$id': typeof ApiInboxThreadsIdRouteWithChildren
   '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
   '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
   '/api/integrations/smtp-imap/accounts': typeof ApiIntegrationsSmtpImapAccountsRoute
@@ -422,6 +443,7 @@ export interface FileRoutesByFullPath {
   '/api/runtimes/$runtimeId/health': typeof ApiRuntimesRuntimeIdHealthRoute
   '/api/runtimes/$runtimeId/model': typeof ApiRuntimesRuntimeIdModelRoute
   '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
+  '/api/inbox/threads/$id/messages': typeof ApiInboxThreadsIdMessagesRoute
   '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
   '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
   '/api/bookmarks/categories/$categoryId/items/$itemId': typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
@@ -458,6 +480,7 @@ export interface FileRoutesByTo {
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
+  '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
   '/api/local-hosts/heartbeat': typeof ApiLocalHostsHeartbeatRoute
   '/api/local-hosts/pair': typeof ApiLocalHostsPairRoute
   '/api/local-hosts/pairing-tokens': typeof ApiLocalHostsPairingTokensRoute
@@ -473,6 +496,7 @@ export interface FileRoutesByTo {
   '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
   '/api/bookmarks/categories/$id': typeof ApiBookmarksCategoriesIdRoute
   '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
+  '/api/inbox/threads/$id': typeof ApiInboxThreadsIdRouteWithChildren
   '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
   '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
   '/api/integrations/smtp-imap/accounts': typeof ApiIntegrationsSmtpImapAccountsRoute
@@ -480,6 +504,7 @@ export interface FileRoutesByTo {
   '/api/runtimes/$runtimeId/health': typeof ApiRuntimesRuntimeIdHealthRoute
   '/api/runtimes/$runtimeId/model': typeof ApiRuntimesRuntimeIdModelRoute
   '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
+  '/api/inbox/threads/$id/messages': typeof ApiInboxThreadsIdMessagesRoute
   '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
   '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
   '/api/bookmarks/categories/$categoryId/items/$itemId': typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
@@ -518,6 +543,7 @@ export interface FileRoutesById {
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
+  '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
   '/api/local-hosts/heartbeat': typeof ApiLocalHostsHeartbeatRoute
   '/api/local-hosts/pair': typeof ApiLocalHostsPairRoute
   '/api/local-hosts/pairing-tokens': typeof ApiLocalHostsPairingTokensRoute
@@ -533,6 +559,7 @@ export interface FileRoutesById {
   '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
   '/api/bookmarks/categories/$id': typeof ApiBookmarksCategoriesIdRoute
   '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
+  '/api/inbox/threads/$id': typeof ApiInboxThreadsIdRouteWithChildren
   '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
   '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
   '/api/integrations/smtp-imap/accounts': typeof ApiIntegrationsSmtpImapAccountsRoute
@@ -540,6 +567,7 @@ export interface FileRoutesById {
   '/api/runtimes/$runtimeId/health': typeof ApiRuntimesRuntimeIdHealthRoute
   '/api/runtimes/$runtimeId/model': typeof ApiRuntimesRuntimeIdModelRoute
   '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
+  '/api/inbox/threads/$id/messages': typeof ApiInboxThreadsIdMessagesRoute
   '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
   '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
   '/api/bookmarks/categories/$categoryId/items/$itemId': typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
@@ -579,6 +607,7 @@ export interface FileRouteTypes {
     | '/api/conversations/deleted'
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
+    | '/api/inbox/threads'
     | '/api/local-hosts/heartbeat'
     | '/api/local-hosts/pair'
     | '/api/local-hosts/pairing-tokens'
@@ -594,6 +623,7 @@ export interface FileRouteTypes {
     | '/api/runtimes/detect'
     | '/api/bookmarks/categories/$id'
     | '/api/conversations/$id/messages'
+    | '/api/inbox/threads/$id'
     | '/api/integrations/$id/connect'
     | '/api/integrations/$id/disconnect'
     | '/api/integrations/smtp-imap/accounts'
@@ -601,6 +631,7 @@ export interface FileRouteTypes {
     | '/api/runtimes/$runtimeId/health'
     | '/api/runtimes/$runtimeId/model'
     | '/api/runtimes/detect/register'
+    | '/api/inbox/threads/$id/messages'
     | '/api/integrations/$id/accounts/$accountId'
     | '/api/integrations/google/$id/accounts'
     | '/api/bookmarks/categories/$categoryId/items/$itemId'
@@ -637,6 +668,7 @@ export interface FileRouteTypes {
     | '/api/conversations/deleted'
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
+    | '/api/inbox/threads'
     | '/api/local-hosts/heartbeat'
     | '/api/local-hosts/pair'
     | '/api/local-hosts/pairing-tokens'
@@ -652,6 +684,7 @@ export interface FileRouteTypes {
     | '/api/runtimes/detect'
     | '/api/bookmarks/categories/$id'
     | '/api/conversations/$id/messages'
+    | '/api/inbox/threads/$id'
     | '/api/integrations/$id/connect'
     | '/api/integrations/$id/disconnect'
     | '/api/integrations/smtp-imap/accounts'
@@ -659,6 +692,7 @@ export interface FileRouteTypes {
     | '/api/runtimes/$runtimeId/health'
     | '/api/runtimes/$runtimeId/model'
     | '/api/runtimes/detect/register'
+    | '/api/inbox/threads/$id/messages'
     | '/api/integrations/$id/accounts/$accountId'
     | '/api/integrations/google/$id/accounts'
     | '/api/bookmarks/categories/$categoryId/items/$itemId'
@@ -696,6 +730,7 @@ export interface FileRouteTypes {
     | '/api/conversations/deleted'
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
+    | '/api/inbox/threads'
     | '/api/local-hosts/heartbeat'
     | '/api/local-hosts/pair'
     | '/api/local-hosts/pairing-tokens'
@@ -711,6 +746,7 @@ export interface FileRouteTypes {
     | '/api/runtimes/detect'
     | '/api/bookmarks/categories/$id'
     | '/api/conversations/$id/messages'
+    | '/api/inbox/threads/$id'
     | '/api/integrations/$id/connect'
     | '/api/integrations/$id/disconnect'
     | '/api/integrations/smtp-imap/accounts'
@@ -718,6 +754,7 @@ export interface FileRouteTypes {
     | '/api/runtimes/$runtimeId/health'
     | '/api/runtimes/$runtimeId/model'
     | '/api/runtimes/detect/register'
+    | '/api/inbox/threads/$id/messages'
     | '/api/integrations/$id/accounts/$accountId'
     | '/api/integrations/google/$id/accounts'
     | '/api/bookmarks/categories/$categoryId/items/$itemId'
@@ -744,6 +781,7 @@ export interface RootRouteChildren {
   ApiSettingsRoute: typeof ApiSettingsRoute
   ApiFilesystemBrowseRoute: typeof ApiFilesystemBrowseRoute
   ApiFilesystemFileRoute: typeof ApiFilesystemFileRoute
+  ApiInboxThreadsRoute: typeof ApiInboxThreadsRouteWithChildren
   ApiObservabilityMetricsRoute: typeof ApiObservabilityMetricsRoute
   ApiObservabilityThroughputRoute: typeof ApiObservabilityThroughputRoute
 }
@@ -1030,6 +1068,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLocalHostsHeartbeatRouteImport
       parentRoute: typeof ApiLocalHostsRoute
     }
+    '/api/inbox/threads': {
+      id: '/api/inbox/threads'
+      path: '/api/inbox/threads'
+      fullPath: '/api/inbox/threads'
+      preLoaderRoute: typeof ApiInboxThreadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/filesystem/file': {
       id: '/api/filesystem/file'
       path: '/api/filesystem/file'
@@ -1114,6 +1159,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiIntegrationsIdConnectRouteImport
       parentRoute: typeof ApiIntegrationsRoute
     }
+    '/api/inbox/threads/$id': {
+      id: '/api/inbox/threads/$id'
+      path: '/$id'
+      fullPath: '/api/inbox/threads/$id'
+      preLoaderRoute: typeof ApiInboxThreadsIdRouteImport
+      parentRoute: typeof ApiInboxThreadsRoute
+    }
     '/api/conversations/$id/messages': {
       id: '/api/conversations/$id/messages'
       path: '/messages'
@@ -1141,6 +1193,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/integrations/$id/accounts/$accountId'
       preLoaderRoute: typeof ApiIntegrationsIdAccountsAccountIdRouteImport
       parentRoute: typeof ApiIntegrationsRoute
+    }
+    '/api/inbox/threads/$id/messages': {
+      id: '/api/inbox/threads/$id/messages'
+      path: '/messages'
+      fullPath: '/api/inbox/threads/$id/messages'
+      preLoaderRoute: typeof ApiInboxThreadsIdMessagesRouteImport
+      parentRoute: typeof ApiInboxThreadsIdRoute
     }
     '/api/bookmarks/categories/$categoryId/items/$itemId': {
       id: '/api/bookmarks/categories/$categoryId/items/$itemId'
@@ -1330,6 +1389,29 @@ const ApiRuntimesRouteWithChildren = ApiRuntimesRoute._addFileChildren(
   ApiRuntimesRouteChildren,
 )
 
+interface ApiInboxThreadsIdRouteChildren {
+  ApiInboxThreadsIdMessagesRoute: typeof ApiInboxThreadsIdMessagesRoute
+}
+
+const ApiInboxThreadsIdRouteChildren: ApiInboxThreadsIdRouteChildren = {
+  ApiInboxThreadsIdMessagesRoute: ApiInboxThreadsIdMessagesRoute,
+}
+
+const ApiInboxThreadsIdRouteWithChildren =
+  ApiInboxThreadsIdRoute._addFileChildren(ApiInboxThreadsIdRouteChildren)
+
+interface ApiInboxThreadsRouteChildren {
+  ApiInboxThreadsIdRoute: typeof ApiInboxThreadsIdRouteWithChildren
+}
+
+const ApiInboxThreadsRouteChildren: ApiInboxThreadsRouteChildren = {
+  ApiInboxThreadsIdRoute: ApiInboxThreadsIdRouteWithChildren,
+}
+
+const ApiInboxThreadsRouteWithChildren = ApiInboxThreadsRoute._addFileChildren(
+  ApiInboxThreadsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -1351,6 +1433,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSettingsRoute: ApiSettingsRoute,
   ApiFilesystemBrowseRoute: ApiFilesystemBrowseRoute,
   ApiFilesystemFileRoute: ApiFilesystemFileRoute,
+  ApiInboxThreadsRoute: ApiInboxThreadsRouteWithChildren,
   ApiObservabilityMetricsRoute: ApiObservabilityMetricsRoute,
   ApiObservabilityThroughputRoute: ApiObservabilityThroughputRoute,
 }

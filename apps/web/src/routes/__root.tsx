@@ -62,7 +62,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <I18nProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </I18nProvider>
-        <Toaster />
+        <Toaster visibleToasts={3} expand />
         <Scripts />
       </body>
     </html>

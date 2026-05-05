@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft01Icon, ArrowRight01Icon, ChartAverageIcon, ComputerIcon, Copy01Icon, Key01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, ArrowRight01Icon, CancelCircleIcon, CheckmarkCircle02Icon, ComputerIcon, Copy01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
 import { AppDialog } from "@/components/ui/app-dialog";
@@ -22,7 +22,7 @@ export function DevicesPage() {
   const [pairing, setPairing] = useState<LocalHostPairingToken | null>(null);
   const [showPairingDialog, setShowPairingDialog] = useState(false);
   const [tokenCopied, setTokenCopied] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<"agents" | "stats" | "pairing">("agents");
+  const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all");
   const [pairingLoading, setPairingLoading] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -30,12 +30,10 @@ export function DevicesPage() {
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
   const collapseTimerRef = useRef<number | null>(null);
 
-  const onlineCount = useMemo(() => localHosts.filter((host) => host.status === "online").length, [localHosts]);
-  const registeredCount = localHosts.length;
-  const totalRuntimeCount = useMemo(
-    () => localHosts.reduce((count, host) => count + host.runtimes.length, 0),
-    [localHosts],
-  );
+  const filteredHosts = useMemo(() => {
+    if (statusFilter === "all") return localHosts;
+    return localHosts.filter((host) => host.status === statusFilter);
+  }, [localHosts, statusFilter]);
 
   useEffect(() => {
     return () => {
@@ -154,21 +152,20 @@ export function DevicesPage() {
         >
           <div className="flex h-10 items-center justify-between rounded-md px-2">
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-foreground">{m.devices()}</div>
+              <div className="text-sm font-semibold text-foreground">{m.devices()} <span className="ml-1 text-xs font-normal text-muted-foreground tabular-nums">{localHosts.length}</span></div>
             </div>
             <div className="flex items-center gap-1">
               <Tooltip>
-                <TooltipTrigger>
-                  <Button
-                    type="button"
+                <TooltipTrigger
+                  render={<Button
                     variant="ghost"
                     size="icon-sm"
                     className="active:-translate-y-0"
                     onClick={handleCollapseSidebar}
                   >
                     <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-                  </Button>
-                </TooltipTrigger>
+                  </Button>}
+                />
                 <TooltipContent side="bottom">{m.collapse_sidebar()}</TooltipContent>
               </Tooltip>
             </div>
@@ -184,57 +181,23 @@ export function DevicesPage() {
         >
           <ScrollArea className="min-h-0 flex-1">
             <div className="space-y-0.5 p-1.5">
-              {sidebarTab === "agents" && (
-                localHosts.length > 0 && (
-                  localHosts.map((host) => (
-                    <div key={host.id} className="group flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-foreground/70 hover:bg-accent/50 hover:text-foreground">
-                      <span className={cn("size-2 shrink-0 rounded-full", host.status === "online" ? "bg-emerald-500" : "bg-muted-foreground/30")} />
-                      <HugeiconsIcon icon={ComputerIcon} className="size-3.5 shrink-0 opacity-40" />
-                      <div className="min-w-0 flex-1 text-left">
-                        <div className="truncate text-xs leading-5">{host.name}</div>
-                        <div className="text-[11px] leading-4 text-muted-foreground">
-                          {host.status === "online" ? m.online() : m.offline()}
-                        </div>
+              {filteredHosts.length > 0 ? (
+                filteredHosts.map((host) => (
+                  <div key={host.id} className="group flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-foreground/70 hover:bg-accent/50 hover:text-foreground">
+                    <span className={cn("size-2 shrink-0 rounded-full", host.status === "online" ? "bg-emerald-500" : "bg-muted-foreground/30")} />
+                    <HugeiconsIcon icon={ComputerIcon} className="size-3.5 shrink-0 opacity-40" />
+                    <div className="min-w-0 flex-1 text-left">
+                      <div className="truncate text-xs leading-5">{host.name}</div>
+                      <div className="text-[11px] leading-4 text-muted-foreground">
+                        {host.status === "online" ? m.online() : m.offline()}
                       </div>
-                    </div>
-                  ))
-                )
-              )}
-
-              {sidebarTab === "stats" && (
-                <>
-                  {[
-                    { label: m.online(), value: onlineCount },
-                    { label: m.registered(), value: registeredCount },
-                    { label: m.runtimes(), value: totalRuntimeCount },
-                  ].map((item) => (
-                    <div key={item.label} className="group flex min-h-9 items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-foreground/70 hover:bg-accent/50 hover:text-foreground">
-                      <div className="min-w-0 flex-1 text-left">
-                        <div className="truncate text-xs leading-5">{item.label}</div>
-                        <div className="text-[11px] leading-4 text-muted-foreground tabular-nums">{item.value}</div>
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
-
-              {sidebarTab === "pairing" && (
-                <button
-                  type="button"
-                  onClick={() => void handleCreatePairingToken()}
-                  disabled={pairingLoading}
-                  className="group flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-foreground/70 hover:bg-accent/50 hover:text-foreground disabled:opacity-50"
-                >
-                  <HugeiconsIcon icon={Key01Icon} className="size-3.5 shrink-0 opacity-40" />
-                  <div className="min-w-0 flex-1 text-left">
-                    <div className="truncate text-xs leading-5">
-                      {pairingLoading ? m.generating_token() : pairing ? m.regenerate_pairing_token() : m.generate_pairing_token()}
-                    </div>
-                    <div className="text-[11px] leading-4 text-muted-foreground">
-                      {m.create_short_lived_token()}
                     </div>
                   </div>
-                </button>
+                ))
+              ) : (
+                <div className="px-2.5 py-6 text-center text-xs text-muted-foreground">
+                  {m.no_devices_paired()}
+                </div>
               )}
             </div>
           </ScrollArea>
@@ -242,25 +205,25 @@ export function DevicesPage() {
           <div className="border-t border-border p-2">
             <div className="flex h-10 items-center justify-center gap-1 rounded-md px-2">
               {[
-                { id: "agents" as const, icon: ComputerIcon, iconClassName: "text-sky-500", label: "Local agents" },
-                { id: "stats" as const, icon: ChartAverageIcon, iconClassName: "text-emerald-500", label: "Statistics" },
-                { id: "pairing" as const, icon: Key01Icon, iconClassName: "text-amber-500", label: "Pairing" },
+                { id: "all" as const, icon: ComputerIcon, iconClassName: "text-sky-500", label: m.all() },
+                { id: "online" as const, icon: CheckmarkCircle02Icon, iconClassName: "text-emerald-500", label: m.online() },
+                { id: "offline" as const, icon: CancelCircleIcon, iconClassName: "text-muted-foreground/50", label: m.offline() },
               ].map((tab) => (
                 <Tooltip key={tab.id}>
-                  <TooltipTrigger>
-                    <button
+                  <TooltipTrigger
+                    render={<button
                       type="button"
-                      onClick={() => setSidebarTab(tab.id)}
+                      onClick={() => setStatusFilter(tab.id)}
                       className={cn(
                         "inline-flex size-8 items-center justify-center rounded-md transition-colors",
-                        sidebarTab === tab.id
+                        statusFilter === tab.id
                           ? "bg-accent text-accent-foreground"
                           : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                       )}
                     >
-                      <HugeiconsIcon icon={tab.icon} className={cn("size-3.5", sidebarTab === tab.id ? tab.iconClassName : "")} />
-                    </button>
-                  </TooltipTrigger>
+                      <HugeiconsIcon icon={tab.icon} className={cn("size-3.5", statusFilter === tab.id ? tab.iconClassName : "text-muted-foreground/40")} />
+                    </button>}
+                  />
                   <TooltipContent side="top">{tab.label}</TooltipContent>
                 </Tooltip>
               ))}
