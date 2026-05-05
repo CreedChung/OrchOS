@@ -140,7 +140,7 @@ export function InboxList({
       </ScrollArea>
 
       {accounts && accounts.length > 0 && onAccountChange ? (
-        <div className="border-t border-border p-2">
+        <div className="flex h-24 items-center border-t border-border p-2">
           <div className="flex flex-wrap items-center gap-1 rounded-md px-1">
             {[
               { id: null, label: "All", icon: InboxIcon },
@@ -155,7 +155,7 @@ export function InboxList({
                   onClick={() => onAccountChange(item.id)}
                   title={item.label}
                   className={cn(
-                    "inline-flex size-10 items-center justify-center rounded-md transition-colors",
+                    "inline-flex size-8 items-center justify-center rounded-md transition-colors",
                     isActive
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",

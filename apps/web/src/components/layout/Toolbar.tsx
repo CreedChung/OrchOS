@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { type AgentModelFilter } from "@/components/layout/AgentModelTabs";
 import { CalendarViewTabs, type CalendarViewMode } from "@/components/layout/CalendarViewTabs";
 import { BoardFilterBar } from "@/components/panels/BoardFilterBar";
@@ -128,9 +129,14 @@ export function Toolbar({
 
       <div className="flex items-center gap-2">
         {activeView === "board" && onOpenCreateGoal ? (
-          <Button variant="ghost" size="icon-sm" onClick={onOpenCreateGoal} title={m.add()}>
-            <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" size="icon-sm" onClick={onOpenCreateGoal}>
+                <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{m.add()}</TooltipContent>
+          </Tooltip>
         ) : null}
 
         {activeView === "mail" ? (

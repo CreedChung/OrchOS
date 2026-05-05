@@ -286,7 +286,7 @@ const AppleSwitch = forwardRef<HTMLButtonElement, AppleSwitchProps>(
         aria-label={typeof label === "string" ? label : props["aria-label"]}
         className={cn(
           "relative inline-flex shrink-0 cursor-pointer items-center rounded-full active:cursor-grabbing",
-          "border border-white/35 bg-white/10 shadow-inner backdrop-blur-md",
+          "border border-input bg-transparent dark:bg-input/30 shadow-sm",
           "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "disabled:cursor-not-allowed disabled:opacity-45",
           className,

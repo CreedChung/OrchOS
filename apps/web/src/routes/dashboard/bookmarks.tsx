@@ -265,6 +265,8 @@ function BookmarksPage() {
   const [bookmarkDraft, setBookmarkDraft] = useState<BookmarkDraft>({ title: "", url: "" });
   const [loading, setLoading] = useState(true);
   const [isCreateBookmarkDialogOpen, setIsCreateBookmarkDialogOpen] = useState(false);
+  const [isCreateCategoryDialogOpen, setIsCreateCategoryDialogOpen] = useState(false);
+  const [createCategoryName, setCreateCategoryName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -366,10 +368,15 @@ function BookmarksPage() {
   }
 
   function handleCreateCategory() {
-    const index = categories.length + 1;
+    setCreateCategoryName("");
+    setIsCreateCategoryDialogOpen(true);
+  }
+
+  function handleCreateCategorySubmit() {
+    const name = createCategoryName.trim() || `New category ${categories.length + 1}`;
     const newCategory: BookmarkCategory = {
       id: `custom-${Date.now()}`,
-      name: `New category ${index}`,
+      name,
       bookmarks: [],
     };
 
@@ -377,7 +384,7 @@ function BookmarksPage() {
     void persistCategories(nextCategories, newCategory.id).catch((error) => {
       toast.error(error instanceof Error ? error.message : "Failed to create category");
     });
-    setRenameCategoryId(newCategory.id);
+    setIsCreateCategoryDialogOpen(false);
   }
 
   function moveCategory(sourceId: string, targetId: string) {
@@ -484,8 +491,8 @@ function BookmarksPage() {
 
       <div
         className={cn(
-          "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r bg-card transition-[width] duration-300 ease-out lg:flex",
-          sidebarCollapsed ? "w-0 border-r-transparent" : "w-[var(--bookmarks-sidebar-width)]",
+          "relative hidden min-h-0 shrink-0 flex-col bg-card transition-[width] duration-300 ease-out lg:flex",
+          sidebarCollapsed ? "w-0 overflow-hidden" : "w-[var(--bookmarks-sidebar-width)] overflow-visible border-r",
           isResizingSidebar ? "border-r-transparent" : "border-border",
         )}
         style={
@@ -507,11 +514,11 @@ function BookmarksPage() {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon-xs"
+                size="icon-sm"
                 onClick={handleCreateCategory}
                 title="New category"
               >
-                <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+                <HugeiconsIcon icon={Add01Icon} className="size-4" />
               </Button>
               <Button
                 type="button"
@@ -536,24 +543,8 @@ function BookmarksPage() {
         >
           <ScrollArea className="min-h-0 flex-1">
             <div className="space-y-5 p-3">
-              <section className="space-y-2">
-                <div className="px-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                  Sources
-                </div>
-                <Button type="button" variant="outline" size="sm" className="w-full justify-start" onClick={handleImportBookmarksClick}>
-                  <HugeiconsIcon icon={Upload01Icon} className="size-3.5" />
-                  Import from file
-                </Button>
-              </section>
-
-              <section className="space-y-2">
-                <div className="flex items-center justify-between gap-2 px-2">
-                  <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                    Categories
-                  </div>
-                </div>
-                {categories.length > 0 ? (
-                  <div className="space-y-1">
+              {categories.length > 0 ? (
+                <div className="space-y-1">
                     {categories.map((category) => {
                       const isActive = category.id === selectedCategory?.id;
 
@@ -626,12 +617,7 @@ function BookmarksPage() {
                       );
                     })}
                   </div>
-                ) : (
-                  <div className="rounded-lg border border-dashed border-border/60 px-3 py-4 text-xs leading-5 text-muted-foreground">
-                    Imported bookmark categories will appear here.
-                  </div>
-                )}
-              </section>
+                ) : null}
             </div>
           </ScrollArea>
 
@@ -1023,6 +1009,43 @@ function BookmarksPage() {
           });
         }}
       />
+
+      <AppDialog
+        open={isCreateCategoryDialogOpen}
+        onOpenChange={setIsCreateCategoryDialogOpen}
+        title="New category"
+        description="Enter a name for the new bookmark category."
+        size="sm"
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setIsCreateCategoryDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleCreateCategorySubmit}>
+              Create
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <label className="grid gap-2 text-sm">
+            <span className="font-medium text-foreground">Name</span>
+            <input
+              value={createCategoryName}
+              onChange={(event) => setCreateCategoryName(event.target.value)}
+              placeholder="Category name"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleCreateCategorySubmit();
+                }
+              }}
+              autoFocus
+            />
+          </label>
+        </div>
+      </AppDialog>
     </div>
   );
 }

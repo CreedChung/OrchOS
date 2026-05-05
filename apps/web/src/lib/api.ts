@@ -581,7 +581,7 @@ export const api = {
     }
     return (await response.json()) as Integration;
   },
-  updateIntegrationAccount: async (id: string, accountId: string, data: { label?: string; email?: string; username?: string }): Promise<Integration> => {
+  updateIntegrationAccount: async (id: string, accountId: string, data: { label?: string; email?: string; username?: string; smtpImap?: { email: string; displayName?: string; smtp: { host: string; port: number; secure: boolean }; imap: { host: string; port: number; secure: boolean }; username: string; password: string } }): Promise<Integration> => {
     const response = await fetch(resolveApiUrl(`/api/integrations/${id}/accounts/${accountId}`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

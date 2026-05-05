@@ -43,14 +43,40 @@ import type { ControlSettings, NotificationEvent, SoundId } from "@/lib/types";
 import { NOTIFICATION_EVENTS, AVAILABLE_SOUNDS } from "@/lib/types";
 import { api, type DetectRuntimesResponse, type RuntimeProfile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+
+const defaultEventSounds: Record<string, string> = {
+  email: "bell",
+  calendar: "bell2",
+  message: "bell3",
+  reminder: "error",
+  system: "pop",
+  social: "pong",
+};
 
 type SettingsTab = "general" | "notifications" | "runtimes" | "mail" | "about";
+
+type MailServerConfig = {
+  host: string;
+  port: number;
+  secure: boolean;
+};
+
+type SmtpImapConfig = {
+  email: string;
+  displayName?: string;
+  smtp: MailServerConfig;
+  imap: MailServerConfig;
+  username: string;
+  password: string;
+};
 
 type MailIntegrationAccount = {
   id: string;
   label: string;
   email?: string;
   username?: string;
+  smtpImap?: SmtpImapConfig;
 };
 
 type SettingsMailIntegration = {
@@ -135,7 +161,19 @@ export function SettingsDialog({
   const [mailIntegrations, setMailIntegrations] = useState<SettingsMailIntegration[]>([]);
   const [loadingMail, setLoadingMail] = useState(false);
   const [editingMailAccount, setEditingMailAccount] = useState<{ integrationId: string; account: MailIntegrationAccount } | null>(null);
-  const [editMailForm, setEditMailForm] = useState({ label: "", email: "" });
+  const [editMailForm, setEditMailForm] = useState<{
+    label: string;
+    email: string;
+    username: string;
+    displayName: string;
+    smtpHost: string;
+    smtpPort: string;
+    smtpSecure: boolean;
+    imapHost: string;
+    imapPort: string;
+    imapSecure: boolean;
+    password: string;
+  }>({ label: "", email: "", username: "", displayName: "", smtpHost: "smtp.gmail.com", smtpPort: "587", smtpSecure: false, imapHost: "imap.gmail.com", imapPort: "993", imapSecure: true, password: "" });
   const { locale: currentLocale, setLocaleWithSync } = useLocale();
 
   useEffect(() => {
@@ -332,16 +370,39 @@ export function SettingsDialog({
   }, [onRuntimesRefresh]);
 
   const handleEditMailAccount = useCallback((integrationId: string, account: MailIntegrationAccount) => {
-    setEditMailForm({ label: account.label, email: account.email || account.username || "" });
+    setEditMailForm({
+      label: account.label,
+      email: account.email || account.smtpImap?.email || "",
+      username: account.username || account.smtpImap?.username || "",
+      displayName: account.smtpImap?.displayName || "",
+      smtpHost: account.smtpImap?.smtp.host || "smtp.gmail.com",
+      smtpPort: String(account.smtpImap?.smtp.port ?? 587),
+      smtpSecure: account.smtpImap?.smtp.secure ?? false,
+      imapHost: account.smtpImap?.imap.host || "imap.gmail.com",
+      imapPort: String(account.smtpImap?.imap.port ?? 993),
+      imapSecure: account.smtpImap?.imap.secure ?? true,
+      password: account.smtpImap?.password || "",
+    });
     setEditingMailAccount({ integrationId, account });
   }, []);
 
   const handleSaveMailAccount = useCallback(async () => {
     if (!editingMailAccount) return;
     try {
+      const smtpPort = parseInt(editMailForm.smtpPort, 10);
+      const imapPort = parseInt(editMailForm.imapPort, 10);
       const updated = await api.updateIntegrationAccount(editingMailAccount.integrationId, editingMailAccount.account.id, {
         label: editMailForm.label,
         email: editMailForm.email,
+        username: editMailForm.username || undefined,
+        smtpImap: {
+          email: editMailForm.email,
+          displayName: editMailForm.displayName || undefined,
+          username: editMailForm.username,
+          password: editMailForm.password,
+          smtp: { host: editMailForm.smtpHost, port: isNaN(smtpPort) ? 587 : smtpPort, secure: editMailForm.smtpSecure },
+          imap: { host: editMailForm.imapHost, port: isNaN(imapPort) ? 993 : imapPort, secure: editMailForm.imapSecure },
+        },
       });
       setMailIntegrations((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
       setEditingMailAccount(null);
@@ -414,12 +475,14 @@ export function SettingsDialog({
             <h2 className="text-sm font-semibold text-foreground">
               {tabDefs.find((t) => t.id === activeTab)?.labelKey()}
             </h2>
-            <button
-              onClick={onClose}
-              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
-            >
-              <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger>
+                <Button variant="ghost" size="icon-sm" onClick={onClose}>
+                  <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Close</TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Content area */}
@@ -494,7 +557,7 @@ export function SettingsDialog({
                   <div className="space-y-1.5 pt-1">
                     {NOTIFICATION_EVENTS.map((event) => {
                       const currentSoundId =
-                        currentSettings.notifications?.eventSoundFiles?.[event.id] || "bell";
+                        currentSettings.notifications?.eventSoundFiles?.[event.id] || defaultEventSounds[event.id] || "bell";
                       const isEnabled =
                         currentSettings.notifications?.eventSounds?.[event.id] !== false;
                       return (
@@ -817,20 +880,22 @@ export function SettingsDialog({
                                   <div className="text-xs text-muted-foreground truncate">{account.email || account.username}</div>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleEditMailAccount(integration.id, account)}
-                                    className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground transition-colors"
-                                  >
-                                    <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteMailAccount(integration.id, account.id)}
-                                    className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-destructive transition-colors"
-                                  >
-                                    <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
-                                  </button>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Button variant="ghost" size="icon-xs" onClick={() => handleEditMailAccount(integration.id, account)}>
+                                        <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">Edit</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Button variant="ghost" size="icon-xs" onClick={() => handleDeleteMailAccount(integration.id, account.id)}>
+                                        <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">Remove</TooltipContent>
+                                  </Tooltip>
                                 </div>
                               </div>
                             ))}
@@ -844,26 +909,66 @@ export function SettingsDialog({
                 )}
 
                 {editingMailAccount && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setEditingMailAccount(null)}>
-                    <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                      <h3 className="text-sm font-semibold text-foreground mb-4">Edit account</h3>
-                      <div className="space-y-3">
+                  <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 backdrop-blur-sm py-8" onClick={() => setEditingMailAccount(null)}>
+                    <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                      <h3 className="text-sm font-semibold text-foreground mb-4">Edit mail account</h3>
+                      <div className="space-y-4">
                         <label className="grid gap-1.5 text-sm">
                           <span className="text-muted-foreground">Label</span>
-                          <input
-                            value={editMailForm.label}
-                            onChange={(e) => setEditMailForm((f) => ({ ...f, label: e.target.value }))}
-                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                          />
+                          <input value={editMailForm.label} onChange={(e) => setEditMailForm((f) => ({ ...f, label: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" />
                         </label>
                         <label className="grid gap-1.5 text-sm">
                           <span className="text-muted-foreground">Email</span>
-                          <input
-                            value={editMailForm.email}
-                            onChange={(e) => setEditMailForm((f) => ({ ...f, email: e.target.value }))}
-                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                          />
+                          <input value={editMailForm.email} onChange={(e) => setEditMailForm((f) => ({ ...f, email: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" />
                         </label>
+                        <label className="grid gap-1.5 text-sm">
+                          <span className="text-muted-foreground">Display name</span>
+                          <input value={editMailForm.displayName} onChange={(e) => setEditMailForm((f) => ({ ...f, displayName: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" />
+                        </label>
+                        <label className="grid gap-1.5 text-sm">
+                          <span className="text-muted-foreground">Username</span>
+                          <input value={editMailForm.username} onChange={(e) => setEditMailForm((f) => ({ ...f, username: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" />
+                        </label>
+                        <label className="grid gap-1.5 text-sm">
+                          <span className="text-muted-foreground">Password</span>
+                          <input type="password" value={editMailForm.password} onChange={(e) => setEditMailForm((f) => ({ ...f, password: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" />
+                        </label>
+
+                        <div className="border-t border-border pt-4">
+                          <p className="text-xs font-medium text-muted-foreground mb-3">SMTP Configuration</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            <label className="grid gap-1.5 text-sm col-span-2">
+                              <span className="text-muted-foreground">Host</span>
+                              <input value={editMailForm.smtpHost} onChange={(e) => setEditMailForm((f) => ({ ...f, smtpHost: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" />
+                            </label>
+                            <label className="grid gap-1.5 text-sm">
+                              <span className="text-muted-foreground">Port</span>
+                              <input value={editMailForm.smtpPort} onChange={(e) => setEditMailForm((f) => ({ ...f, smtpPort: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" />
+                            </label>
+                            <label className="flex items-center gap-2 text-sm pt-5">
+                              <input type="checkbox" checked={editMailForm.smtpSecure} onChange={(e) => setEditMailForm((f) => ({ ...f, smtpSecure: e.target.checked }))} className="rounded border-border" />
+                              <span className="text-muted-foreground">Use TLS/SSL</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-border pt-4">
+                          <p className="text-xs font-medium text-muted-foreground mb-3">IMAP Configuration</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            <label className="grid gap-1.5 text-sm col-span-2">
+                              <span className="text-muted-foreground">Host</span>
+                              <input value={editMailForm.imapHost} onChange={(e) => setEditMailForm((f) => ({ ...f, imapHost: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" />
+                            </label>
+                            <label className="grid gap-1.5 text-sm">
+                              <span className="text-muted-foreground">Port</span>
+                              <input value={editMailForm.imapPort} onChange={(e) => setEditMailForm((f) => ({ ...f, imapPort: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" />
+                            </label>
+                            <label className="flex items-center gap-2 text-sm pt-5">
+                              <input type="checkbox" checked={editMailForm.imapSecure} onChange={(e) => setEditMailForm((f) => ({ ...f, imapSecure: e.target.checked }))} className="rounded border-border" />
+                              <span className="text-muted-foreground">Use TLS/SSL</span>
+                            </label>
+                          </div>
+                        </div>
                       </div>
                       <div className="mt-5 flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setEditingMailAccount(null)}>Cancel</Button>

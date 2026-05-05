@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { BorderBeam } from "border-beam";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
@@ -319,10 +320,10 @@ export function CreationView({
     <div className="flex min-h-0 flex-1 overflow-hidden">
       <div
         className={cn(
-          "relative flex min-h-0 shrink-0 flex-col overflow-visible border-r bg-card transition-[width] duration-300 ease-out",
+          "relative flex min-h-0 shrink-0 flex-col bg-card transition-[width] duration-300 ease-out",
           creationSidebarCollapsed
-            ? "w-0 border-r-transparent"
-            : "w-[var(--creation-sidebar-width)]",
+            ? "w-0 overflow-hidden"
+            : "w-[var(--creation-sidebar-width)] overflow-visible border-r",
           isResizingSidebar ? "border-r-transparent" : "border-border",
         )}
         style={
@@ -343,26 +344,34 @@ export function CreationView({
                 <div className="text-sm font-semibold text-foreground">{m.creation()}</div>
               </div>
               <div className="flex items-center gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="active:-translate-y-0"
-                  onClick={() => void handleNewConversation()}
-                  title={m.new_conversation()}
-                >
-                  <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="active:-translate-y-0"
-                  onClick={handleCollapseSidebar}
-                  title={m.collapse_sidebar()}
-                >
-                  <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="active:-translate-y-0"
+                      onClick={() => void handleNewConversation()}
+                    >
+                      <HugeiconsIcon icon={Add01Icon} className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">{m.new_conversation()}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="active:-translate-y-0"
+                      onClick={handleCollapseSidebar}
+                    >
+                      <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{m.collapse_sidebar()}</TooltipContent>
+                </Tooltip>
               </div>
             </div>
         </div>
@@ -477,16 +486,20 @@ export function CreationView({
 
       <div className="relative flex flex-1 flex-col overflow-hidden">
         {creationSidebarCollapsed ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)] active:!translate-y-[-50%]"
-            onClick={handleExpandSidebar}
-            title={m.expand_sidebar()}
-          >
-            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)] active:!translate-y-[-50%]"
+                onClick={handleExpandSidebar}
+              >
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{m.expand_sidebar()}</TooltipContent>
+          </Tooltip>
         ) : null}
         {!hasLoadedConversations && isLoadingConversations ? (
           <div className="flex h-full items-center justify-center">
@@ -855,44 +868,51 @@ function ChatArea({
                     />
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      title={
-                        isListening ? m.voice_input_stop() : m.voice_input()
-                      }
-                      className={cn(
-                        "text-muted-foreground hover:text-foreground",
-                        isListening && "text-red-500 hover:text-red-600",
-                      )}
-                      onClick={isListening ? stop : start}
-                      disabled={!isSupported}
-                    >
-                      <HugeiconsIcon
-                        icon={isListening ? Cancel01Icon : Mic01Icon}
-                        className="size-4"
-                      />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      disabled={
-                        (!input.trim() && attachedFiles.length === 0) ||
-                        sending ||
-                        isConversationUpdating
-                      }
-                      onClick={handleSend}
-                    >
-                      {sending ? (
-                        <Spinner size="sm" />
-                      ) : (
-                        <HugeiconsIcon
-                          icon={ArrowUp01Icon}
-                          className="size-3.5"
-                        />
-                      )}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className={cn(
+                            "text-muted-foreground hover:text-foreground",
+                            isListening && "text-red-500 hover:text-red-600",
+                          )}
+                          onClick={isListening ? stop : start}
+                          disabled={!isSupported}
+                        >
+                          <HugeiconsIcon
+                            icon={isListening ? Cancel01Icon : Mic01Icon}
+                            className="size-4"
+                          />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">{isListening ? m.voice_input_stop() : m.voice_input()}</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Button
+                          type="button"
+                          size="icon-sm"
+                          disabled={
+                            (!input.trim() && attachedFiles.length === 0) ||
+                            sending ||
+                            isConversationUpdating
+                          }
+                          onClick={handleSend}
+                        >
+                          {sending ? (
+                            <Spinner size="sm" />
+                          ) : (
+                            <HugeiconsIcon
+                              icon={ArrowUp01Icon}
+                              className="size-3.5"
+                            />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">Send</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               </div>

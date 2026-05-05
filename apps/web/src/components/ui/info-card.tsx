@@ -171,7 +171,7 @@ function InfoCard({
                 transition: { duration: 0.2 },
               }}
               transition={{ duration: 0.3, delay: 0 }}
-              className={cn("group relative rounded-lg bg-white dark:bg-zinc-900 p-3", className)}
+              className={cn("group relative rounded-lg border border-border bg-white dark:bg-zinc-900 p-3", className)}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >

@@ -33,42 +33,24 @@ const BUTTON_VARIANTS = {
   animate: { y: 0, opacity: 1, transition: { duration: 0.4, delay: 0.3 } },
 };
 
-const themeStyles = {
-  iconContainer: {
-    dark: "bg-neutral-800 border border-neutral-700 group-hover:shadow-xl group-hover:border-neutral-600",
-    neutral: "bg-stone-100 border border-stone-200 group-hover:shadow-xl group-hover:border-stone-300",
-    light: "bg-white border border-gray-200 group-hover:shadow-xl group-hover:border-gray-300",
-  },
-  iconColor: {
-    dark: "text-neutral-400 group-hover:text-neutral-200",
-    neutral: "text-stone-500 group-hover:text-stone-700",
-    light: "text-gray-500 group-hover:text-gray-700",
-  },
-} as const;
-
-type Theme = "light" | "dark" | "neutral";
-
 const IconContainer = memo(function IconContainer({
   children,
   variant,
   className = "",
-  theme = "light",
 }: {
   children: ReactNode;
   variant: keyof typeof ICON_VARIANTS;
   className?: string;
-  theme?: Theme;
 }) {
   return (
     <motion.div
       variants={ICON_VARIANTS[variant]}
       className={cn(
-        "w-12 h-12 rounded-xl flex items-center justify-center relative shadow-lg transition-all duration-300",
-        themeStyles.iconContainer[theme],
+        "w-12 h-12 rounded-xl flex items-center justify-center relative shadow-lg transition-all duration-300 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 group-hover:shadow-xl group-hover:border-gray-300 dark:group-hover:border-neutral-600",
         className,
       )}
     >
-      <div className={cn("text-sm transition-colors duration-300", themeStyles.iconColor[theme])}>
+      <div className="text-sm transition-colors duration-300 text-gray-500 dark:text-neutral-400 group-hover:text-gray-700 dark:group-hover:text-neutral-200">
         {children}
       </div>
     </motion.div>
@@ -77,22 +59,20 @@ const IconContainer = memo(function IconContainer({
 
 const MultiIconDisplay = memo(function MultiIconDisplay({
   icons,
-  theme,
 }: {
   icons: ReactNode[];
-  theme?: Theme;
 }) {
   if (icons.length < 3) return null;
 
   return (
     <div className="flex justify-center isolate relative">
-      <IconContainer variant="left" className="left-2 top-1 z-10" theme={theme}>
+      <IconContainer variant="left" className="left-2 top-1 z-10">
         {icons[0]}
       </IconContainer>
-      <IconContainer variant="center" className="z-20" theme={theme}>
+      <IconContainer variant="center" className="z-20">
         {icons[1]}
       </IconContainer>
-      <IconContainer variant="right" className="right-2 top-1 z-10" theme={theme}>
+      <IconContainer variant="right" className="right-2 top-1 z-10">
         {icons[2]}
       </IconContainer>
     </div>
@@ -100,34 +80,16 @@ const MultiIconDisplay = memo(function MultiIconDisplay({
 });
 
 function Background() {
-  return (
-    <div
-      aria-hidden="true"
-      className="absolute inset-0 opacity-0 group-hover:opacity-[0.06] transition-opacity duration-500 bg-[radial-gradient(circle_at_2px_2px,rgba(0,0,0,0.6)_1px,transparent_1px)] dark:bg-[radial-gradient(circle_at_2px_2px,rgba(255,255,255,0.5)_1px,transparent_1px)]"
-      style={{ backgroundSize: "24px 24px" }}
-    />
-  );
+  return null;
 }
 
-const emptyStateVariants = {
-  default: {
-    light: "bg-white border-dashed border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50/50",
-    dark: "bg-neutral-900 border-dashed border-2 border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800/50",
-    neutral: "bg-stone-50 border-dashed border-2 border-stone-300 hover:border-stone-400 hover:bg-stone-100/50",
-  },
-  subtle: {
-    light: "bg-white border border-transparent hover:bg-gray-50/30",
-    dark: "bg-neutral-900 border border-transparent hover:bg-neutral-800/30",
-    neutral: "bg-stone-50 border border-transparent hover:bg-stone-100/30",
-  },
-  error: {
-    light: "bg-white border border-red-200 bg-red-50/50 hover:bg-red-50/80",
-    dark: "bg-neutral-900 border border-red-800 bg-red-950/50 hover:bg-red-950/80",
-    neutral: "bg-stone-50 border border-red-300 bg-red-50/50 hover:bg-red-50/80",
-  },
-} as const;
+const emptyStateVariantClasses: Record<string, string> = {
+  default: "border-dashed border-2 border-gray-300 dark:border-neutral-700",
+  subtle: "border border-transparent",
+  error: "border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/50",
+};
 
-type EmptyStateVariant = keyof typeof emptyStateVariants;
+type EmptyStateVariant = keyof typeof emptyStateVariantClasses;
 type EmptyStateSize = "sm" | "default" | "lg";
 
 const sizeClasses: Record<EmptyStateSize, string> = {
@@ -148,18 +110,6 @@ const descriptionSizeClasses: Record<EmptyStateSize, string> = {
   lg: "text-base",
 };
 
-const titleColorClasses: Record<Theme, string> = {
-  light: "text-gray-900",
-  dark: "text-neutral-100",
-  neutral: "text-stone-900",
-};
-
-const descriptionColorClasses: Record<Theme, string> = {
-  light: "text-gray-600",
-  dark: "text-neutral-400",
-  neutral: "text-stone-600",
-};
-
 export type EmptyStateAction = {
   label: string;
   onClick: () => void;
@@ -174,7 +124,6 @@ export type EmptyStateProps = {
   action?: EmptyStateAction;
   variant?: EmptyStateVariant;
   size?: EmptyStateSize;
-  theme?: Theme;
   isIconAnimated?: boolean;
   className?: string;
 };
@@ -187,7 +136,6 @@ export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(function Empt
     action,
     variant = "default",
     size = "default",
-    theme = "light",
     isIconAnimated = true,
     className = "",
   },
@@ -206,7 +154,7 @@ export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(function Empt
         className={cn(
           "group transition-all duration-300 rounded-xl relative overflow-hidden text-center flex flex-col items-center justify-center",
           sizeClasses[size],
-          emptyStateVariants[variant][theme],
+          emptyStateVariantClasses[variant],
           className,
         )}
         initial="initial"
@@ -217,18 +165,18 @@ export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(function Empt
         <div className="relative z-10 flex flex-col items-center">
           {icons && (
             <div className="mb-6">
-              <MultiIconDisplay icons={icons} theme={theme} />
+              <MultiIconDisplay icons={icons} />
             </div>
           )}
 
           <motion.div variants={CONTENT_VARIANTS} className="space-y-2 mb-6">
-            <h2 id={titleId} className={cn("font-semibold transition-colors duration-200", titleSizeClasses[size], titleColorClasses[theme])}>
+            <h2 id={titleId} className={cn("font-semibold transition-colors duration-200 text-gray-900 dark:text-neutral-100", titleSizeClasses[size])}>
               {title}
             </h2>
             {description && (
               <p
                 id={descriptionId}
-                className={cn("max-w-md leading-relaxed transition-colors duration-200", descriptionSizeClasses[size], descriptionColorClasses[theme])}
+                className={cn("max-w-md leading-relaxed transition-colors duration-200 text-gray-600 dark:text-neutral-400", descriptionSizeClasses[size])}
               >
                 {description}
               </p>

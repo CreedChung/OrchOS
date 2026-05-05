@@ -7,6 +7,7 @@ import { LocalDevicesView } from "@/components/panels/LocalDevicesView";
 import { api, type LocalHostPairingToken } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useDashboard } from "@/lib/dashboard-context";
 import { m } from "@/paraglide/messages";
@@ -141,16 +142,20 @@ export function DevicesPage() {
               <div className="text-sm font-semibold text-foreground">{m.devices()}</div>
             </div>
             <div className="flex items-center gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="active:-translate-y-0"
-                onClick={handleCollapseSidebar}
-                title={m.collapse_sidebar()}
-              >
-                <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="active:-translate-y-0"
+                    onClick={handleCollapseSidebar}
+                  >
+                    <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{m.collapse_sidebar()}</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -222,23 +227,27 @@ export function DevicesPage() {
           <div className="border-t border-border p-2">
             <div className="flex h-10 items-center justify-center gap-1 rounded-md px-2">
               {[
-                { id: "agents" as const, icon: ComputerIcon, iconClassName: "text-sky-500" },
-                { id: "stats" as const, icon: ChartAverageIcon, iconClassName: "text-emerald-500" },
-                { id: "pairing" as const, icon: Key01Icon, iconClassName: "text-amber-500" },
+                { id: "agents" as const, icon: ComputerIcon, iconClassName: "text-sky-500", label: "Local agents" },
+                { id: "stats" as const, icon: ChartAverageIcon, iconClassName: "text-emerald-500", label: "Statistics" },
+                { id: "pairing" as const, icon: Key01Icon, iconClassName: "text-amber-500", label: "Pairing" },
               ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setSidebarTab(tab.id)}
-                  className={cn(
-                    "inline-flex size-8 items-center justify-center rounded-md transition-colors",
-                    sidebarTab === tab.id
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-                  )}
-                >
-                  <HugeiconsIcon icon={tab.icon} className={cn("size-3.5", sidebarTab === tab.id ? tab.iconClassName : "")} />
-                </button>
+                <Tooltip key={tab.id}>
+                  <TooltipTrigger>
+                    <button
+                      type="button"
+                      onClick={() => setSidebarTab(tab.id)}
+                      className={cn(
+                        "inline-flex size-8 items-center justify-center rounded-md transition-colors",
+                        sidebarTab === tab.id
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                      )}
+                    >
+                      <HugeiconsIcon icon={tab.icon} className={cn("size-3.5", sidebarTab === tab.id ? tab.iconClassName : "")} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{tab.label}</TooltipContent>
+                </Tooltip>
               ))}
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n-provider";
 import { getLocale } from "@/paraglide/runtime";
@@ -61,6 +62,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <I18nProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </I18nProvider>
+        <Toaster />
         <Scripts />
       </body>
     </html>

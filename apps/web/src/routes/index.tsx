@@ -44,14 +44,14 @@ function HomePageInner() {
               ) : (
                 <>
                   {m.hero_line1()}{" "}
-                  <span className="text-primary italic">
+                  <span className="italic">
                     {m.hero_line2_word()}
                   </span>{" "}
                   {m.hero_line2()}
                 </>
               )}
               <br />
-              <span className="text-primary italic">{m.hero_line3()}</span>
+              <span className="italic">{m.hero_line3()}</span>
             </p>
             <p className="mb-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
               {m.hero_subtitle()}

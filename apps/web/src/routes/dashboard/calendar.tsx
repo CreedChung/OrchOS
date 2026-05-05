@@ -17,6 +17,7 @@ import { EmptyState } from "@/components/ui/interactive-empty-state";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { api, type Integration } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -633,8 +634,8 @@ function CalendarPage() {
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
           className={cn(
-            "relative hidden min-h-0 shrink-0 flex-col overflow-visible border-r bg-card transition-[width] duration-300 ease-out lg:flex",
-            sidebarCollapsed ? "w-0 border-r-transparent" : "w-[var(--calendar-sidebar-width)]",
+            "relative hidden min-h-0 shrink-0 flex-col bg-card transition-[width] duration-300 ease-out lg:flex",
+            sidebarCollapsed ? "w-0 overflow-hidden" : "w-[var(--calendar-sidebar-width)] overflow-visible border-r",
             isResizingSidebar ? "border-r-transparent" : "border-border",
           )}
           style={
@@ -653,14 +654,14 @@ function CalendarPage() {
             <div className="flex h-10 items-center justify-between rounded-md px-2">
               <div className="text-sm font-semibold text-foreground">{m.calendar()}</div>
               <div className="flex items-center gap-1">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setIsCalendarSourceDialogOpen(true)}
-                  className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   title="Add calendar"
                 >
                   <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                </button>
+                </Button>
                 <Button
                   type="button"
                   variant="ghost"
@@ -919,15 +920,25 @@ function CalendarPage() {
                             <div className="mt-1 text-lg font-semibold text-foreground">{formatMonthLabel(visibleMonth)}</div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((current) => addMonths(current, -1))}>
-                              <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((current) => addMonths(current, -1))}>
+                                  <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">Previous month</TooltipContent>
+                            </Tooltip>
                             <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth(startOfMonth(new Date()))}>
                               Today
                             </Button>
-                            <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((current) => addMonths(current, 1))}>
-                              <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((current) => addMonths(current, 1))}>
+                                  <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">Next month</TooltipContent>
+                            </Tooltip>
                           </div>
                         </div>
 
@@ -1029,12 +1040,22 @@ function CalendarPage() {
                                       {event.location ? <div className="mt-1 text-xs text-muted-foreground">{event.location}</div> : null}
                                     </div>
                                     <div className="flex items-center gap-1">
-                                      <Button type="button" variant="ghost" size="icon-sm" onClick={() => openLocalEventDialog(selectedLocalDate, event)}>
-                                        <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-                                      </Button>
-                                      <Button type="button" variant="ghost" size="icon-sm" onClick={() => handleDeleteLocalEvent(event)}>
-                                        <HugeiconsIcon icon={Delete02Icon} className="size-4" />
-                                      </Button>
+                                      <Tooltip>
+                                        <TooltipTrigger>
+                                          <Button type="button" variant="ghost" size="icon-sm" onClick={() => openLocalEventDialog(selectedLocalDate, event)}>
+                                            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">Edit event</TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger>
+                                          <Button type="button" variant="ghost" size="icon-sm" onClick={() => handleDeleteLocalEvent(event)}>
+                                            <HugeiconsIcon icon={Delete02Icon} className="size-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">Delete event</TooltipContent>
+                                      </Tooltip>
                                     </div>
                                   </div>
                                   {event.description ? <p className="mt-3 text-sm text-muted-foreground">{event.description}</p> : null}
@@ -1409,12 +1430,17 @@ function CalendarPage() {
                               <div className="truncate text-sm font-medium text-foreground">{activeAccount.label}</div>
                               <div className="truncate text-xs text-muted-foreground">{activeAccount.email || activeAccount.username}</div>
                             </div>
-                            <button
-                              onClick={() => void handleDeleteAccount(activeAccount.id)}
-                              className="rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                            >
-                              <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                            </button>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <button
+                                  onClick={() => void handleDeleteAccount(activeAccount.id)}
+                                  className="rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                >
+                                  <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">Remove account</TooltipContent>
+                            </Tooltip>
                           </div>
                           <div className="mt-4 flex flex-wrap gap-2">
                             {activeAccount.scopes.map((scope) => (

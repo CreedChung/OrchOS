@@ -592,6 +592,8 @@ function MailPage() {
               <EmptyState
                 variant="subtle"
                 size="lg"
+                isIconAnimated={false}
+                className="hover:bg-transparent dark:hover:bg-transparent w-full max-w-lg"
                 title="Connect mailbox"
                 description="Connect a Gmail or IMAP/SMTP account to manage your email threads from this workspace."
                 icons={[
@@ -604,7 +606,6 @@ function MailPage() {
                   icon: <HugeiconsIcon icon={Add01Icon} className="size-4" />,
                   onClick: () => setIsConnectDialogOpen(true),
                 }}
-                className="w-full max-w-lg"
               />
             </div>
           ) : (
