@@ -274,3 +274,34 @@ export const skills = sqliteTable(
     index("idx_skills_organization_id").on(t.organizationId),
   ],
 );
+
+export const bookmarkCategories = sqliteTable(
+  "bookmark_categories",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    sortOrder: text("sort_order").notNull().default("0"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [index("idx_bookmark_categories_sort_order").on(t.sortOrder)],
+);
+
+export const bookmarks = sqliteTable(
+  "bookmarks",
+  {
+    id: text("id").primaryKey(),
+    categoryId: text("category_id")
+      .notNull()
+      .references(() => bookmarkCategories.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    url: text("url").notNull(),
+    sortOrder: text("sort_order").notNull().default("0"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    index("idx_bookmarks_category_id").on(t.categoryId),
+    index("idx_bookmarks_sort_order").on(t.sortOrder),
+  ],
+);

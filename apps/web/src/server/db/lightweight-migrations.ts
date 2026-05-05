@@ -106,4 +106,34 @@ export function runLightweightMigrations(db: AppDb) {
     exec("CREATE INDEX \"idx_local_host_pairings_user_id\" ON \"local_host_pairings\" (\"user_id\")");
     exec("CREATE INDEX \"idx_local_host_pairings_expires_at\" ON \"local_host_pairings\" (\"expires_at\")");
   }
+
+  if (!hasTable("bookmark_categories")) {
+    exec(`
+      CREATE TABLE "bookmark_categories" (
+        "id" TEXT PRIMARY KEY NOT NULL,
+        "name" TEXT NOT NULL,
+        "sort_order" TEXT NOT NULL DEFAULT '0',
+        "created_at" TEXT NOT NULL,
+        "updated_at" TEXT NOT NULL
+      )
+    `);
+    exec("CREATE INDEX \"idx_bookmark_categories_sort_order\" ON \"bookmark_categories\" (\"sort_order\")");
+  }
+
+  if (!hasTable("bookmarks")) {
+    exec(`
+      CREATE TABLE "bookmarks" (
+        "id" TEXT PRIMARY KEY NOT NULL,
+        "category_id" TEXT NOT NULL,
+        "title" TEXT NOT NULL,
+        "url" TEXT NOT NULL,
+        "sort_order" TEXT NOT NULL DEFAULT '0',
+        "created_at" TEXT NOT NULL,
+        "updated_at" TEXT NOT NULL,
+        FOREIGN KEY ("category_id") REFERENCES "bookmark_categories"("id") ON UPDATE no action ON DELETE cascade
+      )
+    `);
+    exec("CREATE INDEX \"idx_bookmarks_category_id\" ON \"bookmarks\" (\"category_id\")");
+    exec("CREATE INDEX \"idx_bookmarks_sort_order\" ON \"bookmarks\" (\"sort_order\")");
+  }
 }

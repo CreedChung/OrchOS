@@ -481,6 +481,18 @@ export interface InboxMessage {
   createdAt: string;
 }
 
+export interface BookmarkItem {
+  id: string;
+  title: string;
+  url: string;
+}
+
+export interface BookmarkCategory {
+  id: string;
+  name: string;
+  bookmarks: BookmarkItem[];
+}
+
 // API functions
 export const api = {
 
@@ -996,6 +1008,100 @@ export const api = {
     const client = createEdenClient();
     const result = await client.api.inbox.threads({ id: threadId }).messages.post(data);
     return assertData(result);
+  },
+
+  // Bookmarks
+  listBookmarks: async (): Promise<BookmarkCategory[]> => {
+    const response = await fetch(resolveApiUrl("/api/bookmarks"), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as BookmarkCategory[];
+  },
+  replaceBookmarks: async (categories: BookmarkCategory[]): Promise<BookmarkCategory[]> => {
+    const response = await fetch(resolveApiUrl("/api/bookmarks"), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ categories }),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as BookmarkCategory[];
+  },
+  createBookmarkCategory: async (name: string): Promise<BookmarkCategory[]> => {
+    const response = await fetch(resolveApiUrl("/api/bookmarks"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ kind: "category", name }),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as BookmarkCategory[];
+  },
+  createBookmarkItem: async (
+    categoryId: string,
+    data: { title: string; url: string },
+  ): Promise<BookmarkCategory[]> => {
+    const response = await fetch(resolveApiUrl("/api/bookmarks"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ kind: "bookmark", categoryId, title: data.title, url: data.url }),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as BookmarkCategory[];
+  },
+  updateBookmarkCategory: async (id: string, name: string): Promise<BookmarkCategory[]> => {
+    const response = await fetch(resolveApiUrl(`/api/bookmarks/categories/${id}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ name }),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as BookmarkCategory[];
+  },
+  deleteBookmarkCategory: async (id: string): Promise<BookmarkCategory[]> => {
+    const response = await fetch(resolveApiUrl(`/api/bookmarks/categories/${id}`), {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as BookmarkCategory[];
+  },
+  updateBookmarkItem: async (
+    categoryId: string,
+    itemId: string,
+    data: { title: string; url: string },
+  ): Promise<BookmarkCategory[]> => {
+    const response = await fetch(resolveApiUrl(`/api/bookmarks/categories/${categoryId}/items/${itemId}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as BookmarkCategory[];
+  },
+  deleteBookmarkItem: async (categoryId: string, itemId: string): Promise<BookmarkCategory[]> => {
+    const response = await fetch(resolveApiUrl(`/api/bookmarks/categories/${categoryId}/items/${itemId}`), {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as BookmarkCategory[];
+  },
+  moveBookmarkItem: async (
+    bookmarkId: string,
+    sourceCategoryId: string,
+    targetCategoryId: string,
+  ): Promise<BookmarkCategory[]> => {
+    const response = await fetch(resolveApiUrl("/api/bookmarks/move"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ bookmarkId, sourceCategoryId, targetCategoryId }),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as BookmarkCategory[];
   },
 
   // Conversations

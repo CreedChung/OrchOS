@@ -25,6 +25,7 @@ import { Route as DashboardCreationRouteImport } from './routes/dashboard/creati
 import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calendar'
 import { Route as DashboardBookmarksRouteImport } from './routes/dashboard/bookmarks'
 import { Route as DashboardBoardRouteImport } from './routes/dashboard/board'
+import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
 import { Route as ApiSettingsRouteImport } from './routes/api.settings'
 import { Route as ApiRuntimesRouteImport } from './routes/api.runtimes'
 import { Route as ApiProjectsRouteImport } from './routes/api.projects'
@@ -34,6 +35,7 @@ import { Route as ApiLocalHostsRouteImport } from './routes/api.local-hosts'
 import { Route as ApiIntegrationsRouteImport } from './routes/api.integrations'
 import { Route as ApiConversationsRouteImport } from './routes/api.conversations'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
+import { Route as ApiBookmarksRouteImport } from './routes/api.bookmarks'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
 import { Route as ApiRuntimesDetectRouteImport } from './routes/api.runtimes.detect'
 import { Route as ApiRuntimesIdRouteImport } from './routes/api.runtimes.$id'
@@ -52,6 +54,7 @@ import { Route as ApiFilesystemFileRouteImport } from './routes/api.filesystem.f
 import { Route as ApiFilesystemBrowseRouteImport } from './routes/api.filesystem.browse'
 import { Route as ApiConversationsDeletedRouteImport } from './routes/api.conversations.deleted'
 import { Route as ApiConversationsIdRouteImport } from './routes/api.conversations.$id'
+import { Route as ApiBookmarksMoveRouteImport } from './routes/api.bookmarks.move'
 import { Route as ApiRuntimesDetectRegisterRouteImport } from './routes/api.runtimes.detect.register'
 import { Route as ApiRuntimesRuntimeIdModelRouteImport } from './routes/api.runtimes.$runtimeId.model'
 import { Route as ApiRuntimesRuntimeIdHealthRouteImport } from './routes/api.runtimes.$runtimeId.health'
@@ -60,8 +63,10 @@ import { Route as ApiIntegrationsSmtpImapAccountsRouteImport } from './routes/ap
 import { Route as ApiIntegrationsIdDisconnectRouteImport } from './routes/api.integrations.$id.disconnect'
 import { Route as ApiIntegrationsIdConnectRouteImport } from './routes/api.integrations.$id.connect'
 import { Route as ApiConversationsIdMessagesRouteImport } from './routes/api.conversations.$id.messages'
+import { Route as ApiBookmarksCategoriesIdRouteImport } from './routes/api.bookmarks.categories.$id'
 import { Route as ApiIntegrationsGoogleIdAccountsRouteImport } from './routes/api.integrations.google.$id.accounts'
 import { Route as ApiIntegrationsIdAccountsAccountIdRouteImport } from './routes/api.integrations.$id.accounts.$accountId'
+import { Route as ApiBookmarksCategoriesCategoryIdItemsItemIdRouteImport } from './routes/api.bookmarks.categories.$categoryId.items.$itemId'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -143,6 +148,11 @@ const DashboardBoardRoute = DashboardBoardRouteImport.update({
   path: '/board',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAgentsRoute = DashboardAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ApiSettingsRoute = ApiSettingsRouteImport.update({
   id: '/api/settings',
   path: '/api/settings',
@@ -186,6 +196,11 @@ const ApiConversationsRoute = ApiConversationsRouteImport.update({
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBookmarksRoute = ApiBookmarksRouteImport.update({
+  id: '/api/bookmarks',
+  path: '/api/bookmarks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -280,6 +295,11 @@ const ApiConversationsIdRoute = ApiConversationsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ApiConversationsRoute,
 } as any)
+const ApiBookmarksMoveRoute = ApiBookmarksMoveRouteImport.update({
+  id: '/move',
+  path: '/move',
+  getParentRoute: () => ApiBookmarksRoute,
+} as any)
 const ApiRuntimesDetectRegisterRoute =
   ApiRuntimesDetectRegisterRouteImport.update({
     id: '/register',
@@ -328,6 +348,12 @@ const ApiConversationsIdMessagesRoute =
     path: '/messages',
     getParentRoute: () => ApiConversationsIdRoute,
   } as any)
+const ApiBookmarksCategoriesIdRoute =
+  ApiBookmarksCategoriesIdRouteImport.update({
+    id: '/categories/$id',
+    path: '/categories/$id',
+    getParentRoute: () => ApiBookmarksRoute,
+  } as any)
 const ApiIntegrationsGoogleIdAccountsRoute =
   ApiIntegrationsGoogleIdAccountsRouteImport.update({
     id: '/google/$id/accounts',
@@ -340,6 +366,12 @@ const ApiIntegrationsIdAccountsAccountIdRoute =
     path: '/$id/accounts/$accountId',
     getParentRoute: () => ApiIntegrationsRoute,
   } as any)
+const ApiBookmarksCategoriesCategoryIdItemsItemIdRoute =
+  ApiBookmarksCategoriesCategoryIdItemsItemIdRouteImport.update({
+    id: '/categories/$categoryId/items/$itemId',
+    path: '/categories/$categoryId/items/$itemId',
+    getParentRoute: () => ApiBookmarksRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -350,6 +382,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/bookmarks': typeof ApiBookmarksRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/conversations': typeof ApiConversationsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
@@ -359,6 +392,7 @@ export interface FileRoutesByFullPath {
   '/api/projects': typeof ApiProjectsRouteWithChildren
   '/api/runtimes': typeof ApiRuntimesRouteWithChildren
   '/api/settings': typeof ApiSettingsRoute
+  '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
@@ -368,6 +402,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/bookmarks/move': typeof ApiBookmarksMoveRoute
   '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
@@ -385,6 +420,7 @@ export interface FileRoutesByFullPath {
   '/api/projects/$id': typeof ApiProjectsIdRoute
   '/api/runtimes/$id': typeof ApiRuntimesIdRoute
   '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
+  '/api/bookmarks/categories/$id': typeof ApiBookmarksCategoriesIdRoute
   '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
   '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
   '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
@@ -395,6 +431,7 @@ export interface FileRoutesByFullPath {
   '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
   '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
   '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
+  '/api/bookmarks/categories/$categoryId/items/$itemId': typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -404,6 +441,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/bookmarks': typeof ApiBookmarksRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/conversations': typeof ApiConversationsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
@@ -413,6 +451,7 @@ export interface FileRoutesByTo {
   '/api/projects': typeof ApiProjectsRouteWithChildren
   '/api/runtimes': typeof ApiRuntimesRouteWithChildren
   '/api/settings': typeof ApiSettingsRoute
+  '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
@@ -422,6 +461,7 @@ export interface FileRoutesByTo {
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/api/bookmarks/move': typeof ApiBookmarksMoveRoute
   '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
@@ -439,6 +479,7 @@ export interface FileRoutesByTo {
   '/api/projects/$id': typeof ApiProjectsIdRoute
   '/api/runtimes/$id': typeof ApiRuntimesIdRoute
   '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
+  '/api/bookmarks/categories/$id': typeof ApiBookmarksCategoriesIdRoute
   '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
   '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
   '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
@@ -449,6 +490,7 @@ export interface FileRoutesByTo {
   '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
   '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
   '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
+  '/api/bookmarks/categories/$categoryId/items/$itemId': typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -460,6 +502,7 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/bookmarks': typeof ApiBookmarksRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/conversations': typeof ApiConversationsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
@@ -469,6 +512,7 @@ export interface FileRoutesById {
   '/api/projects': typeof ApiProjectsRouteWithChildren
   '/api/runtimes': typeof ApiRuntimesRouteWithChildren
   '/api/settings': typeof ApiSettingsRoute
+  '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
   '/dashboard/calendar': typeof DashboardCalendarRoute
@@ -478,6 +522,7 @@ export interface FileRoutesById {
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/bookmarks/move': typeof ApiBookmarksMoveRoute
   '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
   '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
@@ -495,6 +540,7 @@ export interface FileRoutesById {
   '/api/projects/$id': typeof ApiProjectsIdRoute
   '/api/runtimes/$id': typeof ApiRuntimesIdRoute
   '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
+  '/api/bookmarks/categories/$id': typeof ApiBookmarksCategoriesIdRoute
   '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
   '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
   '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
@@ -505,6 +551,7 @@ export interface FileRoutesById {
   '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
   '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
   '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
+  '/api/bookmarks/categories/$categoryId/items/$itemId': typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -517,6 +564,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/api/bookmarks'
     | '/api/chat'
     | '/api/conversations'
     | '/api/integrations'
@@ -526,6 +574,7 @@ export interface FileRouteTypes {
     | '/api/projects'
     | '/api/runtimes'
     | '/api/settings'
+    | '/dashboard/agents'
     | '/dashboard/board'
     | '/dashboard/bookmarks'
     | '/dashboard/calendar'
@@ -535,6 +584,7 @@ export interface FileRouteTypes {
     | '/dashboard/mail'
     | '/dashboard/observability'
     | '/dashboard/'
+    | '/api/bookmarks/move'
     | '/api/conversations/$id'
     | '/api/conversations/deleted'
     | '/api/filesystem/browse'
@@ -552,6 +602,7 @@ export interface FileRouteTypes {
     | '/api/projects/$id'
     | '/api/runtimes/$id'
     | '/api/runtimes/detect'
+    | '/api/bookmarks/categories/$id'
     | '/api/conversations/$id/messages'
     | '/api/integrations/$id/connect'
     | '/api/integrations/$id/disconnect'
@@ -562,6 +613,7 @@ export interface FileRouteTypes {
     | '/api/runtimes/detect/register'
     | '/api/integrations/$id/accounts/$accountId'
     | '/api/integrations/google/$id/accounts'
+    | '/api/bookmarks/categories/$categoryId/items/$itemId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -571,6 +623,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/api/bookmarks'
     | '/api/chat'
     | '/api/conversations'
     | '/api/integrations'
@@ -580,6 +633,7 @@ export interface FileRouteTypes {
     | '/api/projects'
     | '/api/runtimes'
     | '/api/settings'
+    | '/dashboard/agents'
     | '/dashboard/board'
     | '/dashboard/bookmarks'
     | '/dashboard/calendar'
@@ -589,6 +643,7 @@ export interface FileRouteTypes {
     | '/dashboard/mail'
     | '/dashboard/observability'
     | '/dashboard'
+    | '/api/bookmarks/move'
     | '/api/conversations/$id'
     | '/api/conversations/deleted'
     | '/api/filesystem/browse'
@@ -606,6 +661,7 @@ export interface FileRouteTypes {
     | '/api/projects/$id'
     | '/api/runtimes/$id'
     | '/api/runtimes/detect'
+    | '/api/bookmarks/categories/$id'
     | '/api/conversations/$id/messages'
     | '/api/integrations/$id/connect'
     | '/api/integrations/$id/disconnect'
@@ -616,6 +672,7 @@ export interface FileRouteTypes {
     | '/api/runtimes/detect/register'
     | '/api/integrations/$id/accounts/$accountId'
     | '/api/integrations/google/$id/accounts'
+    | '/api/bookmarks/categories/$categoryId/items/$itemId'
   id:
     | '__root__'
     | '/'
@@ -626,6 +683,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/api/bookmarks'
     | '/api/chat'
     | '/api/conversations'
     | '/api/integrations'
@@ -635,6 +693,7 @@ export interface FileRouteTypes {
     | '/api/projects'
     | '/api/runtimes'
     | '/api/settings'
+    | '/dashboard/agents'
     | '/dashboard/board'
     | '/dashboard/bookmarks'
     | '/dashboard/calendar'
@@ -644,6 +703,7 @@ export interface FileRouteTypes {
     | '/dashboard/mail'
     | '/dashboard/observability'
     | '/dashboard/'
+    | '/api/bookmarks/move'
     | '/api/conversations/$id'
     | '/api/conversations/deleted'
     | '/api/filesystem/browse'
@@ -661,6 +721,7 @@ export interface FileRouteTypes {
     | '/api/projects/$id'
     | '/api/runtimes/$id'
     | '/api/runtimes/detect'
+    | '/api/bookmarks/categories/$id'
     | '/api/conversations/$id/messages'
     | '/api/integrations/$id/connect'
     | '/api/integrations/$id/disconnect'
@@ -671,6 +732,7 @@ export interface FileRouteTypes {
     | '/api/runtimes/detect/register'
     | '/api/integrations/$id/accounts/$accountId'
     | '/api/integrations/google/$id/accounts'
+    | '/api/bookmarks/categories/$categoryId/items/$itemId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -682,6 +744,7 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  ApiBookmarksRoute: typeof ApiBookmarksRouteWithChildren
   ApiChatRoute: typeof ApiChatRoute
   ApiConversationsRoute: typeof ApiConversationsRouteWithChildren
   ApiIntegrationsRoute: typeof ApiIntegrationsRouteWithChildren
@@ -811,6 +874,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBoardRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/agents': {
+      id: '/dashboard/agents'
+      path: '/agents'
+      fullPath: '/dashboard/agents'
+      preLoaderRoute: typeof DashboardAgentsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/api/settings': {
       id: '/api/settings'
       path: '/api/settings'
@@ -872,6 +942,13 @@ declare module '@tanstack/react-router' {
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/bookmarks': {
+      id: '/api/bookmarks'
+      path: '/api/bookmarks'
+      fullPath: '/api/bookmarks'
+      preLoaderRoute: typeof ApiBookmarksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/$': {
@@ -1000,6 +1077,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConversationsIdRouteImport
       parentRoute: typeof ApiConversationsRoute
     }
+    '/api/bookmarks/move': {
+      id: '/api/bookmarks/move'
+      path: '/move'
+      fullPath: '/api/bookmarks/move'
+      preLoaderRoute: typeof ApiBookmarksMoveRouteImport
+      parentRoute: typeof ApiBookmarksRoute
+    }
     '/api/runtimes/detect/register': {
       id: '/api/runtimes/detect/register'
       path: '/register'
@@ -1056,6 +1140,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiConversationsIdMessagesRouteImport
       parentRoute: typeof ApiConversationsIdRoute
     }
+    '/api/bookmarks/categories/$id': {
+      id: '/api/bookmarks/categories/$id'
+      path: '/categories/$id'
+      fullPath: '/api/bookmarks/categories/$id'
+      preLoaderRoute: typeof ApiBookmarksCategoriesIdRouteImport
+      parentRoute: typeof ApiBookmarksRoute
+    }
     '/api/integrations/google/$id/accounts': {
       id: '/api/integrations/google/$id/accounts'
       path: '/google/$id/accounts'
@@ -1070,10 +1161,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiIntegrationsIdAccountsAccountIdRouteImport
       parentRoute: typeof ApiIntegrationsRoute
     }
+    '/api/bookmarks/categories/$categoryId/items/$itemId': {
+      id: '/api/bookmarks/categories/$categoryId/items/$itemId'
+      path: '/categories/$categoryId/items/$itemId'
+      fullPath: '/api/bookmarks/categories/$categoryId/items/$itemId'
+      preLoaderRoute: typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRouteImport
+      parentRoute: typeof ApiBookmarksRoute
+    }
   }
 }
 
 interface DashboardRouteChildren {
+  DashboardAgentsRoute: typeof DashboardAgentsRoute
   DashboardBoardRoute: typeof DashboardBoardRoute
   DashboardBookmarksRoute: typeof DashboardBookmarksRoute
   DashboardCalendarRoute: typeof DashboardCalendarRoute
@@ -1086,6 +1185,7 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAgentsRoute: DashboardAgentsRoute,
   DashboardBoardRoute: DashboardBoardRoute,
   DashboardBookmarksRoute: DashboardBookmarksRoute,
   DashboardCalendarRoute: DashboardCalendarRoute,
@@ -1099,6 +1199,23 @@ const DashboardRouteChildren: DashboardRouteChildren = {
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
+)
+
+interface ApiBookmarksRouteChildren {
+  ApiBookmarksMoveRoute: typeof ApiBookmarksMoveRoute
+  ApiBookmarksCategoriesIdRoute: typeof ApiBookmarksCategoriesIdRoute
+  ApiBookmarksCategoriesCategoryIdItemsItemIdRoute: typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
+}
+
+const ApiBookmarksRouteChildren: ApiBookmarksRouteChildren = {
+  ApiBookmarksMoveRoute: ApiBookmarksMoveRoute,
+  ApiBookmarksCategoriesIdRoute: ApiBookmarksCategoriesIdRoute,
+  ApiBookmarksCategoriesCategoryIdItemsItemIdRoute:
+    ApiBookmarksCategoriesCategoryIdItemsItemIdRoute,
+}
+
+const ApiBookmarksRouteWithChildren = ApiBookmarksRoute._addFileChildren(
+  ApiBookmarksRouteChildren,
 )
 
 interface ApiConversationsIdRouteChildren {
@@ -1243,6 +1360,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   ApiSplatRoute: ApiSplatRoute,
+  ApiBookmarksRoute: ApiBookmarksRouteWithChildren,
   ApiChatRoute: ApiChatRoute,
   ApiConversationsRoute: ApiConversationsRouteWithChildren,
   ApiIntegrationsRoute: ApiIntegrationsRouteWithChildren,

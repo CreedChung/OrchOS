@@ -445,32 +445,31 @@ export function CreationView({
             </div>
           </div>
 
+        </div>
+
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize creation sidebar"
+          onPointerDown={handleResizeStart}
+          className={cn(
+            "group absolute right-[-8px] top-0 z-20 h-full w-4",
+            creationSidebarCollapsed && "hidden",
+            isResizingSidebar && "before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-[repeating-linear-gradient(to_bottom,theme(colors.sky.500)_0_6px,transparent_6px_12px)]",
+          )}
+        >
           <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize creation sidebar"
-            onPointerDown={handleResizeStart}
             className={cn(
-              "group absolute top-0 right-[-8px] z-20 flex h-full w-4 cursor-col-resize items-center justify-center",
-              isResizingSidebar && "before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-[repeating-linear-gradient(to_bottom,theme(colors.sky.500)_0_6px,transparent_6px_12px)]",
+              "absolute top-1/2 left-1/2 flex h-12 w-2 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-out group-hover:bg-muted group-hover:shadow-md",
+              isResizingSidebar && "border-border bg-muted shadow-md",
             )}
           >
             <div
               className={cn(
-                "flex h-12 w-2 items-center justify-center rounded-full border border-border bg-card shadow-sm transition-[background-color,border-color,transform,box-shadow,opacity] duration-150 ease-out group-hover:bg-muted group-hover:scale-100 group-hover:shadow-md",
-                isResizingSidebar
-                  ? "border-border bg-muted scale-100 shadow-md"
-                  : "scale-95",
-                !showExpandedContent && "opacity-0",
+                "h-8 w-px rounded-full bg-border transition-[background-color] duration-150 ease-out group-hover:bg-foreground/35",
+                isResizingSidebar && "opacity-0",
               )}
-            >
-              <div
-                className={cn(
-                  "h-7 w-px rounded-full bg-border transition-[height,background-color,opacity] duration-150 ease-out group-hover:h-8 group-hover:bg-foreground/35",
-                  isResizingSidebar && "opacity-0",
-                )}
-              />
-            </div>
+            />
           </div>
         </div>
       </div>
