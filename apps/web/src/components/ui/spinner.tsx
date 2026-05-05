@@ -9,9 +9,9 @@ interface SpinnerProps {
 }
 
 const sizeClasses = {
-  sm: "text-xs",
-  md: "text-sm",
-  lg: "text-base",
+  sm: "text-sm",
+  md: "text-lg",
+  lg: "text-3xl",
 };
 
 export function Spinner({ size = "md", name = "braille", className }: SpinnerProps) {

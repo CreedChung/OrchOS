@@ -485,6 +485,7 @@ export interface BookmarkItem {
   id: string;
   title: string;
   url: string;
+  pinned: boolean;
 }
 
 export interface BookmarkCategory {
@@ -1082,7 +1083,7 @@ export const api = {
   updateBookmarkItem: async (
     categoryId: string,
     itemId: string,
-    data: { title: string; url: string },
+    data: { title?: string; url?: string; pinned?: boolean },
   ): Promise<BookmarkCategory[]> => {
     const response = await fetch(resolveApiUrl(`/api/bookmarks/categories/${categoryId}/items/${itemId}`), {
       method: "PATCH",

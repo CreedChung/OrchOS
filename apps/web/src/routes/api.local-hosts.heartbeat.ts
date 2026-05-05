@@ -7,6 +7,10 @@ function getJwtKey() {
   return process.env.CLERK_JWT_KEY?.trim() ?? "";
 }
 
+function isClerkConfigured() {
+  return getJwtKey().length > 0;
+}
+
 function extractBearerToken(request: Request) {
   const authHeader = request.headers.get("Authorization")?.trim();
   if (!authHeader?.startsWith("Bearer ")) return null;
@@ -52,12 +56,12 @@ export const Route = createFileRoute("/api/local-hosts/heartbeat")({
         }
 
         const auth = await authenticateRequest(request, getJwtKey());
-        if (!auth.userId) {
+        if (!auth.userId && isClerkConfigured()) {
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         return Response.json(
-          await LocalHostService.heartbeat(await getLocalDb(), auth.userId, auth.orgId, body),
+          await LocalHostService.heartbeat(await getLocalDb(), auth.userId ?? "", auth.orgId, body),
         );
       },
     },

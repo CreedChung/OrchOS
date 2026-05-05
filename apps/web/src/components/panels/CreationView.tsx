@@ -14,7 +14,9 @@ import {
   Delete02Icon,
   Bookmark01Icon,
   Folder01Icon,
-  ComputerIcon,
+  Search01Icon,
+  GlobeIcon,
+  PinIcon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
 import { Button } from "@/components/ui/button";
@@ -54,6 +56,20 @@ const creationFilterButtons = [
   { value: "all", label: m.all(), icon: Chat01Icon, iconClassName: "text-muted-foreground/80" },
   { value: "active", label: m.creation_active(), icon: Clock01Icon, iconClassName: "text-sky-500" },
   { value: "archived", label: m.creation_archived(), icon: Archive01Icon, iconClassName: "text-amber-500" },
+] as const;
+
+const searchEngineMeta = [
+  { id: "google", url: "https://www.google.com/search?q=" },
+  { id: "bing", url: "https://www.bing.com/search?q=" },
+  { id: "duckduckgo", url: "https://duckduckgo.com/?q=" },
+  { id: "baidu", url: "https://www.baidu.com/s?wd=" },
+  { id: "sogou", url: "https://www.sogou.com/web?query=" },
+  { id: "360", url: "https://www.so.com/s?q=" },
+  { id: "yandex", url: "https://yandex.com/search/?text=" },
+  { id: "searxng", url: "https://searx.be/search?q=" },
+  { id: "startpage", url: "https://www.startpage.com/do/dsearch?query=" },
+  { id: "brave", url: "https://search.brave.com/search?q=" },
+  { id: "ecosia", url: "https://www.ecosia.org/search?q=" },
 ] as const;
 
 export function CreationView({
@@ -490,17 +506,16 @@ export function CreationView({
       <div className="relative flex flex-1 flex-col overflow-hidden">
         {creationSidebarCollapsed ? (
           <Tooltip>
-            <TooltipTrigger>
-              <Button
-                type="button"
+            <TooltipTrigger
+              render={<Button
                 variant="ghost"
                 size="icon-sm"
                 className="absolute top-1/2 left-0 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border/70 bg-card shadow-sm active:translate-x-[calc(-50%+2px)] active:!translate-y-[-50%]"
                 onClick={handleExpandSidebar}
               >
                 <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-              </Button>
-            </TooltipTrigger>
+              </Button>}
+            />
             <TooltipContent side="right">{m.expand_sidebar()}</TooltipContent>
           </Tooltip>
         ) : null}
@@ -626,13 +641,28 @@ function ChatArea({
     conversation.runtimeId,
   );
   const [bookmarks, setBookmarks] = useState<BookmarkCategory[]>([]);
-
-  useEffect(() => {
-    setDraftRuntimeId(conversation.runtimeId);
-  }, [
-    conversation.runtimeId,
-    conversation.id,
-  ]);
+  const [mode, setMode] = useState<"chat" | "search">("chat");
+  const [searchEngineId, setSearchEngineId] = useState<string>(searchEngineMeta[0].id);
+  const searchEngines = searchEngineMeta.map((e) => ({
+    ...e,
+    name: ({
+      google: m.search_engine_google(),
+      bing: m.search_engine_bing(),
+      duckduckgo: m.search_engine_duckduckgo(),
+      baidu: m.search_engine_baidu(),
+      sogou: m.search_engine_sogou(),
+      ["360"]: m.search_engine_360(),
+      yandex: m.search_engine_yandex(),
+      searxng: m.search_engine_searxng(),
+      startpage: m.search_engine_startpage(),
+      brave: m.search_engine_brave(),
+      ecosia: m.search_engine_ecosia(),
+    })[e.id],
+  }));
+  const pinnedBookmarks = useMemo(
+    () => bookmarks.flatMap((category) => category.bookmarks.filter((b) => b.pinned)),
+    [bookmarks],
+  );
 
   useEffect(() => {
     api.listBookmarks()
@@ -751,6 +781,16 @@ function ChatArea({
   const handleSend = useCallback(async () => {
     if ((!input.trim() && attachedFiles.length === 0) || sending) return;
 
+    if (mode === "search") {
+      const engine = searchEngineMeta.find((e) => e.id === searchEngineId);
+      if (engine) {
+        const query = input.trim();
+        setInput("");
+        window.open(engine.url + encodeURIComponent(query), "_blank");
+      }
+      return;
+    }
+
     if (pendingConversationUpdateRef.current) {
       await pendingConversationUpdateRef.current;
     }
@@ -779,11 +819,14 @@ function ChatArea({
     }
   }, [
     attachedFiles,
+    conversation,
     draftRuntimeId,
     input,
     isDraftConversation,
+    mode,
     onCreateConversation,
     onSendMessage,
+    searchEngineId,
     sending,
   ]);
 
@@ -853,9 +896,11 @@ function ChatArea({
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={
-                    selectedRuntime
-                      ? `Message ${selectedRuntime.name}...`
-                      : m.creation_placeholder()
+                    mode === "search"
+                      ? "Search the web..."
+                      : selectedRuntime
+                        ? `Message ${selectedRuntime.name}...`
+                        : m.creation_placeholder()
                   }
                   className="min-h-[40px] w-full resize-none bg-transparent py-1 text-sm leading-6 outline-none placeholder:text-muted-foreground"
                   rows={1}
@@ -867,15 +912,51 @@ function ChatArea({
                 />
                 <div className="relative z-20 flex items-center justify-between gap-2 pt-2 pb-0.5">
                   <div className="overflow-visible flex items-center gap-1">
-                    <RuntimeSelector
-                      runtimes={runtimes.filter((runtime) => runtime.enabled)}
-                      selectedRuntimeId={effectiveRuntimeId ?? undefined}
-                      defaultRuntimeId={defaultRuntimeId}
-                      onSelect={(runtimeId) =>
-                        queueConversationUpdate({ runtimeId })
-                      }
-                      onSetDefault={onSetDefaultRuntime}
-                    />
+                    <div className="flex items-center rounded-lg bg-muted p-0.5 gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setMode("chat")}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
+                          mode === "chat"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        <HugeiconsIcon icon={Chat01Icon} className="size-3" />
+                        Chat
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMode("search")}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
+                          mode === "search"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        <HugeiconsIcon icon={Search01Icon} className="size-3" />
+                        Search
+                      </button>
+                    </div>
+                    {mode === "chat" ? (
+                      <RuntimeSelector
+                        runtimes={runtimes.filter((runtime) => runtime.enabled)}
+                        selectedRuntimeId={effectiveRuntimeId ?? undefined}
+                        defaultRuntimeId={defaultRuntimeId}
+                        onSelect={(runtimeId) =>
+                          queueConversationUpdate({ runtimeId })
+                        }
+                        onSetDefault={onSetDefaultRuntime}
+                      />
+                    ) : (
+                      <SearchEngineSelector
+                        engines={searchEngines}
+                        selectedEngineId={searchEngineId}
+                        onSelect={setSearchEngineId}
+                      />
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <Tooltip>
@@ -931,45 +1012,70 @@ function ChatArea({
         </div>
       )}
 
-      {/* Bookmarks + Browser Windows */}
-      {messages.length === 0 && !sending && bookmarks.length > 0 && (
+      {/* Bookmarks + Browser Tabs */}
+      {messages.length === 0 && !sending && (
         <div className="flex min-h-0 flex-1 gap-4 overflow-hidden px-4 py-4 md:px-6">
-          <div className="flex min-w-0 flex-[2] flex-col gap-3 overflow-y-auto">
-            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <HugeiconsIcon icon={Bookmark01Icon} className="size-3.5" />
-              Bookmarks
-            </span>
-            <div className="flex flex-col gap-3">
-              {bookmarks.map((category) => (
-                <div key={category.id} className="flex flex-col gap-1.5">
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground/70">
-                    <HugeiconsIcon icon={Folder01Icon} className="size-3" />
-                    {category.name}
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {category.bookmarks.map((bookmark) => (
-                      <button
-                        key={bookmark.id}
-                        type="button"
-                        onClick={() => setInput(bookmark.url)}
-                        className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                      >
-                        <HugeiconsIcon icon={Bookmark01Icon} className="size-3 shrink-0" />
-                        <span className="truncate max-w-[160px]">{bookmark.title}</span>
-                      </button>
-                    ))}
+          {bookmarks.length > 0 && (
+            <div className="flex min-w-0 flex-[2] flex-col gap-3 overflow-y-auto">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <HugeiconsIcon icon={Bookmark01Icon} className="size-3.5" />
+                Bookmarks
+              </span>
+              <div className="flex flex-col gap-3">
+                {bookmarks.map((category) => (
+                  <div key={category.id} className="flex flex-col gap-1.5">
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground/70">
+                      <HugeiconsIcon icon={Folder01Icon} className="size-3" />
+                      {category.name}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {category.bookmarks.map((bookmark) => (
+                        <button
+                          key={bookmark.id}
+                          type="button"
+                          onClick={() => setInput(bookmark.url)}
+                          className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        >
+                          <HugeiconsIcon icon={Bookmark01Icon} className="size-3 shrink-0" />
+                          <span className="truncate max-w-[160px]">{bookmark.title}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <HugeiconsIcon icon={ComputerIcon} className="size-3.5" />
-              Open Windows
+              <HugeiconsIcon icon={PinIcon} className="size-3.5" />
+              {m.creation()}
             </span>
-            <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border/50 p-4">
-              <p className="text-center text-xs text-muted-foreground/60">No open windows detected</p>
+            <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+              {pinnedBookmarks.length > 0 ? (
+                pinnedBookmarks.map((bookmark) => (
+                  <button
+                    key={bookmark.id}
+                    type="button"
+                    onClick={() => setInput(bookmark.url)}
+                    className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-accent"
+                  >
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <HugeiconsIcon icon={PinIcon} className="size-3.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-xs font-medium text-foreground">{bookmark.title}</div>
+                      <div className="truncate text-[11px] text-muted-foreground">{bookmark.url}</div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border/50 p-4">
+                  <p className="text-center text-xs text-muted-foreground/60">
+                    Pin bookmarks from the Bookmarks page to see them here.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1086,6 +1192,59 @@ function RuntimeSelector({
             </DropdownMenuItem>
           );
         })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+interface SearchEngineSelectorProps {
+  engines: readonly { id: string; name: string; url: string }[];
+  selectedEngineId: string;
+  onSelect: (engineId: string) => void;
+}
+
+function SearchEngineSelector({
+  engines,
+  selectedEngineId,
+  onSelect,
+}: SearchEngineSelectorProps) {
+  const [open, setOpen] = useState(false);
+  const selectedEngine = engines.find((e) => e.id === selectedEngineId);
+
+  return (
+    <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger
+        onClick={(e) => e.stopPropagation()}
+        className="flex h-7 w-36 cursor-default items-center justify-between gap-1.5 rounded-full border border-input bg-transparent py-2 pe-2 ps-2.5 text-xs whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="inline-flex size-4 shrink-0 items-center justify-center overflow-hidden text-foreground/70">
+            <HugeiconsIcon icon={GlobeIcon} className="size-3 shrink-0" />
+          </span>
+          <span className="truncate">
+            {selectedEngine?.name || "Google"}
+          </span>
+        </span>
+        <HugeiconsIcon
+          icon={UnfoldMoreIcon}
+          className="size-3 shrink-0 text-muted-foreground"
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-(--anchor-width)">
+        {engines.map((engine) => (
+          <DropdownMenuItem
+            key={engine.id}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelect(engine.id);
+              setOpen(false);
+            }}
+            className="flex items-center gap-2"
+          >
+            <HugeiconsIcon icon={GlobeIcon} className="size-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">{engine.name}</span>
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

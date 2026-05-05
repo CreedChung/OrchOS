@@ -415,7 +415,7 @@
   "section_features": "功能",
   "section_how_it_works": "工作原理",
   "section_integrations": "集成",
-  "select_organization": "选择组织",
+  "select_organization": "选择空间",
   "selected": "已选择",
   "send": "发送",
   "send_command": "发送指令",
@@ -595,5 +595,16 @@
   "workspace": "工作区",
   "todo_list": "代办清单",
   "collapse_sidebar": "收起侧边栏",
-  "expand_sidebar": "展开侧边栏"
+  "expand_sidebar": "展开侧边栏",
+  "search_engine_google": "Google",
+  "search_engine_bing": "Bing",
+  "search_engine_duckduckgo": "DuckDuckGo",
+  "search_engine_baidu": "百度",
+  "search_engine_sogou": "搜狗",
+  "search_engine_360": "360搜索",
+  "search_engine_yandex": "Yandex",
+  "search_engine_searxng": "SearXNG",
+  "search_engine_startpage": "Startpage",
+  "search_engine_brave": "Brave Search",
+  "search_engine_ecosia": "Ecosia"
 }

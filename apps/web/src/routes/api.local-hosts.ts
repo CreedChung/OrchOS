@@ -7,6 +7,10 @@ function getJwtKey() {
   return process.env.CLERK_JWT_KEY?.trim() ?? "";
 }
 
+function isClerkConfigured() {
+  return getJwtKey().length > 0;
+}
+
 function unauthorized() {
   return Response.json({ error: "Unauthorized" }, { status: 401 });
 }
@@ -16,8 +20,8 @@ export const Route = createFileRoute("/api/local-hosts")({
     handlers: {
       GET: async ({ request }) => {
         const auth = await authenticateRequest(request, getJwtKey());
-        if (!auth.userId) return unauthorized();
-        return Response.json(await LocalHostService.listForUser(await getLocalDb(), auth.userId, auth.orgId));
+        if (!auth.userId && isClerkConfigured()) return unauthorized();
+        return Response.json(await LocalHostService.listForUser(await getLocalDb(), auth.userId ?? "", auth.orgId ?? undefined));
       },
     },
   },

@@ -419,7 +419,7 @@
   "section_features": "Features",
   "section_how_it_works": "How it works",
   "section_integrations": "Integrations",
-  "select_organization": "Select organization",
+  "select_organization": "Select space",
   "selected": "selected",
   "send": "Send",
   "send_command": "Send Command",
@@ -671,5 +671,16 @@
   "use_tls_imap": "Use TLS for IMAP",
   "devices": "Devices",
   "connect_gmail": "Connect Gmail",
-  "connect_imap_smtp": "Connect IMAP/SMTP"
+  "connect_imap_smtp": "Connect IMAP/SMTP",
+  "search_engine_google": "Google",
+  "search_engine_bing": "Bing",
+  "search_engine_duckduckgo": "DuckDuckGo",
+  "search_engine_baidu": "Baidu",
+  "search_engine_sogou": "Sogou",
+  "search_engine_360": "360 Search",
+  "search_engine_yandex": "Yandex",
+  "search_engine_searxng": "SearXNG",
+  "search_engine_startpage": "Startpage",
+  "search_engine_brave": "Brave Search",
+  "search_engine_ecosia": "Ecosia"
 }

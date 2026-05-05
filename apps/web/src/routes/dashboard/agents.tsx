@@ -17,7 +17,7 @@ export const Route = createFileRoute("/dashboard/agents")({
   component: DevicesPage,
 });
 
-export function DevicesPage() {
+function DevicesPage() {
   const { localHosts, loading } = useDashboard();
   const [pairing, setPairing] = useState<LocalHostPairingToken | null>(null);
   const [showPairingDialog, setShowPairingDialog] = useState(false);

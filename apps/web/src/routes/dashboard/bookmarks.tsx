@@ -8,12 +8,15 @@ import {
   Delete02Icon,
   Edit02Icon,
   Folder01Icon,
+  PinIcon,
+  Search01Icon,
   Upload01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
 
 import { api } from "@/lib/api";
+import { useDashboard } from "@/lib/dashboard-context";
 import { AppDialog } from "@/components/ui/app-dialog";
 import { Button } from "@/components/ui/button";
 import { RenameDialog } from "@/components/dialogs/RenameDialog";
@@ -31,6 +34,7 @@ type ImportedBookmark = {
   id: string;
   title: string;
   url: string;
+  pinned: boolean;
 };
 
 type BookmarkCategory = {
@@ -106,7 +110,8 @@ function parseBookmarkHtml(text: string) {
           id: `${slugify(heading.textContent || "category")}-${index}-${slugify(link.textContent || "bookmark")}`,
           title: link.textContent?.trim() || url,
           url,
-        } satisfies ImportedBookmark;
+          pinned: false,
+        } as ImportedBookmark;
       })
       .filter((item): item is ImportedBookmark => item !== null);
 
@@ -130,10 +135,11 @@ function parseBookmarkHtml(text: string) {
       }
 
       return {
-        id: `imported-${index}-${slugify(link.textContent || "bookmark")}`,
-        title: link.textContent?.trim() || url,
-        url,
-      } satisfies ImportedBookmark;
+          id: `imported-${index}-${slugify(link.textContent || "bookmark")}`,
+          title: link.textContent?.trim() || url,
+          url,
+          pinned: false,
+        } as ImportedBookmark;
     })
     .filter((item): item is ImportedBookmark => item !== null);
 
@@ -161,7 +167,8 @@ function parseBookmarkJson(text: string) {
           id: `imported-${index}-${slugify(String(record.title || record.name || url))}`,
           title: typeof record.title === "string" ? record.title : typeof record.name === "string" ? record.name : url,
           url,
-        } satisfies ImportedBookmark;
+          pinned: false,
+        } as ImportedBookmark;
       })
       .filter((item): item is ImportedBookmark => item !== null);
 
@@ -195,7 +202,8 @@ function parseBookmarkJson(text: string) {
           id: `${slugify(name)}-${index}-${slugify(String(record.title || record.name || url))}`,
           title: typeof record.title === "string" ? record.title : typeof record.name === "string" ? record.name : url,
           url,
-        } satisfies ImportedBookmark;
+          pinned: false,
+        } as ImportedBookmark;
       })
       .filter((item): item is ImportedBookmark => item !== null);
 
@@ -240,6 +248,7 @@ function parseBookmarkCsv(text: string) {
       id: `${slugify(category)}-${index}-${slugify(title)}`,
       title,
       url,
+      pinned: false,
     });
     grouped.set(category, existing);
   });
@@ -267,7 +276,7 @@ function BookmarksPage() {
   const [isCreateBookmarkDialogOpen, setIsCreateBookmarkDialogOpen] = useState(false);
   const [isCreateCategoryDialogOpen, setIsCreateCategoryDialogOpen] = useState(false);
   const [createCategoryName, setCreateCategoryName] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const { searchQuery } = useDashboard();
 
   useEffect(() => {
     void loadBookmarks();
@@ -463,6 +472,15 @@ function BookmarksPage() {
     event.target.value = "";
   }
 
+  const handleTogglePin = useCallback(async (categoryId: string, bookmarkId: string, currentPinned: boolean) => {
+    try {
+      const saved = await api.updateBookmarkItem(categoryId, bookmarkId, { pinned: !currentPinned });
+      setCategories(saved);
+    } catch (error) {
+      console.error("Failed to toggle pin:", error);
+    }
+  }, []);
+
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId) ?? categories[0] ?? null;
   const editingBookmark = selectedCategory?.bookmarks.find((bookmark) => bookmark.id === editingBookmarkId) ?? null;
   const filteredBookmarks = selectedCategory
@@ -590,9 +608,6 @@ function BookmarksPage() {
                             <HugeiconsIcon icon={Folder01Icon} className="size-3.5 shrink-0 text-muted-foreground" />
                             <span className="min-w-0 flex-1 truncate text-sm text-foreground">{category.name}</span>
                           </button>
-                          <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground group-hover:hidden">
-                            {category.bookmarks.length}
-                          </span>
                           <Button
                             type="button"
                             variant="ghost"
@@ -613,6 +628,9 @@ function BookmarksPage() {
                           >
                             <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                           </Button>
+                          <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground group-hover:hidden">
+                            {category.bookmarks.length}
+                          </span>
                         </div>
                       );
                     })}
@@ -672,15 +690,14 @@ function BookmarksPage() {
               </div>
             ) : selectedCategory ? (
               <>
-                <section className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card px-6 py-5 shadow-sm">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Category</div>
-                    <h1 className="mt-2 text-xl font-semibold text-foreground">{selectedCategory.name}</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {selectedCategory.bookmarks.length} imported bookmark{selectedCategory.bookmarks.length === 1 ? "" : "s"}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <h1 className="text-2xl font-semibold text-foreground truncate">{selectedCategory.name}</h1>
+                    <p className="mt-0.5 text-sm text-muted-foreground tabular-nums">
+                      {selectedCategory.bookmarks.length} bookmark{selectedCategory.bookmarks.length === 1 ? "" : "s"}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-2">
                     <Button
                       type="button"
                       onClick={() => {
@@ -693,21 +710,12 @@ function BookmarksPage() {
                     </Button>
                     <Button type="button" variant="outline" onClick={handleImportBookmarksClick}>
                       <HugeiconsIcon icon={Upload01Icon} className="size-4" />
-                      Import another file
+                      Import
                     </Button>
                   </div>
-                </section>
+                </div>
 
-                <section className="rounded-2xl border border-border bg-card px-4 py-3 shadow-sm">
-                  <input
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="Search bookmarks in this category"
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </section>
-
-                <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <section className={cn("flex-1", filteredBookmarks.length > 0 ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3" : "flex items-center justify-center")}>
                   {filteredBookmarks.length > 0 ? (
                     filteredBookmarks.map((bookmark) => (
                       <div
@@ -727,7 +735,7 @@ function BookmarksPage() {
                             return;
                           }
                         }}
-                        className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:bg-accent/30"
+                        className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:bg-accent/30 active:scale-[0.96]"
                       >
                         <div className="flex items-start gap-3">
                           <a
@@ -747,6 +755,16 @@ function BookmarksPage() {
                             </div>
                           </a>
                           <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              onClick={() => handleTogglePin(selectedCategory!.id, bookmark.id, bookmark.pinned)}
+                              className={cn(bookmark.pinned && "text-primary")}
+                              title={bookmark.pinned ? "Unpin" : "Pin to home"}
+                            >
+                              <HugeiconsIcon icon={PinIcon} className={cn("size-3.5", bookmark.pinned && "fill-primary")} />
+                            </Button>
                             <Button
                               type="button"
                               variant="ghost"
@@ -774,10 +792,27 @@ function BookmarksPage() {
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-2xl border border-dashed border-border/60 px-5 py-10 text-center text-sm text-muted-foreground md:col-span-2 xl:col-span-3">
-                      {searchQuery.trim()
-                        ? "No bookmarks match the current search."
-                        : "This category does not have any bookmarks yet."}
+                    <div className="flex justify-center md:col-span-2 xl:col-span-3">
+                      <EmptyState
+                        variant="subtle"
+                        size="lg"
+                        title={searchQuery.trim() ? "No results found" : "This category is empty"}
+                        description={searchQuery.trim() ? "No bookmarks match the current search." : "Bookmarks you add will appear here."}
+                        icons={[
+                          <HugeiconsIcon key="s1" icon={Search01Icon} className="size-6" />,
+                          <HugeiconsIcon key="s2" icon={Bookmark01Icon} className="size-6" />,
+                          <HugeiconsIcon key="s3" icon={Folder01Icon} className="size-6" />,
+                        ]}
+                        action={searchQuery.trim() ? undefined : {
+                          label: "New bookmark",
+                          icon: <HugeiconsIcon icon={Add01Icon} className="size-4" />,
+                          onClick: () => {
+                            setBookmarkDraft({ title: "", url: "" });
+                            setIsCreateBookmarkDialogOpen(true);
+                          },
+                        }}
+                        className="w-full max-w-lg"
+                      />
                     </div>
                   )}
                 </section>

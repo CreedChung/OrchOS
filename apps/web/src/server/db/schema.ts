@@ -296,6 +296,7 @@ export const bookmarks = sqliteTable(
       .references(() => bookmarkCategories.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     url: text("url").notNull(),
+    pinned: text("pinned").notNull().default("false"),
     sortOrder: text("sort_order").notNull().default("0"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),

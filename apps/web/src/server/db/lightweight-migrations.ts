@@ -136,4 +136,8 @@ export function runLightweightMigrations(db: AppDb) {
     exec("CREATE INDEX \"idx_bookmarks_category_id\" ON \"bookmarks\" (\"category_id\")");
     exec("CREATE INDEX \"idx_bookmarks_sort_order\" ON \"bookmarks\" (\"sort_order\")");
   }
+
+  if (hasTable("bookmarks") && !hasColumn("bookmarks", "pinned")) {
+    exec("ALTER TABLE bookmarks ADD COLUMN pinned TEXT NOT NULL DEFAULT 'false'");
+  }
 }

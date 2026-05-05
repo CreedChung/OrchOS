@@ -7,17 +7,21 @@ function getJwtKey() {
   return process.env.CLERK_JWT_KEY?.trim() ?? "";
 }
 
+function isClerkConfigured() {
+  return getJwtKey().length > 0;
+}
+
 export const Route = createFileRoute("/api/local-hosts/pairing-tokens")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const auth = await authenticateRequest(request, getJwtKey());
-        if (!auth.userId) {
+        if (!auth.userId && isClerkConfigured()) {
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         return Response.json(
-          await LocalHostService.createPairingToken(await getLocalDb(), auth.userId, auth.orgId),
+          await LocalHostService.createPairingToken(await getLocalDb(), auth.userId ?? "", auth.orgId),
         );
       },
     },

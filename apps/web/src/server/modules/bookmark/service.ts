@@ -7,6 +7,7 @@ type BookmarkItem = {
   id: string;
   title: string;
   url: string;
+  pinned: boolean;
 };
 
 export type BookmarkCategoryRecord = {
@@ -33,6 +34,7 @@ export abstract class BookmarkService {
           id: bookmark.id,
           title: bookmark.title,
           url: bookmark.url,
+          pinned: bookmark.pinned === "true",
         })),
     }));
   }
@@ -60,6 +62,7 @@ export abstract class BookmarkService {
           categoryId: category.id,
           title: bookmark.title,
           url: bookmark.url,
+          pinned: bookmark.pinned ? "true" : "false",
           sortOrder: String(bookmarkIndex),
           createdAt: now,
           updatedAt: now,
@@ -97,7 +100,7 @@ export abstract class BookmarkService {
     );
   }
 
-  static async updateBookmark(db: AppDb, categoryId: string, bookmarkId: string, data: { title: string; url: string }) {
+  static async updateBookmark(db: AppDb, categoryId: string, bookmarkId: string, data: { title?: string; url?: string; pinned?: boolean }) {
     const categories = await BookmarkService.list(db);
     return BookmarkService.replaceAll(
       db,
@@ -106,7 +109,7 @@ export abstract class BookmarkService {
           ? {
               ...category,
               bookmarks: category.bookmarks.map((bookmark) =>
-                bookmark.id === bookmarkId ? { ...bookmark, title: data.title, url: data.url } : bookmark,
+                bookmark.id === bookmarkId ? { ...bookmark, ...data } : bookmark,
               ),
             }
           : category,
@@ -128,6 +131,7 @@ export abstract class BookmarkService {
                   id: generateId("bookmark"),
                   title: data.title,
                   url: data.url,
+                  pinned: false,
                 },
               ],
             }

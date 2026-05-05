@@ -12,6 +12,8 @@ import { CreateBoardConversationDialog } from "@/components/dialogs/CreateBoardC
 import { I18nProvider } from "@/lib/i18n-provider";
 import { useUIStore } from "@/lib/store";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
+import { Search01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { AuthTransitionOverlay } from "@/components/ui/auth-transition-overlay";
 import { Spinner } from "@/components/ui/spinner";
@@ -281,8 +283,20 @@ function DashboardLayout() {
                       setSettingsDefaultTab("mail");
                       setShowSettingsDialog(true);
                     }}
-                   onRefresh={refreshAll}
-                />
+                    onRefresh={refreshAll}
+                >
+                  {activeView === "bookmarks" && (
+                    <div className="relative mx-auto w-full max-w-md">
+                      <HugeiconsIcon icon={Search01Icon} className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search bookmarks..."
+                        className="w-full rounded-lg border border-border bg-background py-1.5 pl-9 pr-3 text-sm text-foreground outline-none transition-[border-color,box-shadow] focus:border-ring/50 focus:ring-2 focus:ring-ring/20"
+                      />
+                    </div>
+                  )}
+                </Toolbar>
                 <Outlet />
               </div>
             </div>
