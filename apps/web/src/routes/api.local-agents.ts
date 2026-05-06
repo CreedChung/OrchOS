@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateRequest } from "@/server/auth/request-auth";
-import { LocalHostService } from "@/server/modules/local-hosts/service";
+import { LocalAgentService } from "@/server/modules/local-agents/service";
 import { getLocalDb } from "@/server/runtime/local-db";
 
 function getJwtKey() {
@@ -15,13 +15,13 @@ function unauthorized() {
   return Response.json({ error: "Unauthorized" }, { status: 401 });
 }
 
-export const Route = createFileRoute("/api/local-hosts")({
+export const Route = createFileRoute("/api/local-agents")({
   server: {
     handlers: {
       GET: async ({ request }) => {
         const auth = await authenticateRequest(request, getJwtKey());
         if (!auth.userId && isClerkConfigured()) return unauthorized();
-        return Response.json(await LocalHostService.listForUser(await getLocalDb(), auth.userId ?? "", auth.orgId ?? undefined));
+        return Response.json(await LocalAgentService.listForUser(await getLocalDb(), auth.userId ?? "", auth.orgId ?? undefined));
       },
     },
   },

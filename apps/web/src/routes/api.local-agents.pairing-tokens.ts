@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateRequest } from "@/server/auth/request-auth";
-import { LocalHostService } from "@/server/modules/local-hosts/service";
+import { LocalAgentService } from "@/server/modules/local-agents/service";
 import { getLocalDb } from "@/server/runtime/local-db";
 
 function getJwtKey() {
@@ -11,7 +11,7 @@ function isClerkConfigured() {
   return getJwtKey().length > 0;
 }
 
-export const Route = createFileRoute("/api/local-hosts/pairing-tokens")({
+export const Route = createFileRoute("/api/local-agents/pairing-tokens")({
   server: {
     handlers: {
       POST: async ({ request }) => {
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/api/local-hosts/pairing-tokens")({
         }
 
         return Response.json(
-          await LocalHostService.createPairingToken(await getLocalDb(), auth.userId ?? "", auth.orgId),
+          await LocalAgentService.createPairingToken(await getLocalDb(), auth.userId ?? "", auth.orgId),
         );
       },
     },

@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import type { AppDb } from "../../db/types";
-import { localHostPairings, localHosts } from "../../db/schema";
+import { localAgentPairings, localAgents } from "../../db/schema";
 import { generateId, timestamp } from "../../utils";
 import type { DetectedRuntime } from "../../runtime/execution-adapter";
 
@@ -19,7 +19,7 @@ async function sha256(input: string) {
     .join("");
 }
 
-export interface LocalHostProfile {
+export interface LocalAgentProfile {
   id: string;
   userId: string;
   organizationId?: string;
@@ -34,12 +34,12 @@ export interface LocalHostProfile {
   lastSeenAt: string;
 }
 
-export abstract class LocalHostService {
+export abstract class LocalAgentService {
   static async listForUser(db: AppDb, userId: string, organizationId?: string | null) {
-    const rows = await db.select().from(localHosts).where(eq(localHosts.userId, userId)).orderBy(desc(localHosts.lastSeenAt)).all();
+    const rows = await db.select().from(localAgents).where(eq(localAgents.userId, userId)).orderBy(desc(localAgents.lastSeenAt)).all();
     return rows
       .filter((row) => !organizationId || row.organizationId === organizationId)
-      .map((row) => LocalHostService.mapRow(row));
+      .map((row) => LocalAgentService.mapRow(row));
   }
 
   static async heartbeat(
@@ -58,15 +58,15 @@ export abstract class LocalHostService {
     const now = timestamp();
     const existing = await db
       .select()
-      .from(localHosts)
-      .where(and(eq(localHosts.userId, userId), eq(localHosts.deviceId, payload.deviceId)))
+      .from(localAgents)
+      .where(and(eq(localAgents.userId, userId), eq(localAgents.deviceId, payload.deviceId)))
       .get();
 
     if (!existing) {
       const id = generateId("host");
       const hostToken = createToken("orchos_host");
       const hostTokenHash = await sha256(hostToken);
-      await db.insert(localHosts).values({
+      await db.insert(localAgents).values({
         id,
         userId,
         organizationId: organizationId || null,
@@ -82,11 +82,11 @@ export abstract class LocalHostService {
         lastSeenAt: now,
       }).run();
 
-      const created = await db.select().from(localHosts).where(eq(localHosts.id, id)).get();
-      return LocalHostService.mapRow(created!);
+      const created = await db.select().from(localAgents).where(eq(localAgents.id, id)).get();
+      return LocalAgentService.mapRow(created!);
     }
 
-    await db.update(localHosts).set({
+    await db.update(localAgents).set({
       organizationId: organizationId || null,
       name: payload.name,
       platform: payload.platform || null,
@@ -95,17 +95,17 @@ export abstract class LocalHostService {
       runtimes: JSON.stringify(payload.runtimes),
       metadata: JSON.stringify(payload.metadata || {}),
       lastSeenAt: now,
-    }).where(eq(localHosts.id, existing.id)).run();
+    }).where(eq(localAgents.id, existing.id)).run();
 
-    const updated = await db.select().from(localHosts).where(eq(localHosts.id, existing.id)).get();
-    return LocalHostService.mapRow(updated!);
+    const updated = await db.select().from(localAgents).where(eq(localAgents.id, existing.id)).get();
+    return LocalAgentService.mapRow(updated!);
   }
 
   static async createPairingToken(db: AppDb, userId: string, organizationId: string | null) {
     const createdAt = timestamp();
     const expiresAt = new Date(Date.now() + PAIRING_TTL_MS).toISOString();
     const token = createToken("orchos_pair");
-    await db.insert(localHostPairings).values({
+    await db.insert(localAgentPairings).values({
       id: generateId("pair"),
       token,
       userId,
@@ -117,7 +117,7 @@ export abstract class LocalHostService {
     return { pairingToken: token, expiresAt };
   }
 
-  static async pairHost(
+  static async pairAgent(
     db: AppDb,
     payload: {
       pairingToken: string;
@@ -128,7 +128,7 @@ export abstract class LocalHostService {
       metadata?: Record<string, string>;
     },
   ) {
-    const pairing = await db.select().from(localHostPairings).where(eq(localHostPairings.token, payload.pairingToken)).get();
+    const pairing = await db.select().from(localAgentPairings).where(eq(localAgentPairings.token, payload.pairingToken)).get();
     if (!pairing) {
       throw new Error("Invalid pairing token");
     }
@@ -141,8 +141,8 @@ export abstract class LocalHostService {
 
     const existing = await db
       .select()
-      .from(localHosts)
-      .where(and(eq(localHosts.userId, pairing.userId), eq(localHosts.deviceId, payload.deviceId)))
+      .from(localAgents)
+      .where(and(eq(localAgents.userId, pairing.userId), eq(localAgents.deviceId, payload.deviceId)))
       .get();
 
     const hostToken = createToken("orchos_host");
@@ -151,7 +151,7 @@ export abstract class LocalHostService {
 
     if (!existing) {
       const hostId = generateId("host");
-      await db.insert(localHosts).values({
+      await db.insert(localAgents).values({
         id: hostId,
         userId: pairing.userId,
         organizationId: pairing.organizationId || null,
@@ -167,7 +167,7 @@ export abstract class LocalHostService {
         lastSeenAt: now,
       }).run();
     } else {
-      await db.update(localHosts).set({
+      await db.update(localAgents).set({
         organizationId: pairing.organizationId || null,
         name: payload.name,
         hostToken: hostTokenHash,
@@ -176,28 +176,28 @@ export abstract class LocalHostService {
         status: "online",
         metadata: JSON.stringify(payload.metadata || {}),
         lastSeenAt: now,
-      }).where(eq(localHosts.id, existing.id)).run();
+      }).where(eq(localAgents.id, existing.id)).run();
     }
 
-    await db.update(localHostPairings).set({ usedAt: now }).where(eq(localHostPairings.id, pairing.id)).run();
+    await db.update(localAgentPairings).set({ usedAt: now }).where(eq(localAgentPairings.id, pairing.id)).run();
 
     const host = await db
       .select()
-      .from(localHosts)
-      .where(and(eq(localHosts.userId, pairing.userId), eq(localHosts.deviceId, payload.deviceId)))
+      .from(localAgents)
+      .where(and(eq(localAgents.userId, pairing.userId), eq(localAgents.deviceId, payload.deviceId)))
       .get();
 
-    return { hostToken, host: LocalHostService.mapRow(host!) };
+    return { hostToken, host: LocalAgentService.mapRow(host!) };
   }
 
   static async getByHostToken(db: AppDb, hostToken: string) {
     const tokenHash = await sha256(hostToken);
-    const row = await db.select().from(localHosts).where(eq(localHosts.hostToken, tokenHash)).get();
+    const row = await db.select().from(localAgents).where(eq(localAgents.hostToken, tokenHash)).get();
     if (!row) return undefined;
     return row;
   }
 
-  static async heartbeatForHostToken(
+  static async heartbeatForAgentToken(
     db: AppDb,
     hostToken: string,
     payload: {
@@ -209,7 +209,7 @@ export abstract class LocalHostService {
       metadata?: Record<string, string>;
     },
   ) {
-    const host = await LocalHostService.getByHostToken(db, hostToken);
+    const host = await LocalAgentService.getByHostToken(db, hostToken);
     if (!host) {
       throw new Error("Invalid host token");
     }
@@ -218,10 +218,10 @@ export abstract class LocalHostService {
       throw new Error("Host token does not match device");
     }
 
-    return LocalHostService.heartbeat(db, host.userId, host.organizationId, payload);
+    return LocalAgentService.heartbeat(db, host.userId, host.organizationId, payload);
   }
 
-  static mapRow(row: typeof localHosts.$inferSelect): LocalHostProfile {
+  static mapRow(row: typeof localAgents.$inferSelect): LocalAgentProfile {
     const lastSeenAt = row.lastSeenAt;
     const lastSeenTime = Date.parse(lastSeenAt);
     const isStale = Number.isNaN(lastSeenTime) || Date.now() - lastSeenTime > LOCAL_HOST_STALE_MS;

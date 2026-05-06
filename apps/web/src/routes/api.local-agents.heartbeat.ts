@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateRequest } from "@/server/auth/request-auth";
-import { LocalHostService } from "@/server/modules/local-hosts/service";
+import { LocalAgentService } from "@/server/modules/local-agents/service";
 import { getLocalDb } from "@/server/runtime/local-db";
 
 function getJwtKey() {
@@ -17,7 +17,7 @@ function extractBearerToken(request: Request) {
   return authHeader.slice(7).trim() || null;
 }
 
-export const Route = createFileRoute("/api/local-hosts/heartbeat")({
+export const Route = createFileRoute("/api/local-agents/heartbeat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/api/local-hosts/heartbeat")({
         if (hostToken?.startsWith("orchos_host_")) {
           try {
             return Response.json(
-              await LocalHostService.heartbeatForHostToken(await getLocalDb(), hostToken, body),
+              await LocalAgentService.heartbeatForAgentToken(await getLocalDb(), hostToken, body),
             );
           } catch (error) {
             return Response.json(
@@ -61,7 +61,7 @@ export const Route = createFileRoute("/api/local-hosts/heartbeat")({
         }
 
         return Response.json(
-          await LocalHostService.heartbeat(await getLocalDb(), auth.userId ?? "", auth.orgId, body),
+          await LocalAgentService.heartbeat(await getLocalDb(), auth.userId ?? "", auth.orgId, body),
         );
       },
     },

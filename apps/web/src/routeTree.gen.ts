@@ -30,7 +30,7 @@ import { Route as ApiRuntimesRouteImport } from './routes/api.runtimes'
 import { Route as ApiProjectsRouteImport } from './routes/api.projects'
 import { Route as ApiProblemsRouteImport } from './routes/api.problems'
 import { Route as ApiOrganizationsRouteImport } from './routes/api.organizations'
-import { Route as ApiLocalHostsRouteImport } from './routes/api.local-hosts'
+import { Route as ApiLocalAgentsRouteImport } from './routes/api.local-agents'
 import { Route as ApiIntegrationsRouteImport } from './routes/api.integrations'
 import { Route as ApiCustomAgentsRouteImport } from './routes/api.custom-agents'
 import { Route as ApiConversationsRouteImport } from './routes/api.conversations'
@@ -47,9 +47,9 @@ import { Route as ApiProblemsIdRouteImport } from './routes/api.problems.$id'
 import { Route as ApiOrganizationsIdRouteImport } from './routes/api.organizations.$id'
 import { Route as ApiObservabilityThroughputRouteImport } from './routes/api.observability.throughput'
 import { Route as ApiObservabilityMetricsRouteImport } from './routes/api.observability.metrics'
-import { Route as ApiLocalHostsPairingTokensRouteImport } from './routes/api.local-hosts.pairing-tokens'
-import { Route as ApiLocalHostsPairRouteImport } from './routes/api.local-hosts.pair'
-import { Route as ApiLocalHostsHeartbeatRouteImport } from './routes/api.local-hosts.heartbeat'
+import { Route as ApiLocalAgentsPairingTokensRouteImport } from './routes/api.local-agents.pairing-tokens'
+import { Route as ApiLocalAgentsPairRouteImport } from './routes/api.local-agents.pair'
+import { Route as ApiLocalAgentsHeartbeatRouteImport } from './routes/api.local-agents.heartbeat'
 import { Route as ApiInboxThreadsRouteImport } from './routes/api.inbox.threads'
 import { Route as ApiFilesystemFileRouteImport } from './routes/api.filesystem.file'
 import { Route as ApiFilesystemBrowseRouteImport } from './routes/api.filesystem.browse'
@@ -177,9 +177,9 @@ const ApiOrganizationsRoute = ApiOrganizationsRouteImport.update({
   path: '/api/organizations',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiLocalHostsRoute = ApiLocalHostsRouteImport.update({
-  id: '/api/local-hosts',
-  path: '/api/local-hosts',
+const ApiLocalAgentsRoute = ApiLocalAgentsRouteImport.update({
+  id: '/api/local-agents',
+  path: '/api/local-agents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiIntegrationsRoute = ApiIntegrationsRouteImport.update({
@@ -263,21 +263,21 @@ const ApiObservabilityMetricsRoute = ApiObservabilityMetricsRouteImport.update({
   path: '/api/observability/metrics',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiLocalHostsPairingTokensRoute =
-  ApiLocalHostsPairingTokensRouteImport.update({
+const ApiLocalAgentsPairingTokensRoute =
+  ApiLocalAgentsPairingTokensRouteImport.update({
     id: '/pairing-tokens',
     path: '/pairing-tokens',
-    getParentRoute: () => ApiLocalHostsRoute,
+    getParentRoute: () => ApiLocalAgentsRoute,
   } as any)
-const ApiLocalHostsPairRoute = ApiLocalHostsPairRouteImport.update({
+const ApiLocalAgentsPairRoute = ApiLocalAgentsPairRouteImport.update({
   id: '/pair',
   path: '/pair',
-  getParentRoute: () => ApiLocalHostsRoute,
+  getParentRoute: () => ApiLocalAgentsRoute,
 } as any)
-const ApiLocalHostsHeartbeatRoute = ApiLocalHostsHeartbeatRouteImport.update({
+const ApiLocalAgentsHeartbeatRoute = ApiLocalAgentsHeartbeatRouteImport.update({
   id: '/heartbeat',
   path: '/heartbeat',
-  getParentRoute: () => ApiLocalHostsRoute,
+  getParentRoute: () => ApiLocalAgentsRoute,
 } as any)
 const ApiInboxThreadsRoute = ApiInboxThreadsRouteImport.update({
   id: '/api/inbox/threads',
@@ -412,7 +412,7 @@ export interface FileRoutesByFullPath {
   '/api/conversations': typeof ApiConversationsRouteWithChildren
   '/api/custom-agents': typeof ApiCustomAgentsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
-  '/api/local-hosts': typeof ApiLocalHostsRouteWithChildren
+  '/api/local-agents': typeof ApiLocalAgentsRouteWithChildren
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
   '/api/problems': typeof ApiProblemsRouteWithChildren
   '/api/projects': typeof ApiProjectsRouteWithChildren
@@ -434,9 +434,9 @@ export interface FileRoutesByFullPath {
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
   '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
-  '/api/local-hosts/heartbeat': typeof ApiLocalHostsHeartbeatRoute
-  '/api/local-hosts/pair': typeof ApiLocalHostsPairRoute
-  '/api/local-hosts/pairing-tokens': typeof ApiLocalHostsPairingTokensRoute
+  '/api/local-agents/heartbeat': typeof ApiLocalAgentsHeartbeatRoute
+  '/api/local-agents/pair': typeof ApiLocalAgentsPairRoute
+  '/api/local-agents/pairing-tokens': typeof ApiLocalAgentsPairingTokensRoute
   '/api/observability/metrics': typeof ApiObservabilityMetricsRoute
   '/api/observability/throughput': typeof ApiObservabilityThroughputRoute
   '/api/organizations/$id': typeof ApiOrganizationsIdRoute
@@ -475,7 +475,7 @@ export interface FileRoutesByTo {
   '/api/conversations': typeof ApiConversationsRouteWithChildren
   '/api/custom-agents': typeof ApiCustomAgentsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
-  '/api/local-hosts': typeof ApiLocalHostsRouteWithChildren
+  '/api/local-agents': typeof ApiLocalAgentsRouteWithChildren
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
   '/api/problems': typeof ApiProblemsRouteWithChildren
   '/api/projects': typeof ApiProjectsRouteWithChildren
@@ -497,9 +497,9 @@ export interface FileRoutesByTo {
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
   '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
-  '/api/local-hosts/heartbeat': typeof ApiLocalHostsHeartbeatRoute
-  '/api/local-hosts/pair': typeof ApiLocalHostsPairRoute
-  '/api/local-hosts/pairing-tokens': typeof ApiLocalHostsPairingTokensRoute
+  '/api/local-agents/heartbeat': typeof ApiLocalAgentsHeartbeatRoute
+  '/api/local-agents/pair': typeof ApiLocalAgentsPairRoute
+  '/api/local-agents/pairing-tokens': typeof ApiLocalAgentsPairingTokensRoute
   '/api/observability/metrics': typeof ApiObservabilityMetricsRoute
   '/api/observability/throughput': typeof ApiObservabilityThroughputRoute
   '/api/organizations/$id': typeof ApiOrganizationsIdRoute
@@ -540,7 +540,7 @@ export interface FileRoutesById {
   '/api/conversations': typeof ApiConversationsRouteWithChildren
   '/api/custom-agents': typeof ApiCustomAgentsRouteWithChildren
   '/api/integrations': typeof ApiIntegrationsRouteWithChildren
-  '/api/local-hosts': typeof ApiLocalHostsRouteWithChildren
+  '/api/local-agents': typeof ApiLocalAgentsRouteWithChildren
   '/api/organizations': typeof ApiOrganizationsRouteWithChildren
   '/api/problems': typeof ApiProblemsRouteWithChildren
   '/api/projects': typeof ApiProjectsRouteWithChildren
@@ -562,9 +562,9 @@ export interface FileRoutesById {
   '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
   '/api/filesystem/file': typeof ApiFilesystemFileRoute
   '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
-  '/api/local-hosts/heartbeat': typeof ApiLocalHostsHeartbeatRoute
-  '/api/local-hosts/pair': typeof ApiLocalHostsPairRoute
-  '/api/local-hosts/pairing-tokens': typeof ApiLocalHostsPairingTokensRoute
+  '/api/local-agents/heartbeat': typeof ApiLocalAgentsHeartbeatRoute
+  '/api/local-agents/pair': typeof ApiLocalAgentsPairRoute
+  '/api/local-agents/pairing-tokens': typeof ApiLocalAgentsPairingTokensRoute
   '/api/observability/metrics': typeof ApiObservabilityMetricsRoute
   '/api/observability/throughput': typeof ApiObservabilityThroughputRoute
   '/api/organizations/$id': typeof ApiOrganizationsIdRoute
@@ -606,7 +606,7 @@ export interface FileRouteTypes {
     | '/api/conversations'
     | '/api/custom-agents'
     | '/api/integrations'
-    | '/api/local-hosts'
+    | '/api/local-agents'
     | '/api/organizations'
     | '/api/problems'
     | '/api/projects'
@@ -628,9 +628,9 @@ export interface FileRouteTypes {
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
     | '/api/inbox/threads'
-    | '/api/local-hosts/heartbeat'
-    | '/api/local-hosts/pair'
-    | '/api/local-hosts/pairing-tokens'
+    | '/api/local-agents/heartbeat'
+    | '/api/local-agents/pair'
+    | '/api/local-agents/pairing-tokens'
     | '/api/observability/metrics'
     | '/api/observability/throughput'
     | '/api/organizations/$id'
@@ -669,7 +669,7 @@ export interface FileRouteTypes {
     | '/api/conversations'
     | '/api/custom-agents'
     | '/api/integrations'
-    | '/api/local-hosts'
+    | '/api/local-agents'
     | '/api/organizations'
     | '/api/problems'
     | '/api/projects'
@@ -691,9 +691,9 @@ export interface FileRouteTypes {
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
     | '/api/inbox/threads'
-    | '/api/local-hosts/heartbeat'
-    | '/api/local-hosts/pair'
-    | '/api/local-hosts/pairing-tokens'
+    | '/api/local-agents/heartbeat'
+    | '/api/local-agents/pair'
+    | '/api/local-agents/pairing-tokens'
     | '/api/observability/metrics'
     | '/api/observability/throughput'
     | '/api/organizations/$id'
@@ -733,7 +733,7 @@ export interface FileRouteTypes {
     | '/api/conversations'
     | '/api/custom-agents'
     | '/api/integrations'
-    | '/api/local-hosts'
+    | '/api/local-agents'
     | '/api/organizations'
     | '/api/problems'
     | '/api/projects'
@@ -755,9 +755,9 @@ export interface FileRouteTypes {
     | '/api/filesystem/browse'
     | '/api/filesystem/file'
     | '/api/inbox/threads'
-    | '/api/local-hosts/heartbeat'
-    | '/api/local-hosts/pair'
-    | '/api/local-hosts/pairing-tokens'
+    | '/api/local-agents/heartbeat'
+    | '/api/local-agents/pair'
+    | '/api/local-agents/pairing-tokens'
     | '/api/observability/metrics'
     | '/api/observability/throughput'
     | '/api/organizations/$id'
@@ -798,7 +798,7 @@ export interface RootRouteChildren {
   ApiConversationsRoute: typeof ApiConversationsRouteWithChildren
   ApiCustomAgentsRoute: typeof ApiCustomAgentsRouteWithChildren
   ApiIntegrationsRoute: typeof ApiIntegrationsRouteWithChildren
-  ApiLocalHostsRoute: typeof ApiLocalHostsRouteWithChildren
+  ApiLocalAgentsRoute: typeof ApiLocalAgentsRouteWithChildren
   ApiOrganizationsRoute: typeof ApiOrganizationsRouteWithChildren
   ApiProblemsRoute: typeof ApiProblemsRouteWithChildren
   ApiProjectsRoute: typeof ApiProjectsRouteWithChildren
@@ -960,11 +960,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOrganizationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/local-hosts': {
-      id: '/api/local-hosts'
-      path: '/api/local-hosts'
-      fullPath: '/api/local-hosts'
-      preLoaderRoute: typeof ApiLocalHostsRouteImport
+    '/api/local-agents': {
+      id: '/api/local-agents'
+      path: '/api/local-agents'
+      fullPath: '/api/local-agents'
+      preLoaderRoute: typeof ApiLocalAgentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/integrations': {
@@ -1079,26 +1079,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiObservabilityMetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/local-hosts/pairing-tokens': {
-      id: '/api/local-hosts/pairing-tokens'
+    '/api/local-agents/pairing-tokens': {
+      id: '/api/local-agents/pairing-tokens'
       path: '/pairing-tokens'
-      fullPath: '/api/local-hosts/pairing-tokens'
-      preLoaderRoute: typeof ApiLocalHostsPairingTokensRouteImport
-      parentRoute: typeof ApiLocalHostsRoute
+      fullPath: '/api/local-agents/pairing-tokens'
+      preLoaderRoute: typeof ApiLocalAgentsPairingTokensRouteImport
+      parentRoute: typeof ApiLocalAgentsRoute
     }
-    '/api/local-hosts/pair': {
-      id: '/api/local-hosts/pair'
+    '/api/local-agents/pair': {
+      id: '/api/local-agents/pair'
       path: '/pair'
-      fullPath: '/api/local-hosts/pair'
-      preLoaderRoute: typeof ApiLocalHostsPairRouteImport
-      parentRoute: typeof ApiLocalHostsRoute
+      fullPath: '/api/local-agents/pair'
+      preLoaderRoute: typeof ApiLocalAgentsPairRouteImport
+      parentRoute: typeof ApiLocalAgentsRoute
     }
-    '/api/local-hosts/heartbeat': {
-      id: '/api/local-hosts/heartbeat'
+    '/api/local-agents/heartbeat': {
+      id: '/api/local-agents/heartbeat'
       path: '/heartbeat'
-      fullPath: '/api/local-hosts/heartbeat'
-      preLoaderRoute: typeof ApiLocalHostsHeartbeatRouteImport
-      parentRoute: typeof ApiLocalHostsRoute
+      fullPath: '/api/local-agents/heartbeat'
+      preLoaderRoute: typeof ApiLocalAgentsHeartbeatRouteImport
+      parentRoute: typeof ApiLocalAgentsRoute
     }
     '/api/inbox/threads': {
       id: '/api/inbox/threads'
@@ -1352,20 +1352,20 @@ const ApiIntegrationsRouteWithChildren = ApiIntegrationsRoute._addFileChildren(
   ApiIntegrationsRouteChildren,
 )
 
-interface ApiLocalHostsRouteChildren {
-  ApiLocalHostsHeartbeatRoute: typeof ApiLocalHostsHeartbeatRoute
-  ApiLocalHostsPairRoute: typeof ApiLocalHostsPairRoute
-  ApiLocalHostsPairingTokensRoute: typeof ApiLocalHostsPairingTokensRoute
+interface ApiLocalAgentsRouteChildren {
+  ApiLocalAgentsHeartbeatRoute: typeof ApiLocalAgentsHeartbeatRoute
+  ApiLocalAgentsPairRoute: typeof ApiLocalAgentsPairRoute
+  ApiLocalAgentsPairingTokensRoute: typeof ApiLocalAgentsPairingTokensRoute
 }
 
-const ApiLocalHostsRouteChildren: ApiLocalHostsRouteChildren = {
-  ApiLocalHostsHeartbeatRoute: ApiLocalHostsHeartbeatRoute,
-  ApiLocalHostsPairRoute: ApiLocalHostsPairRoute,
-  ApiLocalHostsPairingTokensRoute: ApiLocalHostsPairingTokensRoute,
+const ApiLocalAgentsRouteChildren: ApiLocalAgentsRouteChildren = {
+  ApiLocalAgentsHeartbeatRoute: ApiLocalAgentsHeartbeatRoute,
+  ApiLocalAgentsPairRoute: ApiLocalAgentsPairRoute,
+  ApiLocalAgentsPairingTokensRoute: ApiLocalAgentsPairingTokensRoute,
 }
 
-const ApiLocalHostsRouteWithChildren = ApiLocalHostsRoute._addFileChildren(
-  ApiLocalHostsRouteChildren,
+const ApiLocalAgentsRouteWithChildren = ApiLocalAgentsRoute._addFileChildren(
+  ApiLocalAgentsRouteChildren,
 )
 
 interface ApiOrganizationsRouteChildren {
@@ -1477,7 +1477,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiConversationsRoute: ApiConversationsRouteWithChildren,
   ApiCustomAgentsRoute: ApiCustomAgentsRouteWithChildren,
   ApiIntegrationsRoute: ApiIntegrationsRouteWithChildren,
-  ApiLocalHostsRoute: ApiLocalHostsRouteWithChildren,
+  ApiLocalAgentsRoute: ApiLocalAgentsRouteWithChildren,
   ApiOrganizationsRoute: ApiOrganizationsRouteWithChildren,
   ApiProblemsRoute: ApiProblemsRouteWithChildren,
   ApiProjectsRoute: ApiProjectsRouteWithChildren,

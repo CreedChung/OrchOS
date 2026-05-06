@@ -480,11 +480,11 @@ export function SettingsDialog({
               {tabDefs.find((t) => t.id === activeTab)?.labelKey()}
             </h2>
             <Tooltip>
-              <TooltipTrigger>
-                <Button variant="ghost" size="icon-sm" onClick={onClose}>
+              <TooltipTrigger
+                render={<Button variant="ghost" size="icon-sm" onClick={onClose}>
                   <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
-                </Button>
-              </TooltipTrigger>
+                </Button>}
+              />
               <TooltipContent side="top">Close</TooltipContent>
             </Tooltip>
           </div>
@@ -876,19 +876,19 @@ export function SettingsDialog({
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <Tooltip>
-                                    <TooltipTrigger>
-                                      <Button variant="ghost" size="icon-xs" onClick={() => handleEditMailAccount(integration.id, account)}>
+                                    <TooltipTrigger
+                                      render={<Button variant="ghost" size="icon-xs" onClick={() => handleEditMailAccount(integration.id, account)}>
                                         <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
+                                      </Button>}
+                                    />
                                     <TooltipContent side="top">Edit</TooltipContent>
                                   </Tooltip>
                                   <Tooltip>
-                                    <TooltipTrigger>
-                                      <Button variant="ghost" size="icon-xs" onClick={() => handleDeleteMailAccount(integration.id, account.id)}>
+                                    <TooltipTrigger
+                                      render={<Button variant="ghost" size="icon-xs" onClick={() => handleDeleteMailAccount(integration.id, account.id)}>
                                         <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
-                                      </Button>
-                                    </TooltipTrigger>
+                                      </Button>}
+                                    />
                                     <TooltipContent side="top">Remove</TooltipContent>
                                   </Tooltip>
                                 </div>

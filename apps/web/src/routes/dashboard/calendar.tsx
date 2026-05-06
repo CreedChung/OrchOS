@@ -22,6 +22,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { Textarea } from "@/components/ui/textarea";
 import { api, type Integration } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useUIStore } from "@/lib/store";
 import { m } from "@/paraglide/messages";
 
 type CalendarIntegrationAccount = {
@@ -115,6 +116,8 @@ function CalendarPage() {
   const [localStore, setLocalStore] = useState<LocalCalendarStore>(createInitialLocalCalendarStore);
   const [selectedLocalDate, setSelectedLocalDate] = useState(() => formatDayKey(new Date()));
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()));
+  const calendarViewMode = useUIStore((s) => s.calendarViewMode);
+  const viewMode = calendarViewMode;
   const [localGroupForm, setLocalGroupForm] = useState<LocalGroupFormState>({ id: null, name: "" });
   const [localCalendarForm, setLocalCalendarForm] = useState<LocalCalendarFormState>({
     id: null,
@@ -936,96 +939,154 @@ function CalendarPage() {
 
                       <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
                         <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <div className="text-sm font-medium text-muted-foreground">Month view</div>
-                            <div className="mt-1 text-lg font-semibold text-foreground">{formatMonthLabel(visibleMonth)}</div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-lg font-semibold text-foreground">
+                              {viewMode === "day"
+                                ? formatLongDate(selectedLocalDate)
+                                : viewMode === "week"
+                                  ? formatWeekRange(parseDayKey(selectedLocalDate))
+                                  : formatMonthLabel(visibleMonth)}
+                            </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <Tooltip>
-                              <TooltipTrigger>
-                                <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((current) => addMonths(current, -1))}>
+                              <TooltipTrigger
+                                render={<Button type="button" variant="outline" size="sm" onClick={() => {
+                                  if (viewMode === "month") setVisibleMonth((c) => addMonths(c, -1));
+                                  else if (viewMode === "week") setSelectedLocalDate(formatDayKey(addDays(parseDayKey(selectedLocalDate), -7)));
+                                  else setSelectedLocalDate(formatDayKey(addDays(parseDayKey(selectedLocalDate), -1)));
+                                }}>
                                   <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">Previous month</TooltipContent>
+                                </Button>}
+                              />
+                              <TooltipContent side="top">Previous</TooltipContent>
                             </Tooltip>
-                            <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth(startOfMonth(new Date()))}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => {
+                              const today = formatDayKey(new Date());
+                              setSelectedLocalDate(today);
+                              setVisibleMonth(startOfMonth(new Date()));
+                            }}>
                               Today
                             </Button>
                             <Tooltip>
-                              <TooltipTrigger>
-                                <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((current) => addMonths(current, 1))}>
+                              <TooltipTrigger
+                                render={<Button type="button" variant="outline" size="sm" onClick={() => {
+                                  if (viewMode === "month") setVisibleMonth((c) => addMonths(c, 1));
+                                  else if (viewMode === "week") setSelectedLocalDate(formatDayKey(addDays(parseDayKey(selectedLocalDate), 7)));
+                                  else setSelectedLocalDate(formatDayKey(addDays(parseDayKey(selectedLocalDate), 1)));
+                                }}>
                                   <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">Next month</TooltipContent>
+                                </Button>}
+                              />
+                              <TooltipContent side="top">Next</TooltipContent>
                             </Tooltip>
                           </div>
                         </div>
 
-                        <div className="mt-4 grid grid-cols-7 gap-2 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                          {WEEKDAY_LABELS.map((label) => (
-                            <div key={label} className="py-2">
-                              {label}
+                        {viewMode === "day" ? (
+                          <div className="mt-4 space-y-3">
+                            {selectedDateEvents.length > 0 ? selectedDateEvents.map((event) => {
+                              const calendar = localCalendars.find((item) => item.id === event.calendarId);
+                              return (
+                                <div key={event.id} className="flex items-start gap-3 rounded-2xl border border-border/70 bg-background/80 p-4">
+                                  <div className="mt-0.5 size-2 shrink-0 rounded-full" style={{ backgroundColor: calendar?.color ?? LOCAL_CALENDAR_COLORS[0] }} />
+                                  <div className="min-w-0 flex-1">
+                                    <div className="text-sm font-medium text-foreground">{event.title}</div>
+                                    <div className="mt-0.5 text-xs text-muted-foreground">
+                                      {event.allDay ? "All day" : `${formatTime(event.startAt)} – ${formatTime(event.endAt)}`}
+                                    </div>
+                                    {event.description ? <p className="mt-2 text-sm text-muted-foreground">{event.description}</p> : null}
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => openLocalEventDialog(selectedLocalDate, event)}
+                                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                    >
+                                      <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteLocalEvent(event)}
+                                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+                                    >
+                                      <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            }) : (
+                              <div className="rounded-2xl border border-dashed border-border/60 px-4 py-12 text-center text-sm text-muted-foreground">
+                                No events on this day yet.
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <>
+                            <div className="mt-4 grid grid-cols-7 gap-2 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                              {WEEKDAY_LABELS.map((label) => (
+                                <div key={label} className="py-2">{label}</div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
 
-                        <div className="grid grid-cols-7 gap-2">
-                          {monthDays.map((day) => {
-                            const dayKey = formatDayKey(day);
-                            const dayEvents = eventsByDay.get(dayKey) ?? [];
-                            const isCurrentMonth = day.getMonth() === visibleMonth.getMonth();
-                            const isToday = dayKey === formatDayKey(new Date());
-                            const isSelected = dayKey === selectedLocalDate;
+                            <div className={cn("grid gap-2", viewMode === "week" ? "grid-cols-7" : "grid-cols-7")}>
+                              {(viewMode === "week" ? buildWeekDays(parseDayKey(selectedLocalDate)) : monthDays).map((day) => {
+                                const dayKey = formatDayKey(day);
+                                const dayEvents = eventsByDay.get(dayKey) ?? [];
+                                const isCurrentMonth = viewMode === "month" ? day.getMonth() === visibleMonth.getMonth() : true;
+                                const isToday = dayKey === formatDayKey(new Date());
+                                const isSelected = dayKey === selectedLocalDate;
 
-                            return (
-                              <button
-                                key={dayKey}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedLocalDate(dayKey);
-                                  setVisibleMonth(startOfMonth(day));
-                                }}
-                                className={cn(
-                                  "min-h-28 rounded-2xl border p-3 text-left shadow-sm transition-colors hover:bg-accent/40",
-                                  isSelected ? "border-primary/40 bg-primary/5" : "border-border/60 bg-background/80",
-                                  !isCurrentMonth && "opacity-55",
-                                )}
-                              >
-                                <div className="flex items-center justify-between gap-2">
-                                  <span
+                                return (
+                                  <button
+                                    key={dayKey}
+                                    type="button"
+                                    onClick={() => setSelectedLocalDate(dayKey)}
                                     className={cn(
-                                      "inline-flex size-7 items-center justify-center rounded-full text-sm font-medium tabular-nums",
-                                      isToday && "bg-foreground text-background",
+                                      viewMode === "week" ? "min-h-24 rounded-xl p-2" : "min-h-28 rounded-2xl p-3",
+                                      "border text-left shadow-sm transition-colors hover:bg-accent/40",
+                                      isSelected ? "border-primary/40 bg-primary/5" : "border-border/60 bg-background/80",
+                                      !isCurrentMonth && "opacity-55",
                                     )}
                                   >
-                                    {day.getDate()}
-                                  </span>
-                                  <span className="text-[11px] text-muted-foreground">{dayEvents.length}</span>
-                                </div>
-                                <div className="mt-3 space-y-1.5">
-                                  {dayEvents.slice(0, 3).map((event) => {
-                                    const calendar = localCalendars.find((item) => item.id === event.calendarId);
-                                    return (
-                                      <div
-                                        key={event.id}
-                                        className="truncate rounded-lg px-2 py-1 text-xs font-medium"
-                                        style={{
-                                          backgroundColor: `${calendar?.color ?? LOCAL_CALENDAR_COLORS[0]}1A`,
-                                          color: calendar?.color ?? LOCAL_CALENDAR_COLORS[0],
-                                        }}
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span
+                                        className={cn(
+                                          "inline-flex items-center justify-center rounded-full text-sm font-medium tabular-nums",
+                                          viewMode === "week" ? "size-6 text-xs" : "size-7",
+                                          isToday && "bg-foreground text-background",
+                                        )}
                                       >
-                                        {event.title}
-                                      </div>
-                                    );
-                                  })}
-                                  {dayEvents.length > 3 ? <div className="text-xs text-muted-foreground">+{dayEvents.length - 3} more</div> : null}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
+                                        {day.getDate()}
+                                      </span>
+                                      <span className="text-[11px] text-muted-foreground">{dayEvents.length}</span>
+                                    </div>
+                                    <div className={cn("space-y-1", viewMode === "week" ? "mt-2" : "mt-3")}>
+                                      {dayEvents.slice(0, viewMode === "week" ? 2 : 3).map((event) => {
+                                        const calendar = localCalendars.find((item) => item.id === event.calendarId);
+                                        return (
+                                          <div
+                                            key={event.id}
+                                            className="truncate rounded-lg px-1.5 py-0.5 text-xs font-medium"
+                                            style={{
+                                              backgroundColor: `${calendar?.color ?? LOCAL_CALENDAR_COLORS[0]}1A`,
+                                              color: calendar?.color ?? LOCAL_CALENDAR_COLORS[0],
+                                            }}
+                                          >
+                                            {event.title}
+                                          </div>
+                                        );
+                                      })}
+                                      {dayEvents.length > (viewMode === "week" ? 2 : 3) ? (
+                                        <div className="text-xs text-muted-foreground">+{dayEvents.length - (viewMode === "week" ? 2 : 3)} more</div>
+                                      ) : null}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -1062,19 +1123,19 @@ function CalendarPage() {
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <Tooltip>
-                                        <TooltipTrigger>
-                                          <Button type="button" variant="ghost" size="icon-sm" onClick={() => openLocalEventDialog(selectedLocalDate, event)}>
+                                        <TooltipTrigger
+                                          render={<Button type="button" variant="ghost" size="icon-sm" onClick={() => openLocalEventDialog(selectedLocalDate, event)}>
                                             <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-                                          </Button>
-                                        </TooltipTrigger>
+                                          </Button>}
+                                        />
                                         <TooltipContent side="top">Edit event</TooltipContent>
                                       </Tooltip>
                                       <Tooltip>
-                                        <TooltipTrigger>
-                                          <Button type="button" variant="ghost" size="icon-sm" onClick={() => handleDeleteLocalEvent(event)}>
+                                        <TooltipTrigger
+                                          render={<Button type="button" variant="ghost" size="icon-sm" onClick={() => handleDeleteLocalEvent(event)}>
                                             <HugeiconsIcon icon={Delete02Icon} className="size-4" />
-                                          </Button>
-                                        </TooltipTrigger>
+                                          </Button>}
+                                        />
                                         <TooltipContent side="top">Delete event</TooltipContent>
                                       </Tooltip>
                                     </div>
@@ -1152,22 +1213,22 @@ function CalendarPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Tooltip>
-                            <TooltipTrigger>
-                              <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((m) => addMonths(m, -1))}>
+                            <TooltipTrigger
+                              render={<Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((m) => addMonths(m, -1))}>
                                 <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
-                              </Button>
-                            </TooltipTrigger>
+                              </Button>}
+                            />
                             <TooltipContent side="top">Previous month</TooltipContent>
                           </Tooltip>
                           <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth(startOfMonth(new Date()))}>
                             Today
                           </Button>
                           <Tooltip>
-                            <TooltipTrigger>
-                              <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((m) => addMonths(m, 1))}>
+                            <TooltipTrigger
+                              render={<Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth((m) => addMonths(m, 1))}>
                                 <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
-                              </Button>
-                            </TooltipTrigger>
+                              </Button>}
+                            />
                             <TooltipContent side="top">Next month</TooltipContent>
                           </Tooltip>
                         </div>
@@ -1175,61 +1236,155 @@ function CalendarPage() {
                     </div>
 
                     <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
-                      <div className="mb-1 px-2">
-                        <div className="text-lg font-semibold text-foreground">{formatMonthLabel(visibleMonth)}</div>
+                      <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="text-lg font-semibold text-foreground">
+                            {viewMode === "day"
+                              ? formatLongDate(selectedLocalDate)
+                              : viewMode === "week"
+                                ? formatWeekRange(parseDayKey(selectedLocalDate))
+                                : formatMonthLabel(visibleMonth)}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={<Button type="button" variant="outline" size="sm" onClick={() => {
+                                if (viewMode === "month") setVisibleMonth((c) => addMonths(c, -1));
+                                else if (viewMode === "week") setSelectedLocalDate(formatDayKey(addDays(parseDayKey(selectedLocalDate), -7)));
+                                else setSelectedLocalDate(formatDayKey(addDays(parseDayKey(selectedLocalDate), -1)));
+                              }}>
+                                <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
+                              </Button>}
+                            />
+                            <TooltipContent side="top">Previous</TooltipContent>
+                          </Tooltip>
+                          <Button type="button" variant="outline" size="sm" onClick={() => {
+                            const today = formatDayKey(new Date());
+                            setSelectedLocalDate(today);
+                            setVisibleMonth(startOfMonth(new Date()));
+                          }}>
+                            Today
+                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={<Button type="button" variant="outline" size="sm" onClick={() => {
+                                if (viewMode === "month") setVisibleMonth((c) => addMonths(c, 1));
+                                else if (viewMode === "week") setSelectedLocalDate(formatDayKey(addDays(parseDayKey(selectedLocalDate), 7)));
+                                else setSelectedLocalDate(formatDayKey(addDays(parseDayKey(selectedLocalDate), 1)));
+                              }}>
+                                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+                              </Button>}
+                            />
+                            <TooltipContent side="top">Next</TooltipContent>
+                          </Tooltip>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                        {WEEKDAY_LABELS.map((label) => (
-                          <div key={label} className="py-2">{label}</div>
-                        ))}
-                      </div>
-                      <div className="grid grid-cols-7 gap-2">
-                        {monthDays.map((day) => {
-                          const dayKey = formatDayKey(day);
-                          const dayEvents = eventsByDay.get(dayKey) ?? [];
-                          const isCurrentMonth = day.getMonth() === visibleMonth.getMonth();
-                          const isToday = dayKey === formatDayKey(new Date());
-                          const isSelected = dayKey === selectedLocalDate;
 
-                          return (
-                            <button
-                              key={dayKey}
-                              type="button"
-                              onClick={() => setSelectedLocalDate(dayKey)}
-                              className={cn(
-                                "min-h-28 rounded-2xl border p-3 text-left shadow-sm transition-colors hover:bg-accent/40",
-                                isSelected ? "border-primary/40 bg-primary/5" : "border-border/60 bg-background/80",
-                                !isCurrentMonth && "opacity-55",
-                              )}
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <span className={cn("inline-flex size-7 items-center justify-center rounded-full text-sm font-medium tabular-nums", isToday && "bg-foreground text-background")}>
-                                  {day.getDate()}
-                                </span>
-                                <span className="text-[11px] text-muted-foreground">{dayEvents.length}</span>
+                      {viewMode === "day" ? (
+                        <div className="mt-4 space-y-3">
+                          {selectedDateEvents.length > 0 ? selectedDateEvents.map((event) => {
+                            const calendar = localCalendars.find((item) => item.id === event.calendarId);
+                            return (
+                              <div key={event.id} className="flex items-start gap-3 rounded-2xl border border-border/70 bg-background/80 p-4">
+                                <div className="mt-0.5 size-2 shrink-0 rounded-full" style={{ backgroundColor: calendar?.color ?? LOCAL_CALENDAR_COLORS[0] }} />
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-sm font-medium text-foreground">{event.title}</div>
+                                  <div className="mt-0.5 text-xs text-muted-foreground">
+                                    {event.allDay ? "All day" : `${formatTime(event.startAt)} – ${formatTime(event.endAt)}`}
+                                  </div>
+                                  {event.description ? <p className="mt-2 text-sm text-muted-foreground">{event.description}</p> : null}
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => openLocalEventDialog(selectedLocalDate, event)}
+                                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                  >
+                                    <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteLocalEvent(event)}
+                                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+                                  >
+                                    <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                                  </button>
+                                </div>
                               </div>
-                              <div className="mt-3 space-y-1.5">
-                                {dayEvents.slice(0, 3).map((event) => {
-                                  const calendar = localCalendars.find((item) => item.id === event.calendarId);
-                                  return (
-                                    <div
-                                      key={event.id}
-                                      className="truncate rounded-lg px-2 py-1 text-xs font-medium"
-                                      style={{
-                                        backgroundColor: `${calendar?.color ?? LOCAL_CALENDAR_COLORS[0]}1A`,
-                                        color: calendar?.color ?? LOCAL_CALENDAR_COLORS[0],
-                                      }}
+                            );
+                          }) : (
+                            <div className="rounded-2xl border border-dashed border-border/60 px-4 py-12 text-center text-sm text-muted-foreground">
+                              No events on this day yet.
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          <div className="mt-4 grid grid-cols-7 gap-2 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                            {WEEKDAY_LABELS.map((label) => (
+                              <div key={label} className="py-2">{label}</div>
+                            ))}
+                          </div>
+
+                          <div className={cn("grid gap-2", viewMode === "week" ? "grid-cols-7" : "grid-cols-7")}>
+                            {(viewMode === "week" ? buildWeekDays(parseDayKey(selectedLocalDate)) : monthDays).map((day) => {
+                              const dayKey = formatDayKey(day);
+                              const dayEvents = eventsByDay.get(dayKey) ?? [];
+                              const isCurrentMonth = viewMode === "month" ? day.getMonth() === visibleMonth.getMonth() : true;
+                              const isToday = dayKey === formatDayKey(new Date());
+                              const isSelected = dayKey === selectedLocalDate;
+
+                              return (
+                                <button
+                                  key={dayKey}
+                                  type="button"
+                                  onClick={() => setSelectedLocalDate(dayKey)}
+                                  className={cn(
+                                    viewMode === "week" ? "min-h-24 rounded-xl p-2" : "min-h-28 rounded-2xl p-3",
+                                    "border text-left shadow-sm transition-colors hover:bg-accent/40",
+                                    isSelected ? "border-primary/40 bg-primary/5" : "border-border/60 bg-background/80",
+                                    !isCurrentMonth && "opacity-55",
+                                  )}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span
+                                      className={cn(
+                                        "inline-flex items-center justify-center rounded-full text-sm font-medium tabular-nums",
+                                        viewMode === "week" ? "size-6 text-xs" : "size-7",
+                                        isToday && "bg-foreground text-background",
+                                      )}
                                     >
-                                      {event.title}
-                                    </div>
-                                  );
-                                })}
-                                {dayEvents.length > 3 ? <div className="text-xs text-muted-foreground">+{dayEvents.length - 3} more</div> : null}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                                      {day.getDate()}
+                                    </span>
+                                    <span className="text-[11px] text-muted-foreground">{dayEvents.length}</span>
+                                  </div>
+                                  <div className={cn("space-y-1", viewMode === "week" ? "mt-2" : "mt-3")}>
+                                    {dayEvents.slice(0, viewMode === "week" ? 2 : 3).map((event) => {
+                                      const calendar = localCalendars.find((item) => item.id === event.calendarId);
+                                      return (
+                                        <div
+                                          key={event.id}
+                                          className="truncate rounded-lg px-1.5 py-0.5 text-xs font-medium"
+                                          style={{
+                                            backgroundColor: `${calendar?.color ?? LOCAL_CALENDAR_COLORS[0]}1A`,
+                                            color: calendar?.color ?? LOCAL_CALENDAR_COLORS[0],
+                                          }}
+                                        >
+                                          {event.title}
+                                        </div>
+                                      );
+                                    })}
+                                    {dayEvents.length > (viewMode === "week" ? 2 : 3) ? (
+                                      <div className="text-xs text-muted-foreground">+{dayEvents.length - (viewMode === "week" ? 2 : 3)} more</div>
+                                    ) : null}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
@@ -1506,14 +1661,15 @@ function CalendarPage() {
                               <div className="truncate text-xs text-muted-foreground">{activeAccount.email || activeAccount.username}</div>
                             </div>
                             <Tooltip>
-                              <TooltipTrigger>
-                                <button
+                              <TooltipTrigger
+                                render={<button
+                                  type="button"
                                   onClick={() => void handleDeleteAccount(activeAccount.id)}
                                   className="rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                                 >
                                   <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                                </button>
-                              </TooltipTrigger>
+                                </button>}
+                              />
                               <TooltipContent side="top">Remove account</TooltipContent>
                             </Tooltip>
                           </div>
@@ -1938,6 +2094,32 @@ function startOfMonth(date: Date) {
 
 function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function addDays(date: Date, amount: number) {
+  const result = new Date(date);
+  result.setDate(date.getDate() + amount);
+  return result;
+}
+
+function buildWeekDays(date: Date) {
+  const start = new Date(date);
+  start.setDate(date.getDate() - date.getDay());
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(start);
+    day.setDate(start.getDate() + i);
+    return day;
+  });
+}
+
+function formatWeekRange(date: Date) {
+  const weekStart = new Date(date);
+  weekStart.setDate(date.getDate() - date.getDay());
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  const fmt = (d: Date) =>
+    new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(d);
+  return `${fmt(weekStart)} – ${fmt(weekEnd)}`;
 }
 
 function buildMonthGrid(month: Date) {

@@ -134,8 +134,8 @@ export const organizations = sqliteTable("organizations", {
   name: text("name").notNull(),
 });
 
-export const localHosts = sqliteTable(
-  "local_hosts",
+export const localAgents = sqliteTable(
+  "local_agents",
   {
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
@@ -152,15 +152,15 @@ export const localHosts = sqliteTable(
     lastSeenAt: text("last_seen_at").notNull(),
   },
   (t) => [
-    index("idx_local_hosts_user_id").on(t.userId),
-    index("idx_local_hosts_organization_id").on(t.organizationId),
-    index("idx_local_hosts_device_id").on(t.deviceId),
-    index("idx_local_hosts_last_seen_at").on(t.lastSeenAt),
+    index("idx_local_agents_user_id").on(t.userId),
+    index("idx_local_agents_organization_id").on(t.organizationId),
+    index("idx_local_agents_device_id").on(t.deviceId),
+    index("idx_local_agents_last_seen_at").on(t.lastSeenAt),
   ],
 );
 
-export const localHostPairings = sqliteTable(
-  "local_host_pairings",
+export const localAgentPairings = sqliteTable(
+  "local_agent_pairings",
   {
     id: text("id").primaryKey(),
     token: text("token").notNull().unique(),
@@ -171,8 +171,8 @@ export const localHostPairings = sqliteTable(
     createdAt: text("created_at").notNull(),
   },
   (t) => [
-    index("idx_local_host_pairings_user_id").on(t.userId),
-    index("idx_local_host_pairings_expires_at").on(t.expiresAt),
+    index("idx_local_agent_pairings_user_id").on(t.userId),
+    index("idx_local_agent_pairings_expires_at").on(t.expiresAt),
   ],
 );
 

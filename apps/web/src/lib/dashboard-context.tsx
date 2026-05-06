@@ -11,7 +11,7 @@ import {
 import { useLocation } from "@tanstack/react-router";
 import {
   api,
-  type LocalHostProfile,
+  type LocalAgentProfile,
   type ProblemSummary,
   type RuntimeProfile,
 } from "@/lib/api";
@@ -27,7 +27,7 @@ import type {
 } from "@/lib/types";
 
 type RefreshResults = {
-  localHosts?: LocalHostProfile[];
+  localAgents?: LocalAgentProfile[];
   runtimes?: RuntimeProfile[];
   projects?: Project[];
   settings?: ControlSettings;
@@ -83,7 +83,7 @@ interface AgentModelCounts {
 
 interface DashboardContextType {
   runtimes: RuntimeProfile[];
-  localHosts: LocalHostProfile[];
+  localAgents: LocalAgentProfile[];
   projects: Project[];
   organizations: Organization[];
   problems: Problem[];
@@ -95,7 +95,7 @@ interface DashboardContextType {
   agentModelCounts: AgentModelCounts;
 
   refreshAll: () => Promise<void>;
-  refreshLocalHosts: () => Promise<void>;
+  refreshLocalAgents: () => Promise<void>;
 
   handleDismiss: (problemId: string) => Promise<void>;
   handleBulkAction: (ids: string[], status: ProblemStatus) => Promise<void>;
@@ -137,7 +137,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   // Server data (hydrated from cache, then refreshed from API)
   const [runtimes, setRuntimes] = useState<RuntimeProfile[]>(() => initialCache.runtimes);
-  const [localHosts, setLocalHosts] = useState<LocalHostProfile[]>([]);
+  const [localAgents, setLocalAgents] = useState<LocalAgentProfile[]>([]);
   const [projects, setProjects] = useState<Project[]>(() => initialCache.projects);
   const [organizations, setOrganizations] = useState<Organization[]>(() => initialCache.organizations);
   const [problems, setProblems] = useState<Problem[]>(() => initialCache.problems);
@@ -180,7 +180,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     activeView === "board" ||
     activeView === "calendar" ||
     activeView === "mail";
-  const shouldLoadLocalHosts = activeView === "agents";
+  const shouldLoadLocalAgents = activeView === "agents";
   const shouldLoadProblems = activeView === "inbox" || activeView === "observability";
   const agentModelCounts = useMemo(() => ({ all: 0, local: 0, cloud: 0 }), []);
 
@@ -198,7 +198,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const applyRefreshResults = useCallback(
     (results: RefreshResults) => {
       if (results.runtimes) setRuntimes(results.runtimes);
-      if (results.localHosts) setLocalHosts(results.localHosts);
+      if (results.localAgents) setLocalAgents(results.localAgents);
       if (results.projects) setProjects(results.projects);
       if (results.settings) setSettings(results.settings);
       if (results.organizations) applyOrganizationResult(results.organizations);
@@ -221,7 +221,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
     const results = await Promise.allSettled([
       api.listRuntimes(),
-      shouldLoadLocalHosts ? api.listLocalHosts() : Promise.resolve<LocalHostProfile[]>([]),
+      shouldLoadLocalAgents ? api.listLocalAgents() : Promise.resolve<LocalAgentProfile[]>([]),
       shouldLoadProjects ? api.listProjects() : Promise.resolve<Project[]>([]),
       api.getSettings(),
       api.listOrganizations(),
@@ -230,7 +230,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     ]);
     const fresh: RefreshResults = {};
     if (results[0].status === "fulfilled") fresh.runtimes = results[0].value;
-    if (results[1].status === "fulfilled") fresh.localHosts = results[1].value;
+    if (results[1].status === "fulfilled") fresh.localAgents = results[1].value;
     if (results[2].status === "fulfilled") fresh.projects = results[2].value;
     if (results[3].status === "fulfilled") fresh.settings = results[3].value;
     if (results[4].status === "fulfilled") {
@@ -247,13 +247,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     applyRefreshResults,
     hasCachedDashboardData,
     shouldLoadProjects,
-    shouldLoadLocalHosts,
+    shouldLoadLocalAgents,
     shouldLoadProblems,
   ]);
 
-  const refreshLocalHosts = useCallback(async () => {
-    const hosts = await api.listLocalHosts();
-    setLocalHosts(hosts);
+  const refreshLocalAgents = useCallback(async () => {
+    const agents = await api.listLocalAgents();
+    setLocalAgents(agents);
   }, []);
 
   const refreshAll = useCallback(async () => {
@@ -342,7 +342,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     if (activeView === "agents") {
       const deviceResults = await Promise.allSettled([
         api.listRuntimes(),
-        api.listLocalHosts(),
+        api.listLocalAgents(),
         api.getSettings(),
         api.listOrganizations(),
       ]);
@@ -351,7 +351,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         applyRefreshResults({ runtimes: deviceResults[0].value });
       }
       if (deviceResults[1].status === "fulfilled") {
-        applyRefreshResults({ localHosts: deviceResults[1].value });
+        applyRefreshResults({ localAgents: deviceResults[1].value });
       }
       if (deviceResults[2].status === "fulfilled") {
         applyRefreshResults({ settings: deviceResults[2].value });
@@ -454,7 +454,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const value: DashboardContextType = {
     runtimes,
-    localHosts,
+    localAgents,
     projects,
     organizations,
     problems,
@@ -464,7 +464,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     systemProblemCounts,
     agentModelCounts,
     refreshAll,
-    refreshLocalHosts,
+    refreshLocalAgents,
     handleDismiss,
     handleBulkAction,
     handleOrganizationCreate,

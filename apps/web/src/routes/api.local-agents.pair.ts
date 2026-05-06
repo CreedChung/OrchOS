@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LocalHostService } from "@/server/modules/local-hosts/service";
+import { LocalAgentService } from "@/server/modules/local-agents/service";
 import { getLocalDb } from "@/server/runtime/local-db";
 
-export const Route = createFileRoute("/api/local-hosts/pair")({
+export const Route = createFileRoute("/api/local-agents/pair")({
   server: {
     handlers: {
       POST: async ({ request }) => {
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/api/local-hosts/pair")({
         };
 
         try {
-          return Response.json(await LocalHostService.pairHost(await getLocalDb(), body));
+          return Response.json(await LocalAgentService.pairAgent(await getLocalDb(), body));
         } catch (error) {
           return Response.json(
             { error: error instanceof Error ? error.message : String(error) },

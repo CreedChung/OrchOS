@@ -17,7 +17,7 @@ export async function getLocalDb(): Promise<AppDb> {
   const d1 = getCloudflareD1Binding();
   if (!d1) {
     throw new Error(
-      "Cloudflare D1 binding \"DB\" is required in this environment. Local SQLite fallback is disabled.",
+      "Cloudflare D1 binding \"DB\" is required in this environment. Ensure vite dev is running with @cloudflare/vite-plugin and apps/web/wrangler.jsonc is loaded.",
     );
   }
 

@@ -960,14 +960,16 @@ function ChatArea({
       {!inputCollapsed && (
         <div className="shrink-0 overflow-visible bg-background px-4 py-4 md:px-6">
           <div className="mx-auto max-w-3xl">
-            <div className="mb-3 px-1">
-              <p className="text-sm font-medium text-foreground/85">
-                我们开始创造吧
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                描述你的目标，我会先拆解计划，再推进执行与审查。
-              </p>
-            </div>
+            {allMessages.length === 0 && (
+              <div className="mb-3 px-1">
+                <p className="text-sm font-medium text-foreground/85">
+                  我们开始创造吧
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  描述你的目标，我会先拆解计划，再推进执行与审查。
+                </p>
+              </div>
+            )}
             <BorderBeam
               size="md"
               theme="auto"
@@ -1087,8 +1089,8 @@ function ChatArea({
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <Tooltip>
-                      <TooltipTrigger>
-                        <Button
+                      <TooltipTrigger
+                        render={<Button
                           type="button"
                           variant="ghost"
                           size="icon-sm"
@@ -1103,13 +1105,13 @@ function ChatArea({
                             icon={isListening ? Cancel01Icon : Mic01Icon}
                             className="size-4"
                           />
-                        </Button>
-                      </TooltipTrigger>
+                        </Button>}
+                      />
                       <TooltipContent side="top">{isListening ? m.voice_input_stop() : m.voice_input()}</TooltipContent>
                     </Tooltip>
                     <Tooltip>
-                      <TooltipTrigger>
-                        <Button
+                      <TooltipTrigger
+                        render={<Button
                           type="button"
                           size="icon-sm"
                           disabled={
@@ -1127,8 +1129,8 @@ function ChatArea({
                               className="size-3.5"
                             />
                           )}
-                        </Button>
-                      </TooltipTrigger>
+                        </Button>}
+                      />
                       <TooltipContent side="top">Send</TooltipContent>
                     </Tooltip>
                   </div>

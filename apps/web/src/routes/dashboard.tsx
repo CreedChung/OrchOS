@@ -9,7 +9,6 @@ import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toolbar } from "@/components/layout/Toolbar";
 import { CreateBoardConversationDialog } from "@/components/dialogs/CreateBoardConversationDialog";
-import { I18nProvider } from "@/lib/i18n-provider";
 import { useUIStore } from "@/lib/store";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
 import { Search01Icon } from "@hugeicons/core-free-icons";
@@ -102,23 +101,19 @@ function getDashboardEntryPath(pathname: string) {
 }
 
 function DashboardWrapper() {
-  return (
-    <AuthProvider>
-      <RequireAuth>
-        <DashboardProvider>
-          <DashboardLayout />
-        </DashboardProvider>
-      </RequireAuth>
-    </AuthProvider>
-  );
-}
-
-function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
   if (location.pathname === "/dashboard" || location.pathname === "/dashboard/") {
-    return <Navigate to="/dashboard/creation" replace />;
+    return (
+      <AuthProvider>
+        <RequireAuth>
+          <DashboardProvider>
+            <Navigate to="/dashboard/creation" replace />
+          </DashboardProvider>
+        </RequireAuth>
+      </AuthProvider>
+    );
   }
 
   const dashboardPath = getDashboardEntryPath(location.pathname);
@@ -198,8 +193,10 @@ function DashboardLayout() {
   }, [loading, showAuthTransition]);
 
   return (
-    <I18nProvider>
-      <>
+    <AuthProvider>
+      <RequireAuth>
+        <DashboardProvider>
+          <>
         <AuthTransitionOverlay
           active={showAuthTransition}
           reveal={startDashboardReveal}
@@ -346,7 +343,9 @@ function DashboardLayout() {
             }}
           />
         </div>
-      </>
-    </I18nProvider>
+          </>
+        </DashboardProvider>
+      </RequireAuth>
+    </AuthProvider>
   );
 }

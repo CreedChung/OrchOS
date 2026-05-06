@@ -13,7 +13,7 @@ const RuntimeDetectionModel = t.Object({
   error: t.Optional(t.String()),
 });
 
-export const LocalHostModel = {
+export const LocalAgentModel = {
   runtime: RuntimeDetectionModel,
   response: t.Object({
     id: t.String(),
@@ -68,6 +68,6 @@ export const LocalHostModel = {
   }),
 } as const;
 
-export type LocalHostModel = {
-  [k in keyof typeof LocalHostModel]: UnwrapSchema<(typeof LocalHostModel)[k]>;
+export type LocalAgentModel = {
+  [k in keyof typeof LocalAgentModel]: UnwrapSchema<(typeof LocalAgentModel)[k]>;
 };

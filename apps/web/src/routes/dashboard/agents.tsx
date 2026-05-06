@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft01Icon, ArrowRight01Icon, CancelCircleIcon, CheckmarkCircle02Icon, ComputerIcon, Copy01Icon, Delete02Icon, Tick01Icon, Settings01Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, ArrowRight01Icon, CancelCircleIcon, CheckmarkCircle02Icon, ComputerIcon, Copy01Icon, Delete02Icon, Edit01Icon, Tick01Icon, Settings01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "sonner";
 import { AppDialog } from "@/components/ui/app-dialog";
 import { LocalDevicesView } from "@/components/panels/LocalDevicesView";
-import { api, type LocalHostPairingToken, type CustomAgent } from "@/lib/api";
+import { api, type LocalAgentPairingToken, type CustomAgent } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -18,8 +18,8 @@ export const Route = createFileRoute("/dashboard/agents")({
 });
 
 function AgentsPage() {
-  const { localHosts, loading } = useDashboard();
-  const [pairing, setPairing] = useState<LocalHostPairingToken | null>(null);
+  const { localAgents, loading } = useDashboard();
+  const [pairing, setPairing] = useState<LocalAgentPairingToken | null>(null);
   const [showPairingDialog, setShowPairingDialog] = useState(false);
   const [tokenCopied, setTokenCopied] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all");
@@ -28,6 +28,7 @@ function AgentsPage() {
   const [connectStep, setConnectStep] = useState<"choose" | "cli" | "custom">("choose");
   const [isConnectDialogOpen, setIsConnectDialogOpen] = useState(false);
   const [agentForm, setAgentForm] = useState({ name: "", url: "", apiKey: "", model: "" });
+  const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
 
   useEffect(() => {
     void loadCustomAgents();
@@ -45,10 +46,10 @@ function AgentsPage() {
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);
   const collapseTimerRef = useRef<number | null>(null);
 
-  const filteredHosts = useMemo(() => {
-    if (statusFilter === "all") return localHosts;
-    return localHosts.filter((host) => host.status === statusFilter);
-  }, [localHosts, statusFilter]);
+  const filteredAgents = useMemo(() => {
+    if (statusFilter === "all") return localAgents;
+    return localAgents.filter((agent) => agent.status === statusFilter);
+  }, [localAgents, statusFilter]);
 
   useEffect(() => {
     return () => {
@@ -80,14 +81,20 @@ function AgentsPage() {
     setConnectStep("cli");
   }
 
-  function handleSelectCustom() {
-    setAgentForm({ name: "", url: "", apiKey: "", model: "" });
+  function handleSelectCustom(agent?: CustomAgent) {
+    if (agent) {
+      setEditingAgentId(agent.id);
+      setAgentForm({ name: agent.name, url: agent.url, apiKey: agent.apiKey, model: agent.model });
+    } else {
+      setEditingAgentId(null);
+      setAgentForm({ name: "", url: "", apiKey: "", model: "" });
+    }
     setConnectStep("custom");
   }
 
   async function handleCreatePairingToken() {
     try {
-      const token = await api.createLocalHostPairingToken();
+      const token = await api.createLocalAgentPairingToken();
       setPairing(token);
       setIsConnectDialogOpen(false);
       setShowPairingDialog(true);
@@ -98,24 +105,22 @@ function AgentsPage() {
     }
   }
 
-  async function handleCreateCustomAgent() {
+  async function handleSaveCustomAgent() {
     const { name, url, apiKey, model } = agentForm;
     if (!name.trim() || !url.trim() || !apiKey.trim() || !model.trim()) {
       toast.error("All fields are required");
       return;
     }
     try {
-      const agents = await api.createCustomAgent({
-        name: name.trim(),
-        url: url.trim(),
-        apiKey: apiKey.trim(),
-        model: model.trim(),
-      });
+      const agents = editingAgentId
+        ? await api.updateCustomAgent(editingAgentId, { name: name.trim(), url: url.trim(), apiKey: apiKey.trim(), model: model.trim() })
+        : await api.createCustomAgent({ name: name.trim(), url: url.trim(), apiKey: apiKey.trim(), model: model.trim() });
       setCustomAgents(agents);
+      setEditingAgentId(null);
       setIsConnectDialogOpen(false);
-      toast.success("Custom agent created");
+      toast.success(editingAgentId ? "Custom agent updated" : "Custom agent created");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create custom agent");
+      toast.error(error instanceof Error ? error.message : "Failed to save custom agent");
     }
   }
 
@@ -200,7 +205,7 @@ function AgentsPage() {
         >
           <div className="flex h-10 items-center justify-between rounded-md px-2">
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-foreground">{m.agents()} <span className="ml-1 text-xs font-normal text-muted-foreground tabular-nums">{localHosts.length + customAgents.length}</span></div>
+              <div className="text-sm font-semibold text-foreground">{m.agents()} <span className="ml-1 text-xs font-normal text-muted-foreground tabular-nums">{localAgents.length + customAgents.length}</span></div>
             </div>
             <div className="flex items-center gap-1">
               <Tooltip>
@@ -241,6 +246,16 @@ function AgentsPage() {
                   </div>
                   <button
                     type="button"
+                    onClick={() => {
+                      handleSelectCustom(agent);
+                      setIsConnectDialogOpen(true);
+                    }}
+                    className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
+                  >
+                    <HugeiconsIcon icon={Edit01Icon} className="size-3" />
+                  </button>
+                  <button
+                    type="button"
                     onClick={async () => {
                       try {
                         const agents = await api.deleteCustomAgent(agent.id);
@@ -256,22 +271,22 @@ function AgentsPage() {
                   </button>
                 </div>
               ))}
-              {localHosts.length > 0 && (
+              {localAgents.length > 0 && (
                 <div className={cn("px-2.5 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wider", customAgents.length > 0 && "mt-2")}>CLI</div>
               )}
-              {filteredHosts.map((host) => (
-                <div key={host.id} className="group flex min-h-9 cursor-default items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-foreground/70 hover:bg-accent/50 hover:text-foreground">
-                  <span className={cn("size-2 shrink-0 rounded-full", host.status === "online" ? "bg-emerald-500" : "bg-muted-foreground/30")} />
+              {filteredAgents.map((agent) => (
+                <div key={agent.id} className="group flex min-h-9 cursor-default items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-foreground/70 hover:bg-accent/50 hover:text-foreground">
+                  <span className={cn("size-2 shrink-0 rounded-full", agent.status === "online" ? "bg-emerald-500" : "bg-muted-foreground/30")} />
                   <HugeiconsIcon icon={ComputerIcon} className="size-3.5 shrink-0 opacity-40" />
                   <div className="min-w-0 flex-1 text-left">
-                    <div className="truncate text-xs leading-5">{host.name}</div>
+                    <div className="truncate text-xs leading-5">{agent.name}</div>
                     <div className="text-[11px] leading-4 text-muted-foreground">
-                      {host.status === "online" ? m.online() : m.offline()}
+                      {agent.status === "online" ? m.online() : m.offline()}
                     </div>
                   </div>
                 </div>
               ))}
-              {customAgents.length === 0 && filteredHosts.length === 0 && (
+              {customAgents.length === 0 && filteredAgents.length === 0 && (
                 <div className="px-2.5 py-6 text-center text-xs text-muted-foreground">
                   {m.no_devices_paired()}
                 </div>
@@ -361,7 +376,7 @@ function AgentsPage() {
           if (!open) setConnectStep("choose");
           setIsConnectDialogOpen(open);
         }}
-        title={connectStep === "choose" ? "Connect agent" : connectStep === "cli" ? "Connect via CLI" : "Custom configuration"}
+        title={connectStep === "choose" ? "Connect agent" : connectStep === "cli" ? "Connect via CLI" : editingAgentId ? "Edit agent" : "Custom configuration"}
         size="sm"
         bodyClassName={connectStep === "choose" ? "flex items-center" : undefined}
         footer={
@@ -383,7 +398,7 @@ function AgentsPage() {
               <Button type="button" variant="outline" onClick={() => setConnectStep("choose")}>
                 Back
               </Button>
-              <Button type="button" onClick={handleCreateCustomAgent}>
+              <Button type="button" onClick={handleSaveCustomAgent}>
                 Save
               </Button>
             </>
@@ -403,13 +418,13 @@ function AgentsPage() {
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-foreground">Connect via CLI</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Pair a local machine by running a CLI command with a pairing token.
+                  Pair a local agent by running a CLI command with a pairing token.
                 </div>
               </div>
             </button>
             <button
               type="button"
-              onClick={handleSelectCustom}
+              onClick={() => handleSelectCustom()}
               className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition-colors hover:bg-accent/40"
             >
               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -426,14 +441,14 @@ function AgentsPage() {
         ) : connectStep === "cli" ? (
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Generate a pairing token and run the CLI command on the machine you want to connect.
+              Generate a pairing token and run the CLI command for the local agent you want to connect.
             </p>
             <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/50 p-4 text-center">
               <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <HugeiconsIcon icon={ComputerIcon} className="size-6" />
               </div>
               <div className="text-sm text-foreground">
-                Install the CLI on your machine and run the command with the generated token to pair it.
+                Install the CLI for your local agent and run the command with the generated token to pair it.
               </div>
             </div>
           </div>

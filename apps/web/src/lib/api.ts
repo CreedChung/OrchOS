@@ -240,7 +240,7 @@ export interface DetectRuntimesResponse {
   unavailable: DetectedRuntime[];
 }
 
-export interface LocalHostProfile {
+export interface LocalAgentProfile {
   id: string;
   userId: string;
   organizationId?: string;
@@ -255,7 +255,7 @@ export interface LocalHostProfile {
   lastSeenAt: string;
 }
 
-export interface LocalHostPairingToken {
+export interface LocalAgentPairingToken {
   pairingToken: string;
   expiresAt: string;
 }
@@ -505,18 +505,24 @@ export const api = {
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     return (await response.json()) as DetectRuntimesResponse;
   },
-  listLocalHosts: async (): Promise<LocalHostProfile[]> => {
-    const response = await fetch(resolveApiUrl("/api/local-hosts"), { credentials: "include" });
+  listLocalAgents: async (): Promise<LocalAgentProfile[]> => {
+    const response = await fetch(resolveApiUrl("/api/local-agents"), { credentials: "include" });
+    if (response.status === 401) {
+      return [];
+    }
     if (!response.ok) throw new Error(`API error: ${response.status}`);
-    return (await response.json()) as LocalHostProfile[];
+    return (await response.json()) as LocalAgentProfile[];
   },
-  createLocalHostPairingToken: async (): Promise<LocalHostPairingToken> => {
-    const response = await fetch(resolveApiUrl("/api/local-hosts/pairing-tokens"), {
+  createLocalAgentPairingToken: async (): Promise<LocalAgentPairingToken> => {
+    const response = await fetch(resolveApiUrl("/api/local-agents/pairing-tokens"), {
       method: "POST",
       credentials: "include",
     });
+    if (response.status === 401) {
+      throw new Error("Sign in to generate a local agent pairing token.");
+    }
     if (!response.ok) throw new Error(`API error: ${response.status}`);
-    return (await response.json()) as LocalHostPairingToken;
+    return (await response.json()) as LocalAgentPairingToken;
   },
   
   // Integrations
