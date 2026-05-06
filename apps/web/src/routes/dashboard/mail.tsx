@@ -18,7 +18,7 @@ import {
   MailEdit02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 import { InboxDetail, InboxNoSelection } from "@/components/panels/InboxDetail";
 import { InboxList } from "@/components/panels/InboxList";
@@ -597,7 +597,6 @@ function MailPage() {
               <EmptyState
                 variant="subtle"
                 size="lg"
-                isIconAnimated={false}
                 className="hover:bg-transparent dark:hover:bg-transparent w-full max-w-lg"
                 title="Connect mailbox"
                 description="Connect a Gmail or IMAP/SMTP account to manage your email threads from this workspace."

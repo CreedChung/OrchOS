@@ -11,7 +11,7 @@ import {
   SquareArrowDataTransferHorizontalIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { AppDialog } from "@/components/ui/app-dialog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/interactive-empty-state";
@@ -768,27 +768,30 @@ function CalendarPage() {
                                   className="size-3.5 shrink-0 text-violet-500"
                                 />
                                 <span className="min-w-0 flex-1 truncate">{group.name}</span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-xs"
-                                  onClick={(e) => { e.stopPropagation(); openLocalGroupDialog(group); }}
-                                  className="opacity-0 transition-opacity group-hover:opacity-100"
-                                  title="Edit group"
-                                >
-                                  <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-xs"
-                                  onClick={(e) => { e.stopPropagation(); handleDeleteLocalGroup(group); }}
-                                  className="opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
-                                  title="Delete group"
-                                >
-                                  <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
-                                </Button>
-                                <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground group-hover:hidden">{calendars.length}</span>
+                                <div className="grid items-center justify-items-center">
+                                  <div className="col-start-1 row-start-1 flex items-center opacity-0 transition-opacity group-hover:opacity-100">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon-xs"
+                                      onClick={(e) => { e.stopPropagation(); openLocalGroupDialog(group); }}
+                                      title="Edit group"
+                                    >
+                                      <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon-xs"
+                                      onClick={(e) => { e.stopPropagation(); handleDeleteLocalGroup(group); }}
+                                      className="hover:text-destructive"
+                                      title="Delete group"
+                                    >
+                                      <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
+                                    </Button>
+                                  </div>
+                                  <span className="col-start-1 row-start-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground transition-opacity group-hover:opacity-0 pointer-events-none">{calendars.length}</span>
+                                </div>
                               </div>
 
                               <div className="ml-3 space-y-0.5">

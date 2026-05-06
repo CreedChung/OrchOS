@@ -1,9 +1,11 @@
 import { useEffect } from "react";
-import { Navigate, createFileRoute } from "@tanstack/react-router";
-import { SignIn, SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
+import { Navigate, createFileRoute, Link } from "@tanstack/react-router";
+import { useAuth } from "@clerk/clerk-react";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { AuthPage } from "@/components/ui/auth-page";
+import { SignInForm } from "@/components/ui/auth-forms";
 import { isClerkConfigured } from "@/lib/auth";
+import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/sign-in")({
   component: SignInPage,
@@ -20,30 +22,34 @@ function AuthTransitionMarker() {
 }
 
 function SignInPage() {
+  const { isSignedIn } = useAuth();
+
   if (!isClerkConfigured()) {
     return (
-      <AuthPage mode="signIn">
-        <MissingClerkConfig />
-      </AuthPage>
+      <AuthProvider>
+        <AuthPage mode="signIn">
+          <MissingClerkConfig />
+        </AuthPage>
+      </AuthProvider>
     );
+  }
+
+  if (isSignedIn) {
+    return <Navigate to="/dashboard/creation" replace />;
   }
 
   return (
     <AuthProvider>
       <AuthTransitionMarker />
-      <SignedIn>
-        <Navigate to="/dashboard/creation" replace />
-      </SignedIn>
-      <SignedOut>
-        <AuthPage mode="signIn">
-          <SignIn
-            path="/sign-in"
-            routing="path"
-            signUpUrl="/sign-up"
-            fallbackRedirectUrl="/dashboard/creation"
-          />
-        </AuthPage>
-      </SignedOut>
+      <AuthPage mode="signIn">
+        <SignInForm />
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          {m.no_account()}{" "}
+          <Link to="/sign-up" className="font-medium text-primary hover:underline">
+            {m.sign_up()}
+          </Link>
+        </p>
+      </AuthPage>
     </AuthProvider>
   );
 }
@@ -51,10 +57,9 @@ function SignInPage() {
 function MissingClerkConfig() {
   return (
     <div className="rounded-[calc(var(--radius-xl)*1.2)] border border-dashed border-border bg-muted/40 p-6">
-      <p className="text-sm font-semibold text-foreground">Clerk is not configured yet.</p>
+      <p className="text-sm font-semibold text-foreground">{m.not_configured_title()}</p>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-        Set <code>VITE_CLERK_PUBLISHABLE_KEY</code> in <code>.env.local</code> before using the
-        sign-in flow.
+        {m.not_configured_sign_in()}
       </p>
     </div>
   );

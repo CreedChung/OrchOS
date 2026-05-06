@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft01Icon, ArrowRight01Icon, CancelCircleIcon, CheckmarkCircle02Icon, ComputerIcon, Copy01Icon, Delete02Icon, Edit01Icon, Tick01Icon, Settings01Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, ArrowRight01Icon, CancelCircleIcon, CheckmarkCircle02Icon, ComputerIcon, Copy01Icon, Delete02Icon, Edit02Icon, Tick01Icon, Settings01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { AppDialog } from "@/components/ui/app-dialog";
 import { LocalDevicesView } from "@/components/panels/LocalDevicesView";
 import { api, type LocalAgentPairingToken, type CustomAgent } from "@/lib/api";
@@ -234,9 +234,6 @@ function AgentsPage() {
         >
           <ScrollArea className="min-h-0 flex-1">
             <div className="space-y-0.5 p-1.5">
-              {customAgents.length > 0 && (
-                <div className="px-2.5 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wider">Custom</div>
-              )}
               {customAgents.map((agent) => (
                 <div key={agent.id} className="group flex min-h-9 cursor-default items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-foreground/70 hover:bg-accent/50 hover:text-foreground">
                   <HugeiconsIcon icon={Settings01Icon} className="size-3.5 shrink-0 opacity-40" />
@@ -252,7 +249,7 @@ function AgentsPage() {
                     }}
                     className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
                   >
-                    <HugeiconsIcon icon={Edit01Icon} className="size-3" />
+                    <HugeiconsIcon icon={Edit02Icon} className="size-3" />
                   </button>
                   <button
                     type="button"

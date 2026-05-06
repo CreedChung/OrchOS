@@ -202,10 +202,10 @@ export function SettingsDialog({
 
   const handleLocaleChange = async (value: string) => {
     if (!currentSettings) return;
-    setLocaleWithSync(value);
+
     try {
-      const updated = await api.updateSettings({ locale: value });
-      const merged = { ...currentSettings, ...updated };
+      setLocaleWithSync(value);
+      const merged = { ...currentSettings, locale: value };
       setLocalSettings(merged);
       onSettingsChange(merged);
     } catch (err) {

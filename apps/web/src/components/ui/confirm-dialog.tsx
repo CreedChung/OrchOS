@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { AppDialog } from "@/components/ui/app-dialog";
+import { m } from "@/paraglide/messages";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -20,8 +21,8 @@ export function ConfirmDialog({
   title,
   description,
   onConfirm,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel = m.confirm(),
+  cancelLabel = m.cancel(),
   variant = "default",
 }: ConfirmDialogProps) {
   const handleConfirm = () => {

@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { m } from "@/paraglide/messages";
 import React from "react";
 
 interface InfoCardTitleProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -181,7 +182,7 @@ function InfoCard({
                   variant="ghost"
                   size="icon-sm"
                   onClick={handleDismissButtonClick}
-                  title="关闭"
+                  title={m.close()}
                   className="absolute top-2 right-2 shrink-0 text-muted-foreground/60 hover:text-foreground"
                 >
                   <svg
@@ -207,11 +208,11 @@ function InfoCard({
         <ConfirmDialog
           open={dismissConfirmOpen}
           onOpenChange={setDismissConfirmOpen}
-          title="关闭提示"
-          description={dismissType === "forever" ? "关闭后这条提示不会再次显示。" : "关闭后这条提示将在当前会话中隐藏。"}
+          title={m.dismiss_prompt()}
+          description={dismissType === "forever" ? m.dismiss_confirm_desc() : m.dismiss_hide_desc()}
           onConfirm={handleDismiss}
-          confirmLabel="关闭"
-          cancelLabel="取消"
+          confirmLabel={m.close()}
+          cancelLabel={m.cancel()}
         />
       </InfoCardImageContext.Provider>
     </InfoCardContext.Provider>

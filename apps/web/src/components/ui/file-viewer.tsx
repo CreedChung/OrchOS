@@ -18,7 +18,8 @@ import {
   type HTMLAttributes,
   type ReactNode,
 } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
+import { m } from "@/paraglide/messages";
 
 export interface ApiComponent {
   author?: string;
@@ -335,9 +336,9 @@ function FileHeader({
             variant={isPreview ? "secondary" : "outline"}
             size="sm"
             onClick={onTogglePreview}
-            title={isPreview ? "Show markdown source" : "Preview markdown"}
+            title={isPreview ? m.show_markdown_source() : m.preview_markdown()}
           >
-            {isPreview ? "Code" : "Preview"}
+            {isPreview ? m.code() : m.preview()}
           </Button>
         ) : null}
         <Button
@@ -345,7 +346,7 @@ function FileHeader({
           size="icon-sm"
           onClick={onCopy}
           className="cursor-pointer"
-          title="Copy file content"
+          title={m.copy_file_content()}
         >
           {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
         </Button>
@@ -721,7 +722,7 @@ export default function ComponentFileViewer({ component }: { component: ApiCompo
 
     void navigator.clipboard.writeText(selected.content);
     setCopied(true);
-    toast.success("File content copied");
+    toast.success(m.file_content_copied());
 
     window.setTimeout(() => setCopied(false), 2000);
   }, [selected]);

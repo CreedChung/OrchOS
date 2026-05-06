@@ -13,7 +13,7 @@ import {
   Upload01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 import { api } from "@/lib/api";
 import { useDashboard } from "@/lib/dashboard-context";

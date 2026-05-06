@@ -62,7 +62,7 @@ import { m } from "@/paraglide/messages";
 import { isClerkConfigured } from "@/lib/auth";
 import { useUIStore } from "@/lib/store";
 import type { Organization, SidebarView } from "@/lib/types";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 interface SidebarSection {
   label: string;

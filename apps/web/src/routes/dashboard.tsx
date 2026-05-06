@@ -18,6 +18,7 @@ import { AuthTransitionOverlay } from "@/components/ui/auth-transition-overlay";
 import { Spinner } from "@/components/ui/spinner";
 import type { SidebarView } from "@/lib/types";
 import { getCapabilityModeFromPath, getCapabilityPath, isCapabilityView } from "@/lib/capability-routing";
+import { m } from "@/paraglide/messages";
 
 const ACTIVITY_PANEL_TRANSITION_MS = 320;
 const ACTIVITY_PANEL_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  if (!isClerkConfigured) return <>{children}</>;
+  if (!isClerkConfigured()) return <>{children}</>;
   return <ClerkAuthGate>{children}</ClerkAuthGate>;
 }
 
@@ -55,9 +56,9 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
           <div className="relative flex h-full items-center justify-center">
             <div className="flex items-center gap-3 rounded-full border border-white/15 bg-black/20 px-4 py-2 text-white/85 shadow-lg backdrop-blur-md">
               <Spinner size="xl" className="text-white/85" />
-              <span className="text-sm" suppressHydrationWarning>
-                Checking authentication...
-              </span>
+                <span className="text-sm" suppressHydrationWarning>
+                  {m.checking_auth()}
+                </span>
             </div>
           </div>
         </div>
@@ -102,7 +103,6 @@ function getDashboardEntryPath(pathname: string) {
 
 function DashboardWrapper() {
   const location = useLocation();
-  const navigate = useNavigate();
 
   if (location.pathname === "/dashboard" || location.pathname === "/dashboard/") {
     return (
@@ -115,6 +115,21 @@ function DashboardWrapper() {
       </AuthProvider>
     );
   }
+
+  return (
+    <AuthProvider>
+      <RequireAuth>
+        <DashboardProvider>
+          <DashboardContent />
+        </DashboardProvider>
+      </RequireAuth>
+    </AuthProvider>
+  );
+}
+
+function DashboardContent() {
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const dashboardPath = getDashboardEntryPath(location.pathname);
   const activeView = getViewFromPath(dashboardPath);
@@ -193,159 +208,153 @@ function DashboardWrapper() {
   }, [loading, showAuthTransition]);
 
   return (
-    <AuthProvider>
-      <RequireAuth>
-        <DashboardProvider>
-          <>
-        <AuthTransitionOverlay
-          active={showAuthTransition}
-          reveal={startDashboardReveal}
-          onComplete={() => {
-            setShowAuthTransition(false);
-            try {
-              sessionStorage.removeItem("orch_auth_transition");
-            } catch {}
+    <>
+      <AuthTransitionOverlay
+        active={showAuthTransition}
+        reveal={startDashboardReveal}
+        onComplete={() => {
+          setShowAuthTransition(false);
+          try {
+            sessionStorage.removeItem("orch_auth_transition");
+          } catch {}
+        }}
+      />
+      <div className="flex h-screen flex-col overflow-hidden bg-background">
+        <div
+          className="grid flex-1 overflow-hidden transition-[grid-template-columns]"
+          style={{
+            gridTemplateColumns: dashboardColumns,
+            transitionDuration: `${ACTIVITY_PANEL_TRANSITION_MS}ms`,
+            transitionTimingFunction: ACTIVITY_PANEL_EASING,
           }}
-        />
-        <div className="flex h-screen flex-col overflow-hidden bg-background">
+        >
+          <Sidebar
+            organizations={organizations}
+            activeOrganizationId={activeOrganizationId}
+            activeView={activeView}
+            collapsed={sidebarCollapsed}
+            onOpenSettings={() => setShowSettingsDialog(true)}
+            onOrganizationChange={setActiveOrganizationId}
+            onOrganizationCreate={handleOrganizationCreate}
+            onOrganizationRename={handleOrganizationRename}
+            onOrganizationDelete={handleOrganizationDelete}
+            onToggleCollapse={toggleSidebar}
+          />
           <div
-            className="grid flex-1 overflow-hidden transition-[grid-template-columns]"
+            className={[
+              "flex min-w-0 flex-col overflow-hidden transition-[opacity,transform,filter]",
+              activityExpanded
+                ? "pointer-events-none -translate-x-3 opacity-0 blur-[1px]"
+                : "translate-x-0 opacity-100 blur-0",
+            ].join(" ")}
             style={{
-              gridTemplateColumns: dashboardColumns,
               transitionDuration: `${ACTIVITY_PANEL_TRANSITION_MS}ms`,
               transitionTimingFunction: ACTIVITY_PANEL_EASING,
             }}
+            aria-hidden={activityExpanded}
           >
-            <Sidebar
-              organizations={organizations}
-              activeOrganizationId={activeOrganizationId}
-              activeView={activeView}
-              collapsed={sidebarCollapsed}
-              onOpenSettings={() => setShowSettingsDialog(true)}
-              onOrganizationChange={setActiveOrganizationId}
-              onOrganizationCreate={handleOrganizationCreate}
-              onOrganizationRename={handleOrganizationRename}
-              onOrganizationDelete={handleOrganizationDelete}
-              onToggleCollapse={toggleSidebar}
-            />
-            <div
-              className={[
-                "flex min-w-0 flex-col overflow-hidden transition-[opacity,transform,filter]",
-                activityExpanded
-                  ? "pointer-events-none -translate-x-3 opacity-0 blur-[1px]"
-                  : "translate-x-0 opacity-100 blur-0",
-              ].join(" ")}
-              style={{
-                transitionDuration: `${ACTIVITY_PANEL_TRANSITION_MS}ms`,
-                transitionTimingFunction: ACTIVITY_PANEL_EASING,
-              }}
-              aria-hidden={activityExpanded}
-            >
-              <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                <Toolbar
-                  activeView={activeView}
-                  loading={loading}
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  activityPanelOpen={activityPanelOpen}
-                  onToggleActivityPanel={toggleActivityPanel}
-                  sourceFilter={sourceFilter}
-                  onSourceFilterChange={setSourceFilter}
-                  inboxStatusFilter={inboxStatusFilter}
-                   onInboxStatusFilterChange={setInboxStatusFilter}
-                   mailFolderFilter={mailFolderFilter}
-                   onMailFolderFilterChange={setMailFolderFilter}
-                   calendarViewMode={calendarViewMode}
-                   onCalendarViewModeChange={setCalendarViewMode}
-                   boardFilter={boardFilter}
-                   onBoardFilterChange={setBoardFilter}
-                  inboxCounts={inboxCounts}
-                  agentModelFilter="all"
-                  onAgentModelFilterChange={() => {}}
-                  agentModelCounts={{ all: 0, local: 0, cloud: 0 }}
-                  capabilityViewMode={capabilityViewMode}
-                  onCapabilityViewModeChange={(mode) => {
-                    if (isCapabilityView(activeView)) {
-                      void navigate({ to: getCapabilityPath(activeView, mode) });
-                    }
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              <Toolbar
+                activeView={activeView}
+                loading={loading}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                activityPanelOpen={activityPanelOpen}
+                onToggleActivityPanel={toggleActivityPanel}
+                sourceFilter={sourceFilter}
+                onSourceFilterChange={setSourceFilter}
+                inboxStatusFilter={inboxStatusFilter}
+                 onInboxStatusFilterChange={setInboxStatusFilter}
+                 mailFolderFilter={mailFolderFilter}
+                 onMailFolderFilterChange={setMailFolderFilter}
+                 calendarViewMode={calendarViewMode}
+                 onCalendarViewModeChange={setCalendarViewMode}
+                 boardFilter={boardFilter}
+                 onBoardFilterChange={setBoardFilter}
+                inboxCounts={inboxCounts}
+                agentModelFilter="all"
+                onAgentModelFilterChange={() => {}}
+                agentModelCounts={{ all: 0, local: 0, cloud: 0 }}
+                capabilityViewMode={capabilityViewMode}
+                onCapabilityViewModeChange={(mode) => {
+                  if (isCapabilityView(activeView)) {
+                    void navigate({ to: getCapabilityPath(activeView, mode) });
+                  }
+                }}
+                 onOpenCreateGoal={
+                   activeView === "board"
+                     ? () => {
+                         setCreateBoardDialogOpen(true);
+                       }
+                     : undefined
+                 }
+                  onOpenMailAccounts={() => {
+                    setSettingsDefaultTab("mail");
+                    setShowSettingsDialog(true);
                   }}
-                   onOpenCreateGoal={
-                     activeView === "board"
-                       ? () => {
-                           setCreateBoardDialogOpen(true);
-                         }
-                       : undefined
-                   }
-                    onOpenMailAccounts={() => {
-                      setSettingsDefaultTab("mail");
-                      setShowSettingsDialog(true);
-                    }}
-                    onRefresh={refreshAll}
-                >
-                  {activeView === "bookmarks" && (
-                    <div className="relative mx-auto w-full max-w-md">
-                      <HugeiconsIcon icon={Search01Icon} className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <input
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search bookmarks..."
-                        className="w-full rounded-lg border border-border bg-background py-1.5 pl-9 pr-3 text-sm text-foreground outline-none transition-[border-color,box-shadow] focus:border-ring/50 focus:ring-2 focus:ring-ring/20"
-                      />
-                    </div>
-                  )}
-                </Toolbar>
-                <Outlet />
-              </div>
+                  onRefresh={refreshAll}
+              >
+                {activeView === "bookmarks" && (
+                  <div className="relative mx-auto w-full max-w-md">
+                    <HugeiconsIcon icon={Search01Icon} className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={m.search_bookmarks()}
+                      className="w-full rounded-md border border-border bg-background py-1 pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring/30"
+                    />
+                  </div>
+                )}
+              </Toolbar>
+              <Outlet />
             </div>
-            <ActivityPanel
-              problems={problems}
-              collapsed={!activityPanelOpen}
-              activeView={activeView}
-            />
           </div>
-          {showSettingsDialog && (
-            <SettingsDialog
-              open={showSettingsDialog}
-              onClose={() => {
-                setShowSettingsDialog(false);
-                setSettingsDefaultTab("general");
-              }}
-              settings={settings}
-              onSettingsChange={useUIStore.getState().setSettings}
-              onRuntimesRefresh={refreshAll}
-              registeredRuntimes={runtimes}
-              defaultTab={settingsDefaultTab}
-            />
-          )}
-          <CreateBoardConversationDialog
-            open={createBoardDialogOpen}
-            projects={projects}
-            onClose={() => setCreateBoardDialogOpen(false)}
-            onSubmit={async (values) => {
-              const created = await createConversation({
-                title: values.title,
-                projectId: values.projectId,
-              });
-              const noteSections = [
-                values.description ? `Notes:\n${values.description}` : "",
-                values.dueDate ? `Due date: ${values.dueDate}` : "",
-                `Priority: ${values.priority}`,
-                values.tags.length > 0 ? `Tags:\n${values.tags.map((item) => `- ${item}`).join("\n")}` : "",
-                values.subtasks.length > 0
-                  ? `Subtasks:\n${values.subtasks.map((item) => `- [ ] ${item}`).join("\n")}`
-                  : "",
-              ].filter(Boolean);
-              if (noteSections.length > 0) {
-                await api.sendConversationMessage(created.id, noteSections.join("\n\n"));
-              }
-              setActiveConversationId(created.id);
-              await navigate({ to: "/dashboard/creation" });
-            }}
+          <ActivityPanel
+            problems={problems}
+            collapsed={!activityPanelOpen}
+            activeView={activeView}
           />
         </div>
-          </>
-        </DashboardProvider>
-      </RequireAuth>
-    </AuthProvider>
+        {showSettingsDialog && (
+          <SettingsDialog
+            open={showSettingsDialog}
+            onClose={() => {
+              setShowSettingsDialog(false);
+              setSettingsDefaultTab("general");
+            }}
+            settings={settings}
+            onSettingsChange={useUIStore.getState().setSettings}
+            onRuntimesRefresh={refreshAll}
+            registeredRuntimes={runtimes}
+            defaultTab={settingsDefaultTab}
+          />
+        )}
+        <CreateBoardConversationDialog
+          open={createBoardDialogOpen}
+          projects={projects}
+          onClose={() => setCreateBoardDialogOpen(false)}
+          onSubmit={async (values) => {
+            const created = await createConversation({
+              title: values.title,
+              projectId: values.projectId,
+            });
+            const noteSections = [
+              values.description ? `Notes:\n${values.description}` : "",
+              values.dueDate ? `Due date: ${values.dueDate}` : "",
+              `Priority: ${values.priority}`,
+              values.tags.length > 0 ? `Tags:\n${values.tags.map((item) => `- ${item}`).join("\n")}` : "",
+              values.subtasks.length > 0
+                ? `Subtasks:\n${values.subtasks.map((item) => `- [ ] ${item}`).join("\n")}`
+                : "",
+            ].filter(Boolean);
+            if (noteSections.length > 0) {
+              await api.sendConversationMessage(created.id, noteSections.join("\n\n"));
+            }
+            setActiveConversationId(created.id);
+            await navigate({ to: "/dashboard/creation" });
+          }}
+        />
+      </div>
+    </>
   );
 }

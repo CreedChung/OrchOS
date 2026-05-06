@@ -42,7 +42,7 @@ import { useUser } from "@clerk/clerk-react";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { useUIStore } from "@/lib/store";
 import { m } from "@/paraglide/messages";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import { mapConversationMessagesToUiMessages, MessageBubble } from "@/components/chat/ConversationFlow";
 import { ChatThinkingState } from "@/components/chat/ChatThinkingState";

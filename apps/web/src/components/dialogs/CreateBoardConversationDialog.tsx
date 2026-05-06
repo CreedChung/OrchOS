@@ -15,6 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/lib/types";
+import { m } from "@/paraglide/messages";
 
 interface CreateBoardConversationDialogProps {
   open: boolean;
@@ -119,17 +120,17 @@ export function CreateBoardConversationDialog({
           onClose();
         }
       }}
-      title="Add to board"
-      description="Create a lightweight to-do item with the details you would expect on a normal board card."
+      title={m.add_to_board()}
+      description={m.add_to_board_desc()}
       size="lg"
       bodyClassName="pt-5"
       footer={
         <>
           <Button size="sm" type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {m.cancel()}
           </Button>
           <Button size="sm" type="submit" form="create-board-conversation-form" disabled={!title.trim() || submitting}>
-            {submitting ? "Creating..." : "Create"}
+            {submitting ? m.creating() : m.creating_normal()}
           </Button>
         </>
       }
@@ -139,26 +140,26 @@ export function CreateBoardConversationDialog({
           <div className="space-y-5">
             <fieldset className="space-y-1.5">
               <label htmlFor="create-board-title" className="text-sm font-medium text-foreground">
-                Title
+                {m.title()}
               </label>
               <Input
                 id="create-board-title"
                 ref={inputRef}
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Follow up with design on toolbar spacing"
+                placeholder={m.follow_up_title()}
               />
             </fieldset>
 
             <fieldset className="space-y-1.5">
               <label htmlFor="create-board-description" className="text-sm font-medium text-foreground">
-                Notes
+                {m.notes_label()}
               </label>
               <Textarea
                 id="create-board-description"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="Add any context, links, or follow-up notes for this to-do item."
+                placeholder={m.notes_placeholder()}
                 className="min-h-28 resize-y"
               />
             </fieldset>
@@ -166,7 +167,7 @@ export function CreateBoardConversationDialog({
             <div className="grid gap-4 sm:grid-cols-3">
               <fieldset className="space-y-1.5">
                 <label htmlFor="create-board-project" className="text-sm font-medium text-foreground">
-                  Project
+                  {m.project()}
                 </label>
                 <Select
                   value={projectId}
@@ -174,11 +175,11 @@ export function CreateBoardConversationDialog({
                 >
                   <SelectTrigger id="create-board-project" className="w-full">
                     <SelectValue>
-                      {availableProjects.find((project) => project.id === projectId)?.name ?? "No linked project"}
+                      {availableProjects.find((project) => project.id === projectId)?.name ?? m.no_linked_project()}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No linked project</SelectItem>
+                    <SelectItem value="">{m.no_linked_project()}</SelectItem>
                     {availableProjects.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         {project.name}
@@ -190,7 +191,7 @@ export function CreateBoardConversationDialog({
 
               <fieldset className="space-y-1.5">
                 <label htmlFor="create-board-due-date" className="text-sm font-medium text-foreground">
-                  Due date
+                  {m.due_date()}
                 </label>
                 <Input
                   id="create-board-due-date"
@@ -202,7 +203,7 @@ export function CreateBoardConversationDialog({
 
               <fieldset className="space-y-1.5">
                 <label htmlFor="create-board-priority" className="text-sm font-medium text-foreground">
-                  Priority
+                  {m.model_strategy()}
                 </label>
                 <Select
                   value={priority}
@@ -231,9 +232,9 @@ export function CreateBoardConversationDialog({
             <CardHeader>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <CardTitle>To-do card shape</CardTitle>
+                  <CardTitle>{m.to_do_card_shape()}</CardTitle>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground [text-wrap:pretty]">
-                    Keep this closer to a board card than a project brief.
+                    {m.keep_card_brief()}
                   </p>
                 </div>
                 <Badge variant="outline" className={cn("capitalize", priorityColor(priority))}>
@@ -244,21 +245,21 @@ export function CreateBoardConversationDialog({
             <CardContent className="space-y-4">
               <div className="rounded-xl border bg-card p-4 shadow-sm">
                 <div className="text-sm font-medium text-foreground [text-wrap:balance]">
-                  {title.trim() || "A short, actionable title will read best here"}
+                  {title.trim() || m.short_title_placeholder()}
                 </div>
                 <div className="mt-2 text-sm leading-6 text-muted-foreground [text-wrap:pretty]">
-                  {description.trim() || "Use notes for context, decisions, links, or follow-up details that should stay attached to the card."}
+                  {description.trim() || m.notes_placeholder()}
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Badge variant="secondary">{dueDate || "No due date"}</Badge>
+                  <Badge variant="secondary">{dueDate || m.no_due_date()}</Badge>
                   <Badge variant="outline">
-                    {availableProjects.find((project) => project.id === projectId)?.name ?? "Inbox"}
+                    {availableProjects.find((project) => project.id === projectId)?.name ?? m.inbox_fallback()}
                   </Badge>
                 </div>
               </div>
               <div className="text-xs leading-6 text-muted-foreground">
-                <p>Tags and subtasks use one line per item.</p>
-                <p>Keep the title concrete and let the notes hold the extra context.</p>
+                <p>{m.tags_subtasks_hint()}</p>
+                <p>{m.title_concrete_hint()}</p>
               </div>
             </CardContent>
           </Card>
@@ -267,26 +268,26 @@ export function CreateBoardConversationDialog({
         <div className="grid gap-5 lg:grid-cols-2">
           <fieldset className="space-y-1.5">
             <label htmlFor="create-board-tags" className="text-sm font-medium text-foreground">
-              Tags
+              {m.tags_label()}
             </label>
             <Textarea
               id="create-board-tags"
               value={tags}
               onChange={(event) => setTags(event.target.value)}
-              placeholder={"Design\nFollow-up\nToolbar"}
+              placeholder={m.tags_placeholder()}
               className="min-h-28 resize-y"
             />
           </fieldset>
 
           <fieldset className="space-y-1.5">
             <label htmlFor="create-board-subtasks" className="text-sm font-medium text-foreground">
-              Subtasks
+              {m.subtasks_label()}
             </label>
             <Textarea
               id="create-board-subtasks"
               value={subtasks}
               onChange={(event) => setSubtasks(event.target.value)}
-              placeholder={"Review current spacing\nPrepare updated mock\nShare with team"}
+              placeholder={m.subtasks_placeholder()}
               className="min-h-28 resize-y"
             />
           </fieldset>

@@ -1,5 +1,14 @@
-import { createEdenClient } from "./eden";
 import type { ControlSettings as ControlSettingsType } from "./types";
+
+declare global {
+  interface Window {
+    Clerk?: {
+      session?: {
+        getToken: () => Promise<string | null>;
+      } | null;
+    };
+  }
+}
 
 function getServerBaseUrl() {
   if (typeof window === "undefined") {
@@ -21,12 +30,23 @@ export function resolveApiUrl(path: string) {
   return new URL(path, `${getServerBaseUrl()}/`).toString();
 }
 
-function assertData<T>(result: { data: T | null; error: unknown; status: number }): T {
-  if (result.data !== null) {
-    return result.data;
+async function withSessionAuthorization(init?: RequestInit): Promise<RequestInit> {
+  if (typeof window === "undefined") {
+    return init ?? {};
   }
 
-  throw new Error(`API error: ${result.status}`);
+  const token = await window.Clerk?.session?.getToken();
+  if (!token) {
+    return init ?? {};
+  }
+
+  const headers = new Headers(init?.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+
+  return {
+    ...init,
+    headers,
+  };
 }
 
 function normalizeTrace(trace: unknown): ConversationMessage["trace"] {
@@ -506,7 +526,10 @@ export const api = {
     return (await response.json()) as DetectRuntimesResponse;
   },
   listLocalAgents: async (): Promise<LocalAgentProfile[]> => {
-    const response = await fetch(resolveApiUrl("/api/local-agents"), { credentials: "include" });
+    const response = await fetch(
+      resolveApiUrl("/api/local-agents"),
+      await withSessionAuthorization({ credentials: "include" }),
+    );
     if (response.status === 401) {
       return [];
     }
@@ -514,10 +537,13 @@ export const api = {
     return (await response.json()) as LocalAgentProfile[];
   },
   createLocalAgentPairingToken: async (): Promise<LocalAgentPairingToken> => {
-    const response = await fetch(resolveApiUrl("/api/local-agents/pairing-tokens"), {
-      method: "POST",
-      credentials: "include",
-    });
+    const response = await fetch(
+      resolveApiUrl("/api/local-agents/pairing-tokens"),
+      await withSessionAuthorization({
+        method: "POST",
+        credentials: "include",
+      }),
+    );
     if (response.status === 401) {
       throw new Error("Sign in to generate a local agent pairing token.");
     }
@@ -729,47 +755,6 @@ export const api = {
     const response = await fetch(resolveApiUrl(`/api/projects/${id}`), { method: "DELETE", credentials: "include" });
     if (!response.ok) throw new Error(`API error: ${response.status}`);
   },
-  cloneProject: async (
-    id: string,
-    options?: { force?: boolean },
-  ): Promise<{ success: boolean; path: string }> => {
-    const client = createEdenClient();
-    const result = await client.api.projects({ id }).clone.post(options);
-    return assertData(result);
-  },
-  getProjectPreview: async (id: string): Promise<ProjectPreviewStatus> => {
-    const client = createEdenClient();
-    const result = await client.api.projects({ id }).preview.get();
-    return assertData(result);
-  },
-  startProjectPreview: async (id: string): Promise<ProjectPreviewStatus> => {
-    const client = createEdenClient();
-    const result = await client.api.projects({ id }).preview.post(undefined);
-    return assertData(result);
-  },
-  getProjectGitStatus: async (id: string): Promise<ProjectGitStatus> => {
-    const client = createEdenClient();
-    const result = await client.api.projects({ id }).git.get();
-    return assertData(result);
-  },
-  switchProjectBranch: async (id: string, branch: string): Promise<ProjectCommandResult> => {
-    const client = createEdenClient();
-    const result = await client.api.projects({ id }).git.checkout.post({ branch });
-    return assertData(result);
-  },
-  installProjectDependencies: async (id: string): Promise<ProjectCommandResult> => {
-    const client = createEdenClient();
-    const result = await client.api.projects({ id }).install.post(undefined);
-    return assertData(result);
-  },
-  getProjectCommitActivity: async (id: string, days = 84): Promise<ProjectCommitActivity> => {
-    const client = createEdenClient();
-    const result = await client.api.projects({ id }).commits.get({
-      query: { days },
-    });
-    return assertData(result);
-  },
-
   // Filesystem
   browseDirectory: async (path?: string) => {
     const url = new URL(resolveApiUrl("/api/filesystem/browse"));
@@ -839,18 +824,6 @@ export const api = {
       throw new Error(`API error: ${response.status}`);
     }
     return (await response.json()) as ControlSettings;
-  },
-
-  // Events
-  getEvents: async (goalId?: string, limit?: number): Promise<Event[]> => {
-    const client = createEdenClient();
-    const result = await client.api.events.get({
-      query: {
-        goalId,
-        limit,
-      },
-    });
-    return assertData(result);
   },
 
   // Organizations
@@ -968,21 +941,20 @@ export const api = {
     projectId?: string;
     conversationId?: string;
   }): Promise<InboxThread[]> => {
-    const client = createEdenClient();
-    const result = await client.api.inbox.threads.get({
-      query: {
-        kind: filters?.kind,
-        status: filters?.status,
-        projectId: filters?.projectId,
-        conversationId: filters?.conversationId,
-      },
-    });
-    return (assertData(result) as unknown[]).map(normalizeInboxThread);
+    const url = new URL(resolveApiUrl("/api/inbox/threads"));
+    if (filters?.kind) url.searchParams.set("kind", filters.kind);
+    if (filters?.status) url.searchParams.set("status", filters.status);
+    if (filters?.projectId) url.searchParams.set("projectId", filters.projectId);
+    if (filters?.conversationId) url.searchParams.set("conversationId", filters.conversationId);
+
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return ((await response.json()) as unknown[]).map(normalizeInboxThread);
   },
   getInboxThread: async (id: string): Promise<InboxThread> => {
-    const client = createEdenClient();
-    const result = await client.api.inbox.threads({ id }).get();
-    return normalizeInboxThread(assertData(result));
+    const response = await fetch(resolveApiUrl(`/api/inbox/threads/${id}`), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return normalizeInboxThread(await response.json());
   },
   updateInboxThread: async (
     id: string,
@@ -995,14 +967,19 @@ export const api = {
       archived?: boolean;
     },
   ): Promise<InboxThread> => {
-    const client = createEdenClient();
-    const result = await client.api.inbox.threads({ id }).patch(data);
-    return normalizeInboxThread(assertData(result));
+    const response = await fetch(resolveApiUrl(`/api/inbox/threads/${id}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return normalizeInboxThread(await response.json());
   },
   listInboxMessages: async (threadId: string): Promise<InboxMessage[]> => {
-    const client = createEdenClient();
-    const result = await client.api.inbox.threads({ id: threadId }).messages.get();
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/inbox/threads/${threadId}/messages`), { credentials: "include" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as InboxMessage[];
   },
   addInboxMessage: async (
     threadId: string,
@@ -1021,9 +998,14 @@ export const api = {
       metadata?: Record<string, unknown>;
     },
   ): Promise<InboxMessage> => {
-    const client = createEdenClient();
-    const result = await client.api.inbox.threads({ id: threadId }).messages.post(data);
-    return assertData(result);
+    const response = await fetch(resolveApiUrl(`/api/inbox/threads/${threadId}/messages`), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return (await response.json()) as InboxMessage;
   },
 
   // Bookmarks

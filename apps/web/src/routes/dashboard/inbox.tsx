@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useUIStore } from "@/lib/store";
 import { useConversationStore } from "@/lib/stores/conversation";
+import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/dashboard/inbox")({ component: InboxPage });
 
@@ -22,8 +23,8 @@ function InboxPage() {
   }, [activeConversationId, navigate, setActiveGoalId]);
 
   return (
-    <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-      正在跳转到创作工作台...
-    </div>
+      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+        {m.redirecting_to_creation()}
+      </div>
   );
 }
