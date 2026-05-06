@@ -90,117 +90,71 @@ function normalizeCategory(name: string, bookmarks: ImportedBookmark[], used: Se
   } satisfies BookmarkCategory;
 }
 
-function getCategoryDl(dt: Element): Element | null {
-  let next = dt.nextElementSibling;
-  while (next) {
-    if (next.tagName === "DD") {
-      const dl = next.querySelector(":scope > dl");
-      if (dl) return dl;
-      return null;
-    }
-    if (next.tagName === "DL") {
-      return next;
-    }
-    if (next.tagName !== "P" && next.tagName !== "HR") {
-      return null;
-    }
-    next = next.nextElementSibling;
-  }
-  return dt.querySelector(":scope > dl");
+function decodeHtmlText(value: string) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(value, "text/html");
+  return doc.documentElement.textContent?.trim() || "";
 }
 
-function getDirectBookmarkLink(dt: Element): HTMLAnchorElement | null {
-  const link = dt.querySelector(":scope > a[href]");
-  return link instanceof HTMLAnchorElement ? link : null;
-}
+function parseBookmarkHtml(text: string) {
+  const grouped = new Map<string, ImportedBookmark[]>();
+  const used = new Set<string>();
+  const folderStack: string[] = [];
+  let pendingFolder: string | null = null;
+  let bookmarkIndex = 0;
 
-function getDirectDtChildren(dl: Element) {
-  const children: Element[] = [];
+  const tokenPattern = /<DT><H3\b[^>]*>([\s\S]*?)<\/H3>|<DT><A\b[^>]*HREF\s*=\s*(["'])(.*?)\2[^>]*>([\s\S]*?)<\/A>|<DL><p>|<\/DL>/gi;
 
-  for (const child of Array.from(dl.children)) {
-    if (child.tagName === "DT") {
-      children.push(child);
+  for (const match of text.matchAll(tokenPattern)) {
+    const [token, folderName, , urlValue, titleValue] = match;
+
+    if (/^<DT><H3/i.test(token)) {
+      pendingFolder = decodeHtmlText(folderName || "") || "Imported";
       continue;
     }
 
-    if (child.tagName === "P") {
-      for (const nested of Array.from(child.children)) {
-        if (nested.tagName === "DT") {
-          children.push(nested);
-        }
-      }
-    }
-  }
-
-  return children;
-}
-
-function collectHtmlCategories(
-  dl: Element,
-  categories: BookmarkCategory[],
-  used: Set<string>,
-  path: string[] = [],
-) {
-  const directBookmarkGroups = new Map<string, ImportedBookmark[]>();
-  let looseBookmarkIndex = 0;
-
-  for (const child of getDirectDtChildren(dl)) {
-    const heading = child.querySelector(":scope > h3");
-    if (heading) {
-      const folderName = heading.textContent?.trim() || "Imported";
-      const folderDl = getCategoryDl(child);
-      if (folderDl) {
-        collectHtmlCategories(folderDl, categories, used, [...path, folderName]);
+    if (/^<DL><p>$/i.test(token)) {
+      if (pendingFolder) {
+        folderStack.push(pendingFolder);
+        pendingFolder = null;
       }
       continue;
     }
 
-    const link = getDirectBookmarkLink(child);
-    if (!link) {
+    if (/^<\/DL>$/i.test(token)) {
+      pendingFolder = null;
+      if (folderStack.length > 0) {
+        folderStack.pop();
+      }
       continue;
     }
 
-    const url = link.getAttribute("href")?.trim() ?? "";
+    const url = decodeHtmlText(urlValue || "").trim();
     if (!url) {
       continue;
     }
 
-    const categoryName = path.length > 0 ? path.join(" / ") : "Imported";
-    const bookmarks = directBookmarkGroups.get(categoryName) ?? [];
-    const title = link.textContent?.trim() || url;
+    const title = decodeHtmlText(titleValue || "") || url;
+    const categoryName = folderStack.length > 0 ? folderStack[folderStack.length - 1] : "Imported";
+    const bookmarks = grouped.get(categoryName) ?? [];
     bookmarks.push({
-      id: createImportId("bookmark", categoryName, String(looseBookmarkIndex), title),
+      id: createImportId("bookmark", categoryName, String(bookmarkIndex), title),
       title,
       url,
       pinned: false,
     });
-    directBookmarkGroups.set(categoryName, bookmarks);
-    looseBookmarkIndex += 1;
+    grouped.set(categoryName, bookmarks);
+    bookmarkIndex += 1;
   }
 
-  for (const [name, bookmarks] of directBookmarkGroups.entries()) {
-    if (bookmarks.length === 0) {
-      continue;
-    }
-
-    categories.push(normalizeCategory(name, bookmarks, used));
-  }
-}
-
-function parseBookmarkHtml(text: string) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(text, "text/html");
-  const categories: BookmarkCategory[] = [];
-  const used = new Set<string>();
-
-  const rootContainers = Array.from(doc.querySelectorAll("body > dl, body > p > dl"));
-  for (const container of rootContainers) {
-    collectHtmlCategories(container, categories, used);
-  }
+  const categories = Array.from(grouped.entries()).map(([name, bookmarks]) => normalizeCategory(name, bookmarks, used));
 
   if (categories.length > 0) {
     return categories;
   }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, "text/html");
 
   const looseLinks = Array.from(doc.querySelectorAll("a[href]"));
   const bookmarks = looseLinks
@@ -611,6 +565,7 @@ function BookmarksPage() {
 
       await persistCategories(parsed, parsed[0]?.id ?? null);
       toast.success(`Imported ${parsed.reduce((count, category) => count + category.bookmarks.length, 0)} bookmarks`);
+      setIsCreateOrImportDialogOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to import bookmarks");
     }

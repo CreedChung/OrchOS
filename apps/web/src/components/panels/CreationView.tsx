@@ -17,6 +17,7 @@ import {
   GlobeIcon,
   PinIcon,
   Settings01Icon,
+  Bookmark01Icon,
 } from "@hugeicons/core-free-icons";
 import { type UIMessage } from "ai";
 import { Button } from "@/components/ui/button";
@@ -37,17 +38,18 @@ import type {
   ControlSettings,
   RuntimeProfile,
 } from "@/lib/types";
+import { useUser } from "@clerk/clerk-react";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { useUIStore } from "@/lib/store";
 import { m } from "@/paraglide/messages";
 import { toast } from "sonner";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
-import { mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
+import { mapConversationMessagesToUiMessages, MessageBubble } from "@/components/chat/ConversationFlow";
+import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
 
 interface CreationViewProps {
   runtimes: RuntimeProfile[];
   settings: ControlSettings | null;
-  onSettingsChange: (settings: ControlSettings) => void;
 }
 
 const EMPTY_CONVERSATION_MESSAGES: ConversationMessage[] = [];
@@ -75,7 +77,6 @@ const searchEngineMeta = [
 export function CreationView({
   runtimes,
   settings,
-  onSettingsChange,
 }: CreationViewProps) {
   const creationArchiveFilter = useUIStore((s) => s.creationArchiveFilter);
   const setCreationArchiveFilter = useUIStore((s) => s.setCreationArchiveFilter);
@@ -547,19 +548,11 @@ export function CreationView({
             messages={uiMessages}
             sending={sending}
             runtimes={enabledRuntimes}
-            defaultRuntimeId={settings?.defaultRuntimeId}
             customAgents={customAgents}
             selectedCustomAgentId={selectedCustomAgentId}
             onSelectCustomAgent={setSelectedCustomAgentId}
             onUpdateConversation={handleUpdateConversation}
             onCreateConversation={handleCreateConversation}
-            onSetDefaultRuntime={(runtimeId) => {
-              void api
-                .updateSettings({ defaultRuntimeId: runtimeId })
-                .then((updated) => {
-                  onSettingsChange(updated);
-                });
-            }}
             onSendMessage={async (content, targetConversation, customAgentId) => {
               const conversation = targetConversation ?? activeConversation;
               if (!conversation) return;
@@ -617,7 +610,6 @@ interface ChatAreaProps {
   messages: UIMessage[];
   sending: boolean;
   runtimes: RuntimeProfile[];
-  defaultRuntimeId?: string;
   customAgents: CustomAgent[];
   selectedCustomAgentId: string | null;
   onSelectCustomAgent: (id: string | null) => void;
@@ -633,7 +625,6 @@ interface ChatAreaProps {
       deleted?: boolean;
     },
   ) => Promise<void>;
-  onSetDefaultRuntime: (runtimeId?: string) => void;
   onSendMessage: (
     content: string,
     conversation?: Conversation,
@@ -695,21 +686,23 @@ function ChatArea({
   messages,
   sending,
   runtimes,
-  defaultRuntimeId,
   customAgents,
   selectedCustomAgentId,
   onSelectCustomAgent,
   onCreateConversation,
   onUpdateConversation,
-  onSetDefaultRuntime,
   onSendMessage,
 }: ChatAreaProps) {
   const [input, setInput] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isConversationUpdating, setIsConversationUpdating] = useState(false);
   const [inputCollapsed] = useState(false);
+  const [showBookmarks, setShowBookmarks] = useState(messages.length === 0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const toggleRef = useRef<HTMLDivElement>(null);
+  const chatBtnRef = useRef<HTMLButtonElement>(null);
+  const searchBtnRef = useRef<HTMLButtonElement>(null);
   const pendingConversationUpdateRef = useRef<Promise<void> | null>(null);
   const [draftRuntimeId, setDraftRuntimeId] = useState<string | undefined>(
     conversation.runtimeId,
@@ -774,12 +767,20 @@ function ChatArea({
     () => customAgents.find((a) => a.id === selectedCustomAgentId),
     [customAgents, selectedCustomAgentId],
   );
-  const { pendingUserMessageByConversationId, setPendingUserMessage } =
-    useConversationStore();
+  const { user } = useUser();
+  const {
+    pendingConversationId,
+    flowDraftByConversationId,
+    pendingUserMessageByConversationId,
+    setPendingUserMessage,
+  } = useConversationStore();
   const pendingUserMessage =
     conversation.id === "__draft__"
       ? null
       : (pendingUserMessageByConversationId[conversation.id] ?? null);
+  const flowDraft = flowDraftByConversationId[conversation.id];
+  const showPendingAssistantReply = conversation.id !== "__draft__" && pendingConversationId === conversation.id;
+
   const visibleMessages = useMemo(() => {
     if (!pendingUserMessage) return messages;
 
@@ -792,6 +793,18 @@ function ChatArea({
       } as UIMessage,
     ];
   }, [conversation.id, messages, pendingUserMessage]);
+
+  const allMessages = useMemo(() => {
+    const result = [...visibleMessages];
+    if (flowDraft) {
+      result.push({
+        id: flowDraft.id,
+        role: "assistant",
+        parts: [{ type: "text", text: flowDraft.content }],
+      } as UIMessage);
+    }
+    return result;
+  }, [visibleMessages, flowDraft]);
 
   const syncTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -814,6 +827,19 @@ function ChatArea({
   useEffect(() => {
     textareaRef.current?.focus();
   }, [conversation.id]);
+
+  // Track active toggle position for sliding indicator
+  useEffect(() => {
+    const container = toggleRef.current;
+    const activeBtn = mode === "chat" ? chatBtnRef.current : searchBtnRef.current;
+    if (!container || !activeBtn) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const activeRect = activeBtn.getBoundingClientRect();
+
+    container.style.setProperty("--active-left", `${activeRect.left - containerRect.left}px`);
+    container.style.setProperty("--active-width", `${activeRect.width}px`);
+  }, [mode]);
 
   useEffect(() => {
     if (!pendingUserMessage) return;
@@ -864,6 +890,7 @@ function ChatArea({
 
   const handleSend = useCallback(async () => {
     if ((!input.trim() && attachedFiles.length === 0) || sending) return;
+    setShowBookmarks(false);
 
     if (mode === "search") {
       const engine = searchEngineMeta.find((e) => e.id === searchEngineId);
@@ -999,14 +1026,24 @@ function ChatArea({
                 />
                 <div className="relative z-20 flex items-center justify-between gap-2 pt-2 pb-0.5">
                   <div className="overflow-visible flex items-center gap-1">
-                    <div className="flex items-center rounded-lg bg-muted p-0.5 gap-0.5">
+                    <div ref={toggleRef} className="relative flex items-center rounded-lg bg-muted p-0.5 gap-0.5">
+                      <div
+                        className="absolute inset-y-[3px] rounded-md bg-background shadow-sm dark:bg-input/30 transition-all pointer-events-none"
+                        style={{
+                          left: "var(--active-left, 4px)",
+                          width: "var(--active-width, 50%)",
+                          transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+                          transitionDuration: "400ms",
+                        }}
+                      />
                       <button
+                        ref={chatBtnRef}
                         type="button"
                         onClick={() => setMode("chat")}
                         className={cn(
-                          "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
+                          "relative z-10 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
                           mode === "chat"
-                            ? "bg-background text-foreground shadow-sm"
+                            ? "text-foreground"
                             : "text-muted-foreground hover:text-foreground",
                         )}
                       >
@@ -1014,12 +1051,13 @@ function ChatArea({
                         Chat
                       </button>
                       <button
+                        ref={searchBtnRef}
                         type="button"
                         onClick={() => setMode("search")}
                         className={cn(
-                          "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
+                          "relative z-10 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
                           mode === "search"
-                            ? "bg-background text-foreground shadow-sm"
+                            ? "text-foreground"
                             : "text-muted-foreground hover:text-foreground",
                         )}
                       >
@@ -1037,16 +1075,7 @@ function ChatArea({
                             if (id) queueConversationUpdate({ runtimeId: undefined });
                           }}
                         />
-                        <RuntimeSelector
-                          runtimes={runtimes.filter((runtime) => runtime.enabled)}
-                          selectedRuntimeId={effectiveRuntimeId ?? undefined}
-                          defaultRuntimeId={defaultRuntimeId}
-                          onSelect={(runtimeId) => {
-                            queueConversationUpdate({ runtimeId });
-                            if (runtimeId) onSelectCustomAgent(null);
-                          }}
-                          onSetDefault={onSetDefaultRuntime}
-                        />
+
                       </>
                     ) : (
                       <SearchEngineSelector
@@ -1111,7 +1140,7 @@ function ChatArea({
       )}
 
       {/* Bookmarks + Browser Tabs */}
-      {messages.length === 0 && !sending && (
+      {showBookmarks && (
         <div className="flex min-h-0 flex-1 gap-4 overflow-hidden px-4 py-4 md:px-6">
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -1126,7 +1155,7 @@ function ChatArea({
                       <HugeiconsIcon icon={Folder01Icon} className="size-3" />
                       {group.name}
                     </span>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="grid gap-3 md:grid-cols-2">
                       {group.bookmarks.map((bookmark) => (
                         <button
                           key={bookmark.id}
@@ -1159,118 +1188,36 @@ function ChatArea({
       )}
 
       {/* Messages */}
-      <div className={cn("flex min-h-0 flex-col overflow-y-auto px-4 md:px-6", messages.length === 0 && !sending ? "hidden" : "flex-1")}>
-        <div ref={messagesEndRef} />
-      </div>
-    </div>
-  );
-}
-
-interface RuntimeSelectorProps {
-  runtimes: RuntimeProfile[];
-  selectedRuntimeId?: string;
-  defaultRuntimeId?: string;
-  onSelect: (runtimeId?: string) => void;
-  onSetDefault: (runtimeId?: string) => void;
-}
-
-function RuntimeSelector({
-  runtimes,
-  selectedRuntimeId,
-  defaultRuntimeId,
-  onSelect,
-  onSetDefault,
-}: RuntimeSelectorProps) {
-  const safeRuntimes = Array.isArray(runtimes) ? runtimes : [];
-  const [open, setOpen] = useState(false);
-
-  const selectedRuntime = safeRuntimes.find((runtime) => runtime.id === selectedRuntimeId);
-
-  const allItems = [
-    {
-      id: "runtime::__none__",
-      name: m.creation_placeholder(),
-      runtimeId: undefined,
-    },
-    ...safeRuntimes.map((runtime) => ({
-      id: `runtime::${runtime.id}`,
-      name: runtime.name,
-      runtimeId: runtime.id,
-    })),
-  ];
-
-  const handleSelect = useCallback(
-    (item: (typeof allItems)[number]) => {
-      onSelect(item.runtimeId);
-      setOpen(false);
-    },
-    [onSelect],
-  );
-
-  return (
-    <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger
-        onClick={(e) => e.stopPropagation()}
-        className="flex h-7 w-36 cursor-default items-center justify-between gap-1.5 rounded-full border border-input bg-transparent py-2 pe-2 ps-2.5 text-xs whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
-      >
-        <span className="flex min-w-0 items-center gap-1.5">
-          <span className="inline-flex size-4 shrink-0 items-center justify-center overflow-hidden text-foreground/70">
-            <HugeiconsIcon icon={UnfoldMoreIcon} className="size-3 shrink-0" />
-          </span>
-          <span className="truncate">
-            {selectedRuntime?.name || m.creation_placeholder()}
-          </span>
-        </span>
-        <HugeiconsIcon
-          icon={UnfoldMoreIcon}
-          className="size-3 shrink-0 text-muted-foreground"
-        />
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent align="start" className="min-w-(--anchor-width)">
-        {allItems.map((item) => {
-          const isDefault = item.runtimeId !== undefined && item.runtimeId === defaultRuntimeId;
-
-          return (
-            <DropdownMenuItem
-              key={item.id}
-              onClick={(event) => {
-                event.stopPropagation();
-                handleSelect(item);
-              }}
-              className="flex items-center justify-between gap-2"
-            >
-              <span className="truncate">{item.name}</span>
-              {item.runtimeId !== undefined ? (
-                <button
+      {!showBookmarks && (
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <div className="flex items-center justify-between border-b border-border px-4 py-2 md:px-6">
+            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <HugeiconsIcon icon={Chat01Icon} className="size-3.5" />
+              Conversation
+            </span>
+            <Tooltip>
+              <TooltipTrigger
+                render={<button
                   type="button"
-                  className={cn(
-                    "flex size-5 shrink-0 items-center justify-center rounded p-0.5 transition-colors",
-                    isDefault
-                      ? "text-primary"
-                      : "text-muted-foreground/40 hover:text-primary",
-                  )}
-                  title={isDefault ? "Default runtime" : m.set_as_default()}
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                  }}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    if (!isDefault) {
-                      onSetDefault(item.runtimeId);
-                    }
-                  }}
+                  onClick={() => setShowBookmarks(true)}
+                  className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
-                  <HugeiconsIcon icon={Add01Icon} className={cn("size-3", isDefault && "text-primary")} />
-                </button>
-              ) : null}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+                  <HugeiconsIcon icon={Bookmark01Icon} className="size-3.5" />
+                </button>}
+              />
+              <TooltipContent side="top">Show bookmarks</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="flex-1 space-y-4 px-4 py-4 md:px-6">
+            {allMessages.map((message) => (
+              <MessageBubble key={message.id} msg={message} userImageUrl={user?.imageUrl} />
+            ))}
+            {showPendingAssistantReply ? <ChatThinkingState /> : null}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

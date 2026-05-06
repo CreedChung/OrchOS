@@ -27,7 +27,17 @@ export const Route = createFileRoute("/api/conversations/$id/messages")({
           await ConversationService.addMessage(db, params.id, "user", body.content);
 
           try {
-            const res = await fetch(agent.url, {
+            const url = agent.url.endsWith("/chat/completions")
+              ? agent.url
+              : `${agent.url.replace(/\/+$/, "")}/chat/completions`;
+
+            const prevMessages = await ConversationService.getMessages(db, params.id);
+            const history = prevMessages
+              .filter((m) => m.role === "user" || m.role === "assistant")
+              .slice(0, -1)
+              .map((m) => ({ role: m.role, content: m.content }));
+
+            const res = await fetch(url, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -35,7 +45,10 @@ export const Route = createFileRoute("/api/conversations/$id/messages")({
               },
               body: JSON.stringify({
                 model: agent.model,
-                messages: [{ role: "user", content: body.content }],
+                messages: [
+                  ...history,
+                  { role: "user", content: body.content },
+                ],
               }),
             });
 

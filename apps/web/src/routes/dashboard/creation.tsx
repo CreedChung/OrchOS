@@ -8,13 +8,11 @@ export const Route = createFileRoute("/dashboard/creation")({ component: Creatio
 function CreationPage() {
   const { runtimes } = useDashboard();
   const settings = useUIStore((s) => s.settings);
-  const setSettings = useUIStore((s) => s.setSettings);
 
   return (
     <CreationView
       runtimes={runtimes}
       settings={settings}
-      onSettingsChange={setSettings}
     />
   );
 }

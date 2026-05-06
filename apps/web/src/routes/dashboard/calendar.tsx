@@ -765,7 +765,6 @@ function CalendarPage() {
                                   className="size-3.5 shrink-0 text-violet-500"
                                 />
                                 <span className="min-w-0 flex-1 truncate">{group.name}</span>
-                                <span className="text-xs text-muted-foreground/60 group-hover:hidden">{calendars.length}</span>
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -786,6 +785,7 @@ function CalendarPage() {
                                 >
                                   <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                                 </Button>
+                                <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground group-hover:hidden">{calendars.length}</span>
                               </div>
 
                               <div className="ml-3 space-y-0.5">
@@ -809,7 +809,7 @@ function CalendarPage() {
                                         aria-hidden="true"
                                       />
                                       <span className="min-w-0 flex-1 truncate">{calendar.name}</span>
-                                      <span className="text-xs text-muted-foreground/60">
+                                      <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                                         {localEvents.filter((event) => event.calendarId === calendar.id).length}
                                       </span>
                                     </div>

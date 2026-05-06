@@ -1,72 +1,17 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useUser } from "@clerk/clerk-react";
-import { type UIMessage } from "ai";
 import {
   Alert01Icon,
   InformationCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import type { Problem, SidebarView } from "@/lib/types";
-import { useConversationStore } from "@/lib/stores/conversation";
-import { ChatThinkingState } from "@/components/chat/ChatThinkingState";
-import { MessageBubble, mapConversationMessagesToUiMessages } from "@/components/chat/ConversationFlow";
 
 interface ActivityPanelProps {
   problems: Problem[];
   collapsed: boolean;
   expanded?: boolean;
   activeView: SidebarView;
-}
-
-function buildFlowMessages(
-  persistedFlowMessages: UIMessage[],
-  options: {
-    activeConversationId: string | null;
-    pendingUserMessage?: string;
-    flowDraft?: {
-      id: string;
-      role: "assistant";
-      content: string;
-      responseTime?: number;
-      trace?: Parameters<typeof mapConversationMessagesToUiMessages>[0][number]["trace"];
-    };
-  },
-) {
-  return [
-    ...persistedFlowMessages,
-    ...(options.pendingUserMessage
-      ? [
-          {
-            id: `pending-user-${options.activeConversationId ?? "draft"}`,
-            role: "user",
-            parts: [{ type: "text", text: options.pendingUserMessage }],
-          } as UIMessage,
-        ]
-      : []),
-    ...(options.flowDraft
-      ? [
-          {
-            id: options.flowDraft.id,
-            role: options.flowDraft.role,
-            metadata: {
-              responseTime: options.flowDraft.responseTime,
-            },
-            parts: mapConversationMessagesToUiMessages([
-              {
-                id: options.flowDraft.id,
-                conversationId: options.activeConversationId ?? "",
-                role: options.flowDraft.role,
-                content: options.flowDraft.content,
-                responseTime: options.flowDraft.responseTime,
-                trace: options.flowDraft.trace,
-                createdAt: new Date().toISOString(),
-              },
-            ])[0]?.parts ?? [],
-          } as UIMessage,
-        ]
-      : []),
-  ];
 }
 
 function getAttentionItems(problems: Problem[]) {
@@ -86,29 +31,10 @@ function SectionHeader({ title, meta }: { title: string; meta?: string }) {
 }
 
 export function ActivityPanel({ problems, collapsed, expanded, activeView }: ActivityPanelProps) {
-  const { user } = useUser();
-  const {
-    activeConversationId,
-    pendingConversationId,
-    flowDraftByConversationId,
-    messagesByConversationId,
-    pendingUserMessageByConversationId,
-  } = useConversationStore();
-
   if (collapsed) {
     return null;
   }
 
-  const conversationMessages = activeConversationId ? (messagesByConversationId[activeConversationId] ?? []) : [];
-  const pendingUserMessage = activeConversationId ? pendingUserMessageByConversationId[activeConversationId] : undefined;
-  const flowDraft = activeConversationId ? flowDraftByConversationId[activeConversationId] : undefined;
-  const persistedFlowMessages = mapConversationMessagesToUiMessages(conversationMessages);
-  const flowMessages = buildFlowMessages(persistedFlowMessages, {
-    activeConversationId,
-    pendingUserMessage,
-    flowDraft,
-  });
-  const showPendingAssistantReply = activeConversationId !== null && pendingConversationId === activeConversationId;
   const attentionItems = getAttentionItems(problems);
   const panelContext = activeView === "creation"
     ? "当前线程态势"
@@ -130,17 +56,6 @@ export function ActivityPanel({ problems, collapsed, expanded, activeView }: Act
 
       <ScrollArea className="flex-1">
         <div className="space-y-4 py-3">
-          {activeView === "creation" && (flowMessages.length > 0 || showPendingAssistantReply) ? (
-            <section>
-              <div className="space-y-4 px-3">
-                {flowMessages.map((message) => (
-                  <MessageBubble key={message.id} msg={message as UIMessage} userImageUrl={user?.imageUrl} />
-                ))}
-                {showPendingAssistantReply ? <ChatThinkingState /> : null}
-              </div>
-            </section>
-          ) : null}
-
           {attentionItems.length > 0 ? (
             <section>
               <SectionHeader title="Needs Attention" meta={`${attentionItems.length} open`} />

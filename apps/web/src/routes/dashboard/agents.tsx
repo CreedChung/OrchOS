@@ -14,10 +14,10 @@ import { useDashboard } from "@/lib/dashboard-context";
 import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/dashboard/agents")({
-  component: DevicesPage,
+  component: AgentsPage,
 });
 
-function DevicesPage() {
+function AgentsPage() {
   const { localHosts, loading } = useDashboard();
   const [pairing, setPairing] = useState<LocalHostPairingToken | null>(null);
   const [showPairingDialog, setShowPairingDialog] = useState(false);
@@ -78,7 +78,6 @@ function DevicesPage() {
 
   function handleSelectCli() {
     setConnectStep("cli");
-    void handleCreatePairingToken();
   }
 
   function handleSelectCustom() {
@@ -90,6 +89,7 @@ function DevicesPage() {
     try {
       const token = await api.createLocalHostPairingToken();
       setPairing(token);
+      setIsConnectDialogOpen(false);
       setShowPairingDialog(true);
       setTokenCopied(false);
       toast.success(m.pairing_token_generated());
@@ -200,7 +200,7 @@ function DevicesPage() {
         >
           <div className="flex h-10 items-center justify-between rounded-md px-2">
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-foreground">{m.devices()} <span className="ml-1 text-xs font-normal text-muted-foreground tabular-nums">{localHosts.length + customAgents.length}</span></div>
+              <div className="text-sm font-semibold text-foreground">{m.agents()} <span className="ml-1 text-xs font-normal text-muted-foreground tabular-nums">{localHosts.length + customAgents.length}</span></div>
             </div>
             <div className="flex items-center gap-1">
               <Tooltip>
@@ -374,7 +374,7 @@ function DevicesPage() {
               <Button type="button" variant="outline" onClick={() => setConnectStep("choose")}>
                 Back
               </Button>
-              <Button type="button" onClick={() => { setIsConnectDialogOpen(false); handleCreatePairingToken(); }}>
+              <Button type="button" onClick={handleCreatePairingToken}>
                 Generate token
               </Button>
             </>
@@ -422,6 +422,20 @@ function DevicesPage() {
                 </div>
               </div>
             </button>
+          </div>
+        ) : connectStep === "cli" ? (
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Generate a pairing token and run the CLI command on the machine you want to connect.
+            </p>
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/50 p-4 text-center">
+              <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <HugeiconsIcon icon={ComputerIcon} className="size-6" />
+              </div>
+              <div className="text-sm text-foreground">
+                Install the CLI on your machine and run the command with the generated token to pair it.
+              </div>
+            </div>
           </div>
         ) : connectStep === "custom" ? (
           <div className="space-y-4">
@@ -476,14 +490,9 @@ function DevicesPage() {
             <span className="text-xs text-muted-foreground">
               {pairing ? m.token_expires_in({ minutes: String(Math.max(1, Math.round((new Date(pairing.expiresAt).getTime() - Date.now()) / 60000))) }) : ""}
             </span>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="ghost" onClick={() => setShowPairingDialog(false)}>
-                {m.done()}
-              </Button>
-              <Button type="button" variant="default" onClick={() => setShowPairingDialog(false)}>
-                {m.done()}
-              </Button>
-            </div>
+            <Button type="button" variant="default" onClick={() => setShowPairingDialog(false)}>
+              {m.done()}
+            </Button>
           </div>
         }
       >
