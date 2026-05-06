@@ -32,15 +32,14 @@
 ## Backend Wiring
 
 - Server-side modules live under `apps/web/src/server/modules/*`.
-- Runtime database behavior is under `apps/web/src/server/bun/*`; default DB path is `cortex.db` unless `CORTEX_DB_PATH` is set.
+- Runtime database behavior is Cloudflare D1-first via `apps/web/src/server/runtime/local-db.ts` and the `DB` binding from `apps/web/wrangler.jsonc`.
 - Route handlers under `apps/web/src/routes/api.*` call into the server modules directly.
 
 ## Database / Migration Gotcha
 
-- Drizzle config now lives at `apps/web/drizzle.config.ts` and points at the same SQLite-backed runtime used by the app.
-- If changing persistence behavior, inspect both `apps/web/src/server/db/*` and `apps/web/src/server/bun/*` before deciding how migrations should work.
+- Drizzle config lives at `apps/web/drizzle.config.ts` and uses the D1 HTTP driver, reading `database_id` from `apps/web/wrangler.jsonc`.
+- If changing persistence behavior, inspect both `apps/web/src/server/db/*` and `apps/web/src/server/runtime/*` before deciding how migrations should work.
 
 ## Repo-Specific Editing Guidance
 
 - Ignore template README claims in app subfolders unless confirmed by source/config; root config is more reliable here.
-- Existing untracked/modified DB files at the repo root such as `cortex.db`, `cortex.db-shm`, and `cortex.db-wal` are runtime artifacts; avoid committing them unless the user explicitly asks.

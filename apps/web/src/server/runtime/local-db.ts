@@ -1,27 +1,26 @@
 import type { AppDb } from "@/server/db/types";
+import { createD1Db } from "@/server/db";
+import { env } from "cloudflare:workers";
 
 let dbInstancePromise: Promise<AppDb> | null = null;
+
+function getCloudflareD1Binding() {
+  const cloudflareEnv = env as Partial<Cloudflare.Env> | undefined;
+  return cloudflareEnv?.DB;
+}
 
 export async function getLocalDb(): Promise<AppDb> {
   if (dbInstancePromise) {
     return dbInstancePromise;
   }
 
-  const bunRuntime = globalThis as typeof globalThis & {
-    Bun?: unknown;
-  };
+  const d1 = getCloudflareD1Binding();
+  if (!d1) {
+    throw new Error(
+      "Cloudflare D1 binding \"DB\" is required in this environment. Local SQLite fallback is disabled.",
+    );
+  }
 
-  dbInstancePromise = (bunRuntime.Bun
-    ? import("@/server/bun/driver").then(({ createBunDb, syncSchema }) => {
-        const db = createBunDb();
-        syncSchema(db);
-        return db;
-      })
-    : import("@/server/node/driver").then(({ createNodeDb, syncSchema }) => {
-        const db = createNodeDb();
-        syncSchema(db);
-        return db;
-      }));
-
+  dbInstancePromise = Promise.resolve(createD1Db(d1));
   return dbInstancePromise;
 }

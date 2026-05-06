@@ -8,6 +8,7 @@ node_modules
 # Local env files
 .env
 .env.local
+.dev.vars
 .env.development.local
 .env.test.local
 .env.production.local
@@ -39,6 +40,7 @@ yarn-error.log*
 
 # Local runtime state
 .wrangler/
+apps/web/wrangler.jsonc
 
 # Local databases
 *.db

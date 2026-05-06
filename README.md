@@ -162,7 +162,7 @@ bun run --filter=web test
 
 ## Database
 
-The app uses **SQLite** with Drizzle ORM. By default the database file is `cortex.db` at the repository root, and the runtime can override it with `CORTEX_DB_PATH`.
+The app uses **Cloudflare D1** with Drizzle ORM. The `DB` binding is configured in `apps/web/wrangler.jsonc`, and Drizzle reads the D1 `database_id` from that Wrangler config.
 
 Tables: `commands`, `goals`, `states`, `artifacts`, `activities`, `agents`, `projects`, `settings`, `events`, `organizations`, `problems`, `rules`, `mcp_servers`, `skills`, `execution_graphs`, `execution_nodes`, `execution_edges`, `execution_attempts`, `policy_decisions`, `policy_violations`
 
@@ -175,8 +175,9 @@ Tables: `commands`, `goals`, `states`, `artifacts`, `activities`, `agents`, `pro
 ### Migrations
 
 ```bash
-bun run --filter=web drizzle-kit generate
-bun run --filter=web drizzle-kit migrate
+bun run --filter=web db:generate
+bun run --filter=web db:migrate:local
+bun run --filter=web db:migrate:remote
 ```
 
 ---

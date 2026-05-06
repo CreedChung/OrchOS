@@ -8,6 +8,8 @@
   "scripts": {
     "build": "bun run --filter=web build",
     "dev": "bun run --filter=web dev",
+    "deploy:cf": "bun run --filter=web deploy",
+    "cf-typegen": "bun run --filter=web cf-typegen",
     "dev:cli": "bun run --filter=@orchos/cli dev",
     "dev:all": "bun run --filter=web dev",
     "build:cli": "bun run --filter=@orchos/cli build",
@@ -27,11 +29,10 @@
     "typescript": "5.9.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22 <26"
   },
   "packageManager": "bun@1.3.11",
   "dependencies": {
-    "better-sqlite3": "^12.9.0",
     "remark-gfm": "^4.0.1",
     "unicode-animations": "^1.0.3"
   }

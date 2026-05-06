@@ -4,7 +4,7 @@ import { LocalHostService } from "@/server/modules/local-hosts/service";
 import { getLocalDb } from "@/server/runtime/local-db";
 
 function getJwtKey() {
-  return process.env.CLERK_JWT_KEY?.trim() ?? "";
+  return process.env.CLERK_SECRET_KEY?.trim() ?? "";
 }
 
 function isClerkConfigured() {

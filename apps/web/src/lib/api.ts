@@ -1,15 +1,7 @@
 import { createEdenClient } from "./eden";
 import type { ControlSettings as ControlSettingsType } from "./types";
 
-const RAW_API_BASE =
-  import.meta.env.VITE_API_BASE_URL?.trim() ?? import.meta.env.VITE_API_BASE?.trim() ?? "";
-const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
-
 function getServerBaseUrl() {
-  if (API_BASE) {
-    return API_BASE;
-  }
-
   if (typeof window === "undefined") {
     return "http://127.0.0.1:3000";
   }
@@ -26,10 +18,6 @@ function readString(value: unknown) {
 }
 
 export function resolveApiUrl(path: string) {
-  if (API_BASE) {
-    return `${API_BASE}${path}`;
-  }
-
   return new URL(path, `${getServerBaseUrl()}/`).toString();
 }
 

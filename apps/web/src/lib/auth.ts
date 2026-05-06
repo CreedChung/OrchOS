@@ -1,3 +1,9 @@
-export const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() ?? "";
+import { getPublicRuntimeConfig } from "./public-runtime-config";
 
-export const isClerkConfigured = clerkPublishableKey.length > 0;
+export function getClerkPublishableKey() {
+  return getPublicRuntimeConfig().clerkPublishableKey;
+}
+
+export function isClerkConfigured() {
+  return getClerkPublishableKey().length > 0;
+}

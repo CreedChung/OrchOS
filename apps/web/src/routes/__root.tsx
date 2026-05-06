@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n-provider";
+import { getPublicRuntimeConfig } from "@/lib/public-runtime-config";
 import { getLocale } from "@/paraglide/runtime";
 import { initializeClientLocale } from "@/lib/i18n-runtime";
 
@@ -46,6 +47,8 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const publicRuntimeConfig = getPublicRuntimeConfig();
+
   useEffect(() => {
     if (import.meta.env.DEV) {
       void import("react-grab");
@@ -56,6 +59,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang={getLocale()} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__ORCHOS_PUBLIC_CONFIG__=${JSON.stringify(publicRuntimeConfig)};`,
+          }}
+        />
         <HeadContent />
       </head>
       <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">

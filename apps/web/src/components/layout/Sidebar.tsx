@@ -59,6 +59,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { m } from "@/paraglide/messages";
+import { isClerkConfigured } from "@/lib/auth";
 import { useUIStore } from "@/lib/store";
 import type { Organization, SidebarView } from "@/lib/types";
 import { toast } from "sonner";
@@ -576,11 +577,9 @@ function ClerkUserProfile({
   collapsed: boolean;
   showExpandedContent: boolean;
 }) {
-  const isClerkConfigured =
-    !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim();
   const [profileOpen, setProfileOpen] = useState(false);
 
-  if (!isClerkConfigured) {
+  if (!isClerkConfigured()) {
     if (collapsed) {
       return (
         <DropdownMenu modal={false}>

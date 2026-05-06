@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { cloudflare } from "@cloudflare/vite-plugin";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
@@ -19,6 +20,9 @@ const config = defineConfig({
     },
   },
   plugins: [
+    cloudflare({
+      viteEnvironment: { name: "ssr" },
+    }),
     paraglideVitePlugin({
       project: "./project.inlang",
       outdir: "./src/paraglide",
