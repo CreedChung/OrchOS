@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import { Player } from "@remotion/player";
 import type { PlayerRef } from "@remotion/player";

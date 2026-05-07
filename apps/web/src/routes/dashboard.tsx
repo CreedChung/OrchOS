@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createFileRoute, Outlet, useLocation, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
 import { isClerkConfigured } from "@/lib/auth";
 import { api } from "@/lib/api";
@@ -42,7 +42,18 @@ function isAuthTransition(): boolean {
 
 function ClerkAuthGate({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn } = useAuth();
+  const navigate = useNavigate();
+  const hasRedirectedRef = useRef(false);
   const fromAuth = isAuthTransition();
+
+  useEffect(() => {
+    if (!isLoaded || isSignedIn || hasRedirectedRef.current) {
+      return;
+    }
+
+    hasRedirectedRef.current = true;
+    void navigate({ to: "/sign-in", replace: true });
+  }, [isLoaded, isSignedIn, navigate]);
 
   if (!isLoaded) {
     if (fromAuth) {
@@ -72,7 +83,11 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!isSignedIn) {
-    return <Navigate to="/sign-in" replace />;
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Spinner size="xl" className="text-muted-foreground/70" />
+      </div>
+    );
   }
 
   return <>{children}</>;
@@ -93,29 +108,7 @@ function getViewFromPath(pathname: string): SidebarView {
   return validViews.includes(segment as SidebarView) ? (segment as SidebarView) : "inbox";
 }
 
-function getDashboardEntryPath(pathname: string) {
-  if (pathname === "/dashboard" || pathname === "/dashboard/") {
-    return "/dashboard/creation";
-  }
-
-  return pathname;
-}
-
 function DashboardWrapper() {
-  const location = useLocation();
-
-  if (location.pathname === "/dashboard" || location.pathname === "/dashboard/") {
-    return (
-      <AuthProvider>
-        <RequireAuth>
-          <DashboardProvider>
-            <Navigate to="/dashboard/creation" replace />
-          </DashboardProvider>
-        </RequireAuth>
-      </AuthProvider>
-    );
-  }
-
   return (
     <AuthProvider>
       <RequireAuth>
@@ -131,7 +124,7 @@ function DashboardContent() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const dashboardPath = getDashboardEntryPath(location.pathname);
+  const dashboardPath = location.pathname;
   const activeView = getViewFromPath(dashboardPath);
   const capabilityViewMode = isCapabilityView(activeView)
     ? getCapabilityModeFromPath(dashboardPath, activeView)

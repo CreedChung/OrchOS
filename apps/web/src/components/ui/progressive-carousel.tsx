@@ -1,5 +1,3 @@
-"use client";
-
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { FC, ReactElement, ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";

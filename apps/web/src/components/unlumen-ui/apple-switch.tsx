@@ -1,5 +1,3 @@
-"use client";
-
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { forwardRef, useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";

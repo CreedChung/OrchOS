@@ -1,9 +1,10 @@
-import { useEffect } from "react";
-import { Navigate, createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { AuthPage } from "@/components/ui/auth-page";
 import { SignInForm } from "@/components/ui/auth-forms";
+import { Spinner } from "@/components/ui/spinner";
 import { isClerkConfigured } from "@/lib/auth";
 import { m } from "@/paraglide/messages";
 
@@ -22,24 +23,45 @@ function AuthTransitionMarker() {
 }
 
 function SignInPage() {
+  return (
+    <AuthProvider>
+      <SignInPageInner />
+    </AuthProvider>
+  );
+}
+
+function SignInPageInner() {
   const { isSignedIn } = useAuth();
+  const navigate = useNavigate();
+  const hasRedirectedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isSignedIn || hasRedirectedRef.current) {
+      return;
+    }
+
+    hasRedirectedRef.current = true;
+    void navigate({ to: "/dashboard/creation", replace: true });
+  }, [isSignedIn, navigate]);
 
   if (!isClerkConfigured()) {
     return (
-      <AuthProvider>
-        <AuthPage mode="signIn">
-          <MissingClerkConfig />
-        </AuthPage>
-      </AuthProvider>
+      <AuthPage mode="signIn">
+        <MissingClerkConfig />
+      </AuthPage>
     );
   }
 
   if (isSignedIn) {
-    return <Navigate to="/dashboard/creation" replace />;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Spinner size="lg" className="text-muted-foreground/70" />
+      </div>
+    );
   }
 
   return (
-    <AuthProvider>
+    <>
       <AuthTransitionMarker />
       <AuthPage mode="signIn">
         <SignInForm />
@@ -50,7 +72,7 @@ function SignInPage() {
           </Link>
         </p>
       </AuthPage>
-    </AuthProvider>
+    </>
   );
 }
 

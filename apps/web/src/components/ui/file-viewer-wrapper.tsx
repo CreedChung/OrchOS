@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import ComponentFileViewer, { type ApiComponent } from "@/components/ui/file-viewer";
 import { m } from "@/paraglide/messages";

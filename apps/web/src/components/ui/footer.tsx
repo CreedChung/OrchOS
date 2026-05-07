@@ -1,4 +1,3 @@
-"use client";
 import { motion } from "motion/react";
 import { Link } from "@tanstack/react-router";
 import { m } from "@/paraglide/messages";

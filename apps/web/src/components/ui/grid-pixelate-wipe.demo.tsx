@@ -1,5 +1,3 @@
-"use client";
-
 import { Player } from "@remotion/player";
 import { GridPixelateWipe } from "@/components/ui/grid-pixelate-wipe";
 

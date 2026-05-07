@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";

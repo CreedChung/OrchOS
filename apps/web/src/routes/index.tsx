@@ -21,7 +21,6 @@ function HomePageInner() {
               src="/hero/background.png"
               alt=""
               className="size-full object-cover"
-              fetchPriority="high"
               decoding="async"
             />
           </div>
