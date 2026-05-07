@@ -25,6 +25,12 @@ function AgentsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all");
 
   const [customAgents, setCustomAgents] = useState<CustomAgent[]>([]);
+  const [defaultCustomAgentId, setDefaultCustomAgentId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<
+    | { kind: "custom"; id: string }
+    | { kind: "local"; id: string }
+    | null
+  >(null);
   const [connectStep, setConnectStep] = useState<"choose" | "cli" | "custom">("choose");
   const [isConnectDialogOpen, setIsConnectDialogOpen] = useState(false);
   const [agentForm, setAgentForm] = useState({ name: "", url: "", apiKey: "", model: "" });
@@ -32,12 +38,17 @@ function AgentsPage() {
 
   useEffect(() => {
     void loadCustomAgents();
+    void api.getDefaultCustomAgentId().then(setDefaultCustomAgentId).catch(() => {});
   }, []);
 
   async function loadCustomAgents() {
     try {
       const agents = await api.listCustomAgents();
       setCustomAgents(agents);
+      setSelectedItem((current) => {
+        if (!current || current.kind !== "custom") return current;
+        return agents.some((agent) => agent.id === current.id) ? current : null;
+      });
     } catch {}
   }
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -50,6 +61,16 @@ function AgentsPage() {
     if (statusFilter === "all") return localAgents;
     return localAgents.filter((agent) => agent.status === statusFilter);
   }, [localAgents, statusFilter]);
+
+  const selectedAgent = useMemo(() => {
+    if (!selectedItem) return null;
+    if (selectedItem.kind === "custom") {
+      const agent = customAgents.find((item) => item.id === selectedItem.id);
+      return agent ? { kind: "custom" as const, agent } : null;
+    }
+    const agent = localAgents.find((item) => item.id === selectedItem.id);
+    return agent ? { kind: "local" as const, agent } : null;
+  }, [customAgents, localAgents, selectedItem]);
 
   useEffect(() => {
     return () => {
@@ -108,7 +129,7 @@ function AgentsPage() {
   async function handleSaveCustomAgent() {
     const { name, url, apiKey, model } = agentForm;
     if (!name.trim() || !url.trim() || !apiKey.trim() || !model.trim()) {
-      toast.error("All fields are required");
+      toast.error(m.all_fields_required());
       return;
     }
     try {
@@ -116,11 +137,15 @@ function AgentsPage() {
         ? await api.updateCustomAgent(editingAgentId, { name: name.trim(), url: url.trim(), apiKey: apiKey.trim(), model: model.trim() })
         : await api.createCustomAgent({ name: name.trim(), url: url.trim(), apiKey: apiKey.trim(), model: model.trim() });
       setCustomAgents(agents);
+      const selectedId = editingAgentId ?? agents[agents.length - 1]?.id;
+      if (selectedId) {
+        setSelectedItem({ kind: "custom", id: selectedId });
+      }
       setEditingAgentId(null);
       setIsConnectDialogOpen(false);
-      toast.success(editingAgentId ? "Custom agent updated" : "Custom agent created");
+      toast.success(editingAgentId ? m.custom_agent_updated() : m.custom_agent_created());
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save custom agent");
+      toast.error(error instanceof Error ? error.message : m.failed_save_custom_agent());
     }
   }
 
@@ -130,7 +155,17 @@ function AgentsPage() {
       setTokenCopied(true);
       setTimeout(() => setTokenCopied(false), 2000);
     } catch {
-      toast.error("Failed to copy");
+      toast.error(m.failed_to_copy());
+    }
+  }
+
+  async function handleSetDefaultCustomAgent(agentId: string | null) {
+    try {
+      const nextId = await api.setDefaultCustomAgentId(agentId);
+      setDefaultCustomAgentId(nextId);
+      toast.success(nextId ? m.default_agent_updated() : m.default_agent_cleared());
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : m.failed_update_default_agent());
     }
   }
 
@@ -235,15 +270,40 @@ function AgentsPage() {
           <ScrollArea className="min-h-0 flex-1">
             <div className="space-y-0.5 p-1.5">
               {customAgents.map((agent) => (
-                <div key={agent.id} className="group flex min-h-9 cursor-default items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-foreground/70 hover:bg-accent/50 hover:text-foreground">
+                <div
+                  key={agent.id}
+                  onClick={() => setSelectedItem({ kind: "custom", id: agent.id })}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedItem({ kind: "custom", id: agent.id });
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  className={cn(
+                    "group flex min-h-9 w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
+                    selectedItem?.kind === "custom" && selectedItem.id === agent.id
+                      ? "bg-accent text-foreground"
+                      : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
+                  )}
+                >
                   <HugeiconsIcon icon={Settings01Icon} className="size-3.5 shrink-0 opacity-40" />
                   <div className="min-w-0 flex-1 text-left">
-                    <div className="truncate text-xs leading-5">{agent.name}</div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="truncate text-xs leading-5">{agent.name}</div>
+                      {defaultCustomAgentId === agent.id ? (
+                        <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-medium text-primary">
+                          {m.default_agent()}
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="text-[11px] leading-4 text-muted-foreground">{agent.model}</div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.stopPropagation();
                       handleSelectCustom(agent);
                       setIsConnectDialogOpen(true);
                     }}
@@ -253,13 +313,20 @@ function AgentsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={async () => {
+                    onClick={async (event) => {
+                      event.stopPropagation();
                       try {
                         const agents = await api.deleteCustomAgent(agent.id);
                         setCustomAgents(agents);
-                        toast.success("Agent removed");
+                        if (defaultCustomAgentId === agent.id) {
+                          setDefaultCustomAgentId(null);
+                        }
+                        setSelectedItem((current) =>
+                          current?.kind === "custom" && current.id === agent.id ? null : current,
+                        );
+                        toast.success(m.agent_removed());
                       } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Failed to remove agent");
+                        toast.error(error instanceof Error ? error.message : m.failed_remove_agent());
                       }
                     }}
                     className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
@@ -269,10 +336,27 @@ function AgentsPage() {
                 </div>
               ))}
               {localAgents.length > 0 && (
-                <div className={cn("px-2.5 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wider", customAgents.length > 0 && "mt-2")}>CLI</div>
+                <div className={cn("px-2.5 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wider", customAgents.length > 0 && "mt-2")}>{m.custom_agent_section_label()}</div>
               )}
               {filteredAgents.map((agent) => (
-                <div key={agent.id} className="group flex min-h-9 cursor-default items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors text-foreground/70 hover:bg-accent/50 hover:text-foreground">
+                <div
+                  key={agent.id}
+                  onClick={() => setSelectedItem({ kind: "local", id: agent.id })}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedItem({ kind: "local", id: agent.id });
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  className={cn(
+                    "group flex min-h-9 w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
+                    selectedItem?.kind === "local" && selectedItem.id === agent.id
+                      ? "bg-accent text-foreground"
+                      : "text-foreground/70 hover:bg-accent/50 hover:text-foreground",
+                  )}
+                >
                   <span className={cn("size-2 shrink-0 rounded-full", agent.status === "online" ? "bg-emerald-500" : "bg-muted-foreground/30")} />
                   <HugeiconsIcon icon={ComputerIcon} className="size-3.5 shrink-0 opacity-40" />
                   <div className="min-w-0 flex-1 text-left">
@@ -324,7 +408,7 @@ function AgentsPage() {
         <div
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize agents sidebar"
+          aria-label={m.resize_agents_sidebar()}
           onPointerDown={handleResizeStart}
           className={cn(
             "group absolute right-[-8px] top-0 z-20 h-full w-4",
@@ -364,6 +448,9 @@ function AgentsPage() {
         <LocalDevicesView
           loading={loading}
           onConnectClick={handleOpenConnect}
+          selectedAgent={selectedAgent}
+          defaultCustomAgentId={defaultCustomAgentId}
+          onSetDefaultCustomAgent={handleSetDefaultCustomAgent}
         />
       </div>
 
@@ -373,30 +460,30 @@ function AgentsPage() {
           if (!open) setConnectStep("choose");
           setIsConnectDialogOpen(open);
         }}
-        title={connectStep === "choose" ? "Connect agent" : connectStep === "cli" ? "Connect via CLI" : editingAgentId ? "Edit agent" : "Custom configuration"}
+        title={connectStep === "choose" ? m.connect_agent() : connectStep === "cli" ? m.connect_via_cli() : editingAgentId ? m.edit_agent() : m.custom_configuration()}
         size="sm"
         bodyClassName={connectStep === "choose" ? "flex items-center" : undefined}
         footer={
           connectStep === "choose" ? (
             <Button type="button" variant="outline" onClick={() => setIsConnectDialogOpen(false)}>
-              Cancel
+              {m.cancel()}
             </Button>
           ) : connectStep === "cli" ? (
             <>
               <Button type="button" variant="outline" onClick={() => setConnectStep("choose")}>
-                Back
+                {m.back()}
               </Button>
               <Button type="button" onClick={handleCreatePairingToken}>
-                Generate token
+                {m.generate_pairing_token()}
               </Button>
             </>
           ) : (
             <>
               <Button type="button" variant="outline" onClick={() => setConnectStep("choose")}>
-                Back
+                {m.back()}
               </Button>
               <Button type="button" onClick={handleSaveCustomAgent}>
-                Save
+                {m.save()}
               </Button>
             </>
           )
@@ -413,9 +500,9 @@ function AgentsPage() {
                 <HugeiconsIcon icon={ComputerIcon} className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-foreground">Connect via CLI</div>
+                <div className="text-sm font-medium text-foreground">{m.connect_via_cli()}</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Pair a local agent by running a CLI command with a pairing token.
+                  {m.connect_via_cli_desc()}
                 </div>
               </div>
             </button>
@@ -428,9 +515,9 @@ function AgentsPage() {
                 <HugeiconsIcon icon={Settings01Icon} className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-foreground">Custom configuration</div>
+                <div className="text-sm font-medium text-foreground">{m.custom_configuration()}</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Configure a custom agent with URL, API key, and model name.
+                  {m.custom_configuration_desc()}
                 </div>
               </div>
             </button>
@@ -438,52 +525,52 @@ function AgentsPage() {
         ) : connectStep === "cli" ? (
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Generate a pairing token and run the CLI command for the local agent you want to connect.
+              {m.connect_cli_instructions()}
             </p>
             <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/50 p-4 text-center">
               <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <HugeiconsIcon icon={ComputerIcon} className="size-6" />
               </div>
               <div className="text-sm text-foreground">
-                Install the CLI for your local agent and run the command with the generated token to pair it.
+                {m.connect_cli_install_desc()}
               </div>
             </div>
           </div>
         ) : connectStep === "custom" ? (
           <div className="space-y-4">
             <label className="grid gap-2 text-sm">
-              <span className="font-medium text-foreground">Name</span>
+              <span className="font-medium text-foreground">{m.name()}</span>
               <input
                 value={agentForm.name}
                 onChange={(e) => setAgentForm((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="My Agent"
+                placeholder={m.custom_agent_name_placeholder()}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
               />
             </label>
             <label className="grid gap-2 text-sm">
-              <span className="font-medium text-foreground">URL</span>
+              <span className="font-medium text-foreground">{m.url()}</span>
               <input
                 value={agentForm.url}
                 onChange={(e) => setAgentForm((prev) => ({ ...prev, url: e.target.value }))}
-                placeholder="https://my-agent.example.com"
+                placeholder={m.custom_agent_url_placeholder()}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
               />
             </label>
             <label className="grid gap-2 text-sm">
-              <span className="font-medium text-foreground">API Key</span>
+              <span className="font-medium text-foreground">{m.api_key()}</span>
               <input
                 value={agentForm.apiKey}
                 onChange={(e) => setAgentForm((prev) => ({ ...prev, apiKey: e.target.value }))}
-                placeholder="sk-..."
+                placeholder={m.api_key_placeholder()}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
               />
             </label>
             <label className="grid gap-2 text-sm">
-              <span className="font-medium text-foreground">Model</span>
+              <span className="font-medium text-foreground">{m.model()}</span>
               <input
                 value={agentForm.model}
                 onChange={(e) => setAgentForm((prev) => ({ ...prev, model: e.target.value }))}
-                placeholder="gpt-4o"
+                placeholder={m.model_placeholder()}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
               />
             </label>

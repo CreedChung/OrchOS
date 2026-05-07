@@ -12,6 +12,7 @@ export interface CustomAgentRecord {
 }
 
 const AGENTS_KEY = "custom_agents";
+const DEFAULT_AGENT_KEY = "default_custom_agent";
 
 export class CustomAgentService {
   constructor(private db: AppDb) {}
@@ -53,7 +54,46 @@ export class CustomAgentService {
     const agents = await this.list();
     const filtered = agents.filter((a) => a.id !== id);
     await this.save(filtered);
+    const defaultAgentId = await this.getDefaultAgentId();
+    if (defaultAgentId === id) {
+      await this.setDefaultAgentId(null);
+    }
     return filtered;
+  }
+
+  async getDefaultAgentId(): Promise<string | null> {
+    const row = (await this.db.select().from(settings).where(eq(settings.key, DEFAULT_AGENT_KEY)).get()) as
+      | { key: string; value: string }
+      | undefined;
+    if (!row?.value) return null;
+    return row.value;
+  }
+
+  async setDefaultAgentId(id: string | null): Promise<string | null> {
+    if (id) {
+      const agents = await this.list();
+      const exists = agents.some((agent) => agent.id === id);
+      if (!exists) {
+        throw new Error("Custom agent not found");
+      }
+    }
+
+    if (id === null) {
+      const existing = (await this.db.select().from(settings).where(eq(settings.key, DEFAULT_AGENT_KEY)).get()) as
+        | { key: string; value: string }
+        | undefined;
+      if (existing) {
+        await this.db.delete(settings).where(eq(settings.key, DEFAULT_AGENT_KEY)).run();
+      }
+      return null;
+    }
+
+    await this.db.insert(settings).values({ key: DEFAULT_AGENT_KEY, value: id }).onConflictDoUpdate({
+      target: settings.key,
+      set: { value: id },
+    }).run();
+
+    return id;
   }
 
   private async save(agents: CustomAgentRecord[]) {

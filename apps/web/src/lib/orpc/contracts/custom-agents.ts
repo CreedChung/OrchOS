@@ -12,6 +12,12 @@ export const customAgentSchema = z.object({
 
 export const customAgentsContract = {
   list: oc.input(z.object({}).optional()).output(z.array(customAgentSchema)),
+  getDefault: oc
+    .input(z.object({}).optional())
+    .output(z.object({ agentId: z.string().nullable() })),
+  setDefault: oc
+    .input(z.object({ agentId: z.string().nullable() }))
+    .output(z.object({ agentId: z.string().nullable() })),
   create: oc
     .input(
       z.object({

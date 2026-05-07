@@ -94,7 +94,15 @@ export function CreationView({
   const [selectedCustomAgentId, setSelectedCustomAgentId] = useState<string | null>(null);
 
   useEffect(() => {
-    void api.listCustomAgents().then(setCustomAgents).catch(() => {});
+    void Promise.all([
+      api.listCustomAgents(),
+      api.getDefaultCustomAgentId(),
+    ])
+      .then(([agents, defaultAgentId]) => {
+        setCustomAgents(agents);
+        setSelectedCustomAgentId(defaultAgentId);
+      })
+      .catch(() => {});
   }, []);
 
   const {
@@ -497,7 +505,7 @@ export function CreationView({
         <div
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize creation sidebar"
+          aria-label={m.resize_creation_sidebar()}
           onPointerDown={handleResizeStart}
           className={cn(
             "group absolute right-[-8px] top-0 z-20 h-full w-4",
@@ -913,7 +921,7 @@ function ChatArea({
 
     try {
       if (filesToSend.length > 0) {
-        toast.error("当前模型不支持图片输入，请移除图片后重试。");
+        toast.error(m.creation_image_unsupported());
         return;
       }
 
@@ -963,10 +971,10 @@ function ChatArea({
             {allMessages.length === 0 && (
               <div className="mb-3 px-1">
                 <p className="text-sm font-medium text-foreground/85">
-                  我们开始创造吧
+                  {m.creation_intro_title()}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  描述你的目标，我会先拆解计划，再推进执行与审查。
+                  {m.creation_intro_desc()}
                 </p>
               </div>
             )}
@@ -1011,11 +1019,11 @@ function ChatArea({
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={
                     mode === "search"
-                      ? "Search the web..."
+                      ? m.search_web_placeholder()
                       : selectedRuntime
-                        ? `Message ${selectedRuntime.name}...`
+                        ? m.message_runtime_placeholder({ name: selectedRuntime.name })
                         : selectedCustomAgent
-                          ? `Message ${selectedCustomAgent.name}...`
+                          ? m.message_agent_placeholder({ name: selectedCustomAgent.name })
                         : m.creation_placeholder()
                   }
                   className="min-h-[40px] w-full resize-none bg-transparent py-1 text-sm leading-6 outline-none placeholder:text-muted-foreground"
@@ -1050,7 +1058,7 @@ function ChatArea({
                         )}
                       >
                         <HugeiconsIcon icon={Chat01Icon} className="size-3" />
-                        Chat
+                        {m.chat()}
                       </button>
                       <button
                         ref={searchBtnRef}
@@ -1064,7 +1072,7 @@ function ChatArea({
                         )}
                       >
                         <HugeiconsIcon icon={Search01Icon} className="size-3" />
-                        Search
+                        {m.web_search()}
                       </button>
                     </div>
                     {mode === "chat" ? (
@@ -1131,7 +1139,7 @@ function ChatArea({
                           )}
                         </Button>}
                       />
-                      <TooltipContent side="top">Send</TooltipContent>
+                      <TooltipContent side="top">{m.send()}</TooltipContent>
                     </Tooltip>
                   </div>
                 </div>
@@ -1147,7 +1155,7 @@ function ChatArea({
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <HugeiconsIcon icon={PinIcon} className="size-3.5" />
-              书签
+              {m.bookmarks()}
             </span>
             <div className="flex flex-1 flex-col min-h-0 gap-3 overflow-y-auto">
               {pinnedGroups.length > 0 ? (
@@ -1180,7 +1188,7 @@ function ChatArea({
               ) : (
                 <div className="flex flex-1 flex-col justify-center mb-2 rounded-lg border border-dashed border-border/50 p-4">
                   <p className="text-center text-xs text-muted-foreground/60">
-                    Pin bookmarks from the Bookmarks page to see them here.
+                    {m.bookmarks_pin_hint()}
                   </p>
                 </div>
               )}
@@ -1195,7 +1203,7 @@ function ChatArea({
           <div className="flex items-center justify-between border-b border-border px-4 py-2 md:px-6">
             <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <HugeiconsIcon icon={Chat01Icon} className="size-3.5" />
-              Conversation
+              {m.conversation()}
             </span>
             <Tooltip>
               <TooltipTrigger
@@ -1207,7 +1215,7 @@ function ChatArea({
                   <HugeiconsIcon icon={Bookmark01Icon} className="size-3.5" />
                 </button>}
               />
-              <TooltipContent side="top">Show bookmarks</TooltipContent>
+              <TooltipContent side="top">{m.show_bookmarks()}</TooltipContent>
             </Tooltip>
           </div>
           <div className="flex-1 space-y-4 px-4 py-4 md:px-6">
@@ -1248,7 +1256,7 @@ function CustomAgentSelector({
             <HugeiconsIcon icon={Settings01Icon} className="size-3 shrink-0" />
           </span>
           <span className="truncate">
-            {selectedAgent?.name || "Agent"}
+            {selectedAgent?.name || m.agent()}
           </span>
         </span>
         <HugeiconsIcon
@@ -1262,7 +1270,7 @@ function CustomAgentSelector({
           onClick={(e) => { e.stopPropagation(); onSelect(null); setOpen(false); }}
           className="text-muted-foreground"
         >
-          None
+          {m.none()}
         </DropdownMenuItem>
         {agents.map((agent) => (
           <DropdownMenuItem
@@ -1304,7 +1312,7 @@ function SearchEngineSelector({
             <HugeiconsIcon icon={GlobeIcon} className="size-3 shrink-0" />
           </span>
           <span className="truncate">
-            {selectedEngine?.name || "Google"}
+            {selectedEngine?.name || m.search_engine_google()}
           </span>
         </span>
         <HugeiconsIcon

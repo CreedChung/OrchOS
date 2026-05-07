@@ -393,6 +393,14 @@ export const api = {
   listCustomAgents: async (): Promise<CustomAgent[]> => {
     return (await orpc.customAgents.list({})) as CustomAgent[];
   },
+  getDefaultCustomAgentId: async (): Promise<string | null> => {
+    const result = (await orpc.customAgents.getDefault({})) as { agentId: string | null };
+    return result.agentId;
+  },
+  setDefaultCustomAgentId: async (agentId: string | null): Promise<string | null> => {
+    const result = (await orpc.customAgents.setDefault({ agentId })) as { agentId: string | null };
+    return result.agentId;
+  },
   createCustomAgent: async (data: {
     name: string;
     url: string;

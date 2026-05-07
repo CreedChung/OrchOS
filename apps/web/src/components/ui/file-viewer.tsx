@@ -263,7 +263,7 @@ function ShikiViewer({
       <div className={cn("shiki-viewer", className)}>
         {isLoading ? (
           <div className="flex items-center justify-center p-8 text-sm text-muted-foreground">
-            Loading code...
+            {m.loading_code()}
           </div>
         ) : (
           <div dangerouslySetInnerHTML={{ __html: content }} />

@@ -7,6 +7,14 @@ export const customAgentsRouter = {
     const service = new CustomAgentService(await getLocalDb());
     return service.list();
   }),
+  getDefault: os.customAgents.getDefault.handler(async () => {
+    const service = new CustomAgentService(await getLocalDb());
+    return { agentId: await service.getDefaultAgentId() };
+  }),
+  setDefault: os.customAgents.setDefault.handler(async ({ input }) => {
+    const service = new CustomAgentService(await getLocalDb());
+    return { agentId: await service.setDefaultAgentId(input.agentId) };
+  }),
   create: os.customAgents.create.handler(async ({ input }) => {
     const service = new CustomAgentService(await getLocalDb());
     return service.create(input);

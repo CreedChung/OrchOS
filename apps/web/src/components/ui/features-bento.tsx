@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
 import { formatDuration } from "@/lib/utils";
+import { useLocale } from "@/lib/i18n-provider";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowUp01Icon,
@@ -26,24 +27,27 @@ const MOCK_RUNTIME: RuntimeProfile = {
   status: "idle",
 };
 
-const MOCK_RESPONSES: Record<string, string> = {
-  default:
-    "I'm OrchOS Agent, your AI assistant. I can help you orchestrate agents, manage goals, and automate workflows. What would you like to do?",
-  "what can you do":
-    "I can help you with:\n\n1. **Agent Management** — Create, configure, and coordinate multiple AI agents\n2. **Goal Tracking** — Set goals and let agents work toward them autonomously\n3. **Code Generation** — Write, review, and refactor code across your projects\n4. **Debugging** — Identify and fix issues in your codebase\n5. **Integrations** — Connect with GitHub, Slack, Linear, Sentry, and more\n\nWhat would you like to explore?",
-  help: "Here's how to get started with OrchOS:\n\n1. **Create a Goal** — Define what you want to achieve\n2. **Assign Agents** — Let OrchOS match the right agents to your goal\n3. **Monitor Progress** — Track status in real-time from the dashboard\n4. **Review Results** — Check outputs, PRs, and test results\n\nTry asking me about any of these topics!",
-};
-
-const MOCK_INPUT = "What can you do?";
-
-function getMockResponse(userMessage: string): string {
+function getMockResponse(
+  userMessage: string,
+  options: {
+    whatCanYouDoTrigger: string;
+    helpTrigger: string;
+    defaultResponse: string;
+    whatCanYouDoResponse: string;
+    helpResponse: string;
+  },
+): string {
   const lower = userMessage.toLowerCase().trim();
-  for (const [key, response] of Object.entries(MOCK_RESPONSES)) {
-    if (key !== "default" && lower.includes(key)) {
-      return response;
-    }
+
+  if (lower.includes(options.whatCanYouDoTrigger.toLowerCase().trim())) {
+    return options.whatCanYouDoResponse;
   }
-  return MOCK_RESPONSES.default;
+
+  if (lower.includes(options.helpTrigger.toLowerCase().trim())) {
+    return options.helpResponse;
+  }
+
+  return options.defaultResponse;
 }
 
 interface AskMessage {
@@ -55,12 +59,18 @@ interface AskMessage {
 }
 
 export function FeaturesBento() {
+  const { locale } = useLocale();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<AskMessage[]>([]);
-  const [input, setInput] = useState(MOCK_INPUT);
+  const [input, setInput] = useState(() => m.home_bento_mock_input());
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const selectedRuntime: RuntimeProfile | null = MOCK_RUNTIME.enabled ? MOCK_RUNTIME : null;
+
+  useEffect(() => {
+    setMessages([]);
+    setInput(m.home_bento_mock_input());
+  }, [locale]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,7 +109,13 @@ export function FeaturesBento() {
 
     await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 1200));
 
-    const responseContent = getMockResponse(userMessage.content);
+    const responseContent = getMockResponse(userMessage.content, {
+      whatCanYouDoTrigger: m.home_bento_mock_trigger_what_can_you_do(),
+      helpTrigger: m.home_bento_mock_trigger_help(),
+      defaultResponse: m.home_bento_mock_response_default(),
+      whatCanYouDoResponse: m.home_bento_mock_response_capabilities(),
+      helpResponse: m.home_bento_mock_response_help(),
+    });
     const responseTime = Date.now() - startTime;
 
     setMessages((prev) => [
@@ -124,10 +140,10 @@ export function FeaturesBento() {
               <CardHeader className="pb-0">
                 <div className="md:p-4 md:pb-2">
                   <p className="font-medium">
-                    Kanban
+                    {m.kanban()}
                   </p>
                   <p className="text-muted-foreground mt-3 max-w-sm text-sm">
-                    Visualize your workflow with boards, columns, and cards. Drag and drop tasks across stages to track progress at a glance.
+                    {m.home_bento_kanban_desc()}
                   </p>
                 </div>
               </CardHeader>
@@ -137,7 +153,7 @@ export function FeaturesBento() {
                   <img
                     src="/hero/bento1.png"
                     className="shadow h-full w-full object-cover object-top dark:hidden"
-                    alt="Kanban light"
+                    alt=""
                     width={1207}
                     height={929}
                     loading="lazy"
@@ -146,7 +162,7 @@ export function FeaturesBento() {
                   <img
                     src="/hero/bento1-dark.png"
                     className="hidden h-full w-full object-cover object-top dark:block"
-                    alt="Kanban dark"
+                    alt=""
                     width={1207}
                     height={929}
                     loading="lazy"
@@ -160,9 +176,9 @@ export function FeaturesBento() {
             <Card className="group h-full overflow-hidden shadow-zinc-950/5 sm:col-span-2 sm:rounded-none sm:rounded-tr-xl">
               <CardHeader>
                 <div className="md:p-4 md:pb-2">
-                  <p className="font-medium">邮件</p>
+                  <p className="font-medium">{m.mail()}</p>
                   <p className="text-muted-foreground mt-3 max-w-sm text-sm">
-                    Manage multiple email accounts in one inbox. Compose, reply, and organize messages with AI-powered assistance.
+                    {m.home_bento_mail_desc()}
                   </p>
                 </div>
               </CardHeader>
@@ -173,7 +189,7 @@ export function FeaturesBento() {
 <img
                       src="/hero/bento2.png"
                       className="shadow dark:hidden w-full h-full object-cover"
-                      alt="Analytics light"
+                      alt=""
                       width={1207}
                       height={929}
                       loading="lazy"
@@ -182,7 +198,7 @@ export function FeaturesBento() {
                     <img
                       src="/hero/bento2-dark.png"
                       className="hidden dark:block w-full h-full object-cover"
-                      alt="Analytics dark"
+                      alt=""
                       width={1207}
                       height={929}
                       loading="lazy"
@@ -200,10 +216,10 @@ export function FeaturesBento() {
               <CardHeader className="pb-0">
                 <div className="md:p-4 md:pb-2">
                   <p className="font-medium">
-                    日历
+                    {m.calendar()}
                   </p>
                   <p className="text-muted-foreground mt-3 max-w-sm text-sm">
-                    Plan your schedule with month, week, and day views. Add events, set reminders, and keep track of important dates.
+                    {m.home_bento_calendar_desc()}
                   </p>
                 </div>
               </CardHeader>
@@ -211,11 +227,13 @@ export function FeaturesBento() {
 
             {/* Bottom Right: Agents */}
             <Card className="group relative shadow-black/5 sm:col-span-3 sm:rounded-none sm:rounded-br-xl">
-              <CardHeader className="p-5 md:px-8 md:pt-6 md:pb-4">
-                <p className="font-medium">Agents</p>
-                <p className="text-muted-foreground mt-2 max-w-sm text-sm">
-                  Deploy and manage AI agents with specialized capabilities. Coordinate them to work together on complex tasks.
-                </p>
+              <CardHeader className="pb-0">
+                <div className="md:p-4 md:pb-2">
+                  <p className="font-medium">{m.agents()}</p>
+                  <p className="text-muted-foreground mt-3 max-w-sm text-sm">
+                    {m.home_bento_agents_desc()}
+                  </p>
+                </div>
               </CardHeader>
               <CardContent className="relative px-5 md:px-8">
                 <div className="grid grid-cols-4 gap-2 md:grid-cols-6">
@@ -260,7 +278,7 @@ export function FeaturesBento() {
                   <h2 className="text-sm font-semibold text-foreground">{m.ai_ask()}</h2>
                   <p className="text-xs text-muted-foreground">
                     {selectedRuntime
-                      ? `Fixed chat with ${selectedRuntime.name}`
+                      ? m.home_bento_chat_fixed_with({ name: selectedRuntime.name })
                       : m.no_agents_available()}
                   </p>
                 </div>
@@ -282,7 +300,7 @@ export function FeaturesBento() {
                     <p className="text-sm text-foreground">{m.ai_ask()}</p>
                     <p className="max-w-sm text-xs text-muted-foreground/70">
                       {selectedRuntime
-                        ? `Start a fixed conversation with ${selectedRuntime.name}.`
+                        ? m.home_bento_chat_start_fixed({ name: selectedRuntime.name })
                         : m.no_agents_available()}
                     </p>
                   </div>
@@ -335,7 +353,9 @@ export function FeaturesBento() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={
-                      selectedRuntime ? `Ask ${selectedRuntime.name}...` : m.no_agents_available()
+                      selectedRuntime
+                        ? m.home_bento_chat_placeholder({ name: selectedRuntime.name })
+                        : m.no_agents_available()
                     }
                     className="min-h-[68px] max-h-[220px] flex-1 resize-none bg-transparent px-2 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
                     disabled={!selectedRuntime || sending}
@@ -365,7 +385,7 @@ export function FeaturesBento() {
                   </Button>
                 </div>
                 <p className="mt-1.5 text-center text-[10px] text-muted-foreground/50">
-                  Enter to send · Shift+Enter for new line · {selectedRuntime?.name || m.ai_ask()}
+                  {m.home_bento_chat_input_hint({ name: selectedRuntime?.name || m.ai_ask() })}
                 </p>
               </form>
             </div>
