@@ -30,11 +30,13 @@ function HomePageInner() {
               className="mb-3 max-w-3xl font-serif leading-tight text-white"
               style={{ fontSize: "clamp(2.25rem, 6vw, 3.75rem)" }}
             >
-              {locale === "en" ? (
+              {locale === "en" || locale === "zh-CN" ? (
                 <>
                   {m.hero_line1()}{" "}
-                  <span className="italic">{m.hero_line2_word()}</span>{" "}
-                  {m.hero_line2()}
+                  <span className="italic">{m.hero_line2_word()}</span>
+                  <br />
+                  {m.hero_line2()}{" "}
+                  <span className="italic text-primary">{m.hero_line3()}</span>
                 </>
               ) : locale === "ko" || locale === "ja" ? (
                 <>
@@ -50,8 +52,12 @@ function HomePageInner() {
                   {m.hero_line2()}
                 </>
               )}
-              <br />
-              <span className="italic">{m.hero_line3()}</span>
+              {locale !== "en" && locale !== "zh-CN" && m.hero_line3() && (
+                <>
+                  <br />
+                  <span className="italic text-primary">{m.hero_line3()}</span>
+                </>
+              )}
             </p>
             <p className="mb-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
               {m.hero_subtitle()}

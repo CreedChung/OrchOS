@@ -25,52 +25,9 @@ import { Route as DashboardCalendarRouteImport } from './routes/dashboard/calend
 import { Route as DashboardBookmarksRouteImport } from './routes/dashboard/bookmarks'
 import { Route as DashboardBoardRouteImport } from './routes/dashboard/board'
 import { Route as DashboardAgentsRouteImport } from './routes/dashboard/agents'
-import { Route as ApiSettingsRouteImport } from './routes/api.settings'
-import { Route as ApiRuntimesRouteImport } from './routes/api.runtimes'
-import { Route as ApiProjectsRouteImport } from './routes/api.projects'
-import { Route as ApiProblemsRouteImport } from './routes/api.problems'
-import { Route as ApiOrganizationsRouteImport } from './routes/api.organizations'
-import { Route as ApiLocalAgentsRouteImport } from './routes/api.local-agents'
-import { Route as ApiIntegrationsRouteImport } from './routes/api.integrations'
-import { Route as ApiCustomAgentsRouteImport } from './routes/api.custom-agents'
-import { Route as ApiConversationsRouteImport } from './routes/api.conversations'
+import { Route as ApiGithubStarsRouteImport } from './routes/api.github-stars'
 import { Route as ApiChatRouteImport } from './routes/api.chat'
-import { Route as ApiBookmarksRouteImport } from './routes/api.bookmarks'
-import { Route as ApiSplatRouteImport } from './routes/api.$'
-import { Route as ApiRuntimesDetectRouteImport } from './routes/api.runtimes.detect'
-import { Route as ApiRuntimesIdRouteImport } from './routes/api.runtimes.$id'
-import { Route as ApiProjectsIdRouteImport } from './routes/api.projects.$id'
-import { Route as ApiProblemsSummaryRouteImport } from './routes/api.problems.summary'
-import { Route as ApiProblemsCountsRouteImport } from './routes/api.problems.counts'
-import { Route as ApiProblemsBulkRouteImport } from './routes/api.problems.bulk'
-import { Route as ApiProblemsIdRouteImport } from './routes/api.problems.$id'
-import { Route as ApiOrganizationsIdRouteImport } from './routes/api.organizations.$id'
-import { Route as ApiObservabilityThroughputRouteImport } from './routes/api.observability.throughput'
-import { Route as ApiObservabilityMetricsRouteImport } from './routes/api.observability.metrics'
-import { Route as ApiLocalAgentsPairingTokensRouteImport } from './routes/api.local-agents.pairing-tokens'
-import { Route as ApiLocalAgentsPairRouteImport } from './routes/api.local-agents.pair'
-import { Route as ApiLocalAgentsHeartbeatRouteImport } from './routes/api.local-agents.heartbeat'
-import { Route as ApiInboxThreadsRouteImport } from './routes/api.inbox.threads'
-import { Route as ApiFilesystemFileRouteImport } from './routes/api.filesystem.file'
-import { Route as ApiFilesystemBrowseRouteImport } from './routes/api.filesystem.browse'
-import { Route as ApiCustomAgentsIdRouteImport } from './routes/api.custom-agents.$id'
-import { Route as ApiConversationsDeletedRouteImport } from './routes/api.conversations.deleted'
-import { Route as ApiConversationsIdRouteImport } from './routes/api.conversations.$id'
-import { Route as ApiBookmarksMoveRouteImport } from './routes/api.bookmarks.move'
-import { Route as ApiRuntimesDetectRegisterRouteImport } from './routes/api.runtimes.detect.register'
-import { Route as ApiRuntimesRuntimeIdModelRouteImport } from './routes/api.runtimes.$runtimeId.model'
-import { Route as ApiRuntimesRuntimeIdHealthRouteImport } from './routes/api.runtimes.$runtimeId.health'
-import { Route as ApiRuntimesRuntimeIdChatRouteImport } from './routes/api.runtimes.$runtimeId.chat'
-import { Route as ApiIntegrationsSmtpImapAccountsRouteImport } from './routes/api.integrations.smtp-imap.accounts'
-import { Route as ApiIntegrationsIdDisconnectRouteImport } from './routes/api.integrations.$id.disconnect'
-import { Route as ApiIntegrationsIdConnectRouteImport } from './routes/api.integrations.$id.connect'
-import { Route as ApiInboxThreadsIdRouteImport } from './routes/api.inbox.threads.$id'
-import { Route as ApiConversationsIdMessagesRouteImport } from './routes/api.conversations.$id.messages'
-import { Route as ApiBookmarksCategoriesIdRouteImport } from './routes/api.bookmarks.categories.$id'
-import { Route as ApiIntegrationsGoogleIdAccountsRouteImport } from './routes/api.integrations.google.$id.accounts'
-import { Route as ApiIntegrationsIdAccountsAccountIdRouteImport } from './routes/api.integrations.$id.accounts.$accountId'
-import { Route as ApiInboxThreadsIdMessagesRouteImport } from './routes/api.inbox.threads.$id.messages'
-import { Route as ApiBookmarksCategoriesCategoryIdItemsItemIdRouteImport } from './routes/api.bookmarks.categories.$categoryId.items.$itemId'
+import { Route as ApiRpcSplatRouteImport } from './routes/api.rpc.$'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -152,49 +109,9 @@ const DashboardAgentsRoute = DashboardAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => DashboardRoute,
 } as any)
-const ApiSettingsRoute = ApiSettingsRouteImport.update({
-  id: '/api/settings',
-  path: '/api/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiRuntimesRoute = ApiRuntimesRouteImport.update({
-  id: '/api/runtimes',
-  path: '/api/runtimes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiProjectsRoute = ApiProjectsRouteImport.update({
-  id: '/api/projects',
-  path: '/api/projects',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiProblemsRoute = ApiProblemsRouteImport.update({
-  id: '/api/problems',
-  path: '/api/problems',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiOrganizationsRoute = ApiOrganizationsRouteImport.update({
-  id: '/api/organizations',
-  path: '/api/organizations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiLocalAgentsRoute = ApiLocalAgentsRouteImport.update({
-  id: '/api/local-agents',
-  path: '/api/local-agents',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiIntegrationsRoute = ApiIntegrationsRouteImport.update({
-  id: '/api/integrations',
-  path: '/api/integrations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCustomAgentsRoute = ApiCustomAgentsRouteImport.update({
-  id: '/api/custom-agents',
-  path: '/api/custom-agents',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiConversationsRoute = ApiConversationsRouteImport.update({
-  id: '/api/conversations',
-  path: '/api/conversations',
+const ApiGithubStarsRoute = ApiGithubStarsRouteImport.update({
+  id: '/api/github-stars',
+  path: '/api/github-stars',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -202,201 +119,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiBookmarksRoute = ApiBookmarksRouteImport.update({
-  id: '/api/bookmarks',
-  path: '/api/bookmarks',
+const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
+  id: '/api/rpc/$',
+  path: '/api/rpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSplatRoute = ApiSplatRouteImport.update({
-  id: '/api/$',
-  path: '/api/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiRuntimesDetectRoute = ApiRuntimesDetectRouteImport.update({
-  id: '/detect',
-  path: '/detect',
-  getParentRoute: () => ApiRuntimesRoute,
-} as any)
-const ApiRuntimesIdRoute = ApiRuntimesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ApiRuntimesRoute,
-} as any)
-const ApiProjectsIdRoute = ApiProjectsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ApiProjectsRoute,
-} as any)
-const ApiProblemsSummaryRoute = ApiProblemsSummaryRouteImport.update({
-  id: '/summary',
-  path: '/summary',
-  getParentRoute: () => ApiProblemsRoute,
-} as any)
-const ApiProblemsCountsRoute = ApiProblemsCountsRouteImport.update({
-  id: '/counts',
-  path: '/counts',
-  getParentRoute: () => ApiProblemsRoute,
-} as any)
-const ApiProblemsBulkRoute = ApiProblemsBulkRouteImport.update({
-  id: '/bulk',
-  path: '/bulk',
-  getParentRoute: () => ApiProblemsRoute,
-} as any)
-const ApiProblemsIdRoute = ApiProblemsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ApiProblemsRoute,
-} as any)
-const ApiOrganizationsIdRoute = ApiOrganizationsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ApiOrganizationsRoute,
-} as any)
-const ApiObservabilityThroughputRoute =
-  ApiObservabilityThroughputRouteImport.update({
-    id: '/api/observability/throughput',
-    path: '/api/observability/throughput',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiObservabilityMetricsRoute = ApiObservabilityMetricsRouteImport.update({
-  id: '/api/observability/metrics',
-  path: '/api/observability/metrics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiLocalAgentsPairingTokensRoute =
-  ApiLocalAgentsPairingTokensRouteImport.update({
-    id: '/pairing-tokens',
-    path: '/pairing-tokens',
-    getParentRoute: () => ApiLocalAgentsRoute,
-  } as any)
-const ApiLocalAgentsPairRoute = ApiLocalAgentsPairRouteImport.update({
-  id: '/pair',
-  path: '/pair',
-  getParentRoute: () => ApiLocalAgentsRoute,
-} as any)
-const ApiLocalAgentsHeartbeatRoute = ApiLocalAgentsHeartbeatRouteImport.update({
-  id: '/heartbeat',
-  path: '/heartbeat',
-  getParentRoute: () => ApiLocalAgentsRoute,
-} as any)
-const ApiInboxThreadsRoute = ApiInboxThreadsRouteImport.update({
-  id: '/api/inbox/threads',
-  path: '/api/inbox/threads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiFilesystemFileRoute = ApiFilesystemFileRouteImport.update({
-  id: '/api/filesystem/file',
-  path: '/api/filesystem/file',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiFilesystemBrowseRoute = ApiFilesystemBrowseRouteImport.update({
-  id: '/api/filesystem/browse',
-  path: '/api/filesystem/browse',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCustomAgentsIdRoute = ApiCustomAgentsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ApiCustomAgentsRoute,
-} as any)
-const ApiConversationsDeletedRoute = ApiConversationsDeletedRouteImport.update({
-  id: '/deleted',
-  path: '/deleted',
-  getParentRoute: () => ApiConversationsRoute,
-} as any)
-const ApiConversationsIdRoute = ApiConversationsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ApiConversationsRoute,
-} as any)
-const ApiBookmarksMoveRoute = ApiBookmarksMoveRouteImport.update({
-  id: '/move',
-  path: '/move',
-  getParentRoute: () => ApiBookmarksRoute,
-} as any)
-const ApiRuntimesDetectRegisterRoute =
-  ApiRuntimesDetectRegisterRouteImport.update({
-    id: '/register',
-    path: '/register',
-    getParentRoute: () => ApiRuntimesDetectRoute,
-  } as any)
-const ApiRuntimesRuntimeIdModelRoute =
-  ApiRuntimesRuntimeIdModelRouteImport.update({
-    id: '/$runtimeId/model',
-    path: '/$runtimeId/model',
-    getParentRoute: () => ApiRuntimesRoute,
-  } as any)
-const ApiRuntimesRuntimeIdHealthRoute =
-  ApiRuntimesRuntimeIdHealthRouteImport.update({
-    id: '/$runtimeId/health',
-    path: '/$runtimeId/health',
-    getParentRoute: () => ApiRuntimesRoute,
-  } as any)
-const ApiRuntimesRuntimeIdChatRoute =
-  ApiRuntimesRuntimeIdChatRouteImport.update({
-    id: '/$runtimeId/chat',
-    path: '/$runtimeId/chat',
-    getParentRoute: () => ApiRuntimesRoute,
-  } as any)
-const ApiIntegrationsSmtpImapAccountsRoute =
-  ApiIntegrationsSmtpImapAccountsRouteImport.update({
-    id: '/smtp-imap/accounts',
-    path: '/smtp-imap/accounts',
-    getParentRoute: () => ApiIntegrationsRoute,
-  } as any)
-const ApiIntegrationsIdDisconnectRoute =
-  ApiIntegrationsIdDisconnectRouteImport.update({
-    id: '/$id/disconnect',
-    path: '/$id/disconnect',
-    getParentRoute: () => ApiIntegrationsRoute,
-  } as any)
-const ApiIntegrationsIdConnectRoute =
-  ApiIntegrationsIdConnectRouteImport.update({
-    id: '/$id/connect',
-    path: '/$id/connect',
-    getParentRoute: () => ApiIntegrationsRoute,
-  } as any)
-const ApiInboxThreadsIdRoute = ApiInboxThreadsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ApiInboxThreadsRoute,
-} as any)
-const ApiConversationsIdMessagesRoute =
-  ApiConversationsIdMessagesRouteImport.update({
-    id: '/messages',
-    path: '/messages',
-    getParentRoute: () => ApiConversationsIdRoute,
-  } as any)
-const ApiBookmarksCategoriesIdRoute =
-  ApiBookmarksCategoriesIdRouteImport.update({
-    id: '/categories/$id',
-    path: '/categories/$id',
-    getParentRoute: () => ApiBookmarksRoute,
-  } as any)
-const ApiIntegrationsGoogleIdAccountsRoute =
-  ApiIntegrationsGoogleIdAccountsRouteImport.update({
-    id: '/google/$id/accounts',
-    path: '/google/$id/accounts',
-    getParentRoute: () => ApiIntegrationsRoute,
-  } as any)
-const ApiIntegrationsIdAccountsAccountIdRoute =
-  ApiIntegrationsIdAccountsAccountIdRouteImport.update({
-    id: '/$id/accounts/$accountId',
-    path: '/$id/accounts/$accountId',
-    getParentRoute: () => ApiIntegrationsRoute,
-  } as any)
-const ApiInboxThreadsIdMessagesRoute =
-  ApiInboxThreadsIdMessagesRouteImport.update({
-    id: '/messages',
-    path: '/messages',
-    getParentRoute: () => ApiInboxThreadsIdRoute,
-  } as any)
-const ApiBookmarksCategoriesCategoryIdItemsItemIdRoute =
-  ApiBookmarksCategoriesCategoryIdItemsItemIdRouteImport.update({
-    id: '/categories/$categoryId/items/$itemId',
-    path: '/categories/$categoryId/items/$itemId',
-    getParentRoute: () => ApiBookmarksRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -406,18 +133,8 @@ export interface FileRoutesByFullPath {
   '/docs': typeof DocsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/api/$': typeof ApiSplatRoute
-  '/api/bookmarks': typeof ApiBookmarksRouteWithChildren
   '/api/chat': typeof ApiChatRoute
-  '/api/conversations': typeof ApiConversationsRouteWithChildren
-  '/api/custom-agents': typeof ApiCustomAgentsRouteWithChildren
-  '/api/integrations': typeof ApiIntegrationsRouteWithChildren
-  '/api/local-agents': typeof ApiLocalAgentsRouteWithChildren
-  '/api/organizations': typeof ApiOrganizationsRouteWithChildren
-  '/api/problems': typeof ApiProblemsRouteWithChildren
-  '/api/projects': typeof ApiProjectsRouteWithChildren
-  '/api/runtimes': typeof ApiRuntimesRouteWithChildren
-  '/api/settings': typeof ApiSettingsRoute
+  '/api/github-stars': typeof ApiGithubStarsRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
@@ -427,40 +144,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/': typeof DashboardIndexRoute
-  '/api/bookmarks/move': typeof ApiBookmarksMoveRoute
-  '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
-  '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
-  '/api/custom-agents/$id': typeof ApiCustomAgentsIdRoute
-  '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
-  '/api/filesystem/file': typeof ApiFilesystemFileRoute
-  '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
-  '/api/local-agents/heartbeat': typeof ApiLocalAgentsHeartbeatRoute
-  '/api/local-agents/pair': typeof ApiLocalAgentsPairRoute
-  '/api/local-agents/pairing-tokens': typeof ApiLocalAgentsPairingTokensRoute
-  '/api/observability/metrics': typeof ApiObservabilityMetricsRoute
-  '/api/observability/throughput': typeof ApiObservabilityThroughputRoute
-  '/api/organizations/$id': typeof ApiOrganizationsIdRoute
-  '/api/problems/$id': typeof ApiProblemsIdRoute
-  '/api/problems/bulk': typeof ApiProblemsBulkRoute
-  '/api/problems/counts': typeof ApiProblemsCountsRoute
-  '/api/problems/summary': typeof ApiProblemsSummaryRoute
-  '/api/projects/$id': typeof ApiProjectsIdRoute
-  '/api/runtimes/$id': typeof ApiRuntimesIdRoute
-  '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
-  '/api/bookmarks/categories/$id': typeof ApiBookmarksCategoriesIdRoute
-  '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
-  '/api/inbox/threads/$id': typeof ApiInboxThreadsIdRouteWithChildren
-  '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
-  '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
-  '/api/integrations/smtp-imap/accounts': typeof ApiIntegrationsSmtpImapAccountsRoute
-  '/api/runtimes/$runtimeId/chat': typeof ApiRuntimesRuntimeIdChatRoute
-  '/api/runtimes/$runtimeId/health': typeof ApiRuntimesRuntimeIdHealthRoute
-  '/api/runtimes/$runtimeId/model': typeof ApiRuntimesRuntimeIdModelRoute
-  '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
-  '/api/inbox/threads/$id/messages': typeof ApiInboxThreadsIdMessagesRoute
-  '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
-  '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
-  '/api/bookmarks/categories/$categoryId/items/$itemId': typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
+  '/api/rpc/$': typeof ApiRpcSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -469,18 +153,8 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/api/$': typeof ApiSplatRoute
-  '/api/bookmarks': typeof ApiBookmarksRouteWithChildren
   '/api/chat': typeof ApiChatRoute
-  '/api/conversations': typeof ApiConversationsRouteWithChildren
-  '/api/custom-agents': typeof ApiCustomAgentsRouteWithChildren
-  '/api/integrations': typeof ApiIntegrationsRouteWithChildren
-  '/api/local-agents': typeof ApiLocalAgentsRouteWithChildren
-  '/api/organizations': typeof ApiOrganizationsRouteWithChildren
-  '/api/problems': typeof ApiProblemsRouteWithChildren
-  '/api/projects': typeof ApiProjectsRouteWithChildren
-  '/api/runtimes': typeof ApiRuntimesRouteWithChildren
-  '/api/settings': typeof ApiSettingsRoute
+  '/api/github-stars': typeof ApiGithubStarsRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
@@ -490,40 +164,7 @@ export interface FileRoutesByTo {
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard': typeof DashboardIndexRoute
-  '/api/bookmarks/move': typeof ApiBookmarksMoveRoute
-  '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
-  '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
-  '/api/custom-agents/$id': typeof ApiCustomAgentsIdRoute
-  '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
-  '/api/filesystem/file': typeof ApiFilesystemFileRoute
-  '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
-  '/api/local-agents/heartbeat': typeof ApiLocalAgentsHeartbeatRoute
-  '/api/local-agents/pair': typeof ApiLocalAgentsPairRoute
-  '/api/local-agents/pairing-tokens': typeof ApiLocalAgentsPairingTokensRoute
-  '/api/observability/metrics': typeof ApiObservabilityMetricsRoute
-  '/api/observability/throughput': typeof ApiObservabilityThroughputRoute
-  '/api/organizations/$id': typeof ApiOrganizationsIdRoute
-  '/api/problems/$id': typeof ApiProblemsIdRoute
-  '/api/problems/bulk': typeof ApiProblemsBulkRoute
-  '/api/problems/counts': typeof ApiProblemsCountsRoute
-  '/api/problems/summary': typeof ApiProblemsSummaryRoute
-  '/api/projects/$id': typeof ApiProjectsIdRoute
-  '/api/runtimes/$id': typeof ApiRuntimesIdRoute
-  '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
-  '/api/bookmarks/categories/$id': typeof ApiBookmarksCategoriesIdRoute
-  '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
-  '/api/inbox/threads/$id': typeof ApiInboxThreadsIdRouteWithChildren
-  '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
-  '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
-  '/api/integrations/smtp-imap/accounts': typeof ApiIntegrationsSmtpImapAccountsRoute
-  '/api/runtimes/$runtimeId/chat': typeof ApiRuntimesRuntimeIdChatRoute
-  '/api/runtimes/$runtimeId/health': typeof ApiRuntimesRuntimeIdHealthRoute
-  '/api/runtimes/$runtimeId/model': typeof ApiRuntimesRuntimeIdModelRoute
-  '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
-  '/api/inbox/threads/$id/messages': typeof ApiInboxThreadsIdMessagesRoute
-  '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
-  '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
-  '/api/bookmarks/categories/$categoryId/items/$itemId': typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
+  '/api/rpc/$': typeof ApiRpcSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -534,18 +175,8 @@ export interface FileRoutesById {
   '/docs': typeof DocsRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/api/$': typeof ApiSplatRoute
-  '/api/bookmarks': typeof ApiBookmarksRouteWithChildren
   '/api/chat': typeof ApiChatRoute
-  '/api/conversations': typeof ApiConversationsRouteWithChildren
-  '/api/custom-agents': typeof ApiCustomAgentsRouteWithChildren
-  '/api/integrations': typeof ApiIntegrationsRouteWithChildren
-  '/api/local-agents': typeof ApiLocalAgentsRouteWithChildren
-  '/api/organizations': typeof ApiOrganizationsRouteWithChildren
-  '/api/problems': typeof ApiProblemsRouteWithChildren
-  '/api/projects': typeof ApiProjectsRouteWithChildren
-  '/api/runtimes': typeof ApiRuntimesRouteWithChildren
-  '/api/settings': typeof ApiSettingsRoute
+  '/api/github-stars': typeof ApiGithubStarsRoute
   '/dashboard/agents': typeof DashboardAgentsRoute
   '/dashboard/board': typeof DashboardBoardRoute
   '/dashboard/bookmarks': typeof DashboardBookmarksRoute
@@ -555,40 +186,7 @@ export interface FileRoutesById {
   '/dashboard/mail': typeof DashboardMailRoute
   '/dashboard/observability': typeof DashboardObservabilityRoute
   '/dashboard/': typeof DashboardIndexRoute
-  '/api/bookmarks/move': typeof ApiBookmarksMoveRoute
-  '/api/conversations/$id': typeof ApiConversationsIdRouteWithChildren
-  '/api/conversations/deleted': typeof ApiConversationsDeletedRoute
-  '/api/custom-agents/$id': typeof ApiCustomAgentsIdRoute
-  '/api/filesystem/browse': typeof ApiFilesystemBrowseRoute
-  '/api/filesystem/file': typeof ApiFilesystemFileRoute
-  '/api/inbox/threads': typeof ApiInboxThreadsRouteWithChildren
-  '/api/local-agents/heartbeat': typeof ApiLocalAgentsHeartbeatRoute
-  '/api/local-agents/pair': typeof ApiLocalAgentsPairRoute
-  '/api/local-agents/pairing-tokens': typeof ApiLocalAgentsPairingTokensRoute
-  '/api/observability/metrics': typeof ApiObservabilityMetricsRoute
-  '/api/observability/throughput': typeof ApiObservabilityThroughputRoute
-  '/api/organizations/$id': typeof ApiOrganizationsIdRoute
-  '/api/problems/$id': typeof ApiProblemsIdRoute
-  '/api/problems/bulk': typeof ApiProblemsBulkRoute
-  '/api/problems/counts': typeof ApiProblemsCountsRoute
-  '/api/problems/summary': typeof ApiProblemsSummaryRoute
-  '/api/projects/$id': typeof ApiProjectsIdRoute
-  '/api/runtimes/$id': typeof ApiRuntimesIdRoute
-  '/api/runtimes/detect': typeof ApiRuntimesDetectRouteWithChildren
-  '/api/bookmarks/categories/$id': typeof ApiBookmarksCategoriesIdRoute
-  '/api/conversations/$id/messages': typeof ApiConversationsIdMessagesRoute
-  '/api/inbox/threads/$id': typeof ApiInboxThreadsIdRouteWithChildren
-  '/api/integrations/$id/connect': typeof ApiIntegrationsIdConnectRoute
-  '/api/integrations/$id/disconnect': typeof ApiIntegrationsIdDisconnectRoute
-  '/api/integrations/smtp-imap/accounts': typeof ApiIntegrationsSmtpImapAccountsRoute
-  '/api/runtimes/$runtimeId/chat': typeof ApiRuntimesRuntimeIdChatRoute
-  '/api/runtimes/$runtimeId/health': typeof ApiRuntimesRuntimeIdHealthRoute
-  '/api/runtimes/$runtimeId/model': typeof ApiRuntimesRuntimeIdModelRoute
-  '/api/runtimes/detect/register': typeof ApiRuntimesDetectRegisterRoute
-  '/api/inbox/threads/$id/messages': typeof ApiInboxThreadsIdMessagesRoute
-  '/api/integrations/$id/accounts/$accountId': typeof ApiIntegrationsIdAccountsAccountIdRoute
-  '/api/integrations/google/$id/accounts': typeof ApiIntegrationsGoogleIdAccountsRoute
-  '/api/bookmarks/categories/$categoryId/items/$itemId': typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
+  '/api/rpc/$': typeof ApiRpcSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -600,18 +198,8 @@ export interface FileRouteTypes {
     | '/docs'
     | '/sign-in'
     | '/sign-up'
-    | '/api/$'
-    | '/api/bookmarks'
     | '/api/chat'
-    | '/api/conversations'
-    | '/api/custom-agents'
-    | '/api/integrations'
-    | '/api/local-agents'
-    | '/api/organizations'
-    | '/api/problems'
-    | '/api/projects'
-    | '/api/runtimes'
-    | '/api/settings'
+    | '/api/github-stars'
     | '/dashboard/agents'
     | '/dashboard/board'
     | '/dashboard/bookmarks'
@@ -621,40 +209,7 @@ export interface FileRouteTypes {
     | '/dashboard/mail'
     | '/dashboard/observability'
     | '/dashboard/'
-    | '/api/bookmarks/move'
-    | '/api/conversations/$id'
-    | '/api/conversations/deleted'
-    | '/api/custom-agents/$id'
-    | '/api/filesystem/browse'
-    | '/api/filesystem/file'
-    | '/api/inbox/threads'
-    | '/api/local-agents/heartbeat'
-    | '/api/local-agents/pair'
-    | '/api/local-agents/pairing-tokens'
-    | '/api/observability/metrics'
-    | '/api/observability/throughput'
-    | '/api/organizations/$id'
-    | '/api/problems/$id'
-    | '/api/problems/bulk'
-    | '/api/problems/counts'
-    | '/api/problems/summary'
-    | '/api/projects/$id'
-    | '/api/runtimes/$id'
-    | '/api/runtimes/detect'
-    | '/api/bookmarks/categories/$id'
-    | '/api/conversations/$id/messages'
-    | '/api/inbox/threads/$id'
-    | '/api/integrations/$id/connect'
-    | '/api/integrations/$id/disconnect'
-    | '/api/integrations/smtp-imap/accounts'
-    | '/api/runtimes/$runtimeId/chat'
-    | '/api/runtimes/$runtimeId/health'
-    | '/api/runtimes/$runtimeId/model'
-    | '/api/runtimes/detect/register'
-    | '/api/inbox/threads/$id/messages'
-    | '/api/integrations/$id/accounts/$accountId'
-    | '/api/integrations/google/$id/accounts'
-    | '/api/bookmarks/categories/$categoryId/items/$itemId'
+    | '/api/rpc/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -663,18 +218,8 @@ export interface FileRouteTypes {
     | '/docs'
     | '/sign-in'
     | '/sign-up'
-    | '/api/$'
-    | '/api/bookmarks'
     | '/api/chat'
-    | '/api/conversations'
-    | '/api/custom-agents'
-    | '/api/integrations'
-    | '/api/local-agents'
-    | '/api/organizations'
-    | '/api/problems'
-    | '/api/projects'
-    | '/api/runtimes'
-    | '/api/settings'
+    | '/api/github-stars'
     | '/dashboard/agents'
     | '/dashboard/board'
     | '/dashboard/bookmarks'
@@ -684,40 +229,7 @@ export interface FileRouteTypes {
     | '/dashboard/mail'
     | '/dashboard/observability'
     | '/dashboard'
-    | '/api/bookmarks/move'
-    | '/api/conversations/$id'
-    | '/api/conversations/deleted'
-    | '/api/custom-agents/$id'
-    | '/api/filesystem/browse'
-    | '/api/filesystem/file'
-    | '/api/inbox/threads'
-    | '/api/local-agents/heartbeat'
-    | '/api/local-agents/pair'
-    | '/api/local-agents/pairing-tokens'
-    | '/api/observability/metrics'
-    | '/api/observability/throughput'
-    | '/api/organizations/$id'
-    | '/api/problems/$id'
-    | '/api/problems/bulk'
-    | '/api/problems/counts'
-    | '/api/problems/summary'
-    | '/api/projects/$id'
-    | '/api/runtimes/$id'
-    | '/api/runtimes/detect'
-    | '/api/bookmarks/categories/$id'
-    | '/api/conversations/$id/messages'
-    | '/api/inbox/threads/$id'
-    | '/api/integrations/$id/connect'
-    | '/api/integrations/$id/disconnect'
-    | '/api/integrations/smtp-imap/accounts'
-    | '/api/runtimes/$runtimeId/chat'
-    | '/api/runtimes/$runtimeId/health'
-    | '/api/runtimes/$runtimeId/model'
-    | '/api/runtimes/detect/register'
-    | '/api/inbox/threads/$id/messages'
-    | '/api/integrations/$id/accounts/$accountId'
-    | '/api/integrations/google/$id/accounts'
-    | '/api/bookmarks/categories/$categoryId/items/$itemId'
+    | '/api/rpc/$'
   id:
     | '__root__'
     | '/'
@@ -727,18 +239,8 @@ export interface FileRouteTypes {
     | '/docs'
     | '/sign-in'
     | '/sign-up'
-    | '/api/$'
-    | '/api/bookmarks'
     | '/api/chat'
-    | '/api/conversations'
-    | '/api/custom-agents'
-    | '/api/integrations'
-    | '/api/local-agents'
-    | '/api/organizations'
-    | '/api/problems'
-    | '/api/projects'
-    | '/api/runtimes'
-    | '/api/settings'
+    | '/api/github-stars'
     | '/dashboard/agents'
     | '/dashboard/board'
     | '/dashboard/bookmarks'
@@ -748,40 +250,7 @@ export interface FileRouteTypes {
     | '/dashboard/mail'
     | '/dashboard/observability'
     | '/dashboard/'
-    | '/api/bookmarks/move'
-    | '/api/conversations/$id'
-    | '/api/conversations/deleted'
-    | '/api/custom-agents/$id'
-    | '/api/filesystem/browse'
-    | '/api/filesystem/file'
-    | '/api/inbox/threads'
-    | '/api/local-agents/heartbeat'
-    | '/api/local-agents/pair'
-    | '/api/local-agents/pairing-tokens'
-    | '/api/observability/metrics'
-    | '/api/observability/throughput'
-    | '/api/organizations/$id'
-    | '/api/problems/$id'
-    | '/api/problems/bulk'
-    | '/api/problems/counts'
-    | '/api/problems/summary'
-    | '/api/projects/$id'
-    | '/api/runtimes/$id'
-    | '/api/runtimes/detect'
-    | '/api/bookmarks/categories/$id'
-    | '/api/conversations/$id/messages'
-    | '/api/inbox/threads/$id'
-    | '/api/integrations/$id/connect'
-    | '/api/integrations/$id/disconnect'
-    | '/api/integrations/smtp-imap/accounts'
-    | '/api/runtimes/$runtimeId/chat'
-    | '/api/runtimes/$runtimeId/health'
-    | '/api/runtimes/$runtimeId/model'
-    | '/api/runtimes/detect/register'
-    | '/api/inbox/threads/$id/messages'
-    | '/api/integrations/$id/accounts/$accountId'
-    | '/api/integrations/google/$id/accounts'
-    | '/api/bookmarks/categories/$categoryId/items/$itemId'
+    | '/api/rpc/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -792,23 +261,9 @@ export interface RootRouteChildren {
   DocsRoute: typeof DocsRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
-  ApiSplatRoute: typeof ApiSplatRoute
-  ApiBookmarksRoute: typeof ApiBookmarksRouteWithChildren
   ApiChatRoute: typeof ApiChatRoute
-  ApiConversationsRoute: typeof ApiConversationsRouteWithChildren
-  ApiCustomAgentsRoute: typeof ApiCustomAgentsRouteWithChildren
-  ApiIntegrationsRoute: typeof ApiIntegrationsRouteWithChildren
-  ApiLocalAgentsRoute: typeof ApiLocalAgentsRouteWithChildren
-  ApiOrganizationsRoute: typeof ApiOrganizationsRouteWithChildren
-  ApiProblemsRoute: typeof ApiProblemsRouteWithChildren
-  ApiProjectsRoute: typeof ApiProjectsRouteWithChildren
-  ApiRuntimesRoute: typeof ApiRuntimesRouteWithChildren
-  ApiSettingsRoute: typeof ApiSettingsRoute
-  ApiFilesystemBrowseRoute: typeof ApiFilesystemBrowseRoute
-  ApiFilesystemFileRoute: typeof ApiFilesystemFileRoute
-  ApiInboxThreadsRoute: typeof ApiInboxThreadsRouteWithChildren
-  ApiObservabilityMetricsRoute: typeof ApiObservabilityMetricsRoute
-  ApiObservabilityThroughputRoute: typeof ApiObservabilityThroughputRoute
+  ApiGithubStarsRoute: typeof ApiGithubStarsRoute
+  ApiRpcSplatRoute: typeof ApiRpcSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -925,67 +380,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAgentsRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/api/settings': {
-      id: '/api/settings'
-      path: '/api/settings'
-      fullPath: '/api/settings'
-      preLoaderRoute: typeof ApiSettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/runtimes': {
-      id: '/api/runtimes'
-      path: '/api/runtimes'
-      fullPath: '/api/runtimes'
-      preLoaderRoute: typeof ApiRuntimesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/projects': {
-      id: '/api/projects'
-      path: '/api/projects'
-      fullPath: '/api/projects'
-      preLoaderRoute: typeof ApiProjectsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/problems': {
-      id: '/api/problems'
-      path: '/api/problems'
-      fullPath: '/api/problems'
-      preLoaderRoute: typeof ApiProblemsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/organizations': {
-      id: '/api/organizations'
-      path: '/api/organizations'
-      fullPath: '/api/organizations'
-      preLoaderRoute: typeof ApiOrganizationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/local-agents': {
-      id: '/api/local-agents'
-      path: '/api/local-agents'
-      fullPath: '/api/local-agents'
-      preLoaderRoute: typeof ApiLocalAgentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/integrations': {
-      id: '/api/integrations'
-      path: '/api/integrations'
-      fullPath: '/api/integrations'
-      preLoaderRoute: typeof ApiIntegrationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/custom-agents': {
-      id: '/api/custom-agents'
-      path: '/api/custom-agents'
-      fullPath: '/api/custom-agents'
-      preLoaderRoute: typeof ApiCustomAgentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/conversations': {
-      id: '/api/conversations'
-      path: '/api/conversations'
-      fullPath: '/api/conversations'
-      preLoaderRoute: typeof ApiConversationsRouteImport
+    '/api/github-stars': {
+      id: '/api/github-stars'
+      path: '/api/github-stars'
+      fullPath: '/api/github-stars'
+      preLoaderRoute: typeof ApiGithubStarsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -995,257 +394,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/bookmarks': {
-      id: '/api/bookmarks'
-      path: '/api/bookmarks'
-      fullPath: '/api/bookmarks'
-      preLoaderRoute: typeof ApiBookmarksRouteImport
+    '/api/rpc/$': {
+      id: '/api/rpc/$'
+      path: '/api/rpc/$'
+      fullPath: '/api/rpc/$'
+      preLoaderRoute: typeof ApiRpcSplatRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/api/$': {
-      id: '/api/$'
-      path: '/api/$'
-      fullPath: '/api/$'
-      preLoaderRoute: typeof ApiSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/runtimes/detect': {
-      id: '/api/runtimes/detect'
-      path: '/detect'
-      fullPath: '/api/runtimes/detect'
-      preLoaderRoute: typeof ApiRuntimesDetectRouteImport
-      parentRoute: typeof ApiRuntimesRoute
-    }
-    '/api/runtimes/$id': {
-      id: '/api/runtimes/$id'
-      path: '/$id'
-      fullPath: '/api/runtimes/$id'
-      preLoaderRoute: typeof ApiRuntimesIdRouteImport
-      parentRoute: typeof ApiRuntimesRoute
-    }
-    '/api/projects/$id': {
-      id: '/api/projects/$id'
-      path: '/$id'
-      fullPath: '/api/projects/$id'
-      preLoaderRoute: typeof ApiProjectsIdRouteImport
-      parentRoute: typeof ApiProjectsRoute
-    }
-    '/api/problems/summary': {
-      id: '/api/problems/summary'
-      path: '/summary'
-      fullPath: '/api/problems/summary'
-      preLoaderRoute: typeof ApiProblemsSummaryRouteImport
-      parentRoute: typeof ApiProblemsRoute
-    }
-    '/api/problems/counts': {
-      id: '/api/problems/counts'
-      path: '/counts'
-      fullPath: '/api/problems/counts'
-      preLoaderRoute: typeof ApiProblemsCountsRouteImport
-      parentRoute: typeof ApiProblemsRoute
-    }
-    '/api/problems/bulk': {
-      id: '/api/problems/bulk'
-      path: '/bulk'
-      fullPath: '/api/problems/bulk'
-      preLoaderRoute: typeof ApiProblemsBulkRouteImport
-      parentRoute: typeof ApiProblemsRoute
-    }
-    '/api/problems/$id': {
-      id: '/api/problems/$id'
-      path: '/$id'
-      fullPath: '/api/problems/$id'
-      preLoaderRoute: typeof ApiProblemsIdRouteImport
-      parentRoute: typeof ApiProblemsRoute
-    }
-    '/api/organizations/$id': {
-      id: '/api/organizations/$id'
-      path: '/$id'
-      fullPath: '/api/organizations/$id'
-      preLoaderRoute: typeof ApiOrganizationsIdRouteImport
-      parentRoute: typeof ApiOrganizationsRoute
-    }
-    '/api/observability/throughput': {
-      id: '/api/observability/throughput'
-      path: '/api/observability/throughput'
-      fullPath: '/api/observability/throughput'
-      preLoaderRoute: typeof ApiObservabilityThroughputRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/observability/metrics': {
-      id: '/api/observability/metrics'
-      path: '/api/observability/metrics'
-      fullPath: '/api/observability/metrics'
-      preLoaderRoute: typeof ApiObservabilityMetricsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/local-agents/pairing-tokens': {
-      id: '/api/local-agents/pairing-tokens'
-      path: '/pairing-tokens'
-      fullPath: '/api/local-agents/pairing-tokens'
-      preLoaderRoute: typeof ApiLocalAgentsPairingTokensRouteImport
-      parentRoute: typeof ApiLocalAgentsRoute
-    }
-    '/api/local-agents/pair': {
-      id: '/api/local-agents/pair'
-      path: '/pair'
-      fullPath: '/api/local-agents/pair'
-      preLoaderRoute: typeof ApiLocalAgentsPairRouteImport
-      parentRoute: typeof ApiLocalAgentsRoute
-    }
-    '/api/local-agents/heartbeat': {
-      id: '/api/local-agents/heartbeat'
-      path: '/heartbeat'
-      fullPath: '/api/local-agents/heartbeat'
-      preLoaderRoute: typeof ApiLocalAgentsHeartbeatRouteImport
-      parentRoute: typeof ApiLocalAgentsRoute
-    }
-    '/api/inbox/threads': {
-      id: '/api/inbox/threads'
-      path: '/api/inbox/threads'
-      fullPath: '/api/inbox/threads'
-      preLoaderRoute: typeof ApiInboxThreadsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/filesystem/file': {
-      id: '/api/filesystem/file'
-      path: '/api/filesystem/file'
-      fullPath: '/api/filesystem/file'
-      preLoaderRoute: typeof ApiFilesystemFileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/filesystem/browse': {
-      id: '/api/filesystem/browse'
-      path: '/api/filesystem/browse'
-      fullPath: '/api/filesystem/browse'
-      preLoaderRoute: typeof ApiFilesystemBrowseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/custom-agents/$id': {
-      id: '/api/custom-agents/$id'
-      path: '/$id'
-      fullPath: '/api/custom-agents/$id'
-      preLoaderRoute: typeof ApiCustomAgentsIdRouteImport
-      parentRoute: typeof ApiCustomAgentsRoute
-    }
-    '/api/conversations/deleted': {
-      id: '/api/conversations/deleted'
-      path: '/deleted'
-      fullPath: '/api/conversations/deleted'
-      preLoaderRoute: typeof ApiConversationsDeletedRouteImport
-      parentRoute: typeof ApiConversationsRoute
-    }
-    '/api/conversations/$id': {
-      id: '/api/conversations/$id'
-      path: '/$id'
-      fullPath: '/api/conversations/$id'
-      preLoaderRoute: typeof ApiConversationsIdRouteImport
-      parentRoute: typeof ApiConversationsRoute
-    }
-    '/api/bookmarks/move': {
-      id: '/api/bookmarks/move'
-      path: '/move'
-      fullPath: '/api/bookmarks/move'
-      preLoaderRoute: typeof ApiBookmarksMoveRouteImport
-      parentRoute: typeof ApiBookmarksRoute
-    }
-    '/api/runtimes/detect/register': {
-      id: '/api/runtimes/detect/register'
-      path: '/register'
-      fullPath: '/api/runtimes/detect/register'
-      preLoaderRoute: typeof ApiRuntimesDetectRegisterRouteImport
-      parentRoute: typeof ApiRuntimesDetectRoute
-    }
-    '/api/runtimes/$runtimeId/model': {
-      id: '/api/runtimes/$runtimeId/model'
-      path: '/$runtimeId/model'
-      fullPath: '/api/runtimes/$runtimeId/model'
-      preLoaderRoute: typeof ApiRuntimesRuntimeIdModelRouteImport
-      parentRoute: typeof ApiRuntimesRoute
-    }
-    '/api/runtimes/$runtimeId/health': {
-      id: '/api/runtimes/$runtimeId/health'
-      path: '/$runtimeId/health'
-      fullPath: '/api/runtimes/$runtimeId/health'
-      preLoaderRoute: typeof ApiRuntimesRuntimeIdHealthRouteImport
-      parentRoute: typeof ApiRuntimesRoute
-    }
-    '/api/runtimes/$runtimeId/chat': {
-      id: '/api/runtimes/$runtimeId/chat'
-      path: '/$runtimeId/chat'
-      fullPath: '/api/runtimes/$runtimeId/chat'
-      preLoaderRoute: typeof ApiRuntimesRuntimeIdChatRouteImport
-      parentRoute: typeof ApiRuntimesRoute
-    }
-    '/api/integrations/smtp-imap/accounts': {
-      id: '/api/integrations/smtp-imap/accounts'
-      path: '/smtp-imap/accounts'
-      fullPath: '/api/integrations/smtp-imap/accounts'
-      preLoaderRoute: typeof ApiIntegrationsSmtpImapAccountsRouteImport
-      parentRoute: typeof ApiIntegrationsRoute
-    }
-    '/api/integrations/$id/disconnect': {
-      id: '/api/integrations/$id/disconnect'
-      path: '/$id/disconnect'
-      fullPath: '/api/integrations/$id/disconnect'
-      preLoaderRoute: typeof ApiIntegrationsIdDisconnectRouteImport
-      parentRoute: typeof ApiIntegrationsRoute
-    }
-    '/api/integrations/$id/connect': {
-      id: '/api/integrations/$id/connect'
-      path: '/$id/connect'
-      fullPath: '/api/integrations/$id/connect'
-      preLoaderRoute: typeof ApiIntegrationsIdConnectRouteImport
-      parentRoute: typeof ApiIntegrationsRoute
-    }
-    '/api/inbox/threads/$id': {
-      id: '/api/inbox/threads/$id'
-      path: '/$id'
-      fullPath: '/api/inbox/threads/$id'
-      preLoaderRoute: typeof ApiInboxThreadsIdRouteImport
-      parentRoute: typeof ApiInboxThreadsRoute
-    }
-    '/api/conversations/$id/messages': {
-      id: '/api/conversations/$id/messages'
-      path: '/messages'
-      fullPath: '/api/conversations/$id/messages'
-      preLoaderRoute: typeof ApiConversationsIdMessagesRouteImport
-      parentRoute: typeof ApiConversationsIdRoute
-    }
-    '/api/bookmarks/categories/$id': {
-      id: '/api/bookmarks/categories/$id'
-      path: '/categories/$id'
-      fullPath: '/api/bookmarks/categories/$id'
-      preLoaderRoute: typeof ApiBookmarksCategoriesIdRouteImport
-      parentRoute: typeof ApiBookmarksRoute
-    }
-    '/api/integrations/google/$id/accounts': {
-      id: '/api/integrations/google/$id/accounts'
-      path: '/google/$id/accounts'
-      fullPath: '/api/integrations/google/$id/accounts'
-      preLoaderRoute: typeof ApiIntegrationsGoogleIdAccountsRouteImport
-      parentRoute: typeof ApiIntegrationsRoute
-    }
-    '/api/integrations/$id/accounts/$accountId': {
-      id: '/api/integrations/$id/accounts/$accountId'
-      path: '/$id/accounts/$accountId'
-      fullPath: '/api/integrations/$id/accounts/$accountId'
-      preLoaderRoute: typeof ApiIntegrationsIdAccountsAccountIdRouteImport
-      parentRoute: typeof ApiIntegrationsRoute
-    }
-    '/api/inbox/threads/$id/messages': {
-      id: '/api/inbox/threads/$id/messages'
-      path: '/messages'
-      fullPath: '/api/inbox/threads/$id/messages'
-      preLoaderRoute: typeof ApiInboxThreadsIdMessagesRouteImport
-      parentRoute: typeof ApiInboxThreadsIdRoute
-    }
-    '/api/bookmarks/categories/$categoryId/items/$itemId': {
-      id: '/api/bookmarks/categories/$categoryId/items/$itemId'
-      path: '/categories/$categoryId/items/$itemId'
-      fullPath: '/api/bookmarks/categories/$categoryId/items/$itemId'
-      preLoaderRoute: typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRouteImport
-      parentRoute: typeof ApiBookmarksRoute
     }
   }
 }
@@ -1278,191 +432,6 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
-interface ApiBookmarksRouteChildren {
-  ApiBookmarksMoveRoute: typeof ApiBookmarksMoveRoute
-  ApiBookmarksCategoriesIdRoute: typeof ApiBookmarksCategoriesIdRoute
-  ApiBookmarksCategoriesCategoryIdItemsItemIdRoute: typeof ApiBookmarksCategoriesCategoryIdItemsItemIdRoute
-}
-
-const ApiBookmarksRouteChildren: ApiBookmarksRouteChildren = {
-  ApiBookmarksMoveRoute: ApiBookmarksMoveRoute,
-  ApiBookmarksCategoriesIdRoute: ApiBookmarksCategoriesIdRoute,
-  ApiBookmarksCategoriesCategoryIdItemsItemIdRoute:
-    ApiBookmarksCategoriesCategoryIdItemsItemIdRoute,
-}
-
-const ApiBookmarksRouteWithChildren = ApiBookmarksRoute._addFileChildren(
-  ApiBookmarksRouteChildren,
-)
-
-interface ApiConversationsIdRouteChildren {
-  ApiConversationsIdMessagesRoute: typeof ApiConversationsIdMessagesRoute
-}
-
-const ApiConversationsIdRouteChildren: ApiConversationsIdRouteChildren = {
-  ApiConversationsIdMessagesRoute: ApiConversationsIdMessagesRoute,
-}
-
-const ApiConversationsIdRouteWithChildren =
-  ApiConversationsIdRoute._addFileChildren(ApiConversationsIdRouteChildren)
-
-interface ApiConversationsRouteChildren {
-  ApiConversationsIdRoute: typeof ApiConversationsIdRouteWithChildren
-  ApiConversationsDeletedRoute: typeof ApiConversationsDeletedRoute
-}
-
-const ApiConversationsRouteChildren: ApiConversationsRouteChildren = {
-  ApiConversationsIdRoute: ApiConversationsIdRouteWithChildren,
-  ApiConversationsDeletedRoute: ApiConversationsDeletedRoute,
-}
-
-const ApiConversationsRouteWithChildren =
-  ApiConversationsRoute._addFileChildren(ApiConversationsRouteChildren)
-
-interface ApiCustomAgentsRouteChildren {
-  ApiCustomAgentsIdRoute: typeof ApiCustomAgentsIdRoute
-}
-
-const ApiCustomAgentsRouteChildren: ApiCustomAgentsRouteChildren = {
-  ApiCustomAgentsIdRoute: ApiCustomAgentsIdRoute,
-}
-
-const ApiCustomAgentsRouteWithChildren = ApiCustomAgentsRoute._addFileChildren(
-  ApiCustomAgentsRouteChildren,
-)
-
-interface ApiIntegrationsRouteChildren {
-  ApiIntegrationsIdConnectRoute: typeof ApiIntegrationsIdConnectRoute
-  ApiIntegrationsIdDisconnectRoute: typeof ApiIntegrationsIdDisconnectRoute
-  ApiIntegrationsSmtpImapAccountsRoute: typeof ApiIntegrationsSmtpImapAccountsRoute
-  ApiIntegrationsIdAccountsAccountIdRoute: typeof ApiIntegrationsIdAccountsAccountIdRoute
-  ApiIntegrationsGoogleIdAccountsRoute: typeof ApiIntegrationsGoogleIdAccountsRoute
-}
-
-const ApiIntegrationsRouteChildren: ApiIntegrationsRouteChildren = {
-  ApiIntegrationsIdConnectRoute: ApiIntegrationsIdConnectRoute,
-  ApiIntegrationsIdDisconnectRoute: ApiIntegrationsIdDisconnectRoute,
-  ApiIntegrationsSmtpImapAccountsRoute: ApiIntegrationsSmtpImapAccountsRoute,
-  ApiIntegrationsIdAccountsAccountIdRoute:
-    ApiIntegrationsIdAccountsAccountIdRoute,
-  ApiIntegrationsGoogleIdAccountsRoute: ApiIntegrationsGoogleIdAccountsRoute,
-}
-
-const ApiIntegrationsRouteWithChildren = ApiIntegrationsRoute._addFileChildren(
-  ApiIntegrationsRouteChildren,
-)
-
-interface ApiLocalAgentsRouteChildren {
-  ApiLocalAgentsHeartbeatRoute: typeof ApiLocalAgentsHeartbeatRoute
-  ApiLocalAgentsPairRoute: typeof ApiLocalAgentsPairRoute
-  ApiLocalAgentsPairingTokensRoute: typeof ApiLocalAgentsPairingTokensRoute
-}
-
-const ApiLocalAgentsRouteChildren: ApiLocalAgentsRouteChildren = {
-  ApiLocalAgentsHeartbeatRoute: ApiLocalAgentsHeartbeatRoute,
-  ApiLocalAgentsPairRoute: ApiLocalAgentsPairRoute,
-  ApiLocalAgentsPairingTokensRoute: ApiLocalAgentsPairingTokensRoute,
-}
-
-const ApiLocalAgentsRouteWithChildren = ApiLocalAgentsRoute._addFileChildren(
-  ApiLocalAgentsRouteChildren,
-)
-
-interface ApiOrganizationsRouteChildren {
-  ApiOrganizationsIdRoute: typeof ApiOrganizationsIdRoute
-}
-
-const ApiOrganizationsRouteChildren: ApiOrganizationsRouteChildren = {
-  ApiOrganizationsIdRoute: ApiOrganizationsIdRoute,
-}
-
-const ApiOrganizationsRouteWithChildren =
-  ApiOrganizationsRoute._addFileChildren(ApiOrganizationsRouteChildren)
-
-interface ApiProblemsRouteChildren {
-  ApiProblemsIdRoute: typeof ApiProblemsIdRoute
-  ApiProblemsBulkRoute: typeof ApiProblemsBulkRoute
-  ApiProblemsCountsRoute: typeof ApiProblemsCountsRoute
-  ApiProblemsSummaryRoute: typeof ApiProblemsSummaryRoute
-}
-
-const ApiProblemsRouteChildren: ApiProblemsRouteChildren = {
-  ApiProblemsIdRoute: ApiProblemsIdRoute,
-  ApiProblemsBulkRoute: ApiProblemsBulkRoute,
-  ApiProblemsCountsRoute: ApiProblemsCountsRoute,
-  ApiProblemsSummaryRoute: ApiProblemsSummaryRoute,
-}
-
-const ApiProblemsRouteWithChildren = ApiProblemsRoute._addFileChildren(
-  ApiProblemsRouteChildren,
-)
-
-interface ApiProjectsRouteChildren {
-  ApiProjectsIdRoute: typeof ApiProjectsIdRoute
-}
-
-const ApiProjectsRouteChildren: ApiProjectsRouteChildren = {
-  ApiProjectsIdRoute: ApiProjectsIdRoute,
-}
-
-const ApiProjectsRouteWithChildren = ApiProjectsRoute._addFileChildren(
-  ApiProjectsRouteChildren,
-)
-
-interface ApiRuntimesDetectRouteChildren {
-  ApiRuntimesDetectRegisterRoute: typeof ApiRuntimesDetectRegisterRoute
-}
-
-const ApiRuntimesDetectRouteChildren: ApiRuntimesDetectRouteChildren = {
-  ApiRuntimesDetectRegisterRoute: ApiRuntimesDetectRegisterRoute,
-}
-
-const ApiRuntimesDetectRouteWithChildren =
-  ApiRuntimesDetectRoute._addFileChildren(ApiRuntimesDetectRouteChildren)
-
-interface ApiRuntimesRouteChildren {
-  ApiRuntimesIdRoute: typeof ApiRuntimesIdRoute
-  ApiRuntimesDetectRoute: typeof ApiRuntimesDetectRouteWithChildren
-  ApiRuntimesRuntimeIdChatRoute: typeof ApiRuntimesRuntimeIdChatRoute
-  ApiRuntimesRuntimeIdHealthRoute: typeof ApiRuntimesRuntimeIdHealthRoute
-  ApiRuntimesRuntimeIdModelRoute: typeof ApiRuntimesRuntimeIdModelRoute
-}
-
-const ApiRuntimesRouteChildren: ApiRuntimesRouteChildren = {
-  ApiRuntimesIdRoute: ApiRuntimesIdRoute,
-  ApiRuntimesDetectRoute: ApiRuntimesDetectRouteWithChildren,
-  ApiRuntimesRuntimeIdChatRoute: ApiRuntimesRuntimeIdChatRoute,
-  ApiRuntimesRuntimeIdHealthRoute: ApiRuntimesRuntimeIdHealthRoute,
-  ApiRuntimesRuntimeIdModelRoute: ApiRuntimesRuntimeIdModelRoute,
-}
-
-const ApiRuntimesRouteWithChildren = ApiRuntimesRoute._addFileChildren(
-  ApiRuntimesRouteChildren,
-)
-
-interface ApiInboxThreadsIdRouteChildren {
-  ApiInboxThreadsIdMessagesRoute: typeof ApiInboxThreadsIdMessagesRoute
-}
-
-const ApiInboxThreadsIdRouteChildren: ApiInboxThreadsIdRouteChildren = {
-  ApiInboxThreadsIdMessagesRoute: ApiInboxThreadsIdMessagesRoute,
-}
-
-const ApiInboxThreadsIdRouteWithChildren =
-  ApiInboxThreadsIdRoute._addFileChildren(ApiInboxThreadsIdRouteChildren)
-
-interface ApiInboxThreadsRouteChildren {
-  ApiInboxThreadsIdRoute: typeof ApiInboxThreadsIdRouteWithChildren
-}
-
-const ApiInboxThreadsRouteChildren: ApiInboxThreadsRouteChildren = {
-  ApiInboxThreadsIdRoute: ApiInboxThreadsIdRouteWithChildren,
-}
-
-const ApiInboxThreadsRouteWithChildren = ApiInboxThreadsRoute._addFileChildren(
-  ApiInboxThreadsRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -1471,23 +440,9 @@ const rootRouteChildren: RootRouteChildren = {
   DocsRoute: DocsRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
-  ApiSplatRoute: ApiSplatRoute,
-  ApiBookmarksRoute: ApiBookmarksRouteWithChildren,
   ApiChatRoute: ApiChatRoute,
-  ApiConversationsRoute: ApiConversationsRouteWithChildren,
-  ApiCustomAgentsRoute: ApiCustomAgentsRouteWithChildren,
-  ApiIntegrationsRoute: ApiIntegrationsRouteWithChildren,
-  ApiLocalAgentsRoute: ApiLocalAgentsRouteWithChildren,
-  ApiOrganizationsRoute: ApiOrganizationsRouteWithChildren,
-  ApiProblemsRoute: ApiProblemsRouteWithChildren,
-  ApiProjectsRoute: ApiProjectsRouteWithChildren,
-  ApiRuntimesRoute: ApiRuntimesRouteWithChildren,
-  ApiSettingsRoute: ApiSettingsRoute,
-  ApiFilesystemBrowseRoute: ApiFilesystemBrowseRoute,
-  ApiFilesystemFileRoute: ApiFilesystemFileRoute,
-  ApiInboxThreadsRoute: ApiInboxThreadsRouteWithChildren,
-  ApiObservabilityMetricsRoute: ApiObservabilityMetricsRoute,
-  ApiObservabilityThroughputRoute: ApiObservabilityThroughputRoute,
+  ApiGithubStarsRoute: ApiGithubStarsRoute,
+  ApiRpcSplatRoute: ApiRpcSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

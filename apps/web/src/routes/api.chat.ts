@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createUIMessageStream, createUIMessageStreamResponse, type UIMessage } from "ai";
+import { call } from "@orpc/server";
 
-import { resolveApiUrl } from "@/lib/api";
+import { conversationsRouter } from "@/server/orpc/routers/conversations";
 
 type RuntimeTraceEvent =
   | { kind: "message"; text: string }
@@ -51,6 +52,7 @@ export const Route = createFileRoute("/api/chat")({
         if (!body.conversationId) {
           return new Response("Missing conversationId", { status: 400 });
         }
+        const conversationId = body.conversationId;
 
         const latestMessage = body.message ?? body.messages?.[body.messages.length - 1];
         const content = readTextPart(latestMessage).trim();
@@ -69,7 +71,7 @@ export const Route = createFileRoute("/api/chat")({
               toolCallId: prepareContextToolCallId,
               toolName: "prepare_context",
               input: {
-                conversationId: body.conversationId,
+                conversationId,
                 promptPreview: content.slice(0, 160),
               },
             });
@@ -87,44 +89,24 @@ export const Route = createFileRoute("/api/chat")({
               toolCallId: runRuntimeToolCallId,
               toolName: "run_runtime",
               input: {
-                conversationId: body.conversationId,
+                conversationId,
                 prompt: content,
               },
             });
 
-            const headers = new Headers();
-            headers.set("Content-Type", "application/json");
-
-            const cookieHeader = request.headers.get("cookie");
-            if (cookieHeader) {
-              headers.set("cookie", cookieHeader);
-            }
-
-            const authorizationHeader = request.headers.get("authorization");
-            if (authorizationHeader) {
-              headers.set("authorization", authorizationHeader);
-            }
-
-            const upstream = await fetch(
-              resolveApiUrl(`/api/conversations/${body.conversationId}/messages`),
+            const message = (await call(
+              conversationsRouter.sendMessage,
               {
-                method: "POST",
-                headers,
-                body: JSON.stringify({ content }),
+                id: conversationId,
+                content,
               },
-            );
-
-            if (!upstream.ok) {
-              const errorText = await upstream.text();
-              writer.write({
-                type: "tool-output-error",
-                toolCallId: runRuntimeToolCallId,
-                errorText: errorText || "Failed to send message",
-              });
-              throw new Error(errorText || "Failed to send message");
-            }
-
-            const message = (await upstream.json()) as {
+              {
+                context: {
+                  request,
+                  headers: request.headers,
+                },
+              },
+            )) as {
               id?: string;
               content?: string;
               error?: string;
@@ -132,7 +114,6 @@ export const Route = createFileRoute("/api/chat")({
               createdAt?: string;
               trace?: RuntimeTraceEvent[];
             };
-
             const textPartId = `${message.id || "assistant"}-text`;
 
             if (message.error) {

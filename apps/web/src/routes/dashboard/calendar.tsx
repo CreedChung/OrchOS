@@ -662,7 +662,7 @@ function CalendarPage() {
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => setIsCalendarSourceDialogOpen(true)}
-                  title="Add calendar"
+                                      title={m.calendar_add_calendar()}
                 >
                   <HugeiconsIcon icon={Add01Icon} className="size-4" />
                 </Button>
@@ -692,7 +692,7 @@ function CalendarPage() {
                 <div className="space-y-5 p-3">
                   {accounts.length > 0 ? (
                     <section className="space-y-2">
-                      <div className="px-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Google</div>
+                      <div className="px-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{m.calendar_google()}</div>
                       <button
                         type="button"
                         onClick={() => setSelectedSidebarItem("google-overview")}
@@ -707,9 +707,9 @@ function CalendarPage() {
                           <HugeiconsIcon icon={GoogleIcon} className="size-4" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-foreground">Google Calendar</div>
+                          <div className="text-sm font-medium text-foreground">{m.calendar_google_overview()}</div>
                           <div className="mt-0.5 text-xs text-muted-foreground">
-                            {accounts.length} account{accounts.length > 1 ? "s" : ""}
+                            {m.calendar_n_accounts({ n: accounts.length })}
                           </div>
                         </div>
                       </button>
@@ -775,7 +775,7 @@ function CalendarPage() {
                                       variant="ghost"
                                       size="icon-xs"
                                       onClick={(e) => { e.stopPropagation(); openLocalGroupDialog(group); }}
-                                      title="Edit group"
+                                      title={m.edit()}
                                     >
                                       <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
                                     </Button>
@@ -785,7 +785,7 @@ function CalendarPage() {
                                       size="icon-xs"
                                       onClick={(e) => { e.stopPropagation(); handleDeleteLocalGroup(group); }}
                                       className="hover:text-destructive"
-                                      title="Delete group"
+                                      title={m.calendar_delete_group()}
                                     >
                                       <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                                     </Button>
@@ -829,7 +829,7 @@ function CalendarPage() {
                     ) : (
                       <div className="py-6 text-center">
                         <HugeiconsIcon icon={Calendar03Icon} className="mx-auto mb-1.5 size-5 text-muted-foreground/30" />
-                        <p className="text-xs text-muted-foreground">Create a group to start organizing local calendars.</p>
+                        <p className="text-xs text-muted-foreground">{m.calendar_no_groups_desc()}</p>
                       </div>
                     )}
                   </div>
@@ -893,15 +893,15 @@ function CalendarPage() {
                     <EmptyState
                       variant="subtle"
                       size="lg"
-                      title="Build your local calendar workspace"
-                      description="Create calendar groups, add multiple calendars to each group, and keep your own events entirely inside this workspace."
+                      title={m.calendar_empty_workspace_title()}
+                      description={m.calendar_empty_workspace_desc()}
                       icons={[
                         <HugeiconsIcon key="l1" icon={SquareArrowDataTransferHorizontalIcon} className="size-6" />,
                         <HugeiconsIcon key="l2" icon={Calendar03Icon} className="size-6" />,
                         <HugeiconsIcon key="l3" icon={Add01Icon} className="size-6" />,
                       ]}
                       action={{
-                        label: "Create group",
+                        label: m.calendar_create_group(),
                         icon: <HugeiconsIcon icon={Add01Icon} className="size-4" />,
                         onClick: () => openLocalGroupDialog(),
                       }}
@@ -919,22 +919,22 @@ function CalendarPage() {
                               <h2 className="text-balance text-xl font-semibold text-foreground">{selectedLocalCalendar.name}</h2>
                             </div>
                             <p className="mt-2 text-sm text-muted-foreground">
-                              {selectedLocalCalendar.description || "A dedicated local calendar for workspace-only planning and event tracking."}
+                              {selectedLocalCalendar.description || m.calendar_fallback_desc()}
                             </p>
                             <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                              <span className="rounded-full bg-muted px-2.5 py-1">{selectedLocalGroup?.name ?? "Ungrouped"}</span>
+                              <span className="rounded-full bg-muted px-2.5 py-1">{selectedLocalGroup?.name ?? m.calendar_ungrouped()}</span>
                               <span className="rounded-full bg-muted px-2.5 py-1">
-                                {localEventsInScope.length} event{localEventsInScope.length === 1 ? "" : "s"}
+                                {m.calendar_n_events({ n: localEventsInScope.length })}
                               </span>
                             </div>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             <Button type="button" variant="outline" onClick={() => openLocalCalendarDialog(selectedLocalCalendar.groupId, selectedLocalCalendar)}>
-                              Edit calendar
+                              {m.calendar_edit_calendar()}
                             </Button>
                             <Button type="button" onClick={() => openLocalEventDialog(selectedLocalDate)}>
                               <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                              Add event
+                              {m.calendar_add_event()}
                             </Button>
                           </div>
                         </div>
@@ -962,14 +962,14 @@ function CalendarPage() {
                                   <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
                                 </Button>}
                               />
-                              <TooltipContent side="top">Previous</TooltipContent>
+                              <TooltipContent side="top">{m.previous()}</TooltipContent>
                             </Tooltip>
                             <Button type="button" variant="outline" size="sm" onClick={() => {
                               const today = formatDayKey(new Date());
                               setSelectedLocalDate(today);
                               setVisibleMonth(startOfMonth(new Date()));
                             }}>
-                              Today
+                              {m.today()}
                             </Button>
                             <Tooltip>
                               <TooltipTrigger
@@ -981,7 +981,7 @@ function CalendarPage() {
                                   <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
                                 </Button>}
                               />
-                              <TooltipContent side="top">Next</TooltipContent>
+                              <TooltipContent side="top">{m.next()}</TooltipContent>
                             </Tooltip>
                           </div>
                         </div>
@@ -996,7 +996,7 @@ function CalendarPage() {
                                   <div className="min-w-0 flex-1">
                                     <div className="text-sm font-medium text-foreground">{event.title}</div>
                                     <div className="mt-0.5 text-xs text-muted-foreground">
-                                      {event.allDay ? "All day" : `${formatTime(event.startAt)} – ${formatTime(event.endAt)}`}
+                                      {event.allDay ? m.calendar_all_day() : `${formatTime(event.startAt)} – ${formatTime(event.endAt)}`}
                                     </div>
                                     {event.description ? <p className="mt-2 text-sm text-muted-foreground">{event.description}</p> : null}
                                   </div>
@@ -1020,7 +1020,7 @@ function CalendarPage() {
                               );
                             }) : (
                               <div className="rounded-2xl border border-dashed border-border/60 px-4 py-12 text-center text-sm text-muted-foreground">
-                                No events on this day yet.
+                                {m.calendar_no_events_day()}
                               </div>
                             )}
                           </div>
@@ -1081,7 +1081,7 @@ function CalendarPage() {
                                         );
                                       })}
                                       {dayEvents.length > (viewMode === "week" ? 2 : 3) ? (
-                                        <div className="text-xs text-muted-foreground">+{dayEvents.length - (viewMode === "week" ? 2 : 3)} more</div>
+                                        <div className="text-xs text-muted-foreground">+{dayEvents.length - (viewMode === "week" ? 2 : 3)} {m.calendar_n_more()}</div>
                                       ) : null}
                                     </div>
                                   </button>
@@ -1097,12 +1097,12 @@ function CalendarPage() {
                       <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <div className="text-sm font-medium text-muted-foreground">Selected day</div>
+                            <div className="text-sm font-medium text-muted-foreground">{m.calendar_selected_day()}</div>
                             <div className="mt-1 text-lg font-semibold text-foreground">{formatLongDate(selectedLocalDate)}</div>
                           </div>
                           <Button type="button" variant="outline" size="sm" onClick={() => openLocalEventDialog(selectedLocalDate)}>
                             <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                            Add
+                            {m.add()}
                           </Button>
                         </div>
 
@@ -1120,7 +1120,7 @@ function CalendarPage() {
                                         <div className="truncate text-sm font-medium text-foreground">{event.title}</div>
                                       </div>
                                       <div className="mt-1 text-xs text-muted-foreground">
-                                        {event.allDay ? "All day" : `${formatTime(event.startAt)} - ${formatTime(event.endAt)}`}
+                                        {event.allDay ? m.calendar_all_day() : `${formatTime(event.startAt)} - ${formatTime(event.endAt)}`}
                                       </div>
                                       {event.location ? <div className="mt-1 text-xs text-muted-foreground">{event.location}</div> : null}
                                     </div>
@@ -1131,7 +1131,7 @@ function CalendarPage() {
                                             <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
                                           </Button>}
                                         />
-                                        <TooltipContent side="top">Edit event</TooltipContent>
+                                        <TooltipContent side="top">{m.calendar_edit_event()}</TooltipContent>
                                       </Tooltip>
                                       <Tooltip>
                                         <TooltipTrigger
@@ -1139,7 +1139,7 @@ function CalendarPage() {
                                             <HugeiconsIcon icon={Delete02Icon} className="size-4" />
                                           </Button>}
                                         />
-                                        <TooltipContent side="top">Delete event</TooltipContent>
+                                        <TooltipContent side="top">{m.calendar_delete_event()}</TooltipContent>
                                       </Tooltip>
                                     </div>
                                   </div>
@@ -1149,7 +1149,7 @@ function CalendarPage() {
                             })
                           ) : (
                             <div className="rounded-2xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-                              No events on this day yet.
+                              {m.calendar_no_events_day()}
                             </div>
                           )}
                         </div>
@@ -1158,12 +1158,12 @@ function CalendarPage() {
                       <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <div className="text-sm font-medium text-muted-foreground">Upcoming</div>
-                            <div className="mt-1 text-lg font-semibold text-foreground">Next events</div>
+                            <div className="text-sm font-medium text-muted-foreground">{m.calendar_upcoming()}</div>
+                            <div className="mt-1 text-lg font-semibold text-foreground">{m.calendar_next_events()}</div>
                           </div>
                           <Button type="button" variant="outline" size="sm" onClick={() => handleDeleteLocalCalendar(selectedLocalCalendar)}>
                             <HugeiconsIcon icon={Delete02Icon} className="size-4" />
-                            Delete
+                            {m.delete()}
                           </Button>
                         </div>
 
@@ -1182,7 +1182,7 @@ function CalendarPage() {
                               <div className="min-w-0">
                                 <div className="truncate text-sm font-medium text-foreground">{event.title}</div>
                                 <div className="mt-1 text-xs text-muted-foreground">
-                                  {formatLongDate(formatDayKey(new Date(event.startAt)))} · {event.allDay ? "All day" : formatTime(event.startAt)}
+                                  {formatLongDate(formatDayKey(new Date(event.startAt)))} · {event.allDay ? m.calendar_all_day() : formatTime(event.startAt)}
                                 </div>
                               </div>
                               <HugeiconsIcon icon={ArrowRight01Icon} className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -1190,7 +1190,7 @@ function CalendarPage() {
                           ))}
                           {localEventsInScope.length === 0 ? (
                             <div className="rounded-2xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-                              Add your first event to start using this calendar.
+                              {m.calendar_add_first_event()}
                             </div>
                           ) : null}
                         </div>
@@ -1211,7 +1211,7 @@ function CalendarPage() {
                             </div>
                           </div>
                           <p className="mt-1 text-sm text-muted-foreground">
-                            {localCalendars.filter((c) => c.groupId === selectedLocalGroup.id).length} calendars
+                            {m.calendar_n_calendars({ n: localCalendars.filter((c) => c.groupId === selectedLocalGroup.id).length })}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1221,10 +1221,10 @@ function CalendarPage() {
                                 <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
                               </Button>}
                             />
-                            <TooltipContent side="top">Previous month</TooltipContent>
+                            <TooltipContent side="top">{m.calendar_previous_month()}</TooltipContent>
                           </Tooltip>
                           <Button type="button" variant="outline" size="sm" onClick={() => setVisibleMonth(startOfMonth(new Date()))}>
-                            Today
+                            {m.today()}
                           </Button>
                           <Tooltip>
                             <TooltipTrigger
@@ -1232,7 +1232,7 @@ function CalendarPage() {
                                 <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
                               </Button>}
                             />
-                            <TooltipContent side="top">Next month</TooltipContent>
+                            <TooltipContent side="top">{m.calendar_next_month()}</TooltipContent>
                           </Tooltip>
                         </div>
                       </div>
@@ -1260,14 +1260,14 @@ function CalendarPage() {
                                 <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
                               </Button>}
                             />
-                            <TooltipContent side="top">Previous</TooltipContent>
+                            <TooltipContent side="top">{m.previous()}</TooltipContent>
                           </Tooltip>
                           <Button type="button" variant="outline" size="sm" onClick={() => {
                             const today = formatDayKey(new Date());
                             setSelectedLocalDate(today);
                             setVisibleMonth(startOfMonth(new Date()));
                           }}>
-                            Today
+                            {m.today()}
                           </Button>
                           <Tooltip>
                             <TooltipTrigger
@@ -1279,7 +1279,7 @@ function CalendarPage() {
                                 <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
                               </Button>}
                             />
-                            <TooltipContent side="top">Next</TooltipContent>
+                            <TooltipContent side="top">{m.next()}</TooltipContent>
                           </Tooltip>
                         </div>
                       </div>
@@ -1294,7 +1294,7 @@ function CalendarPage() {
                                 <div className="min-w-0 flex-1">
                                   <div className="text-sm font-medium text-foreground">{event.title}</div>
                                   <div className="mt-0.5 text-xs text-muted-foreground">
-                                    {event.allDay ? "All day" : `${formatTime(event.startAt)} – ${formatTime(event.endAt)}`}
+                                    {event.allDay ? m.calendar_all_day() : `${formatTime(event.startAt)} – ${formatTime(event.endAt)}`}
                                   </div>
                                   {event.description ? <p className="mt-2 text-sm text-muted-foreground">{event.description}</p> : null}
                                 </div>
@@ -1318,7 +1318,7 @@ function CalendarPage() {
                             );
                           }) : (
                             <div className="rounded-2xl border border-dashed border-border/60 px-4 py-12 text-center text-sm text-muted-foreground">
-                              No events on this day yet.
+                              {m.calendar_no_events_day()}
                             </div>
                           )}
                         </div>
@@ -1379,7 +1379,7 @@ function CalendarPage() {
                                       );
                                     })}
                                     {dayEvents.length > (viewMode === "week" ? 2 : 3) ? (
-                                      <div className="text-xs text-muted-foreground">+{dayEvents.length - (viewMode === "week" ? 2 : 3)} more</div>
+                                      <div className="text-xs text-muted-foreground">+{dayEvents.length - (viewMode === "week" ? 2 : 3)} {m.calendar_n_more()}</div>
                                     ) : null}
                                   </div>
                                 </button>
@@ -1393,12 +1393,12 @@ function CalendarPage() {
                     <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-sm font-medium text-muted-foreground">Selected day</div>
+                          <div className="text-sm font-medium text-muted-foreground">{m.calendar_selected_day()}</div>
                           <div className="mt-1 text-lg font-semibold text-foreground">{formatLongDate(selectedLocalDate)}</div>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={() => openLocalEventDialog(selectedLocalDate)}>
                           <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                          Add
+                          {m.add()}
                         </Button>
                       </div>
                       <div className="mt-5 space-y-3">
@@ -1414,7 +1414,7 @@ function CalendarPage() {
                                       <div className="truncate text-sm font-medium text-foreground">{event.title}</div>
                                     </div>
                                     <div className="mt-1 text-xs text-muted-foreground">
-                                      {event.allDay ? "All day" : `${formatTime(event.startAt)} - ${formatTime(event.endAt)}`}
+                                      {event.allDay ? m.calendar_all_day() : `${formatTime(event.startAt)} - ${formatTime(event.endAt)}`}
                                       {calendar ? <span> · {calendar.name}</span> : null}
                                     </div>
                                     {event.location ? <div className="mt-1 text-xs text-muted-foreground">{event.location}</div> : null}
@@ -1434,7 +1434,7 @@ function CalendarPage() {
                           })
                         ) : (
                           <div className="rounded-2xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-                            No events on this day yet.
+                            {m.calendar_no_events_day()}
                           </div>
                         )}
                       </div>
@@ -1445,28 +1445,28 @@ function CalendarPage() {
                     <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                          <div className="text-sm font-medium text-muted-foreground">Overview</div>
-                          <h2 className="mt-1 text-balance text-2xl font-semibold text-foreground">Local calendar workspace</h2>
+                          <div className="text-sm font-medium text-muted-foreground">{m.calendar_overview()}</div>
+                          <h2 className="mt-1 text-balance text-2xl font-semibold text-foreground">{m.calendar_local_workspace()}</h2>
                           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                            This is your own calendar layer inside OrchOS: build groups, split work across multiple calendars, and keep events local without relying on Google.
+                            {m.calendar_local_workspace_desc()}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <Button type="button" variant="outline" onClick={() => openLocalGroupDialog()}>
                             <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                            New group
+                            {m.calendar_new_group()}
                           </Button>
                           <Button type="button" onClick={() => openLocalCalendarDialog(localGroups[0]?.id)} disabled={localGroups.length === 0}>
                             <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                            New calendar
+                            {m.calendar_new_calendar()}
                           </Button>
                         </div>
                       </div>
 
                       <div className="mt-6 grid gap-4 md:grid-cols-3">
-                        <MetricCard label="Groups" value={localGroups.length} />
-                        <MetricCard label="Calendars" value={localCalendars.length} />
-                        <MetricCard label="Events" value={localEvents.length} />
+                        <MetricCard label={m.calendar_groups()} value={localGroups.length} />
+                        <MetricCard label={m.calendar_calendars()} value={localCalendars.length} />
+                        <MetricCard label={m.calendar_events()} value={localEvents.length} />
                       </div>
                     </div>
 
@@ -1474,12 +1474,12 @@ function CalendarPage() {
                       <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <div className="text-sm font-medium text-muted-foreground">Groups</div>
-                            <div className="mt-1 text-lg font-semibold text-foreground">Organize by context</div>
+                            <div className="text-sm font-medium text-muted-foreground">{m.calendar_groups()}</div>
+                            <div className="mt-1 text-lg font-semibold text-foreground">{m.calendar_organize_by_context()}</div>
                           </div>
                           <Button type="button" variant="outline" size="sm" onClick={() => openLocalGroupDialog()}>
                             <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                            Add group
+                            {m.calendar_add_group()}
                           </Button>
                         </div>
 
@@ -1496,16 +1496,16 @@ function CalendarPage() {
                                     {group.name}
                                   </button>
                                   <div className="mt-1 text-sm text-muted-foreground">
-                                    {calendars.length} calendar{calendars.length === 1 ? "" : "s"}
+                                    {m.calendar_n_calendars({ n: calendars.length })}
                                   </div>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                   <Button type="button" variant="outline" size="sm" onClick={() => openLocalGroupDialog(group)}>
-                                    Edit
+                                    {m.edit()}
                                   </Button>
                                   <Button type="button" size="sm" onClick={() => openLocalCalendarDialog(group.id)}>
                                     <HugeiconsIcon icon={Add01Icon} className="size-4" />
-                                    Add calendar
+                                    {m.calendar_add_calendar()}
                                   </Button>
                                 </div>
                               </div>
@@ -1522,7 +1522,7 @@ function CalendarPage() {
                                     {calendar.name}
                                   </button>
                                 ))}
-                                {calendars.length === 0 ? <div className="text-sm text-muted-foreground">No calendars yet.</div> : null}
+                                {calendars.length === 0 ? <div className="text-sm text-muted-foreground">{m.calendar_no_calendars_yet()}</div> : null}
                               </div>
                             </div>
                           ))}
@@ -1531,8 +1531,8 @@ function CalendarPage() {
 
                       <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
                         <div>
-                          <div className="text-sm font-medium text-muted-foreground">Upcoming local events</div>
-                          <div className="mt-1 text-lg font-semibold text-foreground">What is next</div>
+                          <div className="text-sm font-medium text-muted-foreground">{m.calendar_upcoming_local_events()}</div>
+                          <div className="mt-1 text-lg font-semibold text-foreground">{m.calendar_what_is_next()}</div>
                         </div>
 
                         <div className="mt-5 space-y-3">
@@ -1560,7 +1560,7 @@ function CalendarPage() {
                                   <div className="min-w-0 flex-1">
                                     <div className="truncate text-sm font-medium text-foreground">{event.title}</div>
                                     <div className="mt-1 text-xs text-muted-foreground">
-                                      {calendar?.name ?? "Unknown calendar"} · {formatLongDate(formatDayKey(new Date(event.startAt)))}
+                                      {calendar?.name ?? m.calendar_unknown()} · {formatLongDate(formatDayKey(new Date(event.startAt)))}
                                     </div>
                                   </div>
                                 </button>
@@ -1569,7 +1569,7 @@ function CalendarPage() {
 
                           {localEvents.length === 0 ? (
                             <div className="rounded-2xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-                              Local events will show up here once you create them.
+                              {m.calendar_events_will_show()}
                             </div>
                           ) : null}
                         </div>
@@ -1582,15 +1582,15 @@ function CalendarPage() {
                   <EmptyState
                     variant="subtle"
                     size="lg"
-                    title="No calendar connected yet"
-                    description="Add a Google Calendar account to manage meetings, deadlines, and project timing from this workspace."
+                    title={m.calendar_no_calendar_connected()}
+                    description={m.calendar_no_calendar_desc()}
                     icons={[
                       <HugeiconsIcon key="c1" icon={Calendar03Icon} className="size-6" />,
                       <HugeiconsIcon key="c2" icon={GoogleIcon} className="size-6" />,
                       <HugeiconsIcon key="c3" icon={Add01Icon} className="size-6" />,
                     ]}
                     action={{
-                      label: "Add calendar",
+                      label: m.calendar_add_calendar(),
                       icon: <HugeiconsIcon icon={Add01Icon} className="size-4" />,
                       onClick: () => setIsCalendarSourceDialogOpen(true),
                     }}
@@ -1602,9 +1602,9 @@ function CalendarPage() {
                   <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h2 className="text-base font-semibold text-foreground">Connected accounts</h2>
+                        <h2 className="text-base font-semibold text-foreground">{m.calendar_connected_accounts()}</h2>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Manage each Google Calendar identity bound to this workspace.
+                          {m.calendar_connected_accounts_desc()}
                         </p>
                       </div>
                       {integration?.connected ? (
@@ -1634,7 +1634,7 @@ function CalendarPage() {
                                 <div className="mt-1 truncate text-xs text-muted-foreground">{account.email || account.username}</div>
                               </div>
                               <span className="rounded-full bg-muted px-2 py-1 text-[10px] text-muted-foreground">
-                                {account.scopes.length} scopes
+                                {m.calendar_n_scopes({ n: account.scopes.length })}
                               </span>
                             </div>
                           </button>
@@ -1646,8 +1646,8 @@ function CalendarPage() {
                   <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h2 className="text-base font-semibold text-foreground">Account details</h2>
-                        <p className="mt-1 text-sm text-muted-foreground">Review scopes and remove access when needed.</p>
+                        <h2 className="text-base font-semibold text-foreground">{m.calendar_account_details()}</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">{m.calendar_account_details_desc()}</p>
                       </div>
                       <Button type="button" variant="outline" size="sm" onClick={() => setIsCalendarSourceDialogOpen(true)}>
                         <HugeiconsIcon icon={Add01Icon} className="size-4" />
@@ -1673,7 +1673,7 @@ function CalendarPage() {
                                   <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
                                 </button>}
                               />
-                              <TooltipContent side="top">Remove account</TooltipContent>
+                              <TooltipContent side="top">{m.calendar_remove_account()}</TooltipContent>
                             </Tooltip>
                           </div>
                           <div className="mt-4 flex flex-wrap gap-2">
@@ -1686,7 +1686,7 @@ function CalendarPage() {
                         </div>
                       ) : (
                         <div className="rounded-xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-                          Select an account to inspect its permissions.
+                          {m.calendar_select_account()}
                         </div>
                       )}
                     </div>
@@ -1701,8 +1701,8 @@ function CalendarPage() {
       <AppDialog
         open={isCalendarSourceDialogOpen}
         onOpenChange={setIsCalendarSourceDialogOpen}
-        title="Add calendar"
-        description="Choose whether to connect Google Calendar or create a local calendar setup."
+        title={m.calendar_add_calendar()}
+        description={m.calendar_add_calendar_desc()}
         size="md"
         footer={
           <Button type="button" variant="outline" onClick={() => setIsCalendarSourceDialogOpen(false)}>
@@ -1721,9 +1721,9 @@ function CalendarPage() {
               <HugeiconsIcon icon={GoogleIcon} className="size-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-foreground">Google Calendar</div>
+              <div className="text-sm font-medium text-foreground">{m.calendar_google_overview()}</div>
               <div className="mt-1 text-sm text-muted-foreground">
-                Connect an existing Google account with OAuth credentials and a refresh token.
+                {m.calendar_google_calendar_option_desc()}
               </div>
             </div>
           </button>
@@ -1737,9 +1737,9 @@ function CalendarPage() {
               <HugeiconsIcon icon={SquareArrowDataTransferHorizontalIcon} className="size-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-foreground">Local calendar</div>
+              <div className="text-sm font-medium text-foreground">{m.calendar_local_calendar_option()}</div>
               <div className="mt-1 text-sm text-muted-foreground">
-                Create local groups, multiple calendars inside them, and store your own events in this workspace.
+                {m.calendar_local_calendar_option_desc()}
               </div>
             </div>
           </button>
@@ -1749,8 +1749,8 @@ function CalendarPage() {
       <AppDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        title="Add Google Calendar"
-        description="Connect a Google Calendar account with OAuth credentials and a refresh token."
+        title={m.calendar_add_google_title()}
+        description={m.calendar_add_google_desc()}
         size="lg"
         footer={
           <>
@@ -1765,7 +1765,7 @@ function CalendarPage() {
       >
         <div className="grid gap-4">
           <label className="grid gap-2 text-sm">
-            <span className="font-medium text-foreground">Account label</span>
+            <span className="font-medium text-foreground">{m.account_label()}</span>
             <Input
               value={form.label}
               onChange={(event) => setForm((current) => ({ ...current, label: event.target.value }))}
@@ -1773,7 +1773,7 @@ function CalendarPage() {
             />
           </label>
           <label className="grid gap-2 text-sm">
-            <span className="font-medium text-foreground">Client ID</span>
+            <span className="font-medium text-foreground">{m.client_id()}</span>
             <Input
               value={form.clientId}
               onChange={(event) => setForm((current) => ({ ...current, clientId: event.target.value }))}
@@ -1781,7 +1781,7 @@ function CalendarPage() {
             />
           </label>
           <label className="grid gap-2 text-sm">
-            <span className="font-medium text-foreground">Client Secret</span>
+            <span className="font-medium text-foreground">{m.client_secret()}</span>
             <Input
               type="password"
               value={form.clientSecret}
@@ -1790,7 +1790,7 @@ function CalendarPage() {
             />
           </label>
           <label className="grid gap-2 text-sm">
-            <span className="font-medium text-foreground">Refresh Token</span>
+            <span className="font-medium text-foreground">{m.refresh_token()}</span>
             <Textarea
               value={form.refreshToken}
               onChange={(event) => setForm((current) => ({ ...current, refreshToken: event.target.value }))}
@@ -1798,15 +1798,15 @@ function CalendarPage() {
               className="min-h-32"
             />
           </label>
-          <p className="text-xs text-muted-foreground">Required scopes: `calendar`, `calendar.events`</p>
+          <p className="text-xs text-muted-foreground">{m.calendar_required_scopes()}</p>
         </div>
       </AppDialog>
 
       <AppDialog
         open={isLocalGroupDialogOpen}
         onOpenChange={setIsLocalGroupDialogOpen}
-        title={localGroupForm.id ? "Edit local group" : "Create local group"}
-        description="Use groups to separate contexts such as personal planning, project delivery, or operations."
+        title={localGroupForm.id ? m.calendar_edit_local_group() : m.calendar_create_local_group()}
+        description={m.calendar_local_group_desc()}
         size="md"
         footer={
           <>
@@ -1814,14 +1814,14 @@ function CalendarPage() {
               {m.cancel()}
             </Button>
             <Button type="button" onClick={handleSaveLocalGroup}>
-              {localGroupForm.id ? "Save changes" : "Create group"}
+              {localGroupForm.id ? m.save() : m.calendar_create_group()}
             </Button>
           </>
         }
       >
         <div className="grid gap-4">
           <label className="grid gap-2 text-sm">
-            <span className="font-medium text-foreground">Group name</span>
+            <span className="font-medium text-foreground">{m.calendar_group_label()}</span>
             <Input
               value={localGroupForm.name}
               onChange={(event) => setLocalGroupForm((current) => ({ ...current, name: event.target.value }))}
@@ -1834,8 +1834,8 @@ function CalendarPage() {
       <AppDialog
         open={isLocalCalendarDialogOpen}
         onOpenChange={setIsLocalCalendarDialogOpen}
-        title={localCalendarForm.id ? "Edit local calendar" : "Create local calendar"}
-        description="Each group can contain multiple calendars with their own color, description, and events."
+        title={localCalendarForm.id ? m.calendar_edit_calendar() : m.calendar_new_calendar()}
+        description={m.calendar_local_calendar_desc()}
         size="lg"
         footer={
           <>
@@ -1843,7 +1843,7 @@ function CalendarPage() {
               {m.cancel()}
             </Button>
             <Button type="button" onClick={handleSaveLocalCalendar} disabled={localGroups.length === 0}>
-              {localCalendarForm.id ? "Save changes" : "Create calendar"}
+              {localCalendarForm.id ? m.save() : m.calendar_new_calendar()}
             </Button>
           </>
         }
@@ -1851,7 +1851,7 @@ function CalendarPage() {
         {localGroups.length > 0 ? (
           <div className="grid gap-4">
             <label className="grid gap-2 text-sm">
-              <span className="font-medium text-foreground">Group</span>
+              <span className="font-medium text-foreground">{m.calendar_group_label()}</span>
               <select
                 value={localCalendarForm.groupId}
                 onChange={(event) => setLocalCalendarForm((current) => ({ ...current, groupId: event.target.value }))}
@@ -1866,7 +1866,7 @@ function CalendarPage() {
             </label>
 
             <label className="grid gap-2 text-sm">
-              <span className="font-medium text-foreground">Calendar name</span>
+              <span className="font-medium text-foreground">{m.calendar_calendar_name()}</span>
               <Input
                 value={localCalendarForm.name}
                 onChange={(event) => setLocalCalendarForm((current) => ({ ...current, name: event.target.value }))}
@@ -1912,7 +1912,7 @@ function CalendarPage() {
       <AppDialog
         open={isLocalEventDialogOpen}
         onOpenChange={setIsLocalEventDialogOpen}
-        title={localEventForm.id ? "Edit local event" : "Create local event"}
+        title={localEventForm.id ? m.calendar_edit_event() : m.calendar_add_event()}
         description="Store an event inside one of your local calendars without relying on an external provider."
         size="lg"
         footer={
@@ -1921,7 +1921,7 @@ function CalendarPage() {
               {m.cancel()}
             </Button>
             <Button type="button" onClick={handleSaveLocalEvent} disabled={localCalendars.length === 0}>
-              {localEventForm.id ? "Save changes" : "Create event"}
+              {localEventForm.id ? m.save() : m.calendar_add_event()}
             </Button>
           </>
         }

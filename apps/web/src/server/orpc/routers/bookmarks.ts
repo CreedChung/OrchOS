@@ -1,0 +1,45 @@
+import { os } from "@/server/orpc/base";
+import { BookmarkService } from "@/server/modules/bookmark/service";
+import { getLocalDb } from "@/server/runtime/local-db";
+
+export const bookmarksRouter = {
+  list: os.bookmarks.list.handler(async () => {
+    return BookmarkService.list(await getLocalDb());
+  }),
+  replaceAll: os.bookmarks.replaceAll.handler(async ({ input }) => {
+    return BookmarkService.replaceAll(await getLocalDb(), input.categories);
+  }),
+  createCategory: os.bookmarks.createCategory.handler(async ({ input }) => {
+    return BookmarkService.createCategory(await getLocalDb(), input.name);
+  }),
+  createItem: os.bookmarks.createItem.handler(async ({ input }) => {
+    return BookmarkService.createBookmark(await getLocalDb(), input.categoryId, {
+      title: input.title,
+      url: input.url,
+    });
+  }),
+  updateCategory: os.bookmarks.updateCategory.handler(async ({ input }) => {
+    return BookmarkService.updateCategory(await getLocalDb(), input.id, input.name);
+  }),
+  deleteCategory: os.bookmarks.deleteCategory.handler(async ({ input }) => {
+    return BookmarkService.deleteCategory(await getLocalDb(), input.id);
+  }),
+  updateItem: os.bookmarks.updateItem.handler(async ({ input }) => {
+    return BookmarkService.updateBookmark(await getLocalDb(), input.categoryId, input.itemId, {
+      title: input.title,
+      url: input.url,
+      pinned: input.pinned,
+    });
+  }),
+  deleteItem: os.bookmarks.deleteItem.handler(async ({ input }) => {
+    return BookmarkService.deleteBookmark(await getLocalDb(), input.categoryId, input.itemId);
+  }),
+  moveItem: os.bookmarks.moveItem.handler(async ({ input }) => {
+    return BookmarkService.moveBookmark(
+      await getLocalDb(),
+      input.bookmarkId,
+      input.sourceCategoryId,
+      input.targetCategoryId,
+    );
+  }),
+};

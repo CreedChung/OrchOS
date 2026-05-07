@@ -5,14 +5,15 @@ function getChangelogMarkdown(locale: string) {
   if (locale === "zh-CN") {
     return `# OrchOS v0.1.0
 
-第一个公开版本，聚焦在多代理编排与工作流可视化。
+第一个公开版本 —— 你的个人数字工作空间，现在开始。
 
 ## 新增
 
-- 多代理协作与任务分配基础能力
-- 目标驱动的工作流管理界面
-- MCP Server 接入入口与配置能力
-- 首页交互式步骤演示
+- 书签管理 — 收藏、分类、搜索和导入书签
+- 邮件集成 — 连接 Gmail 或 IMAP/SMTP 账号
+- 日历视图 — 日、周、月模式，事件管理和 Google Calendar 接入
+- 看板面板 — 拖拽式任务追踪
+- 智能收件箱 — 统一管理 GitHub PR、Issue、提及和代理请求
 
 ## 变更
 
@@ -29,14 +30,15 @@ function getChangelogMarkdown(locale: string) {
   if (locale === "zh-TW") {
     return `# OrchOS v0.1.0
 
-第一個公開版本，聚焦於多代理編排與工作流程視覺化。
+第一個公開版本 —— 你的個人數位工作空間，現在開始。
 
 ## 新增
 
-- 多代理協作與任務分配基礎能力
-- 目標驅動的工作流程管理介面
-- MCP Server 接入入口與設定能力
-- 首頁互動式步驟展示
+- 書籤管理 — 收藏、分類、搜尋和匯入書籤
+- 郵件整合 — 連接 Gmail 或 IMAP/SMTP 帳號
+- 日曆檢視 — 日、週、月模式，事件管理和 Google Calendar 接入
+- 看板面板 — 拖拽式任務追蹤
+- 智慧收件匣 — 統一管理 GitHub PR、Issue、提及和代理請求
 
 ## 變更
 
@@ -52,14 +54,15 @@ function getChangelogMarkdown(locale: string) {
 
   return `# OrchOS v0.1.0
 
-First public release focused on multi-agent orchestration and workflow visualization.
+Your personal digital workspace — now in your hands.
 
 ## Added
 
-- Foundational multi-agent collaboration and task assignment
-- Goal-driven workflow management interface
-- MCP Server entry points and configuration support
-- Interactive homepage walkthrough
+- **Bookmarks** — Save, organize, search, and import bookmarks with categories
+- **Mail** — Connect Gmail or IMAP/SMTP accounts, manage threads in one place
+- **Calendar** — Day, week, and month views with events and Google Calendar integration
+- **Board** — Drag-and-drop task tracking for projects and todos
+- **Inbox** — Unified feed for GitHub PRs, issues, mentions, and agent requests
 
 ## Changed
 
