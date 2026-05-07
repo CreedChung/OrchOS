@@ -32,43 +32,6 @@ interface ConversationBoardCard {
 
 const EMPTY_CONVERSATION_MESSAGES: ConversationMessage[] = [];
 
-const conversationBoardColumns: Array<{
-  id: ConversationBoardColumnId;
-  label: string;
-  icon: typeof PlayCircleIcon;
-  tone: string;
-  bgAccent: string;
-}> = [
-  {
-    id: "review",
-    label: m.board_today(),
-    icon: InformationCircleIcon,
-    tone: "text-violet-600 dark:text-violet-400",
-    bgAccent: "bg-violet-500/5 dark:bg-violet-500/10",
-  },
-  {
-    id: "planning",
-    label: m.board_planning(),
-    icon: File02Icon,
-    tone: "text-amber-600 dark:text-amber-400",
-    bgAccent: "bg-amber-500/5 dark:bg-amber-500/10",
-  },
-  {
-    id: "in_progress",
-    label: m.board_in_progress(),
-    icon: PlayCircleIcon,
-    tone: "text-sky-600 dark:text-sky-400",
-    bgAccent: "bg-sky-500/5 dark:bg-sky-500/10",
-  },
-   {
-    id: "completed",
-    label: m.board_completed(),
-    icon: CheckmarkCircle02Icon,
-    tone: "text-emerald-600 dark:text-emerald-400",
-    bgAccent: "bg-emerald-500/5 dark:bg-emerald-500/10",
-  },
-];
-
 function formatConversationTime(value?: string) {
   if (!value) return "";
 
@@ -128,6 +91,42 @@ export function BoardView({ boardFilter }: BoardViewProps) {
   const { runtimes } = useDashboard();
   const [renameCardId, setRenameCardId] = useState<string | null>(null);
   const [renameCardTitle, setRenameCardTitle] = useState("");
+  const conversationBoardColumns: Array<{
+    id: ConversationBoardColumnId;
+    label: string;
+    icon: typeof PlayCircleIcon;
+    tone: string;
+    bgAccent: string;
+  }> = [
+    {
+      id: "review",
+      label: m.board_today(),
+      icon: InformationCircleIcon,
+      tone: "text-violet-600 dark:text-violet-400",
+      bgAccent: "bg-violet-500/5 dark:bg-violet-500/10",
+    },
+    {
+      id: "planning",
+      label: m.board_planning(),
+      icon: File02Icon,
+      tone: "text-amber-600 dark:text-amber-400",
+      bgAccent: "bg-amber-500/5 dark:bg-amber-500/10",
+    },
+    {
+      id: "in_progress",
+      label: m.board_in_progress(),
+      icon: PlayCircleIcon,
+      tone: "text-sky-600 dark:text-sky-400",
+      bgAccent: "bg-sky-500/5 dark:bg-sky-500/10",
+    },
+    {
+      id: "completed",
+      label: m.board_completed(),
+      icon: CheckmarkCircle02Icon,
+      tone: "text-emerald-600 dark:text-emerald-400",
+      bgAccent: "bg-emerald-500/5 dark:bg-emerald-500/10",
+    },
+  ];
 
   const {
     conversations,
@@ -157,7 +156,7 @@ export function BoardView({ boardFilter }: BoardViewProps) {
       })
       .filter((card) => card.hasUserMessage)
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
-  }, [conversations, messagesByConversationId, pendingConversationId, boardFilter]);
+  }, [conversations, messagesByConversationId, pendingConversationId]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background px-4 py-4 md:px-6">

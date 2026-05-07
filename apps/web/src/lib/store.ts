@@ -78,6 +78,8 @@ const defaultSettings: ControlSettings = {
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   projectChatsRequireSandbox: true,
   showShortcutHints: false,
+  useMixedScript: false,
+  preferKanji: false,
   notifications: { system: true, sound: true, eventSounds: {}, eventSoundFiles: {} },
 };
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
-import { Spinner } from "@/components/ui/spinner";
+import { AsciiLoading } from "@/components/ui/ascii-loading";
 import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/sso-callback")({
@@ -33,17 +33,15 @@ function SSOCallbackPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" />
-        <p className="ml-3 text-sm text-muted-foreground">{m.loading()}</p>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <AsciiLoading label={m.loading()} />
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <Spinner size="lg" className="text-muted-foreground/70" />
-      <p className="ml-3 text-sm text-muted-foreground">{m.loading()}</p>
+      <AsciiLoading label={m.loading()} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { os } from "@/server/orpc/base";
+import { ORPCError } from "@orpc/server";
 import { LocalAgentService } from "@/server/modules/local-agents/service";
 import {
   authenticateORPCRequest,
@@ -9,14 +10,16 @@ import { getLocalDb } from "@/server/runtime/local-db";
 
 function ensureAuthenticatedUser(userId: string | null) {
   if (!userId && isClerkConfigured()) {
-    throw new Error("Unauthorized");
+    throw new ORPCError("UNAUTHORIZED");
   }
 }
 
 export const localAgentsRouter = {
   list: os.localAgents.list.handler(async ({ context }) => {
     const auth = await authenticateORPCRequest(context.request);
-    ensureAuthenticatedUser(auth.userId);
+    if (!auth.userId && isClerkConfigured()) {
+      return [];
+    }
     return LocalAgentService.listForUser(await getLocalDb(), auth.userId ?? "", auth.orgId ?? undefined);
   }),
   createPairingToken: os.localAgents.createPairingToken.handler(async ({ context }) => {

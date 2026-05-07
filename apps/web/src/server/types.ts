@@ -119,6 +119,8 @@ export interface ControlSettings {
   autoFix: boolean;
   modelStrategy: "local-first" | "cloud-first" | "adaptive";
   showShortcutHints: boolean;
+  useMixedScript: boolean;
+  preferKanji: boolean;
 }
 
 export interface McpServerProfile {

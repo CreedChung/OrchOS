@@ -5,13 +5,13 @@ import {
   InformationCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
-import type { Problem, SidebarView } from "@/lib/types";
+import type { Problem } from "@/lib/types";
+import { m } from "@/paraglide/messages";
 
 interface ActivityPanelProps {
   problems: Problem[];
   collapsed: boolean;
   expanded?: boolean;
-  activeView: SidebarView;
 }
 
 function getAttentionItems(problems: Problem[]) {
@@ -30,15 +30,12 @@ function SectionHeader({ title, meta }: { title: string; meta?: string }) {
   );
 }
 
-export function ActivityPanel({ problems, collapsed, expanded, activeView }: ActivityPanelProps) {
+export function ActivityPanel({ problems, collapsed, expanded }: ActivityPanelProps) {
   if (collapsed) {
     return null;
   }
 
   const attentionItems = getAttentionItems(problems);
-  const panelContext = activeView === "creation"
-    ? "当前线程态势"
-    : "当前页面上下文态势";
 
   return (
     <aside
@@ -50,15 +47,17 @@ export function ActivityPanel({ problems, collapsed, expanded, activeView }: Act
       )}
     >
       <div className="flex h-11 items-center gap-2 border-b border-border bg-sidebar px-4">
-        <div className="truncate text-sm font-medium text-foreground">工作面板</div>
-        <div className="truncate text-xs text-muted-foreground">{panelContext}</div>
+        <div className="truncate text-sm font-medium text-foreground">{m.activity_panel()}</div>
       </div>
 
       <ScrollArea className="flex-1">
         <div className="space-y-4 py-3">
           {attentionItems.length > 0 ? (
             <section>
-              <SectionHeader title="Needs Attention" meta={`${attentionItems.length} open`} />
+              <SectionHeader
+                title={m.needs_attention()}
+                meta={m.open_items({ count: attentionItems.length })}
+              />
               <div className="space-y-2 px-3">
                 {attentionItems.map((problem) => (
                   <div key={problem.id} className="rounded-lg border border-border/50 bg-background/70 px-3 py-2">

@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { ActivityPanel } from "@/components/panels/ActivityPanel";
 import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { AsciiLoading } from "@/components/ui/ascii-loading";
 import { Toolbar } from "@/components/layout/Toolbar";
 import { CreateBoardConversationDialog } from "@/components/dialogs/CreateBoardConversationDialog";
 import { useUIStore } from "@/lib/store";
@@ -15,7 +16,6 @@ import { Search01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useConversationStore } from "@/lib/stores/conversation";
 import { AuthTransitionOverlay } from "@/components/ui/auth-transition-overlay";
-import { Spinner } from "@/components/ui/spinner";
 import type { SidebarView } from "@/lib/types";
 import { getCapabilityModeFromPath, getCapabilityPath, isCapabilityView } from "@/lib/capability-routing";
 import { m } from "@/paraglide/messages";
@@ -66,10 +66,12 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-0 bg-background/72 backdrop-blur-[2px]" />
           <div className="relative flex h-full items-center justify-center">
             <div className="flex items-center gap-3 rounded-full border border-white/15 bg-black/20 px-4 py-2 text-white/85 shadow-lg backdrop-blur-md">
-              <Spinner size="xl" className="text-white/85" />
-                <span className="text-sm" suppressHydrationWarning>
-                  {m.checking_auth()}
-                </span>
+              <AsciiLoading
+                label={m.checking_auth()}
+                className="text-white/85"
+                chipClassName="bg-white/10 text-white/85"
+                textClassName="text-sm"
+              />
             </div>
           </div>
         </div>
@@ -77,7 +79,7 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
     }
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <Spinner size="xl" className="text-muted-foreground/70" />
+        <AsciiLoading label={m.loading()} />
       </div>
     );
   }
@@ -85,7 +87,7 @@ function ClerkAuthGate({ children }: { children: React.ReactNode }) {
   if (!isSignedIn) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <Spinner size="xl" className="text-muted-foreground/70" />
+        <AsciiLoading label={m.loading()} />
       </div>
     );
   }
@@ -305,7 +307,6 @@ function DashboardContent() {
           <ActivityPanel
             problems={problems}
             collapsed={!activityPanelOpen}
-            activeView={activeView}
           />
         </div>
         {showSettingsDialog && (

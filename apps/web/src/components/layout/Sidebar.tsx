@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/tooltip";
 import { m } from "@/paraglide/messages";
 import { isClerkConfigured } from "@/lib/auth";
+import { useLocale } from "@/lib/i18n-provider";
 import { useUIStore } from "@/lib/store";
 import type { Organization, SidebarView } from "@/lib/types";
 import { toast } from "@/components/ui/toast";
@@ -102,6 +103,7 @@ export function Sidebar({
   onOrganizationDelete,
   onToggleCollapse,
 }: SidebarProps) {
+  const { locale: _locale } = useLocale();
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [createOrgOpen, setCreateOrgOpen] = useState(false);
@@ -181,7 +183,7 @@ export function Sidebar({
           id: "board",
           to: "/dashboard/board",
           icon: DashboardCircleIcon,
-          label: m.reminder(),
+          label: m.board(),
           shortcut: "3",
         },
         {
@@ -259,7 +261,7 @@ export function Sidebar({
                   <Input
                     value={orgSearch}
                     onChange={(e) => setOrgSearch(e.target.value)}
-                    placeholder={m.org_launcher_search_placeholder()}
+                    placeholder={m.space_launcher_search_placeholder()}
                     className="h-8"
                   />
                 </div>
@@ -267,7 +269,7 @@ export function Sidebar({
                   <>
                     <DropdownMenuGroup>
                       <DropdownMenuLabel>
-                        {m.org_launcher_current()}
+                        {m.space_launcher_current()}
                       </DropdownMenuLabel>
                       <DropdownMenuItem
                         onClick={() =>
@@ -285,7 +287,7 @@ export function Sidebar({
                   </>
                 ) : null}
                 <DropdownMenuGroup>
-                  <DropdownMenuLabel>{m.org_launcher_all()}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{m.space_launcher_all()}</DropdownMenuLabel>
                   {filteredOrganizations.length > 0 ? (
                     filteredOrganizations.map((org) => (
                       <DropdownMenuItem
@@ -303,18 +305,18 @@ export function Sidebar({
                     ))
                   ) : (
                     <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                      {m.no_organizations()}
+                      {m.no_spaces()}
                     </div>
                   )}
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>
-                    {m.team_create_organization()}
+                    {m.create_space()}
                   </DropdownMenuLabel>
                   <DropdownMenuItem onClick={() => setCreateOrgOpen(true)}>
                     <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-                    {m.team_create_organization()}
+                    {m.create_space()}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
@@ -525,24 +527,24 @@ export function Sidebar({
 
         <RenameDialog
           open={createOrgOpen}
-          title={m.team_create_organization()}
+          title={m.create_space()}
           initialValue=""
-          placeholder={m.team_create_organization_placeholder()}
+          placeholder={m.space_name_placeholder()}
           onClose={() => setCreateOrgOpen(false)}
           onSubmit={async (name) => {
             await onOrganizationCreate(name);
-            toast.success(m.org_launcher_created());
+            toast.success(m.space_created());
             setCreateOrgOpen(false);
           }}
         />
 
         <RenameDialog
           open={renameOpen}
-          title={m.rename_organization()}
+          title={m.rename_space()}
           initialValue={
             organizations.find((o) => o.id === activeOrganizationId)?.name ?? ""
           }
-          placeholder={m.organization_name_placeholder()}
+          placeholder={m.space_name_placeholder()}
           onClose={() => setRenameOpen(false)}
           onSubmit={(name) => {
             if (activeOrganizationId)
@@ -554,8 +556,8 @@ export function Sidebar({
         <ConfirmDialog
           open={deleteConfirmOpen}
           onOpenChange={setDeleteConfirmOpen}
-          title={m.delete_organization()}
-          description={m.delete_organization()}
+          title={m.delete_space()}
+          description={m.delete_space()}
           onConfirm={() => {
             if (activeOrganizationId)
               onOrganizationDelete(activeOrganizationId);
@@ -1228,7 +1230,7 @@ function ProfileEditDialog({
               </div>
 
               <div className="flex h-24 items-center justify-end gap-2 border-t border-border px-6 py-4">
-                <DialogPrimitive.Close className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent">
+                <DialogPrimitive.Close render={<Button type="button" variant="outline" />}>
                   {m.cancel()}
                 </DialogPrimitive.Close>
                 <Button

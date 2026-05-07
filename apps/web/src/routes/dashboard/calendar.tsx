@@ -12,12 +12,12 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "@/components/ui/toast";
+import { AsciiLoading } from "@/components/ui/ascii-loading";
 import { AppDialog } from "@/components/ui/app-dialog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/interactive-empty-state";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { api, type Integration } from "@/lib/api";
@@ -885,7 +885,7 @@ function CalendarPage() {
             <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-6 p-6">
               {loading ? (
                 <div className="flex flex-1 items-center justify-center">
-                  <Spinner size="lg" className="text-muted-foreground" />
+                  <AsciiLoading label={m.loading()} />
                 </div>
               ) : selectedSidebarItem.startsWith("local") ? (
                 localGroups.length === 0 ? (

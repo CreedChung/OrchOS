@@ -6,6 +6,7 @@ import { Camera01Icon, Robot02Icon } from "@hugeicons/core-free-icons";
 import type { RuntimeProfile } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
 import { decodeNiceAvatar } from "@/lib/avatar";
+import { m } from "@/paraglide/messages";
 
 interface AvatarUploadProps {
   agentId: string;
@@ -80,7 +81,7 @@ export function AvatarUpload({
         uploading && "opacity-60 cursor-wait",
         !uploading && "cursor-pointer",
       )}
-      title="Upload avatar"
+      title={m.upload()}
       disabled={uploading}
     >
       {niceAvatarConfig ? (

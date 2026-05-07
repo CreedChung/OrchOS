@@ -92,9 +92,50 @@ const tabDefs: { id: SettingsTab; icon: IconSvgElement; labelKey: () => string }
   { id: "general", icon: SlidersHorizontalIcon, labelKey: m.general },
   { id: "notifications", icon: NotificationIcon, labelKey: m.notifications },
   { id: "runtimes", icon: Robot02Icon, labelKey: m.runtimes },
-  { id: "mail", icon: InboxIcon, labelKey: () => "Mail" },
+  { id: "mail", icon: InboxIcon, labelKey: m.mail },
   { id: "about", icon: InformationCircleIcon, labelKey: m.about },
 ];
+
+const ACKNOWLEDGEMENT_LIBRARIES = [
+  "Bun",
+  "Vite",
+  "Cloudflare",
+  "Wrangler",
+  "TanStack Start",
+  "TanStack Router",
+  "React",
+  "Tailwind CSS",
+  "Base UI",
+  "Radix UI",
+  "shadcn/ui",
+  "Motion",
+  "Lucide React",
+  "React Resizable Panels",
+  "React Grab",
+  "React Nice Avatar",
+  "Zustand",
+  "oRPC",
+  "AI SDK",
+  "Drizzle",
+  "Clerk",
+  "Paraglide JS",
+  "Shiki",
+  "React Markdown",
+  "Remark GFM",
+  "Recharts",
+  "Remotion",
+  "Remotion Player",
+  "Hugeicons",
+  "Web Kits Audio",
+  "Border Beam",
+  "Liveline",
+  "class-variance-authority",
+  "clsx",
+  "zod",
+  "Sonner",
+  "dotenv",
+  "Vitest",
+] as const;
 
 interface SettingsDialogProps {
   open: boolean;
@@ -135,6 +176,21 @@ function ModelBadge({ model, isLocalRuntime }: { model: string; isLocalRuntime?:
       {label}
     </span>
   );
+}
+
+function getRuntimeRoleLabel(role: string) {
+  switch (role) {
+    case "Conversational AI assistant":
+      return m.runtime_role_conversational_ai_assistant();
+    case "Code generation & reasoning":
+      return m.runtime_role_code_generation_reasoning();
+    case "Code generation & editing":
+      return m.runtime_role_code_generation_editing();
+    case "Open-source code generation":
+      return m.runtime_role_open_source_code_generation();
+    default:
+      return role;
+  }
 }
 
 export function SettingsDialog({
@@ -186,8 +242,14 @@ export function SettingsDialog({
 
   const currentSettings = localSettings ?? settings;
 
+  const getSoundLabel = useCallback((soundId: SoundId) => {
+    const sound = AVAILABLE_SOUNDS.find((item) => item.id === soundId);
+    if (!sound) return m.sound_bell_1();
+    return m[sound.labelKey]();
+  }, []);
+
   const handleToggle = async (
-    key: keyof Pick<ControlSettings, "showShortcutHints">,
+    key: keyof Pick<ControlSettings, "showShortcutHints" | "useMixedScript" | "preferKanji">,
   ) => {
     if (!currentSettings) return;
     try {
@@ -485,7 +547,7 @@ export function SettingsDialog({
                   <HugeiconsIcon icon={Cancel01Icon} className="size-4" />
                 </Button>}
               />
-              <TooltipContent side="top">Close</TooltipContent>
+              <TooltipContent side="top">{m.close()}</TooltipContent>
             </Tooltip>
           </div>
 
@@ -534,6 +596,38 @@ export function SettingsDialog({
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Korean Mixed Script Toggle */}
+                {currentLocale === "ko" && (
+                  <div className="flex items-center justify-between">
+                    <div className="max-w-[280px]">
+                      <span className="text-sm font-medium text-foreground">{m.use_mixed_script()}</span>
+                      <p className="text-xs text-muted-foreground">{m.use_mixed_script_desc()}</p>
+                    </div>
+                    <AppleSwitch
+                      checked={Boolean(currentSettings.useMixedScript)}
+                      onCheckedChange={() => void handleToggle("useMixedScript")}
+                      size="sm"
+                      aria-label={m.use_mixed_script()}
+                    />
+                  </div>
+                )}
+
+                {/* Japanese Kanji Preference */}
+                {currentLocale === "ja" && (
+                  <div className="flex items-center justify-between">
+                    <div className="max-w-[280px]">
+                      <span className="text-sm font-medium text-foreground">{m.prefer_kanji()}</span>
+                      <p className="text-xs text-muted-foreground">{m.prefer_kanji_desc()}</p>
+                    </div>
+                    <AppleSwitch
+                      checked={Boolean(currentSettings.preferKanji)}
+                      onCheckedChange={() => void handleToggle("preferKanji")}
+                      size="sm"
+                      aria-label={m.prefer_kanji()}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -561,7 +655,9 @@ export function SettingsDialog({
                   <div className="space-y-1.5 pt-1">
                     {NOTIFICATION_EVENTS.map((event) => {
                       const currentSoundId =
-                        currentSettings.notifications?.eventSoundFiles?.[event.id] || defaultEventSounds[event.id] || "bell";
+                        currentSettings.notifications?.eventSoundFiles?.[event.id] ||
+                        (defaultEventSounds[event.id] as SoundId) ||
+                        "bell";
                       const isEnabled =
                         currentSettings.notifications?.eventSounds?.[event.id] !== false;
                       return (
@@ -580,11 +676,10 @@ export function SettingsDialog({
                                   "flex items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent h-7 px-2.5 text-xs min-w-[100px]",
                                   !isEnabled && "cursor-not-allowed opacity-50",
                                 )}
-                              >
-                                <span className="truncate">
-                                  {AVAILABLE_SOUNDS.find((s) => s.id === currentSoundId)?.name ||
-                                    "Bell"}
-                                </span>
+                                >
+                                  <span className="truncate">
+                                  {getSoundLabel(currentSoundId)}
+                                  </span>
                                 <HugeiconsIcon
                                   icon={UnfoldMoreIcon}
                                   className="size-3 text-muted-foreground"
@@ -612,7 +707,7 @@ export function SettingsDialog({
                                     >
                                       <HugeiconsIcon icon={VolumeHighIcon} className="size-3.5" />
                                     </button>
-                                    <span className="flex-1 select-none">{sound.name}</span>
+                                    <span className="flex-1 select-none">{m[sound.labelKey]()}</span>
                                     {sound.id === currentSoundId && (
                                       <HugeiconsIcon
                                         icon={Tick02Icon}
@@ -752,7 +847,7 @@ export function SettingsDialog({
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground">{agent.role}</p>
+                            <p className="text-xs text-muted-foreground">{getRuntimeRoleLabel(agent.role)}</p>
                           </div>
                           {isRegistered ? (
                             <span className="rounded-md px-2.5 py-1 text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -811,7 +906,7 @@ export function SettingsDialog({
                             </span>
                             <ModelBadge model={agent.model} isLocalRuntime />
                           </div>
-                          <p className="text-xs text-muted-foreground">{agent.role}</p>
+                          <p className="text-xs text-muted-foreground">{getRuntimeRoleLabel(agent.role)}</p>
                         </div>
                         <span className="rounded-md px-2.5 py-1 text-[10px] font-medium bg-muted text-muted-foreground">
                           {m.not_installed()}
@@ -841,8 +936,8 @@ export function SettingsDialog({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-medium text-foreground">Mail Accounts</span>
-                    <p className="text-xs text-muted-foreground">View and manage your email accounts</p>
+                    <span className="text-sm font-medium text-foreground">{m.mail_accounts()}</span>
+                    <p className="text-xs text-muted-foreground">{m.mail_accounts_desc()}</p>
                   </div>
                 </div>
 
@@ -853,9 +948,9 @@ export function SettingsDialog({
                 ) : mailIntegrations.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-border/50 py-6 text-center">
                     <HugeiconsIcon icon={InboxIcon} className="mx-auto size-5 text-muted-foreground/30 mb-2" />
-                    <p className="text-sm text-muted-foreground">No mail accounts configured</p>
+                    <p className="text-sm text-muted-foreground">{m.no_mail_accounts_configured()}</p>
                     <p className="text-xs text-muted-foreground/60 mt-1">
-                      Add an email account in the Mail page to get started.
+                      {m.mail_accounts_empty_hint()}
                     </p>
                   </div>
                 ) : (
@@ -881,7 +976,7 @@ export function SettingsDialog({
                                         <HugeiconsIcon icon={Edit02Icon} className="size-3.5" />
                                       </Button>}
                                     />
-                                    <TooltipContent side="top">Edit</TooltipContent>
+                                    <TooltipContent side="top">{m.edit()}</TooltipContent>
                                   </Tooltip>
                                   <Tooltip>
                                     <TooltipTrigger
@@ -889,14 +984,14 @@ export function SettingsDialog({
                                         <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
                                       </Button>}
                                     />
-                                    <TooltipContent side="top">Remove</TooltipContent>
+                                    <TooltipContent side="top">{m.delete()}</TooltipContent>
                                   </Tooltip>
                                 </div>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <div className="text-xs text-muted-foreground pl-6">No accounts</div>
+                          <div className="text-xs text-muted-foreground pl-6">{m.no_accounts()}</div>
                         )}
                       </div>
                     ))}
@@ -906,52 +1001,52 @@ export function SettingsDialog({
                 <AppDialog
                   open={editingMailAccount !== null}
                   onOpenChange={(open) => { if (!open) setEditingMailAccount(null); }}
-                  title="Edit mail account"
+                  title={m.edit_mail_account()}
                   size="lg"
                   nested
                   footer={
                     <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setEditingMailAccount(null)}>Cancel</Button>
-                      <Button type="button" onClick={handleSaveMailAccount}>Save</Button>
+                      <Button type="button" variant="outline" onClick={() => setEditingMailAccount(null)}>{m.cancel()}</Button>
+                      <Button type="button" onClick={handleSaveMailAccount}>{m.save()}</Button>
                     </div>
                   }
                 >
                   <div className="space-y-4">
                     <label className="grid gap-1.5 text-sm">
-                      <span className="text-muted-foreground">Email</span>
+                      <span className="text-muted-foreground">{m.email()}</span>
                       <input
                         value={editMailForm.email}
                         onChange={(e) => setEditMailForm((f) => ({ ...f, email: e.target.value, username: f.username || e.target.value }))}
-                        placeholder="you@company.com"
+                        placeholder={m.email_placeholder()}
                         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                       />
                     </label>
                     <label className="grid gap-1.5 text-sm">
-                      <span className="text-muted-foreground">Display name</span>
+                      <span className="text-muted-foreground">{m.display_name()}</span>
                       <input
                         value={editMailForm.displayName}
                         onChange={(e) => setEditMailForm((f) => ({ ...f, displayName: e.target.value }))}
-                        placeholder="Team Inbox"
+                        placeholder={m.display_name_placeholder()}
                         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                       />
                     </label>
                     <label className="grid gap-1.5 text-sm">
-                      <span className="text-muted-foreground">Username</span>
+                      <span className="text-muted-foreground">{m.username()}</span>
                       <input
                         value={editMailForm.username}
                         onChange={(e) => setEditMailForm((f) => ({ ...f, username: e.target.value }))}
-                        placeholder="IMAP/SMTP username"
+                        placeholder={m.username_placeholder()}
                         className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                       />
                     </label>
                     <label className="grid gap-1.5 text-sm">
-                      <span className="text-muted-foreground">Password</span>
+                      <span className="text-muted-foreground">{m.password()}</span>
                       <div className="relative">
                         <input
                           type={showPassword ? "text" : "password"}
                           value={editMailForm.password}
                           onChange={(e) => setEditMailForm((f) => ({ ...f, password: e.target.value }))}
-                          placeholder="Mailbox password or app password"
+                          placeholder={m.password_placeholder()}
                           className="w-full rounded-md border border-border bg-background px-3 py-2 pr-9 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                         />
                         <button
@@ -966,10 +1061,10 @@ export function SettingsDialog({
                     </label>
 
                     <div className="border-t border-border pt-4">
-                      <p className="text-xs font-medium text-muted-foreground mb-3">SMTP Configuration</p>
+                      <p className="text-xs font-medium text-muted-foreground mb-3">{m.smtp_configuration()}</p>
                       <div className="space-y-3">
                         <label className="grid gap-1.5 text-sm">
-                          <span className="text-muted-foreground">Host</span>
+                          <span className="text-muted-foreground">{m.smtp_host()}</span>
                           <input
                             value={editMailForm.smtpHost}
                             onChange={(e) => setEditMailForm((f) => ({ ...f, smtpHost: e.target.value }))}
@@ -979,7 +1074,7 @@ export function SettingsDialog({
                         </label>
                         <div className="grid grid-cols-2 gap-3">
                           <label className="grid gap-1.5 text-sm">
-                            <span className="text-muted-foreground">Port</span>
+                            <span className="text-muted-foreground">{m.smtp_port()}</span>
                             <input
                               value={editMailForm.smtpPort}
                               onChange={(e) => setEditMailForm((f) => ({ ...f, smtpPort: e.target.value }))}
@@ -994,17 +1089,17 @@ export function SettingsDialog({
                               onChange={(e) => setEditMailForm((f) => ({ ...f, smtpSecure: e.target.checked }))}
                               className="rounded border-border"
                             />
-                            <span className="text-muted-foreground">Use TLS/SSL</span>
+                            <span className="text-muted-foreground">{m.use_tls_smtp()}</span>
                           </label>
                         </div>
                       </div>
                     </div>
 
                     <div className="border-t border-border pt-4">
-                      <p className="text-xs font-medium text-muted-foreground mb-3">IMAP Configuration</p>
+                      <p className="text-xs font-medium text-muted-foreground mb-3">{m.imap_configuration()}</p>
                       <div className="space-y-3">
                         <label className="grid gap-1.5 text-sm">
-                          <span className="text-muted-foreground">Host</span>
+                          <span className="text-muted-foreground">{m.imap_host()}</span>
                           <input
                             value={editMailForm.imapHost}
                             onChange={(e) => setEditMailForm((f) => ({ ...f, imapHost: e.target.value }))}
@@ -1014,7 +1109,7 @@ export function SettingsDialog({
                         </label>
                         <div className="grid grid-cols-2 gap-3">
                           <label className="grid gap-1.5 text-sm">
-                            <span className="text-muted-foreground">Port</span>
+                            <span className="text-muted-foreground">{m.imap_port()}</span>
                             <input
                               value={editMailForm.imapPort}
                               onChange={(e) => setEditMailForm((f) => ({ ...f, imapPort: e.target.value }))}
@@ -1029,7 +1124,7 @@ export function SettingsDialog({
                               onChange={(e) => setEditMailForm((f) => ({ ...f, imapSecure: e.target.checked }))}
                               className="rounded border-border"
                             />
-                            <span className="text-muted-foreground">Use TLS/SSL</span>
+                            <span className="text-muted-foreground">{m.use_tls_imap()}</span>
                           </label>
                         </div>
                       </div>
@@ -1048,25 +1143,26 @@ export function SettingsDialog({
                     <p className="text-xs text-muted-foreground">v1.0.0</p>
                   </div>
                 </div>
-                <div className="space-y-2 rounded-lg border border-border p-4">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{m.runtime()}</span>
-                    <span className="font-medium text-foreground">Bun</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{m.server()}</span>
-                    <span className="font-medium text-foreground">TanStack Start</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{m.ui()}</span>
-                    <span className="font-medium text-foreground">React + Tailwind</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{m.database()}</span>
-                    <span className="font-medium text-foreground">SQLite (Drizzle)</span>
+                <div className="rounded-lg p-4">
+                  <p className="text-sm font-medium text-foreground">{m.about_project_summary_title()}</p>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">{m.orchos_desc()}</p>
+                </div>
+                <div className="rounded-lg p-4">
+                  <p className="text-sm font-medium text-foreground">{m.about_acknowledgements_title()}</p>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                    {m.about_acknowledgements_desc()}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {ACKNOWLEDGEMENT_LIBRARIES.map((library) => (
+                      <span
+                        key={library}
+                        className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[11px] text-foreground"
+                      >
+                        {library}
+                      </span>
+                    ))}
                   </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground">{m.orchos_desc()}</p>
               </div>
             )}
           </div>

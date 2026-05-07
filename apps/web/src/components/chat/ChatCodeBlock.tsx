@@ -133,7 +133,7 @@ export function ChatCodeBlock({ code, language }: { code: string; language?: str
           type="button"
           className="rounded p-0.5 text-muted-foreground/40 hover:text-foreground transition-colors"
           onClick={() => void handleCopy()}
-          title="Copy"
+          title={m.copy_file_content()}
         >
           {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
         </button>

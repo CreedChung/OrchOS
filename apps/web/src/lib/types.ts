@@ -128,14 +128,14 @@ export const NOTIFICATION_EVENTS: { id: NotificationEvent; labelKey: string }[] 
 ];
 
 export const AVAILABLE_SOUNDS = [
-  { id: "bell", name: "Bell 1", file: "/sounds/bell.mp3" },
-  { id: "bell2", name: "Bell 2", file: "/sounds/bell2.mp3" },
-  { id: "bell3", name: "Bell 3", file: "/sounds/bell3.mp3" },
-  { id: "error", name: "Error", file: "/sounds/error.mp3" },
-  { id: "pop", name: "Pop", file: "" },
-  { id: "pong", name: "Pong", file: "/sounds/pong.mp3" },
-  { id: "ring", name: "Ring 1", file: "/sounds/ring.mp3" },
-  { id: "ring2", name: "Ring 2", file: "/sounds/ring2.mp3" },
+  { id: "bell", labelKey: "sound_bell_1", file: "/sounds/bell.mp3" },
+  { id: "bell2", labelKey: "sound_bell_2", file: "/sounds/bell2.mp3" },
+  { id: "bell3", labelKey: "sound_bell_3", file: "/sounds/bell3.mp3" },
+  { id: "error", labelKey: "sound_error", file: "/sounds/error.mp3" },
+  { id: "pop", labelKey: "sound_pop", file: "" },
+  { id: "pong", labelKey: "sound_pong", file: "/sounds/pong.mp3" },
+  { id: "ring", labelKey: "sound_ring_1", file: "/sounds/ring.mp3" },
+  { id: "ring2", labelKey: "sound_ring_2", file: "/sounds/ring2.mp3" },
 ] as const;
 
 export type SoundId = (typeof AVAILABLE_SOUNDS)[number]["id"];
@@ -149,6 +149,8 @@ export interface ControlSettings {
   defaultRuntimeId?: string;
   projectChatsRequireSandbox: boolean;
   showShortcutHints: boolean;
+  useMixedScript: boolean;
+  preferKanji: boolean;
   notifications: {
     system: boolean;
     sound: boolean;

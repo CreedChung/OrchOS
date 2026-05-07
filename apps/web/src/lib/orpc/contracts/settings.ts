@@ -8,6 +8,8 @@ export const settingsSchema = z.object({
   autoFix: z.boolean(),
   modelStrategy: modelStrategySchema,
   showShortcutHints: z.boolean(),
+  useMixedScript: z.boolean(),
+  preferKanji: z.boolean(),
 });
 
 export const settingsContract = {

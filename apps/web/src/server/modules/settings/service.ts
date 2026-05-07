@@ -8,6 +8,8 @@ export class SettingsService {
     autoFix: true,
     modelStrategy: "adaptive",
     showShortcutHints: false,
+    useMixedScript: false,
+    preferKanji: false,
   };
 
   private constructor(private db: AppDb) {}
@@ -25,6 +27,8 @@ export class SettingsService {
       if (row.key === "autoFix") this.settings.autoFix = row.value === "true";
       if (row.key === "modelStrategy") this.settings.modelStrategy = row.value as ControlSettings["modelStrategy"];
       if (row.key === "showShortcutHints") this.settings.showShortcutHints = row.value === "true";
+      if (row.key === "useMixedScript") this.settings.useMixedScript = row.value === "true";
+      if (row.key === "preferKanji") this.settings.preferKanji = row.value === "true";
     }
   }
 
@@ -59,6 +63,20 @@ export class SettingsService {
       await this.db.insert(settings).values({ key: "showShortcutHints", value: String(patch.showShortcutHints) }).onConflictDoUpdate({
         target: settings.key,
         set: { value: String(patch.showShortcutHints) },
+      }).run();
+    }
+    if (patch.useMixedScript !== undefined) {
+      this.settings.useMixedScript = patch.useMixedScript;
+      await this.db.insert(settings).values({ key: "useMixedScript", value: String(patch.useMixedScript) }).onConflictDoUpdate({
+        target: settings.key,
+        set: { value: String(patch.useMixedScript) },
+      }).run();
+    }
+    if (patch.preferKanji !== undefined) {
+      this.settings.preferKanji = patch.preferKanji;
+      await this.db.insert(settings).values({ key: "preferKanji", value: String(patch.preferKanji) }).onConflictDoUpdate({
+        target: settings.key,
+        set: { value: String(patch.preferKanji) },
       }).run();
     }
     return { ...this.settings };

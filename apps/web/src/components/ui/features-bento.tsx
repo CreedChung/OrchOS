@@ -62,15 +62,16 @@ export function FeaturesBento() {
   const { locale } = useLocale();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<AskMessage[]>([]);
-  const [input, setInput] = useState(() => m.home_bento_mock_input());
+  const defaultInput = m.home_bento_mock_input();
+  const [input, setInput] = useState(defaultInput);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const selectedRuntime: RuntimeProfile | null = MOCK_RUNTIME.enabled ? MOCK_RUNTIME : null;
 
   useEffect(() => {
     setMessages([]);
-    setInput(m.home_bento_mock_input());
-  }, [locale]);
+    setInput(defaultInput);
+  }, [defaultInput, locale]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

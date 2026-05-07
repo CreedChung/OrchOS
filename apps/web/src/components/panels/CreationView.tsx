@@ -54,12 +54,6 @@ interface CreationViewProps {
 
 const EMPTY_CONVERSATION_MESSAGES: ConversationMessage[] = [];
 
-const creationFilterButtons = [
-  { value: "all", label: m.all(), icon: Chat01Icon, iconClassName: "text-muted-foreground/80" },
-  { value: "active", label: m.creation_active(), icon: Clock01Icon, iconClassName: "text-sky-500" },
-  { value: "archived", label: m.creation_archived(), icon: Archive01Icon, iconClassName: "text-amber-500" },
-] as const;
-
 const searchEngineMeta = [
   { id: "google", url: "https://www.google.com/search?q=" },
   { id: "bing", url: "https://www.bing.com/search?q=" },
@@ -78,6 +72,12 @@ export function CreationView({
   runtimes,
   settings,
 }: CreationViewProps) {
+  const creationFilterButtons = [
+    { value: "all", label: m.all(), icon: Chat01Icon, iconClassName: "text-muted-foreground/80" },
+    { value: "active", label: m.creation_active(), icon: Clock01Icon, iconClassName: "text-sky-500" },
+    { value: "archived", label: m.creation_archived(), icon: Archive01Icon, iconClassName: "text-amber-500" },
+  ] as const;
+
   const creationArchiveFilter = useUIStore((s) => s.creationArchiveFilter);
   const setCreationArchiveFilter = useUIStore((s) => s.setCreationArchiveFilter);
   const creationSidebarCollapsed = useUIStore((s) => s.creationSidebarCollapsed);

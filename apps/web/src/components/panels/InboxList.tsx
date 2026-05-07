@@ -80,6 +80,8 @@ export function InboxList({
   activeAccountId,
   onAccountChange,
 }: InboxListProps) {
+  const isMailContext = Boolean(accounts && onAccountChange);
+
   return (
     <div className="flex h-full min-w-0 w-full flex-col bg-background">
       <ScrollArea className="flex-1">
@@ -132,8 +134,8 @@ export function InboxList({
               <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-emerald-500/10">
                 <HugeiconsIcon icon={CheckmarkBadge01Icon} className="size-5 text-emerald-500" />
               </div>
-              <p className="text-sm text-muted-foreground">{m.inbox_is_empty()}</p>
-              <p className="mt-1 text-xs text-muted-foreground/60">{m.no_new_items()}</p>
+              <p className="text-sm text-muted-foreground">{isMailContext ? m.mail_accounts() : m.inbox_is_empty()}</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">{isMailContext ? m.no_new_mail_items() : m.no_new_items()}</p>
             </div>
           )}
         </div>
@@ -143,7 +145,7 @@ export function InboxList({
         <div className="flex h-10 items-center border-t border-border p-2">
           <div className="flex flex-wrap items-center gap-1 rounded-md px-1">
             {[
-              { id: null, label: "All", icon: InboxIcon },
+              { id: null, label: m.all(), icon: InboxIcon },
               ...accounts.map((a) => ({ id: a.id, label: a.label, icon: a.source === "Gmail" ? GoogleIcon : InboxIcon })),
             ].map((item) => {
               const isActive = activeAccountId === item.id;

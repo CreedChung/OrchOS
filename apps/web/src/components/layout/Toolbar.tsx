@@ -144,7 +144,7 @@ export function Toolbar({
         {activeView === "mail" ? (
           <Button variant="outline" size="sm" onClick={onOpenMailAccounts}>
             <HugeiconsIcon icon={Settings02Icon} className="size-3.5" />
-            Accounts
+            {m.accounts()}
           </Button>
         ) : (
           <Button

@@ -3,8 +3,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { AuthPage } from "@/components/ui/auth-page";
+import { AsciiLoading } from "@/components/ui/ascii-loading";
 import { SignInForm } from "@/components/ui/auth-forms";
-import { Spinner } from "@/components/ui/spinner";
 import { isClerkConfigured } from "@/lib/auth";
 import { m } from "@/paraglide/messages";
 
@@ -55,7 +55,7 @@ function SignInPageInner() {
   if (isSignedIn) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <Spinner size="lg" className="text-muted-foreground/70" />
+        <AsciiLoading label={m.loading()} />
       </div>
     );
   }

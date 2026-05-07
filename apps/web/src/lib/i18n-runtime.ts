@@ -5,15 +5,82 @@ import {
   setLocale as setParaglideLocale,
 } from "@/paraglide/runtime";
 
+const UI_STORAGE_KEY = "orchos-ui";
+const LEGACY_LOCALE_STORAGE_KEY = "orchos-locale";
+
 let activeLocale = baseLocale;
 let clientLocaleInitialized = false;
+
+function readStoredLocale() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(UI_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as {
+        state?: { settings?: { locale?: string } };
+      };
+      const storedLocale = parsed.state?.settings?.locale;
+      if (typeof storedLocale === "string" && storedLocale.length > 0) {
+        return storedLocale;
+      }
+    }
+
+    const legacyLocale = window.localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY);
+    if (legacyLocale) {
+      writeStoredLocale(legacyLocale);
+      window.localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
+      return legacyLocale;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredLocale(locale: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(UI_STORAGE_KEY);
+    const parsed = raw
+      ? (JSON.parse(raw) as {
+          state?: { settings?: Record<string, unknown> };
+          version?: number;
+        })
+      : {};
+
+    const next = {
+      ...parsed,
+      state: {
+        ...parsed.state,
+        settings: {
+          ...parsed.state?.settings,
+          locale,
+        },
+      },
+    };
+
+    window.localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.removeItem(LEGACY_LOCALE_STORAGE_KEY);
+  } catch {}
+}
 
 export function initializeClientLocale() {
   if (typeof document === "undefined" || clientLocaleInitialized) {
     return;
   }
 
-  activeLocale = document.documentElement.lang || baseLocale;
+  activeLocale =
+    readStoredLocale() ||
+    document.documentElement.lang ||
+    getParaglideLocale() ||
+    baseLocale;
   overwriteGetLocale(() => activeLocale);
   clientLocaleInitialized = true;
 }
@@ -29,5 +96,9 @@ export function getInitialLocale() {
 
 export function syncRuntimeLocale(locale: string) {
   activeLocale = locale;
+  writeStoredLocale(locale);
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = locale;
+  }
   setParaglideLocale(locale, { reload: false });
 }
